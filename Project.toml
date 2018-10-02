@@ -1,0 +1,10 @@
+name = "ProtoSyn"
+uuid = "092f5425-1474-5527-b419-6132197c7e30"
+authors = ["JosePereiraUA <jose.manuel.pereira@ua.pt>"]
+version = "0.1.0"
+
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+project = "092f5425-1474-5527-b419-6132197c7e30"

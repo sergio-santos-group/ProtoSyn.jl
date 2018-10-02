@@ -1,0 +1,11 @@
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+*.DS_STORE
+*.zip
+
+examples/
+build/
+docs/build/
+docs/site/
+
