@@ -13,27 +13,9 @@ makedocs(
         "Home" => "index.md",
         "Manual" => [
             "Forcefield" => "forcefield.md",
-            # "Evaluators" => "forcefield/evaluators.md",
-        #     "Page2" => "page2.md",
-        #     "Page3" => "page3.md",
+            "Common" => "common.md"
         ],
-        # "About" => "about.md",
     ]
-    #     "Variography" => [
-    #         "empirical_variograms.md",
-    #         "theoretical_variograms.md",
-    #         "fitting_variograms.md"
-    #     "Kriging estimators" => "estimators.md",
-    #     "Solver comparisons" => "comparisons.md",
-    #     "Plotting" => "plotting.md"
-    #     ],
-    #     "Examples" => "examples.md",
-    #     "Contributing" => "contributing.md",
-    #     "About" => [
-    #     "Community" => "about/community.md",
-    #     "License" => "about/license.md",
-    #     "Citing" => "about/citing.md"
-    #     ]
-    # ]
+
 )
 

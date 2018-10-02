@@ -1,6 +1,17 @@
-#TO DO:
-# 1) DOCUMENT THE FUNCTION
-function load_from_gro(i_file::String)
+@doc raw"""
+    load_from_gro(i_file::String)::Common.State
+
+Return a new [`Common.State`](@ref) by loading the atom positions and names from the input .gro file.
+As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+
+# Examples
+```julia-repl
+julia> Common.load_from_gro("molecule.gro")
+Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], atnames=["C", "O"])
+```
+See algo: [`load_from_pdb`](@ref)
+"""
+function load_from_gro(i_file::String)::Common.State
 
     #Initialize empty arrays
     xyz     = Array{Array{Float64, 2}, 1}()
@@ -18,12 +29,25 @@ function load_from_gro(i_file::String)
     end
 
     n = length(xyz)
-    return State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
+    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
 end
 
-#TO DO:
-# 1) DOCUMENT THE FUNCTION
-function load_from_pdb(i_file::String)
+# ----------------------------------------------------------------------------------------------------------
+
+@doc raw"""
+    load_from_pdb(i_file::String)::Common.State
+
+Return a new [`Common.State`](@ref) by loading the atom positions and names from the input .pdb file.
+As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+
+# Examples
+```julia-repl
+julia> Common.load_from_pdb("molecule.pdb")
+Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], atnames=["C", "O"])
+```
+See algo: [`load_from_gro`](@ref)
+"""
+function load_from_pdb(i_file::String)::Common.State
 
     xyz     = Array{Array{Float64, 2}, 1}()
     atnames = Array{String, 1}()
@@ -39,5 +63,5 @@ function load_from_pdb(i_file::String)
     end
 
     n = length(xyz)
-    return State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
+    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
 end

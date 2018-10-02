@@ -1,10 +1,7 @@
+@doc raw"""
+    evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
-    evalbond!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State, do_forces::Bool = false) -> Float64
-
-Evaluate an array of `Bonds` using the given **state**.
-
-"""
-function evalbond!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State;
+function evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State;
     do_forces::Bool = false)
 
     energy::Float64 = 0.0
@@ -27,8 +24,10 @@ function evalbond!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State;
     return 0.5 * energy
 end
 
-
-function evalangle!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State;
+@doc raw"""
+    evaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
+"""
+function evaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State;
     do_forces::Bool = false)
 
     v12 = zeros(Float64, 3)
@@ -106,8 +105,10 @@ end
 #     return energy
 # end
 
-
-function evaldihedralCos!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State;
+@doc raw"""
+    evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
+"""
+function evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State;
     do_forces = false)
 
     energy::Float64 = 0.0
@@ -144,8 +145,25 @@ function evaldihedralCos!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Co
     return energy
 end
 
+@doc raw"""
+    evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State, do_forces::Bool = false)::Float64
 
-function evalnonbonded!(atoms::Array{Forcefield.Atom}, state::Common.State;
+Evaluate an array of [Forcefield.Components](#Components-1) using the current [`Common.State`](@ref),
+calculate and update state.energy according to the equations defined in each component.
+If `do_forces` flag is set to `true`, calculate and update `state.forces`.
+Non-bonded interactions are only assessed if the distance between atoms is below the defined `cut_off` value.
+Return the component energy value (kJ mol⁻¹).
+
+# Examples
+```julia-repl
+julia> Forcefield.evaluate!(bonds, state)
+0.500
+```
+
+See also: [`evalenergy!`](@ref) [`Forcefield.HarmonicBond`](@ref) [`Forcefield.HarmonicAngle`](@ref)
+[`Forcefield.DihedralCos`](@ref) [`Forcefield.Atom`](@ref)
+"""
+function evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State;
     do_forces::Bool = false, cut_off::Float64 = 2.0)
 
     eLJ::Float64 = 0.0
@@ -241,15 +259,30 @@ function evalnonbonded!(atoms::Array{Forcefield.Atom}, state::Common.State;
     return eLJ + eLJ14 + eCoulomb + eCoulomb14
 end
 
+@doc raw"""
+    evalenergy!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
 
+Evaluate the current [`Common.State`](@ref) energy according to the defined [`Forcefield.Topology`](@ref).
+If `do_forces` bool is set to `true`, calculate and update `state.forces`.
+Non-bonded interactions are only assessed if the distance between atoms is below the defined `cut_off` value.
+Return `state.energy.eTotal` value (kJ mol⁻¹).
+
+# Examples
+```julia-repl
+julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
+0.500
+```
+
+See also: [`evaluate!`](@ref)
+"""
 function evalenergy!(topology::Forcefield.Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
 
     energy::Float64 = 0.0
-    energy += evalbond!(topology.bonds, state, do_forces = do_forces)
-    energy += evalangle!(topology.angles, state, do_forces = do_forces)
-    energy += evalnonbonded!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
+    energy += evaluate!(topology.bonds, state, do_forces = do_forces)
+    energy += evaluate!(topology.angles, state, do_forces = do_forces)
+    energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
     # energy += evaldihedralRB(topology.dihedralsRB, state, do_forces = do_forces)
-    energy += evaldihedralCos!(topology.dihedralsCos, state, do_forces = do_forces)
+    energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
     return energy
 end
