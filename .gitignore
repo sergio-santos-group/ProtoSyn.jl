@@ -4,7 +4,6 @@
 *.DS_STORE
 *.zip
 
-examples/
 build/
 docs/build/
 docs/site/
