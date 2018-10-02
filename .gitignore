@@ -8,4 +8,5 @@ examples/
 build/
 docs/build/
 docs/site/
+.vscode/
 
