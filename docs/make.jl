@@ -18,7 +18,7 @@ makedocs(
     ]
 )
 
-deploydoc(
+deploydocs(
     repo = "github.com/sergio-santos-group/ProtoSyn.jl.git",
     osname = "linux",
     julia = "1.0"
