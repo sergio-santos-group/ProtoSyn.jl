@@ -73,5 +73,12 @@ mutable struct Residue
     next::Union{Residue, Int64, Nothing}
     name::String
 end
-Base.show(io::IO, b::Residue) = print(io, "Common.Residue(atoms=$(b.atoms), next=$(b.next.name), name=$(b.name))")
+function Base.show(io::IO, b::Residue)
+    if b.next == nothing
+        print(io, "Common.Residue(atoms=$(b.atoms), next=nothing, name=$(b.name))")
+    else
+        print(io, "Common.Residue(atoms=$(b.atoms), next=$(b.next.name), name=$(b.name))")
+    end
+    
+end
 

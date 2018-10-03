@@ -1,5 +1,5 @@
 @doc raw"""
-    load_from_json(json_file::String)::Forcefield.Topology
+    load_from_json(i_file::String)::Forcefield.Topology
 
 Gather all topology components and return a [`Forcefield.Topology`](@ref) object, parsing a JSON file.
 
@@ -13,11 +13,11 @@ Forcefield.Topology(
  dihedralsCos=ProtoSyn.Forcefield.DihedralCos[Forcefield.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0), ...])
 ```
 """
-function load_from_json(json_file::String)::Forcefield.Topology
+function load_from_json(i_file::String)::Forcefield.Topology
     
     #Parse JSON file content to Dictionary
     ffield = Dict()
-    open(json_file, "r") do f
+    open(i_file, "r") do f
         json_txt = read(f, String)
         ffield = JSON.parse(json_txt)
     end
@@ -65,11 +65,11 @@ function load_from_json(json_file::String)::Forcefield.Topology
     end
 
     #Create angles
-    angles = Array{Forcefield.Angle, 1}()
+    angles = Array{Forcefield.HarmonicAngle, 1}()
     for angle in ffield["angles"]
         th = ffield["angletypes"][string(angle["type"])]["th"]
         ct = ffield["angletypes"][string(angle["type"])]["ct"]
-        new_angle = Forcefield.Angle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
+        new_angle = Forcefield.HarmonicAngle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
         push!(angles, new_angle)
     end
 

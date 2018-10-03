@@ -9,7 +9,7 @@ As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set 
 julia> Common.load_from_gro("molecule.gro")
 Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], atnames=["C", "O"])
 ```
-See algo: [`load_from_pdb`](@ref)
+See also: [`load_from_pdb`](@ref)
 """
 function load_from_gro(i_file::String)::Common.State
 
@@ -45,7 +45,7 @@ As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set 
 julia> Common.load_from_pdb("molecule.pdb")
 Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], atnames=["C", "O"])
 ```
-See algo: [`load_from_gro`](@ref)
+See also: [`load_from_gro`](@ref)
 """
 function load_from_pdb(i_file::String)::Common.State
 
