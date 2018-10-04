@@ -100,7 +100,7 @@ E(\phi_{abcd})=K_{\phi}(1+cos(n\phi_{abcd}-\phi))
 # Arguments
 - `a1::Int64, a2::Int64, a3::Int64, a4::Int64`: *global* atom indices.
 - `k::Float64`: force constant (kJ mol⁻¹).
-- `θ::Float64`: equilibrium angle value (deg).
+- `θ::Float64`: equilibrium angle value (rad).
 - `mult::Float64`: multiplicity.
 
 # Examples
@@ -117,7 +117,7 @@ mutable struct DihedralCos
     a3::Int64
     a4::Int64
     k::Float64    # kJ mol⁻¹
-    θ::Float64    # deg
+    θ::Float64    # rad
     mult::Float64 # multiplicity
 
 end
@@ -162,7 +162,7 @@ as a result).
 # Arguments
 - `name::String`: Atom name (example: "C", "H", etc).
 - `σ::Float64`: finite distance at which the inter-particle potential is zero (nm).
-- `ϵ::Float64`: of the depth of the potential well (kJ mol⁻¹).
+- `ϵ::Float64`: depth of the potential well (kJ mol⁻¹).
 - `q::Float64`: atom charge (eletron).
 - `excls::Array{Int64, 1}`: exclusion list (as *global* atom indices).
 - `pairs::Array{Int64, 1}`: pair list containing atoms that interfere in 1-4 interations (as *global* atom indices)
