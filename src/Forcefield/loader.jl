@@ -1,8 +1,23 @@
-function load_from_json(json_file::String)
+@doc raw"""
+    load_from_json(i_file::String)::Forcefield.Topology
+
+Gather all topology components and return a [`Forcefield.Topology`](@ref) object, parsing a JSON file.
+
+# Examples
+```julia-repl
+julia> Forcefield.load_from_json(json_file)
+Forcefield.Topology(
+ atoms=ProtoSyn.Forcefield.Atom[Forcefield.Atom(name="N", σ=0.325, ϵ=0.711, q=0.0017, excls=[0, 1, 2, 3, 4, 5], pairs=[4, 5]), ...],
+ bonds=ProtoSyn.Forcefield.HarmonicBond[Forcefield.HarmonicBond(a1=1, a2=2, k=2500.0, b0=0.19), ...],
+ angles=ProtoSyn.Forcefield.HarmonicAngle[Forcefield.HarmonicAngle(a1=1, a2=2, a3=3, k=670.0, θ=1.92), ...],
+ dihedralsCos=ProtoSyn.Forcefield.DihedralCos[Forcefield.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0), ...])
+```
+"""
+function load_from_json(i_file::String)::Forcefield.Topology
     
     #Parse JSON file content to Dictionary
     ffield = Dict()
-    open(json_file, "r") do f
+    open(i_file, "r") do f
         json_txt = read(f, String)
         ffield = JSON.parse(json_txt)
     end
@@ -23,13 +38,10 @@ function load_from_json(json_file::String)
                 push!(pairs, (pair["a2"] + 1))
             end
         end
-        # fSI = 1/(4.pi.Eo) = 138.935485 kJ mol-1 nm e-2
-        # sqrtfSI = sqrt(fSI);
-        sqrtfSI=11.787089759563214
 
         #σ, ϵ and q are multiplied by the constants so that the geometric and arithmetic averages are
-        #correct in the energy calculations
-        push!(atoms, Forcefield.Atom(name, 0.5*σ, sqrt(ε), sqrtfSI*q, excls, pairs))
+        #correct in the energy calculations (Inside the ATOM constructor)
+        push!(atoms, Forcefield.Atom(name, σ, ε, q, excls, pairs))
     end
 
     #Fix bonds, angles and dihedrals numbering
@@ -53,11 +65,11 @@ function load_from_json(json_file::String)
     end
 
     #Create angles
-    angles = Array{Forcefield.Angle, 1}()
+    angles = Array{Forcefield.HarmonicAngle, 1}()
     for angle in ffield["angles"]
         th = ffield["angletypes"][string(angle["type"])]["th"]
         ct = ffield["angletypes"][string(angle["type"])]["ct"]
-        new_angle = Forcefield.Angle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
+        new_angle = Forcefield.HarmonicAngle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
         push!(angles, new_angle)
     end
 

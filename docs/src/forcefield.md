@@ -1,4 +1,4 @@
-# Force-field
+# Forcefield
 
 ```@meta
 CurrentModule = Forcefield
@@ -6,8 +6,7 @@ CurrentModule = Forcefield
 
 ## Components
 
-This section provides a description on all the individual components that
-comprise the Forcefield.
+This section provides a description on all the individual components that comprise the Forcefield.
 
 
 ```@docs
@@ -21,10 +20,19 @@ Energy
 
 ## Evaluators
 
-This section provides a description on how to use the previously documented [Components](#Components-1) to calculate their energy.
+This section provides a description on how to use [Forcefield.Components](#Components-1) to calculate their energy.
 
 
 ```@docs
-evalbond!
+evaluate!
+evalenergy!
+```
+
+## Loaders
+
+This section provides a description on how to load [Forcefield.Components](#Components-1) from external sources.
+
+```@docs
+load_from_json
 ```
 
