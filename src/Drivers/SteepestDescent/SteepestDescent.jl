@@ -4,20 +4,24 @@ using ..Common
 using Printf
 
 @doc raw"""
-    ConfigParameters(n_steps::Int64, log_freq::Int64, f_tol::Float64, max_step:Float64)
+    ConfigParameters(n_steps::Int64 = 0, log_freq::Int64 = 1, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1)
 
 Define the runtime parameters for the Monte Carlo Driver.
+If `n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
-- `n_steps`: Total amount of steps to be performed (if convergence is not achieved before).
-- `log_freq`: Defines the frequency (in steps) of the logs.
-- `f_tol`: Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value.
-- `max_step`: Defines the maximum value ɣ that the system can jump when applying the forces.
+- `n_steps`: Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
+- `log_freq`: Defines the frequency (in steps) of the logs (Default: 1).
+- `f_tol`: Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
+- `max_step`: Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
 
 # Examples
 ```julia-repl
 julia> Drivers.SteepestDescent.ConfigParameters(100, 5, 1e-3, 0.1)
 Drivers.SteepestDescent.ConfigParameters(n_steps=100, log_freq=5, f_tol=1e-3, max_step=0.1)
+
+julia> Drivers.SteepestDescent.ConfigParameters(f_tol = 1e-6)
+Drivers.SteepestDescent.ConfigParameters(n_steps=0, log_freq=1, f_tol=1e-6, max_step=0.1)
 ```
 See also: [`load_parameters`](@ref)
 """
@@ -28,6 +32,7 @@ struct ConfigParameters
     f_tol::Float64
     max_step::Float64
 
+    ConfigParameters(; n_steps::Int64 = 0, log_freq::Int64 = 1, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = new(n_steps, log_freq, f_tol, max_step)
 end
 Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.SteepestDescent.ConfigParameters(n_steps=$(b.n_steps), log_freq=$(b.log_freq), f_tol=$(b.f_tol), max_step=$(b.max_step))")
 
@@ -56,7 +61,7 @@ end
 @doc raw"""
     run!(state::Common.State, evaluator!::Function, params::ConfigParameters[, ostream::IO = stdout, callback::Union{Function, Nothing} = nothing])
 
-Run the main body of the Driver.
+Run the main body of the Driver. If `params.n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.

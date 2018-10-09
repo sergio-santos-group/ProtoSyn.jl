@@ -4,28 +4,32 @@ using ..Common
 using Printf
 
 @doc raw"""
-    ConfigParameters(nsteps::Int64, temperature::Float64)
+    ConfigParameters(n_steps::Int64 = 1000, temperature::Float64 = 0.5)
 
 Define the runtime parameters for the Monte Carlo Driver.
 
 # Arguments
-- `nsteps`: Total amount of steps to be performed.
-- `temperature`: Temperature value to be used in the Metropolis Algorithm.
+- `n_steps`: Total amount of steps to be performed (Default: 1000).
+- `temperature`: Temperature value to be used in the Metropolis Algorithm (Default: 0.5).
 
 # Examples
 ```julia-repl
-julia> Drivers.MonteCarlo.ConfigParameters(100, 0.5)
-Drivers.MonteCarlo.ConfigParameters(nsteps=100, temperature=0.5)
+julia> Drivers.MonteCarlo.ConfigParameters(1000, 0.5)
+Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=0.5)
+
+julia> Drivers.MonteCarlo.ConfigParameters(temperature = 1.2)
+Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=1.2)
 ```
 See also: [`load_parameters`](@ref)
 """
 struct ConfigParameters
 
-    nsteps::Int64
-    temperature::Float64
+    n_steps::Int64        # (1000)
+    temperature::Float64 # (0.5)
 
+    ConfigParameters(; n_steps::Int64 = 1000, temperature::Float64 = 0.5) = new(n_steps, temperature)
 end
-Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.MonteCarlo.ConfigParameters(nsteps=$(b.nsteps), temperature=$(b.temperature))")
+Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.MonteCarlo.ConfigParameters(n_steps=$(b.n_steps), temperature=$(b.temperature))")
 
 # ------------------------------------------------------------------------------------------------------------
 
@@ -37,13 +41,13 @@ Load the [`ConfigParameters`](@ref) from a dictionary.
 # Examples
 ```julia-repl
 julia> Drivers.MonteCarlo.load_parameters(p)
-Drivers.MonteCarlo.ConfigParameters(nsteps=100, temperature=0.5)
+Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=0.5)
 ```
 See also: [`Aux.read_JSON`](@ref Aux)
 """
 function load_parameters(p::Dict{String, Any})::ConfigParameters
 
-    return ConfigParameters(p["nsteps"], p["temperature"])
+    return ConfigParameters(p["n_steps"], p["temperature"])
 
 end
 
@@ -91,7 +95,7 @@ function run!(
     ene0 = evaluator!(state, false)
 
     step::Int64 = 0
-    while step < params.nsteps
+    while step < params.n_steps
         step += 1
 
         #Generate new state and evaluate its energy
