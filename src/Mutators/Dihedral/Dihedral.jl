@@ -4,25 +4,29 @@ using ..Common
 using ..Aux
 
 @doc raw"""
-    ConfigParameters(pmut::Float64)
+    ConfigParameters(p_mut::Float64 = 0.1)
 
 Define the runtime parameters for Dihedral movements.
 
 # Arguments
-- `pmut::Float64`: Probability of mutation of this dihedral.
+- `p_mut::Float64`: Probability of mutation of this dihedral (Default: 0.1).
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.ConfigParameters(0.1)
-ConfigParameters(pmut=0.1)
+julia> Mutators.Diehdral.ConfigParameters(0.2)
+ConfigParameters(p_mut=0.2)
+
+julia> Mutators.Diehdral.ConfigParameters()
+ConfigParameters(p_mut=0.1)
 ```
 """
 struct ConfigParameters
 
     pmut::Float64
 
+    ConfigParameters(; p_mut::Float64 = 0.1) = new(p_mut)
 end
-Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(pmut=$(b.pmut))")
+Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(p_mut=$(b.p_mut))")
 
 # ----------------------------------------------------------------------------------------------------------
 
