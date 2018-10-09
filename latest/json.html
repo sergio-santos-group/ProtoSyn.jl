@@ -1,86 +1,106 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Input JSON Schemas · ProtoSyn.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><a href="index.html"><img class="logo" src="assets/logo.png" alt="ProtoSyn.jl logo"/></a><h1>ProtoSyn.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Home</a></li><li><a class="toctext" href="guide.html">Guide</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="common.html">Common</a></li><li><a class="toctext" href="forcefield.html">Forcefield</a></li><li><a class="toctext" href="mutators.html">Mutators</a></li><li><a class="toctext" href="drivers.html">Drivers</a></li><li><a class="toctext" href="print.html">Print</a></li><li><a class="toctext" href="aux.html">Aux</a></li><li class="current"><a class="toctext" href="json.html">Input JSON Schemas</a><ul class="internal"><li><a class="toctext" href="#Topology-1">Topology</a></li></ul></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href="json.html">Input JSON Schemas</a></li></ul><a class="edit-page" href="https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/docs/src/json.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Input JSON Schemas</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Input-JSON-Schema-1" href="#Input-JSON-Schema-1">Input JSON Schema</a></h1><p>This section describes in detail the general schematics of the input JSON so it can be easily read by ProtoSyn. </p><h2><a class="nav-anchor" id="Topology-1" href="#Topology-1">Topology</a></h2><p>Protosyn receives various types of topology, depending on the <a href="drivers.html#Drivers-1">Driver</a> chosen by the user.</p><h3><a class="nav-anchor" id="Forcefield-Topology-1" href="#Forcefield-Topology-1">Forcefield Topology</a></h3><p>Forcedield topology holds the information regarding the system bonds, angles, dihedrals and non-bonded interactions. ProtoSyn offers a tool (<a href="https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/tools/tpr2json.py">ProtoSyn.jl/tools/tpr2json.py</a>) that easily reads .tpr file formats from <a href="http://www.gromacs.org">GROMACS</a> (dumped to human readable format using <code>gmx dump</code>) and converts the obtained information to a correct JSON format. </p><pre><code class="language-markdown"># Teste
-```javascript
-{
-    &quot;teste&quot;: Int64
-}
-```</code></pre><pre><code class="language-javascript">{
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Input JSON Schemas · ProtoSyn.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><a href="index.html"><img class="logo" src="assets/logo.png" alt="ProtoSyn.jl logo"/></a><h1>ProtoSyn.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="index.html">Home</a></li><li><a class="toctext" href="guide.html">Guide</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="common.html">Common</a></li><li><a class="toctext" href="forcefield.html">Forcefield</a></li><li><a class="toctext" href="mutators.html">Mutators</a></li><li><a class="toctext" href="drivers.html">Drivers</a></li><li><a class="toctext" href="print.html">Print</a></li><li><a class="toctext" href="aux.html">Aux</a></li><li class="current"><a class="toctext" href="json.html">Input JSON Schemas</a><ul class="internal"><li><a class="toctext" href="#Topology-1">Topology</a></li></ul></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href="json.html">Input JSON Schemas</a></li></ul><a class="edit-page" href="https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/docs/src/json.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Input JSON Schemas</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Input-JSON-Schema-1" href="#Input-JSON-Schema-1">Input JSON Schema</a></h1><p>This section describes in detail the general schematics of the input JSON so it can be easily read by ProtoSyn. </p><h2><a class="nav-anchor" id="Topology-1" href="#Topology-1">Topology</a></h2><p>Protosyn receives various types of topology, depending on the <a href="drivers.html#Drivers-1">Driver</a> chosen by the user.</p><h3><a class="nav-anchor" id="Forcefield-Topology-1" href="#Forcefield-Topology-1">Forcefield Topology</a></h3><p>Forcedield topology holds the information regarding the system bonds, angles, dihedrals and non-bonded interactions. ProtoSyn offers a tool (<a href="https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/tools/tpr2json.py">ProtoSyn.jl/tools/tpr2json.py</a>) that easily reads .tpr file formats from <a href="http://www.gromacs.org">GROMACS</a> (dumped to human readable format using <code>gmx dump</code>) and converts the obtained information to a correct JSON format. </p><details>
+<summary style="background-color:#1abc9c;border-radius: 13px;height: 30px;display: flex;align-items: center">&ensp;Detailed forcefield topology JSON description▼</summary>
+<p><pre><code class="language-javascript">{
     &quot;dihedraltypes&quot;: {
-        ID::Int64: {
-            &quot;phi&quot;    : Float64, // Equilibrium angle value (degrees)
-            &quot;cp&quot;     : Float64, // Force constant (kJ mol⁻¹)
-            &quot;mult&quot;   : Float64  // Multiplicity
+        ID::String: {
+            &quot;phi&quot;    : Float64,    // Equilibrium angle value (degrees)
+            &quot;cp&quot;     : Float64,    // Force constant (kJ mol⁻¹)
+            &quot;mult&quot;   : Float64     // Multiplicity
         },
         ...
     },
     &quot;angletypes&quot;: {
-        ID::Int64: {
-            &quot;th&quot;     : Float64, // Equilibrium angle value (degrees)
-            &quot;ct&quot;     : Float64  // Force constant (kJ mol⁻¹ rad⁻²)
+        ID::String: {
+            &quot;th&quot;     : Float64,    // Equilibrium angle value (degrees)
+            &quot;ct&quot;     : Float64     // Force constant (kJ mol⁻¹ rad⁻²)
         },
         ...
     },
     &quot;bondtypes&quot;: {
-        ID::Int64: {
-            &quot;cb&quot;     : Float64, // Force constant (kJ mol⁻¹ nm⁻²)
-            &quot;b0&quot;     : Float64  // Equilibrium bond length (nm)
+        ID::String: {
+            &quot;cb&quot;     : Float64,    // Force constant (kJ mol⁻¹ nm⁻²)
+            &quot;b0&quot;     : Float64     // Equilibrium bond length (nm)
         },
         ...
     },
     &quot;atomtypes&quot;: {
-        ID::Int64: {
-            &quot;sigma&quot;  : Float64, // Finite distance at which the inter-particle potential is zero (nm)
-            &quot;epsilon&quot;: Float64, // Depth of the potential well (kJ mol⁻¹)
-            &quot;name&quot;   : String   // Name of the atomtype
+        ID::String: {
+            &quot;sigma&quot;  : Float64,    // Finite distance at which the inter-particle potential is zero (nm)
+            &quot;epsilon&quot;: Float64,    // Depth of the potential well (kJ mol⁻¹)
+            &quot;name&quot;   : String      // Name of the atomtype
         },
         ...
     },
     &quot;dihedrals&quot;: [
         {
-            &quot;a1&quot;     : Int64,   // Global atom 1 index
-            &quot;a2&quot;     : Int64,   // Global atom 2 index
-            &quot;a3&quot;     : Int64,   // Global atom 3 index
-            &quot;a4&quot;     : Int64,   // Global atom 4 index
-            &quot;type&quot;   : Int64    // ID of dihedraltypes
+            &quot;a1&quot;     : Int64,      // Global atom 1 index
+            &quot;a2&quot;     : Int64,      // Global atom 2 index
+            &quot;a3&quot;     : Int64,      // Global atom 3 index
+            &quot;a4&quot;     : Int64,      // Global atom 4 index
+            &quot;type&quot;   : Int64       // ID of dihedraltypes
         },
         ...
     ],
     &quot;angles&quot;: [
         {
-            &quot;a1&quot;     : Int64,   // Global atom 1 index
-            &quot;a2&quot;     : Int64,   // Global atom 2 index
-            &quot;a3&quot;     : Int64,   // Global atom 3 index
-            &quot;type&quot;   : Int64    // ID of angletypes
+            &quot;a1&quot;     : Int64,      // Global atom 1 index
+            &quot;a2&quot;     : Int64,      // Global atom 2 index
+            &quot;a3&quot;     : Int64,      // Global atom 3 index
+            &quot;type&quot;   : Int64       // ID of angletypes
         },
         ...
     ],
     &quot;bonds&quot;: [
         {
-            &quot;a1&quot;     : Int64,   // Global atom 1 index
-            &quot;a2&quot;     : Int64,   // Global atom 2 index
-            &quot;type&quot;   : Int64    // ID of bondtypes
+            &quot;a1&quot;     : Int64,      // Global atom 1 index
+            &quot;a2&quot;     : Int64,      // Global atom 2 index
+            &quot;type&quot;   : Int64       // ID of bondtypes
         },
         ...
     ]
     &quot;atoms&quot;: [
         {
-            &quot;q&quot;      : Float64, // Atom charge (eletron)
-            &quot;type&quot;   : Int64,   // ID of atomtypes
+            &quot;q&quot;      : Float64,    // Atom charge (eletron)
+            &quot;type&quot;   : Int64,      // ID of atomtypes
         },
         ...
     ],
     &quot;excls&quot;: {
-        a1::Int64: [
-            a2,                 // Global indices of the atoms excluded
-            ...                 // from non-bonded interactions with a1
-        ],
+        a1::Int64: Array{Int64, 1}, // Global indices of the atoms excluded from non-bonded interactions with a1
         ...
     },
     &quot;pairs&quot;: [
         {
-            &quot;a1&quot;     : Int64,   // Global index of a1
-            &quot;a2&quot;     : Int64,   // Global index of a2 (At 3 connections away from a1)
+            &quot;a1&quot;     : Int64,       // Global index of a1
+            &quot;a2&quot;     : Int64,       // Global index of a2 (At 3 connections away from a1)
         },
         ...
     ]
-}</code></pre><footer><hr/><a class="previous" href="aux.html"><span class="direction">Previous</span><span class="title">Aux</span></a></footer></article></body></html>
+}</code></pre></p>
+</details><h3><a class="nav-anchor" id="Monte-Carlo-Topology-1" href="#Monte-Carlo-Topology-1">Monte Carlo Topology</a></h3><p>Monte Carlo topology holds the information regarding the rotatable dihedrals and the residues present in the system. This allows for correct rotation in Monte Carlo moves.</p><details>
+<summary style="background-color:#1abc9c;border-radius: 13px;height: 30px;display: flex;align-items: center">&ensp;Detailed Monte Carlo JSON description▼</summary>
+<p><pre><code class="language-javascript">{
+    &quot;dihedrals&quot;: [
+        {
+            &quot;parent&quot; : Int64,           // Index of parent residue in list of residues
+            &quot;movable&quot;: Array{Int64, 1}, // Global indices of atoms moved in the parent residue when rotating this dihedral
+            &quot;a1&quot;     : Int64,           // Global atom 1 index
+            &quot;a2&quot;     : Int64,           // Global atom 2 index
+            &quot;a3&quot;     : Int64,           // Global atom 3 index
+            &quot;a4&quot;     : Int64,           // Global atom 4 index
+            &quot;type&quot;   : String           // Dihedral type (i.e. &quot;PHI&quot;, &quot;PSI&quot;, ...)
+        },
+        ...
+    ],
+    &quot;residues&quot;: [
+        {
+            &quot;next&quot;   : Int64,           // Index of the next residue in list of residues
+            &quot;atoms&quot;  : Array{Int64, 1}, // List of global indices of the atoms included in this residue
+            &quot;type&quot;   : String,          // Residue type (i.e. &quot;V&quot;, &quot;K&quot;, ...)
+            &quot;n&quot;      : Int64            // Residue identifier
+        },
+        ...
+    ]
+}</code></pre></p>
+</details><footer><hr/><a class="previous" href="aux.html"><span class="direction">Previous</span><span class="title">Aux</span></a></footer></article></body></html>
