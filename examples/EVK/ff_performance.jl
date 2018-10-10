@@ -11,11 +11,13 @@ function do_work(n::Int64)
     for i = 1:n
         fill!(state.forces, 0.0)
         Forcefield.evaluate!(topol.bonds, state, do_forces=true)
+        Forcefield.evaluate!(topol.angles, state, do_forces=true)
+        Forcefield.evaluate!(topol.dihedralsCos, state, do_forces=true)
         Forcefield.evaluate!(topol.atoms, state, do_forces=true, cut_off=Inf)
     end
 end
 
 # force JIT compilation
-do_work(10)
+do_work(2)
 
-@time do_work(5000)
+@time do_work(10000)
