@@ -131,12 +131,13 @@ function evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.St
         
         if do_forces
             dVdphi_x_d32 = dihedral.k * dihedral.mult * sin(dihedral.θ - dihedral.mult * phi) * d32
-            @. f1 = m * (-dVdphi_x_d32 / dot(m, m))
-            @. f4 = n * ( dVdphi_x_d32 / dot(n, n))
-            # @. f3 = f4 * (dot(v34, v32)/d32Sq - 1.0) - f1 * (dot(v12, v32)/d32Sq)
-            @. f3 = -f4
-            @. f3 -= f1 * (dot(v12, v32)/d32Sq)
-            @. f3 += f4 * (dot(v34, v32)/d32Sq)
+            f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
+            f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
+            f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
+            
+            # @. f3 = -f4
+            # @. f3 -= f1 * (dot(v12, v32)/d32Sq)
+            # @. f3 += f4 * (dot(v34, v32)/d32Sq)
             
             @. state.forces[dihedral.a1, :] -= f1
             @. state.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
@@ -270,7 +271,7 @@ function evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State;
 end
 
 @doc raw"""
-    evalenergy!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
+    evaluate!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
 
 Evaluate the current [`Common.State`](@ref) energy according to the defined [`Forcefield.Topology`](@ref).
 If `do_forces` bool is set to `true`, calculate and update `state.forces`.
@@ -285,7 +286,7 @@ julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
 
 See also: [`evaluate!`](@ref)
 """
-function evalenergy!(topology::Forcefield.Topology, state::Common.State;
+function evaluate!(topology::Forcefield.Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
 
     energy = 0.0
