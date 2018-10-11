@@ -209,22 +209,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "forcefield.html#ProtoSyn.Forcefield.evaluate!",
-    "page": "Forcefield",
-    "title": "ProtoSyn.Forcefield.evaluate!",
-    "category": "function",
-    "text": "evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64\n\n\n\n\n\nevaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64\n\n\n\n\n\nevaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64\n\n\n\n\n\nevaluate!(atoms::Array{Forcefield.Atom}, state::Common.State, do_forces::Bool = false)::Float64\n\nEvaluate an array of Forcefield.Components using the current Common.State, calculate and update state.energy according to the equations defined in each component. If do_forces flag is set to true, calculate and update state.forces. Non-bonded interactions are only assessed if the distance between atoms is below the defined cut_off value. Return the component energy value (kJ mol⁻¹).\n\nExamples\n\njulia> Forcefield.evaluate!(bonds, state)\n0.500\n\nSee also: evalenergy! Forcefield.HarmonicBond Forcefield.HarmonicAngle Forcefield.DihedralCos Forcefield.Atom\n\n\n\n\n\n"
-},
-
-{
-    "location": "forcefield.html#ProtoSyn.Forcefield.evalenergy!",
-    "page": "Forcefield",
-    "title": "ProtoSyn.Forcefield.evalenergy!",
-    "category": "function",
-    "text": "evalenergy!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64\n\nEvaluate the current Common.State energy according to the defined Forcefield.Topology. If do_forces bool is set to true, calculate and update state.forces. Non-bonded interactions are only assessed if the distance between atoms is below the defined cut_off value. Return state.energy.eTotal value (kJ mol⁻¹).\n\nExamples\n\njulia> Forcefield.evalenergy!(topology, state, cut_off = Inf)\n0.500\n\nSee also: evaluate!\n\n\n\n\n\n"
-},
-
-{
     "location": "forcefield.html#Evaluators-1",
     "page": "Forcefield",
     "title": "Evaluators",
