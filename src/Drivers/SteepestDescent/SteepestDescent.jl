@@ -2,6 +2,7 @@ module SteepestDescent
 
 using ..Common
 using Printf
+using LinearAlgebra
 
 @doc raw"""
     ConfigParameters(n_steps::Int64 = 0, log_freq::Int64 = 0, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1)
@@ -25,14 +26,15 @@ Drivers.SteepestDescent.ConfigParameters(n_steps=0, log_freq=0, f_tol=1e-6, max_
 ```
 See also: [`load_parameters`](@ref)
 """
-struct ConfigParameters
+mutable struct ConfigParameters
     
     n_steps::Int64
     log_freq::Int64
+    callback_freq::Int64
     f_tol::Float64
     max_step::Float64
 
-    ConfigParameters(; n_steps::Int64 = 0, log_freq::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = new(n_steps, log_freq, f_tol, max_step)
+    ConfigParameters(; n_steps::Int64 = 0, log_freq::Int64 = 1, callback_freq::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = new(n_steps, log_freq, callback_freq, f_tol, max_step)
 end
 Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.SteepestDescent.ConfigParameters(n_steps=$(b.n_steps), log_freq=$(b.log_freq), f_tol=$(b.f_tol), max_step=$(b.max_step))")
 
@@ -91,61 +93,84 @@ function run!(
     ostream::IO = stdout,
     callback::Union{Function, Nothing} = nothing)
 
-    function get_max_force(f::Array{Float64, 2})
-        return sqrt(maximum(sum(f.^2, dims = 2)))
+    @inline function get_max_force(f::Array{Float64, 2})
+        return sqrt(maximum(sum(f.*f, dims = 2)))
     end
 
+    @inline function logger(s::Int64, e::Float64, f::Float64, g::Float64)
+        write(ostream, @sprintf "(SD) Step: %4d | Energy: %9.4f | maxForce: %9.4f | gamma: %8.3e\n" s e f g)
+    end
+    
+    @inline function is_output_step(freq::Int64, step::Int64)
+        return ((freq>0) && (step%freq==0))
+    end
+
+
     # Evaluate initial energy and forces
-    energy_old::Float64 = evaluator!(state, true)
-    max_force = get_max_force(state.forces)
-    old_max_force::Float64 = max_force
+    energy::Float64 = evaluator!(state, true)
+    max_force::Float64  = get_max_force(state.forces)
+    energy_old = energy
     
-    
-    gamma::Float64 = 1e-5
+    gamma::Float64 = 1.0#e-5
     step::Int64 = 0
+    
+    
     if callback != nothing
         callback(state, step)
     end
+    logger(step, energy_old, max_force, gamma)
+    
     while step < params.n_steps
         step += 1
 
         #Update system coordinates
         gamma = min(gamma, params.max_step)
-        dx = (gamma / get_max_force(state.forces)) * state.forces
-        state.xyz += dx
+        stepsize = gamma / get_max_force(state.forces)
+        @. state.xyz += stepsize * state.forces
 
-        #Calculate new energy and forces
-        state.forces = zeros(size(state.xyz, 1), 3)
+        # housekeep variables
+        energy_old = energy
+
+        # Calculate new energy and forces
+        fill!(state.forces, 0.0)
         energy = evaluator!(state, true)
         max_force = get_max_force(state.forces)
 
-        #Callback, if present
-        if params.log_freq != 0 && step % params.log_freq == 0
-            if callback != nothing
-                callback(state, step)
-            end
-            write(ostream, @sprintf "(SD) Step: %5d | Energy: %9.4f | maxForce: %9.4f\n" step energy max_force)
+        # call callback function and output information to log 
+        if is_output_step(params.callback_freq, step) && (callback != nothing)
+            callback(state, step)
         end
 
-        #If max force variance is bellow fTol threshold, convergence was achieved: exit function
-        if abs(old_max_force - max_force) < params.f_tol
-            if callback != nothing
-                callback(state, step)
-            end
-            write(ostream, "Achieved convergence (below fTol $(params.f_tol)) in $step steps.\n")
+        if is_output_step(params.log_freq, step)
+            logger(step, energy, max_force, gamma)
+        end
+        
+        # check if force convergence was achieved
+        if max_force < params.f_tol
+            write(ostream, "Achieved convergence (f_tol < $(params.f_tol)) in $step steps.\n")
             break
         end
-
-        #Update gamma constant
-        if max_force > old_max_force
+        
+        # check if gamma is below machine precision
+        if gamma < eps()
+            write(ostream, "Gamma below machine precision! Exiting ...\n")
+            break
+        end
+        
+        # Update gamma
+        if energy > energy_old
             gamma *= 0.50
         else
             gamma *= 1.05
         end
-
-        #Update current force to new cycle
-        old_max_force = max_force
     end
+
+
+    if callback != nothing
+        callback(state, step)
+    end
+    logger(step, energy, max_force, gamma)
+
 end
 
 end
