@@ -17,7 +17,7 @@ be parsed by Catulia. mol.pdb is a PDB model that is adapted by Catulia to print
 """
 
 #Grow molecule from sequence
-mol_sequence = "EVK"
+mol_sequence = "EFDVILKAAGANKVAVIKAVRGATGLGLKEAKDLVESAPAALKEGVSKDDAEALKKALEEAGAEVEVK"
 m = grow("mol", mol_sequence)
 cap_chain(m)
 

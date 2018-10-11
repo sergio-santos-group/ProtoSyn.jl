@@ -1,0 +1,6 @@
+Step:     0 | Energy:  6316.1417 | Δ Energy: 0.0000
+Step:    25 | Energy: -1756.8311 | Δ Energy: -8072.9728 | ɣ: 7.897e-04
+Step:    50 | Energy: -2010.2739 | Δ Energy:  -253.4427 | ɣ: 3.367e-06
+Step:    75 | Energy: -2005.7913 | Δ Energy:     4.4825 | ɣ: 6.330e-08
+Step:   100 | Energy: -2020.0854 | Δ Energy:   -14.2940 | ɣ: 5.667e-10
+Step:   123 | Energy: -2020.0855 | Δ Energy:    -0.0001 | ɣ: 4.262e-11

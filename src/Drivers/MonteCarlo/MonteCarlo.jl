@@ -3,6 +3,7 @@ module MonteCarlo
 using ..Common
 using Printf
 
+#TO DO: Update this documentation
 @doc raw"""
     ConfigParameters(n_steps::Int64 = 1000, temperature::Float64 = 0.5)
 
@@ -22,14 +23,16 @@ Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=1.2)
 ```
 See also: [`load_parameters`](@ref)
 """
-struct ConfigParameters
+mutable struct ConfigParameters
 
     n_steps::Int64        # (1000)
-    temperature::Float64 # (0.5)
+    log_freq::Int64       # (0)
+    temperature::Float64  # (0.5)
+    step_size::Float64    # (0.1)
 
-    ConfigParameters(; n_steps::Int64 = 1000, temperature::Float64 = 0.5) = new(n_steps, temperature)
+    ConfigParameters(; n_steps::Int64 = 1000, log_freq::Int64 = 0, temperature::Float64 = 0.5, step_size::Float64 = 0.1) = new(n_steps, log_freq, temperature, step_size)
 end
-Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.MonteCarlo.ConfigParameters(n_steps=$(b.n_steps), temperature=$(b.temperature))")
+Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.MonteCarlo.ConfigParameters(n_steps=$(b.n_steps), log_freq=$(b.log_freq), temperature=$(b.temperature), step_size=$(b.step_size))")
 
 # ------------------------------------------------------------------------------------------------------------
 
@@ -93,8 +96,10 @@ function run!(
 
     xyz0 = copy(state.xyz)
     ene0 = evaluator!(state, false)
+    println("Energy 0 = $ene0")
 
     step::Int64 = 0
+    accepted::Int64 = 0
     while step < params.n_steps
         step += 1
 
@@ -103,14 +108,20 @@ function run!(
         ene1 = evaluator!(state, false)
 
         if ene1 < ene0 || rand() < exp(-(ene1 - ene0) / params.temperature)
+            accepted += 1
             ene0 = ene1
             xyz0[:] = state.xyz
-            if callback != nothing
+            if callback != nothing && accepted % params.log_freq == 0
                 callback(state, step)
             end
-            write(ostream, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step ene1)
+            
+            #Adjust step_size
+            # params.step_size = max(1, params.step_size*1.01)
+            write(ostream, @sprintf "(MC) Step: %5d | Energy: %9.4f <- (%5d accepted)\n--\n" step ene1 accepted)
         else
             state.xyz[:] = xyz0
+            # params.step_size = min(1e-1, params.step_size*0.99)
+            write(ostream, @sprintf "(MC) Step: %5d | Energy: %9.4f\n--\n" step ene1)
         end
     end
 end

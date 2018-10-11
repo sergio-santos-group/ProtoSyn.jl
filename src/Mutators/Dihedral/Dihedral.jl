@@ -20,13 +20,14 @@ julia> Mutators.Diehdral.ConfigParameters()
 ConfigParameters(p_mut=0.1)
 ```
 """
-struct ConfigParameters
+mutable struct ConfigParameters
 
-    pmut::Float64
+    p_mut::Float64
+    step_size::Float64
 
-    ConfigParameters(; p_mut::Float64 = 0.1) = new(p_mut)
+    ConfigParameters(; p_mut::Float64 = 0.1, step_size::Float64 = 0.1) = new(p_mut, step_size)
 end
-Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(p_mut=$(b.p_mut))")
+Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
 # ----------------------------------------------------------------------------------------------------------
 
@@ -147,16 +148,20 @@ function run!(
     angle_sampler::Function;
     ostream::IO = stdout)
     
+    dihedral_count::Int64 = 0
     for dihedral in dihedrals
-        if rand() < params.pmut
+        if rand() < params.p_mut
             angle::Float64 = angle_sampler()
             rotate_dihedral!(state.xyz, dihedral, angle)
+            dihedral_count += 1
         end
     end
+    write(ostream, "(D ) Performed $dihedral_count dihedral movements (step_size: $(params.step_size)).\n")
 end
 
 # -----------------------------------------------------------------------------------------------------------
 
+#TO DO: Update Documentation
 @doc raw"""
     rotate_dihedral!(xyz::Array{Float64, 2}, dihedral::NewDihedral, angle::Float64)
 
@@ -175,6 +180,7 @@ function rotate_dihedral!(
     dihedral::NewDihedral,
     angle::Float64)
 
+    #Define Pivot and Axis
     pivot = xyz[dihedral.a2,:]'
     axis = xyz[dihedral.a3,:]' - pivot
 
@@ -195,3 +201,7 @@ function rotate_dihedral!(
 end
 
 end
+
+# function mask_by_type(dtype_to_mask::String, dihedrals::Array{NewDihedral, 1})
+#     return view(dihedrals, findall(x -> x.dtype == dtype_to_mask, dihedrals))
+# end
