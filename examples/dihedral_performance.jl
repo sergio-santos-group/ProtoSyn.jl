@@ -143,17 +143,15 @@ dihedral_mutator = Mutators.Dihedral.DihedralMutator(
     () -> randn()       # angle sampler
 )
 
-dihedral_mutator.pmut = 0.0
-
 function do_work(p::Float64, nsteps::Int64)
-    fout = open("out/dihd.xyz", "w")
+    # fout = open("out/dihd.xyz", "w")
     dihedral_mutator.pmut = p
-    Print.as_xyz(state, ostream=fout, title="Step 0")
+    # Print.as_xyz(state, ostream=fout, title="Step 0")
     for n = 1:nsteps
         Mutators.Dihedral.run!(state, dihedral_mutator)
-        Print.as_xyz(state, ostream=fout, title="Step $n")
+        # Print.as_xyz(state, ostream=fout, title="Step $n")
     end
-    close(fout)
+    # close(fout)
 end
 
 do_work(0.0, 1)

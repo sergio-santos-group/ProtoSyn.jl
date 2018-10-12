@@ -243,7 +243,7 @@ function load_topology(p::Dict{String, Any})
         for d in p["dihedrals"]
     ]
     
-    #Set correct references for dihedrals previous and next
+    # Set correct references for dihedrals previous and next
     for residue in values(residues)
         residue.next = get(residues, residue.next, nothing)
     end
@@ -252,7 +252,7 @@ function load_topology(p::Dict{String, Any})
 end
 
 
-function run!(state::Common.State, mutator::DihedralMutator)
+@inline function run!(state::Common.State, mutator::DihedralMutator)
     for dihedral in mutator.dihedrals
         if rand() < mutator.pmut
             rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
@@ -261,14 +261,13 @@ function run!(state::Common.State, mutator::DihedralMutator)
 end
 
 
-function rotate_dihedral!(
+@inline function rotate_dihedral!(
     xyz::Array{Float64,2},
     dihedral::MutableDihedral,
     angle::Float64)
 
-    pivot = xyz[dihedral.a2, :]
-    axis  = xyz[dihedral.a3, :] - pivot
-    pivot = pivot'
+    pivot = xyz[dihedral.a2, :]'
+    axis  = xyz[dihedral.a3, :] - pivot'
     
     # Define the rotation matrix based on the rotation axis and angle
     rmat = Aux.rotation_matrix_from_axis_angle(axis, angle)
