@@ -138,9 +138,9 @@ dihedrals, residues = Mutators.Dihedral.load_topology(dihd_json)
 state = Common.load_from_pdb("data/mol.pdb")
 
 dihedral_mutator = Mutators.Dihedral.DihedralMutator(
-    dihedrals,
-    0.1,
-    () -> randn()
+    dihedrals,          # list of dihedrals
+    0.1,                # single dihedral mutation probability 
+    () -> randn()       # angle sampler
 )
 
 dihedral_mutator.pmut = 0.0

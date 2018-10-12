@@ -219,7 +219,7 @@ mutable struct MutableDihedral
     a3::Int64
     a4::Int64
     movable::Vector{Int64}
-    residue::Union{Common.Residue, Int64}
+    residue::Common.Residue
     dtype::DIHEDRALTYPE
 end
 
