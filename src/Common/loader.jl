@@ -51,8 +51,6 @@ function load_from_pdb(i_file::String)::Common.State
 
     xyz      = Array{Array{Float64, 2}, 1}()
     atnames  = Array{String, 1}()
-    conects  = Array{Array{Int64, 1}, 1}()
-    residues = []
 
     open(i_file, "r") do f
         for (index, line) in enumerate(eachline(f))
@@ -60,13 +58,10 @@ function load_from_pdb(i_file::String)::Common.State
             if elem[1] == "ATOM"
                 push!(xyz, map(x -> parse(Float64, x)/10, [elem[7] elem[8] elem[9]]))
                 push!(atnames, elem[3])
-                push!(residues, Pair(parse(Int64, elem[6]), elem[4]))
-            elseif elem[1] == "CONECT"
-                push!(conects, map(x -> parse(Int64, x), elem[2:end]))
             end
         end
     end
 
     n = length(xyz)
-    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames, conects, residues)
+    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
 end

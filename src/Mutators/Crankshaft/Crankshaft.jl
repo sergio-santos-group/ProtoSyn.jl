@@ -1,7 +1,6 @@
 module Crankshaft
 
 using ..Drivers
-using ..Dihedral
 using ..Common
 using ..Aux
 
@@ -34,7 +33,7 @@ Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(p_mut=$(b.p
 # ----------------------------------------------------------------------------------------------------
 function run!(
     state::Common.State,
-    dihedrals::Array{Dihedral.NewDihedral, 1},
+    dihedrals::Array{Common.Dihedral, 1},
     params::ConfigParameters,
     angle_sampler::Function;
     ostream::IO = stdout)
@@ -58,44 +57,71 @@ function run!(
 end
 
 
+# function rotate_crankshaft!(
+#     xyz::Array{Float64, 2},
+#     dihedral_1::Common.Dihedral,
+#     dihedral_2::Common.Dihedral,
+#     dihedral_2_prev::Common.Dihedral,
+#     angle::Float64)
+
+#     #Verify that both dihedrals are PHI
+#     if dihedral_1.dtype != "PHI" || dihedral_2.dtype != "PHI"
+#         error("Both dihedrals involved in crankshaft movements need to be of dtype 'PHI'")
+#     end
+
+#     #Get carbon alphas and define rotation axis
+#     pivot = xyz[dihedral_1.a3, :]'
+#     axis = xyz[dihedral_2.a3, :]' - pivot
+
+#     #Define the rotation matrix based on the rotation axis and angle
+#     rmat = Aux.rotation_matrix_from_axis_angle(axis', angle)
+    
+#     #Disconect
+#     dihedral_2_prev.residue.next = nothing
+    
+#     #Rotate movable atoms pertaining to this dihedral
+#     xyz[dihedral_1.movable, :] = (rmat * (xyz[dihedral_1.movable, :] .- pivot)')' .+ pivot
+
+#     #Rotate all downstream residues
+#     residue = dihedral_1.residue
+#     while residue.next != nothing
+#         residue = residue.next
+#         xyz[residue.atoms, :] = (rmat * (xyz[residue.atoms, :] .- pivot)')' .+ pivot
+#     end
+
+#     #Rotate first 3 atoms in the last residue
+#     f3 = setdiff(dihedral_2.residue.atoms, dihedral_2.movable)
+#     xyz[f3, :] = (rmat * (xyz[f3, :] .- pivot)')' .+ pivot
+
+#     #Reconnect
+#     dihedral_2_prev.residue.next = dihedral_2.residue
+# end
+
+
+
+
 function rotate_crankshaft!(
     xyz::Array{Float64, 2},
-    dihedral_1::Dihedral.NewDihedral,
-    dihedral_2::Dihedral.NewDihedral,
-    dihedral_2_prev::Dihedral.NewDihedral,
+    dihedral1::Dihedral,
+    dihedral2::Dihedral,
     angle::Float64)
 
-    #Verify that both dihedrals are PHI
-    if dihedral_1.dtype != "PHI" || dihedral_2.dtype != "PHI"
-        error("Both dihedrals involved in crankshaft movements need to be of dtype 'PHI'")
-    end
-
-    #Get carbon alphas and define rotation axis
-    pivot = xyz[dihedral_1.a3, :]'
-    axis = xyz[dihedral_2.a3, :]' - pivot
-
-    #Define the rotation matrix based on the rotation axis and angle
-    rmat = Aux.rotation_matrix_from_axis_angle(axis', angle)
+    next = dihedral2.residue.next 
+    dihedral2.residue.next = nothing
+    rotate_dihedral!(xyz,
+        dihedral1.a3, dihedral2.a3,
+        dihedral1.dtype, angle,
+        dihedral1.movable,
+        dihedral1.residue)
+    dihedral2.residue.next = next
     
-    #Disconect
-    dihedral_2_prev.residue.next = nothing
+    #movable = setdiff(dihedral2.residue.atoms, dihedral2.movable)
+    rotate_dihedral!(xyz,
+        dihedral1.a3, dihedral2.a3,
+        dihedral1.dtype, -angle,
+        dihedral2.movable)
     
-    #Rotate movable atoms pertaining to this dihedral
-    xyz[dihedral_1.movable, :] = (rmat * (xyz[dihedral_1.movable, :] .- pivot)')' .+ pivot
-
-    #Rotate all downstream residues
-    residue = dihedral_1.residue
-    while residue.next != nothing
-        residue = residue.next
-        xyz[residue.atoms, :] = (rmat * (xyz[residue.atoms, :] .- pivot)')' .+ pivot
-    end
-
-    #Rotate first 3 atoms in the last residue
-    f3 = setdiff(dihedral_2.residue.atoms, dihedral_2.movable)
-    xyz[f3, :] = (rmat * (xyz[f3, :] .- pivot)')' .+ pivot
-
-    #Reconnect
-    dihedral_2_prev.residue.next = dihedral_2.residue
 end
+
 
 end
