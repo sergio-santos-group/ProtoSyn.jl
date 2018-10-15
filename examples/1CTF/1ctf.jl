@@ -4,18 +4,18 @@ using Printf
 
 # ------------------------------------------------------------------------------------
 
-# file_xyz = open("teste_output.xyz", "w")
+file_xyz = open("teste_output.xyz", "w")
 
 #1. LOAD STATE
 state = Common.load_from_pdb("mol.pdb")
-state.energy = Forcefield.Energy()
+state.energy = Forcefield.Amber.Energy()
 
 #2. LOAD TOPOLOGY (DIHEDRALS AND RESIDUES)
 mc_topology = Aux.read_JSON("1ctf_mc_top.json")
 dihedrals, residues = Common.load_topology(mc_topology)
 
 #3. LOAD AMBER TOPOLOGY (BONDS, ANGLES, DIHEDRALS AND NON-BONDED)
-topology = Forcefield.load_from_json("1ctf.json")
+topology = Forcefield.Amber.load_from_json("1ctf.json")
 
 #4. FILTER DIHEDRALS
 bb_dihedrals = filter(x -> x.dtype < Common.omega, dihedrals)
@@ -31,8 +31,8 @@ function my_sampler(st::Common.State)
 end
 
 #7. DEFINE THE EVALUATOR
-function my_evaluator1!(st::Common.State, do_forces::Bool)
-    energy = Forcefield.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
+function my_evaluator!(st::Common.State, do_forces::Bool)
+    energy = Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
     return energy
 end
 
@@ -40,14 +40,15 @@ end
 function callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ac_ratio::Float64)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
     dihedral_mutator.stepsize *= 0.95
+    Print.as_xyz(st, ostream = file_xyz, title = "Step: $step")
 end
 my_callback = Common.CallbackObject(100, callback)
 
 #9. DEFINE THE DRIVER PARAMETERS AND RUN THE SIMULATION
-mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler, my_evaluator, 200.0, 1000)
+mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler, my_evaluator!, 1.0, 1000)
 Drivers.MonteCarlo.run!(state, mc_driver, my_callback)
 
-# close(file_xyz)
+close(file_xyz)
 exit(1)
 # ------------------------------------------------------------------------------------
 

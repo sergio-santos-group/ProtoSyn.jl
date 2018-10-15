@@ -3,36 +3,9 @@ module Dihedral
 using ..Common
 using ..Aux
 
-# @doc raw"""
-#     ConfigParameters(p_mut::Float64 = 0.1)
-
-# Define the runtime parameters for Dihedral movements.
-
-# # Arguments
-# - `p_mut::Float64`: Probability of mutation of this dihedral (Default: 0.1).
-
-# # Examples
-# ```julia-repl
-# julia> Mutators.Diehdral.ConfigParameters(0.2)
-# ConfigParameters(p_mut=0.2)
-
-# julia> Mutators.Diehdral.ConfigParameters()
-# ConfigParameters(p_mut=0.1)
-# ```
-# """
-# mutable struct ConfigParameters
-
-#     p_mut::Float64
-#     step_size::Float64
-
-#     ConfigParameters(; p_mut::Float64 = 0.1, step_size::Float64 = 0.1) = new(p_mut, step_size)
-# end
-# Base.show(io::IO, b::ConfigParameters) = print(io, "ConfigParameters(p_mut=$(b.p_mut), step_size=$(b.step_size))")
-
-# -----------------------------------------------------------------------------------------------------------
-
+#TODO: Document structure
 mutable struct DihedralMutator
-    dihedrals::Vector{MutableDihedral}
+    dihedrals::Vector{Common.Dihedral}
     pmut::Float64
     angle_sampler::Function
     stepsize::Float64

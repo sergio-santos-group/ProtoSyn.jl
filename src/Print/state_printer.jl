@@ -25,6 +25,7 @@ function as_xyz(state::Common.State;
     end
 end
 
+#TODO: Function is deprecated. Either return it to LIVE (and document it) or DELETE.
 function as_pdb(state::Common.State;
     ostream::IO = stdout, title::String = "mol")
 

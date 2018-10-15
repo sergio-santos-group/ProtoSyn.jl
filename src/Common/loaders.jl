@@ -1,3 +1,4 @@
+#TODO: Verify function
 @doc raw"""
     load_from_gro(i_file::String)::Common.State
 
@@ -64,4 +65,45 @@ function load_from_pdb(i_file::String)::Common.State
 
     n = length(xyz)
     return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
+end
+
+# ----------------------------------------------------------------------------------------------------------
+
+@doc raw"""
+    load_topology(p::Dict{String, Any})
+
+Parse a dictionary containing the dihedral and residue topology. Return a [`NewDihedral`](@ref) array
+and a [`Common.Residue`](@ref) array.
+
+# Examples
+```julia-repl
+julia> Mutators.Diehdral.load_topology(p)
+(ProtoSyn.Mutators.Dihedral.NewDihedral[...], ProtoSyn.Common.Residue[...])
+```
+See also: [`Aux.read_JSON`](@ref)
+"""
+function load_topology(p::Dict{String, Any})
+
+    conv = Dict(
+        "C" => coil,
+        "H" => alpha,
+        "E" => beta,
+    )
+
+    residues = Dict(d["n"] => Residue(d["atoms"], d["next"], d["type"], conv[d["ss"]]) for d in p["residues"])
+    
+    str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
+    
+    dihedrals = [
+        Dihedral(d["a1"], d["a2"], d["a3"], d["a4"],
+            d["movable"], residues[d["parent"]], str2enum[lowercase(d["type"])])
+        for d in p["dihedrals"]
+    ]
+    
+    # Set correct references for dihedrals previous and next
+    for residue in values(residues)
+        residue.next = get(residues, residue.next, nothing)
+    end
+
+    return dihedrals, residues
 end

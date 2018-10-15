@@ -1,7 +1,7 @@
 @doc raw"""
     evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
-function evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State;
+function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
     do_forces::Bool = false)
 
     energy = 0.0
@@ -27,7 +27,7 @@ end
 @doc raw"""
     evaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State;
+function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
     do_forces::Bool = false)
 
     v12 = zeros(Float64, 3)
@@ -102,7 +102,7 @@ end
 @doc raw"""
     evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State;
+function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
     do_forces = false)
 
     v12 = zeros(Float64, 3)
@@ -169,7 +169,7 @@ julia> Forcefield.evaluate!(bonds, state)
 See also: [`evalenergy!`](@ref) [`Forcefield.HarmonicBond`](@ref) [`Forcefield.HarmonicAngle`](@ref)
 [`Forcefield.DihedralCos`](@ref) [`Forcefield.Atom`](@ref)
 """
-function evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State;
+function evaluate!(atoms::Vector{Atom}, state::Common.State;
     do_forces::Bool = false, cut_off::Float64 = 2.0)
 
     eLJ = 0.0
@@ -185,7 +185,7 @@ function evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State;
     
     #Calculate nonbonded interactions
     for i in 1:(n_atoms - 1)
-        atomi::Forcefield.Atom = atoms[i]
+        atomi::Atom = atoms[i]
         
         # set the exclution index to the correct location and extract the exclude atom index
         exclude_idx = 1
@@ -201,7 +201,7 @@ function evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State;
                 exclude = atomi.excls[exclude_idx]
                 continue
             end
-            atomj::Forcefield.Atom = atoms[j]
+            atomj::Atom = atoms[j]
             
             @views @. vij = state.xyz[j, :] - state.xyz[i, :]
 
@@ -286,7 +286,7 @@ julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
 
 See also: [`evaluate!`](@ref)
 """
-function evaluate!(topology::Forcefield.Topology, state::Common.State;
+function evaluate!(topology::Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
 
     energy = 0.0
@@ -295,5 +295,6 @@ function evaluate!(topology::Forcefield.Topology, state::Common.State;
     energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
     # energy += evaldihedralRB(topology.dihedralsRB, state, do_forces = do_forces)
     energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
+    state.energy.eTotal = energy
     return energy
 end

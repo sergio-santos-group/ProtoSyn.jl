@@ -170,7 +170,6 @@ function run!(
         callback(state, step)
     end
     logger(step, energy, max_force, gamma)
-
 end
 
 end
