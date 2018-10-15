@@ -4,6 +4,5 @@ macro cbcall(cb, step, args...)
             getproperty($cb, :callback)($step, $(args...))
         end
     end
-    println(esc(ex))
     return esc(ex)
 end

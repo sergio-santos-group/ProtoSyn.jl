@@ -17,7 +17,8 @@ be parsed by Catulia. mol.pdb is a PDB model that is adapted by Catulia to print
 """
 
 #Grow molecule from sequence
-mol_sequence = "EVK"
+mol_sequence = "EFDVILKAAGANKVAVIKAVRGATGLGLKEAKDLVESAPAALKEGVSKDDAEALKKALEEAGAEVEVK"
+ss           = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC"
 m = grow("mol", mol_sequence)
 cap_chain(m)
 
@@ -63,7 +64,8 @@ for r in m.residues:
         'n': r.index + 1,
         'type': r.letter,
         'atoms': [x.index + 1 for x in r.atoms],
-        'next': _next
+        'next': _next,
+        'ss': ss[r.index]
     })
 
 #Create dihedrals dictionary

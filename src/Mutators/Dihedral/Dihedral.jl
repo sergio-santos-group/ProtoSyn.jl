@@ -201,90 +201,34 @@ module Dihedral
 using ..Common
 using ..Aux
 
-@enum DIHEDRALTYPE begin
-    phi   = 0
-    psi   = 1
-    omega = 2
-    chi1  = 3
-    chi2  = 4
-    chi3  = 5
-    chi4  = 6
-    chi5  = 7
-end
-
-
-mutable struct MutableDihedral
-    a1::Int64
-    a2::Int64
-    a3::Int64
-    a4::Int64
-    movable::Vector{Int64}
-    residue::Common.Residue
-    dtype::DIHEDRALTYPE
-end
-
-
+#TODO: Document structure
 mutable struct DihedralMutator
-    dihedrals::Vector{MutableDihedral}
+    dihedrals::Vector{Common.Dihedral}
     pmut::Float64
     angle_sampler::Function
     stepsize::Float64
 end
 
+@doc raw"""
+    run!(state::Common.State, dihedrals::Array{NewDihedral, 1}, params::Config.Parameters, angle_sampler::Function[, ostream::IO = stdout])
 
-function load_topology(p::Dict{String, Any})
+Iterate over a list of [`NewDihedral`](@ref) (`dihedrals`) and perform dihedral movements on the current
+[`Common.State`](@ref). The probability of each dihedral undergo movements is defined in the
+[`ConfigParameters`](@ref) (`params.pmut`). The new angle is obtained from `angle_sampler`, who should
+return a `Float64` in radians.
+After movement, the [`Common.State`](@ref) is updated with the new conformation.
+Any logging is written to `ostream` (Default: `stdout`).
 
-    residues = Dict(d["n"]=>Common.Residue(d["atoms"],d["next"],d["type"]) for d in p["residues"])
-    
-    str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
-    
-    dihedrals = [
-        MutableDihedral(d["a1"], d["a2"], d["a3"], d["a4"],
-            d["movable"], residues[d["parent"]], str2enum[lowercase(d["type"])])
-        for d in p["dihedrals"]
-    ]
-    
-    # Set correct references for dihedrals previous and next
-    for residue in values(residues)
-        residue.next = get(residues, residue.next, nothing)
-    end
-
-    return dihedrals, residues
-end
-
-
+# Examples
+```julia-repl
+julia> Mutators.Diehdral.run!(state, dihedrals, params, () -> randn())
+```
+See also: [`rotate_dihedral!`](@ref)
+"""
 @inline function run!(state::Common.State, mutator::DihedralMutator)
     for dihedral in mutator.dihedrals
         if rand() < mutator.pmut
-            angle = mutator.stepsize * mutator.angle_sampler()
-            rotate_dihedral!(state.xyz, dihedral, angle)
-        end
-    end
-end
-
-
-@inline function rotate_dihedral!(
-    xyz::Array{Float64,2},
-    dihedral::MutableDihedral,
-    angle::Float64)
-
-    pivot = xyz[dihedral.a2, :]'
-    axis  = xyz[dihedral.a3, :] - pivot'
-    
-    # Define the rotation matrix based on the rotation axis and angle
-    rmat = Aux.rotation_matrix_from_axis_angle(axis, angle)
-
-    #Rotate movable atoms pertaining to this dihedral
-    xyz[dihedral.movable, :] = (rmat * (xyz[dihedral.movable, :] .- pivot)')' .+ pivot
-
-    
-    # Rotate all downstream residues
-    if dihedral.dtype < omega
-        idxs = Vector{Int64}()
-        residue = dihedral.residue
-        while residue.next != nothing
-            residue = residue.next
-            append!(idxs, residue.atoms)
+            Common.rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
         end
         xyz[idxs, :] = (rmat * (xyz[idxs, :] .- pivot)')' .+ pivot
     end
