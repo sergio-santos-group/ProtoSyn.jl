@@ -98,7 +98,7 @@ function load_topology(p::Dict{String, Any})
         new_residue = Common.Residue(
             content["atoms"],
             content["next"],
-            content["type"]
+            string(content["type"], content["n"])
         )
         
         #Set parent of this residue dihedrals
@@ -149,14 +149,15 @@ function run!(
     ostream::IO = stdout)
     
     dihedral_count::Int64 = 0
-    for dihedral in dihedrals
+    for (index, dihedral) in enumerate(dihedrals)
         if rand() < params.p_mut
             angle::Float64 = angle_sampler()
             rotate_dihedral!(state.xyz, dihedral, angle)
             dihedral_count += 1
+            write(ostream, "Dihedral movement on: $(dihedral.residue.name).\n")
         end
     end
-    write(ostream, "(D ) Performed $dihedral_count dihedral movements (step_size: $(params.step_size)).\n")
+    write(stdout, "(D ) Performed a total of $dihedral_count dihedral movements (step_size: $(params.step_size)).\n")
 end
 
 # -----------------------------------------------------------------------------------------------------------

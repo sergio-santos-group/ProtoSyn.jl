@@ -96,7 +96,7 @@ function run!(
 
     xyz0 = copy(state.xyz)
     ene0 = evaluator!(state, false)
-    println("Energy 0 = $ene0")
+    println("$(@sprintf("Energy 0: %.6e", ene0))")
 
     step::Int64 = 0
     accepted::Int64 = 0
@@ -117,11 +117,15 @@ function run!(
             
             #Adjust step_size
             # params.step_size = max(1, params.step_size*1.01)
-            write(ostream, @sprintf "(MC) Step: %5d | Energy: %9.4f <- (%5d accepted)\n--\n" step ene1 accepted)
+            # callback(state, step)
+            # println(state.energy)
+            write(ostream, @sprintf "(MC) Step: %5d | Energy: %.6e <- (%5d accepted)\n--\n" step ene1 accepted)
         else
-            state.xyz[:] = xyz0
             # params.step_size = min(1e-1, params.step_size*0.99)
-            write(ostream, @sprintf "(MC) Step: %5d | Energy: %9.4f\n--\n" step ene1)
+            # callback(state, step)
+            # println(state.energy)
+            write(ostream, @sprintf "(MC) Step: %5d | Energy: %.6e\n--\n" step ene1)
+            state.xyz[:] = xyz0
         end
     end
 end

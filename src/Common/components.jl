@@ -45,10 +45,12 @@ mutable struct State
     xyz::Array{Float64, 2}
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
     atnames::Array{String, 1}
+    conects::Array{Array{Int64, 1}, 1}
+    residues::Array{Pair{Int64, String}}
 
 end
-State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Array{String, 1}())
-Base.show(io::IO, b::State) = print(io, "Common.State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), atnames=$(b.atnames))")
+State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Array{String, 1}(), Dict{Int64, Array{Int64, 1}}(), [])
+Base.show(io::IO, b::State) = print(io, "Common.State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), atnames=$(b.atnames), conects=$(b.conects), residues=$(b.residues))")
 
 # ----------------------------------------------------------------------------------------------------------
 
