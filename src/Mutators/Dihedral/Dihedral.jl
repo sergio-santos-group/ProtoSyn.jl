@@ -228,6 +228,7 @@ mutable struct DihedralMutator
     dihedrals::Vector{MutableDihedral}
     pmut::Float64
     angle_sampler::Function
+    stepsize::Float64
 end
 
 
@@ -255,7 +256,8 @@ end
 @inline function run!(state::Common.State, mutator::DihedralMutator)
     for dihedral in mutator.dihedrals
         if rand() < mutator.pmut
-            rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
+            angle = mutator.stepsize * mutator.angle_sampler()
+            rotate_dihedral!(state.xyz, dihedral, angle)
         end
     end
 end

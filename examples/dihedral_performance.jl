@@ -130,31 +130,185 @@ using ProtoSyn
 #     end
 # end
 
-#-------------------------------------------
 
+
+using Printf
+
+# mutable struct CallbackObject
+#     freq::Int64
+#     callback::Function
+# end
+
+
+# mutable struct MonteCarloDriver
+#     sampler! :: Function
+#     evaluator! :: Function
+#     temperature :: Float64
+#     nsteps::Int64
+#     # callback::Union{Function, Nothing}
+#     # callback_freq::Int64
+# end
+
+
+# macro cbcall(cb, step, args...)
+#     ex = quote
+#         if (($cb != nothing) && (getproperty($cb, :freq)>0) && ($step%getproperty($cb, :freq)==0))
+#             getproperty($cb, :callback)($step, $(args...))
+#         end
+#     end
+#     println(esc(ex))
+#     return esc(ex)
+# end
+
+
+# function run!(state::Common.State, driver::MonteCarloDriver, callback::Union{CallbackObject, Nothing}=nothing)
+    
+#     step = 0
+#     xyz0 = copy(state.xyz)
+#     ene0 = driver.evaluator!(state, false)
+#     acceptance_count = 0
+
+#     while step < driver.nsteps
+#         step += 1
+#         driver.sampler!(state)
+#         ene1 = driver.evaluator!(state, false)
+
+#         if (ene1 < ene0) || (rand() < exp(-(ene1 - ene0) / driver.temperature))
+#             ene0 = ene1
+#             xyz0[:] = state.xyz
+#             acceptance_count += 1
+#         else
+#             state.xyz[:] = xyz0
+#         end
+#         # write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step ene1)
+
+#         # @cbcall driver.callback driver.callback.freq step state
+#         @cbcall callback step state driver acceptance_count/step
+
+#     end
+# end
+
+
+
+
+# -------------------------------------
+# LOAD
+# -------------------------------------
 dihd_json = Aux.read_JSON("data/1ctf_mc_top.json")
 dihedrals, residues = Mutators.Dihedral.load_topology(dihd_json)
-
 state = Common.load_from_pdb("data/mol.pdb")
+state.energy = Common.Energy()
 
+
+# -------------------------------------
+# SAMPLER
+# -------------------------------------
 dihedral_mutator = Mutators.Dihedral.DihedralMutator(
-    dihedrals,          # list of dihedrals
-    0.1,                # single dihedral mutation probability 
-    () -> randn()       # angle sampler
+    dihedrals   # list of dihedrals
+    , 0.1       # single dihedral mutation probability
+    , randn     # angle sampler
+    , 1.0       # stepsize
 )
+my_sampler(st::Common.State) = Mutators.Dihedral.run!(st, dihedral_mutator)
 
-function do_work(p::Float64, nsteps::Int64)
-    # fout = open("out/dihd.xyz", "w")
-    dihedral_mutator.pmut = p
-    # Print.as_xyz(state, ostream=fout, title="Step 0")
-    for n = 1:nsteps
-        Mutators.Dihedral.run!(state, dihedral_mutator)
-        # Print.as_xyz(state, ostream=fout, title="Step $n")
-    end
-    # close(fout)
+
+# -------------------------------------
+# EVALUATOR
+# -------------------------------------
+function my_evaluator(st::Common.State, do_forces::Bool)
+    #st.energy.eTotal = rand()
+    #return st.energy.eTotal
+    st.energy.eTotal
 end
 
-do_work(0.0, 1)
 
-using Profile
-@time do_work(0.01, 1000)
+# -------------------------------------
+# DRIVER
+# -------------------------------------
+mc_driver = Drivers.MonteCarlo.MonteCarloDriver(
+    my_sampler      # sampler
+    , my_evaluator  # evaluator
+    , 1.0           # temperature
+    , 1000          # nsteps
+)
+    
+
+# -------------------------------------
+# CALLBACK
+# -------------------------------------
+function callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ac_ratio::Float64)
+    write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
+    println("$ac_ratio -> $(dihedral_mutator.stepsize)")
+    dihedral_mutator.stepsize *= 0.95
+
+end
+
+my_callback = Common.CallbackObject(
+    10          # calling frequency
+    , callback  # the actual callback function
+)
+
+
+
+Drivers.MonteCarlo.run!(state, mc_driver, my_callback)
+
+
+
+
+
+
+
+
+# fout = open("out/dihd.xyz", "w")
+
+# function my_cb(step::Int64, st::Common.State, dr::MonteCarloDriver, ac_ratio::Float64)
+#     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
+#     println(dr.temperature)
+#     #Print.as_xyz(st, ostream=fout, title="Step $step")
+# end
+
+# cb = CallbackObject(10, my_cb)
+
+# mc_driver = MonteCarloDriver(
+#     dihedral_sampler    # sampler!
+#     , (a,b) -> 1.0      # evaluator
+#     , 1.0               # temperature
+#     , 1000              # nsteps
+#     # , cb        # callback object
+#     # , my_cb     # callback
+#     # , 10        # callback_freq
+# )
+
+# # mc_driver.nsteps = 1000
+# # mc_driver.callback = eq_callback
+# # run!(state, mc_driver)
+
+# # mc_driver.nsteps = 10000
+# # mc_driver.callback = prod_callback
+# # run!(state, mc_driver)
+
+# run!(state, mc_driver, cb)
+
+
+
+# function do_work(p::Float64, nsteps::Int64)
+#     # fout = open("out/dihd.xyz", "w")
+#     #dihedral_mutator.pmut = p
+#     # Print.as_xyz(state, ostream=fout, title="Step 0")
+#     #for n = 1:nsteps
+#     #    Mutators.Dihedral.run!(state, dihedral_mutator)
+#     #    # Print.as_xyz(state, ostream=fout, title="Step $n")
+#     #end
+#     # close(fout)
+    
+#     dihedral_mutator.pmut = p
+#     mc_driver.nsteps = nsteps
+#     run!(state, mc_driver)
+# end
+
+# do_work(0.0, 1)
+
+# using Profile
+# @time do_work(0.01, 100)
+
+# close(fout)

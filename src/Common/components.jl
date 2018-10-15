@@ -14,6 +14,14 @@ Null
 struct NullEnergy <: AbstractEnergy end
 Base.show(io::IO, b::NullEnergy) = print(io, "Null")
 
+
+# ----------------------------------------------------------------------------------------------------------
+mutable struct Energy <: AbstractEnergy
+    eTotal::Float64
+end
+Energy() = Energy(0.0)
+Base.show(io::IO, b::Energy) = print(io, b.eTotal)
+
 # ----------------------------------------------------------------------------------------------------------
 
 @doc raw"""
@@ -82,3 +90,9 @@ function Base.show(io::IO, b::Residue)
     
 end
 
+
+
+mutable struct CallbackObject
+    freq::Int64
+    callback::Function
+end
