@@ -11,6 +11,7 @@ mutable struct DihedralMutator
     stepsize::Float64
 end
 
+#TODO: Document function
 @doc raw"""
     run!(state::Common.State, dihedrals::Array{NewDihedral, 1}, params::Config.Parameters, angle_sampler::Function[, ostream::IO = stdout])
 
@@ -32,7 +33,12 @@ See also: [`rotate_dihedral!`](@ref)
         if rand() < mutator.pmut
             Common.rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
         end
+        xyz[idxs, :] = (rmat * (xyz[idxs, :] .- pivot)')' .+ pivot
     end
 end
+
+
+
+
 
 end
