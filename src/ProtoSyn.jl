@@ -11,4 +11,12 @@ include("Print/Print.jl")
 include("Mutators/Mutators.jl") # Order ?
 include("Drivers/Drivers.jl")   # Order ?
 
+include("nbdisplay.jl")
+
+function __init__()
+    if isdefined(Main, :IJulia) && Main.IJulia.inited
+        embed_javascript()
+    end
+end
+
 end
