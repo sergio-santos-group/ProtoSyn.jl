@@ -12,37 +12,7 @@ mutable struct MonteCarloDriver
     nsteps::Int64
 end
 
-#TODO: Update documentation
-@doc raw"""
-    run!(state::Common.State, sampler!::Function, evaluator!::Function, params::ConfigParameters[, ostream::IO = stdout, callback::Union{Function, Nothing} = nothing])
-
-Run the main body of the Driver.
-
-# Arguments
-- `state::Common.State`: Current state of the system to be modified.
-- `sampler!::Function`: Responsible for mutating the current `state`. This function should have the following signature:
-```   
-sampler!(state::Common.State)
-```
-- `evaluator!::Function`: Responsible for evaluating the current `state.energy` for the Metropolis Algorithm. This function should have the following signature:
-```
-evaluator!(state::Common.State, do_forces::Bool)
-```
-- `params::ConfigParameters`: Hold the runtime parameters of the Monte Carlo Driver. 
-- `ostream::IO`: (Optional) Any logging will be written to the supplied `ostream`.
-- `callback::Union{Function, Nothing}`: (Optional) If present, this function will be called if the new conformation was accepted. This function should have the following signature:
-```
-callback(state::Common.State, step::Int64)
-```
-!!! tip
-    The callback function is often a [Print](@ref) function.
-
-# Examples
-```julia-repl
-julia> Drivers.MonteCarlo.run(state, my_sampler!, my_evaluator!, params!, callback = my_callback)
-```
-See also: [Mutators](@ref) [`Forcefield.evalenergy!`](@ref Forcefield)
-"""
+#TODO: Document function
 function run!(state::Common.State, driver::MonteCarloDriver, callback::Union{Common.CallbackObject, Nothing}=nothing)
     
     step = 0
