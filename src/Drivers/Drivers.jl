@@ -1,7 +1,6 @@
 module Drivers
 
 using ..Aux
-
 using ..Common
 using Printf
 

@@ -4,12 +4,12 @@ using LinearAlgebra, JSON, Printf
 
 export Common, Aux, Forcefield, Print, Mutators, Drivers
 
-include("Common/Common.jl")
 include("Aux/Aux.jl")
+include("Common/Common.jl")
 include("Forcefield/Forcefield.jl")
 include("Print/Print.jl")
-include("Mutators/Mutators.jl")
-include("Drivers/Drivers.jl")
+include("Mutators/Mutators.jl") # Order ?
+include("Drivers/Drivers.jl")   # Order ?
 
 include("nbdisplay.jl")
 
