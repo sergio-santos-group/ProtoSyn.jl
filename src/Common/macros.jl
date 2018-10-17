@@ -13,6 +13,7 @@ julia> @Common.cbcall (callback_object1, callback_object2) 1
 ```
 """
 macro cbcall(cbs, step, args...)
+    println(eval(cbs))
     tmp = eval(cbs)
 
     if length(tmp) == 0

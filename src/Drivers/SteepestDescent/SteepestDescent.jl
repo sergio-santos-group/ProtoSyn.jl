@@ -65,6 +65,8 @@ julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, ca
 """
 function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Common.CallbackObject...)
 
+    println("CALLBACKS:", callbacks)
+
     @inline function get_max_force(f::Array{Float64, 2})
         return sqrt(maximum(sum(f.*f, dims = 2)))
     end
@@ -78,7 +80,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     step::Int64 = 0
     
     # Initial callback
-    @Common.cbcall callbacks step state driver
+    # @Common.cbcall callbacks step state driver
     
     while step < params.n_steps
         step += 1
@@ -97,7 +99,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         max_force = get_max_force(state.forces)
 
         # Call callback function and output information to log 
-        @Common.cbcall callbacks step state driver
+        # @Common.cbcall callbacks step state driver
         
         # Check if force convergence was achieved
         if max_force < params.f_tol
@@ -120,7 +122,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     end
 
     #Final callback
-    @Common.cbcall callbacks step state driver
+    # @Common.cbcall callbacks step state driver
 end
 
 end

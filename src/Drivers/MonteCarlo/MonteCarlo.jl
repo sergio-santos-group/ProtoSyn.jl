@@ -14,6 +14,8 @@ end
 
 #TODO: Document function
 function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.CallbackObject...)
+
+    println("CALLBACKS: $callbacks")
     
     step = 0
     xyz0 = copy(state.xyz)
@@ -33,7 +35,7 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
             state.xyz[:] = xyz0
         end
         
-        @Common.cbcall callbacks step state driver (acceptance_count/step)
+        # @Common.cbcall callbacks step state driver (acceptance_count/step)
     end
 end
 

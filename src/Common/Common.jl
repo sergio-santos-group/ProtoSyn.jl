@@ -10,5 +10,6 @@ include("state.jl")
 include("callback.jl")
 include("loaders.jl")
 include("conf_gen.jl")
+include("macros.jl")
 
 end

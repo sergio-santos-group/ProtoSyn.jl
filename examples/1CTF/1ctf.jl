@@ -23,6 +23,7 @@ bb_nb_dihedrals = filter(x -> x.dtype < Common.omega && Int(x.residue.ss) < 1, d
 
 #5. APPLY INITIAL CONFORMATION
 Common.apply_initial_conf!(state, bb_dihedrals)
+println("APPLIED INITIAL CONF!")
 
 #6. DEFINE THE SAMPLER
 dihedral_mutator = Mutators.Dihedral.DihedralMutator(bb_nb_dihedrals, 0.1, randn, 1.0)
@@ -39,13 +40,13 @@ end
 #8. DEFINE THE CALLBACK
 function callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
-    dihedral_mutator.stepsize *= 0.95
-    Print.as_xyz(st, ostream = file_xyz, title = "Step: $step")
+    # dihedral_mutator.stepsize *= 0.95
+    # Print.as_xyz(st, ostream = file_xyz, title = "Step: $step")
 end
-my_callback = Common.CallbackObject(100, callback)
+my_callback = Common.CallbackObject(1, callback)
 
 #9. DEFINE THE DRIVER PARAMETERS AND RUN THE SIMULATION
-mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler, my_evaluator!, 1.0, 1000)
+mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler, my_evaluator!, 1.0, 10)
 Drivers.MonteCarlo.run!(state, mc_driver, my_callback)
 
 close(file_xyz)
