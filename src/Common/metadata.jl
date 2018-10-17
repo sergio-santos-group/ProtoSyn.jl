@@ -17,12 +17,12 @@ Define an atom metadata, containing extra information pertaining the [`State`](@
 # Examples
 ```julia-repl
 julia> AtomMetadata("H1", "H", 2, "VAL", "A", [4])
-AtomMetadata(name=H1, elem=H, res_num=2, res_name=VAL)
+AtomMetadata(name=H1, elem=H, res_num=2, res_name=VAL, chain_id=A, connects=[4])
 
 julia> AtomMetadata("H1")
-AtomMetadata(name=H1, elem=H1, res_num=1, res_name=UNK)
+AtomMetadata(name=H1, elem=H1, res_num=1, res_name=UNK, chain_id=nothing, connects=nothing)
 ```
-See also: [`iter_residues`](@ref)
+See also: [`iter`](@ref)
 """
 mutable struct AtomMetadata
 
@@ -55,7 +55,21 @@ function Array{AtomMetadata, 1}(n::Int64)
 end
 
 
-#TODO: Document function
+@doc raw"""
+    iter(data::Vector{AtomMetadata}; property::Symbol = :res_num)
+
+Iterate over an array of AtomMetadata objects, grouping them based on `property` (Default: `:res_num`)
+
+# Examples
+```julia-repl
+julia> for residue in iter(state.metadata)
+    println(residue)
+end
+[AtomMetadata(name=H1, elem=H1, res_num=1, res_name=UNK, chain_id=nothing, connects=nothing), AtomMetadata(name=H2, elem=H2, res_num=1, res_name=UNK, chain_id=nothing, connects=nothing)]
+[AtomMetadata(name=H3, elem=H3, res_num=2, res_name=UNK, chain_id=nothing, connects=nothing), AtomMetadata(name=H4, elem=H4, res_num=2, res_name=UNK, chain_id=nothing, connects=nothing)]
+```
+See also: [`AtomMetadata`](@ref)
+"""
 function iter(data::Vector{AtomMetadata}; property::Symbol = :res_num)
 
     #GET UNIQUE VALUES FOR THIS PROPERTY

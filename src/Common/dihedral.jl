@@ -49,9 +49,8 @@ end
 Base.show(io::IO, b::Dihedral) = print(io, "Dihedral(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), movable=$(b.movable), residue=$(b.residue), type=$(b.dtype))")
 
 
-#TODO: Update documentation
 @doc raw"""
-rotate_dihedral!(xyz::Array{Float64, 2}, dihedral::NewDihedral, angle::Float64)
+    rotate_dihedral!(xyz::Array{Float64, 2}, dihedral::Dihedral, angle::Float64)
 
 Perform a dihedral movement, adding the provided `angle` (in radians). If the `dihedral.dtype` is "PHI"
 or "PSI" the `dihedral.residue.next` is also rotated and this is propagated recursively until the end of
@@ -61,7 +60,7 @@ the molecule.
 ```julia-repl
 julia> Mutators.Diehdral.rotate_dihedral(state.xyz, dihedral, π/2)
 ```
-See also: [`run!`](@ref) [`Aux.rotation_matrix_from_axis_angle`](@ref)
+See also: [`Mutators.DihedralMutator`](@ref Mutators)
 """
 function rotate_dihedral!(
     xyz::Array{Float64, 2},
@@ -72,7 +71,17 @@ function rotate_dihedral!(
 end
 
 
-#TODO: Add documentation
+@doc raw"""
+    rotate_dihedral!(xyz::Array{Float64, 2}, a2::Int64, a3::Int64, angle::Float64, dtype::DIHEDRALTYPE, movable::Vector{Int64}[, residue::Union{Residue, Nothing} = nothing])
+
+Base dihedral movement function. Especifies all arguments used in dihedral rotation movement. 
+
+# Examples
+```julia-repl
+julia> Mutators.Diehdral.rotate_dihedral(xyz, dihedral.a2, dihedral.a3, π/2, dihedral.dtype, dihedral.movable, dihedral.residue)
+```
+See also: [`run!`](@ref) [`Aux.rotation_matrix_from_axis_angle`](@ref) [`Mutators.DihedralMutator`](@ref Mutators) [`Mutators.CrankshaftMutator`](@ref Mutators)
+"""
 @inline function rotate_dihedral!(
     xyz::Array{Float64, 2},
     a2::Int64,
@@ -91,7 +100,6 @@ end
     #Rotate movable atoms pertaining to this dihedral
     xyz[movable, :] = (rmat * (xyz[movable, :] .- pivot)')' .+ pivot
 
-    
     # Rotate all downstream residues
     if (dtype < omega) && (residue != nothing)
         idxs = Vector{Int64}()

@@ -46,27 +46,34 @@ As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set 
 # Examples
 ```julia-repl
 julia> Common.load_from_pdb("molecule.pdb")
-Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], atnames=["C", "O"])
+Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], metadata=(...))
 ```
 See also: [`load_from_gro`](@ref)
 """
-function load_from_pdb(i_file::String)::Common.State
+function load_from_pdb(i_file::String)::State
 
     xyz      = Array{Array{Float64, 2}, 1}()
-    atnames  = Array{String, 1}()
+    metadata = Vector{AtomMetadata}()
 
     open(i_file, "r") do f
-        for (index, line) in enumerate(eachline(f))
-            elem = split(line)
-            if elem[1] == "ATOM"
-                push!(xyz, map(x -> parse(Float64, x)/10, [elem[7] elem[8] elem[9]]))
-                push!(atnames, elem[3])
+        for line in eachline(f)
+            if length(line) > 6 && line[1:6] == "ATOM  "
+                push!(xyz, map(x -> parse(Float64, x)/10, [line[31:38] line[39:46] line[47:54]]))
+                push!(metadata, AtomMetadata(string(strip(line[13:16])),
+                    elem = line[77:78],
+                    res_num = parse(Int64, line[23:26]),
+                    res_name = line[18:20],
+                    chain_id = string(line[22]),
+                    connects = nothing))
+            elseif length(line) > 6 && line[1:6] == "CONECT"
+                elem = split(line)
+                metadata[parse(Int64, elem[2])].connects = map(x -> parse(Int64, x), elem[3:end])
             end
         end
     end
 
     n = length(xyz)
-    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
+    return State(n, NullEnergy(), vcat(xyz...), zeros(n, 3), metadata)
 end
 
 
