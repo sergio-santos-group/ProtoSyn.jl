@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------------------------------------------
+#                                                 LOADERS
+
 #TODO: Verify function
 @doc raw"""
     load_from_gro(i_file::String)::Common.State
@@ -33,7 +36,6 @@ function load_from_gro(i_file::String)::Common.State
     return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
 end
 
-# ----------------------------------------------------------------------------------------------------------
 
 @doc raw"""
     load_from_pdb(i_file::String)::Common.State
@@ -67,7 +69,6 @@ function load_from_pdb(i_file::String)::Common.State
     return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), atnames)
 end
 
-# ----------------------------------------------------------------------------------------------------------
 
 @doc raw"""
     load_topology(p::Dict{String, Any})

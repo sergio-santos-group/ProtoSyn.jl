@@ -37,7 +37,7 @@ function my_evaluator!(st::Common.State, do_forces::Bool)
 end
 
 #8. DEFINE THE CALLBACK
-function callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ac_ratio::Float64)
+function callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
     dihedral_mutator.stepsize *= 0.95
     Print.as_xyz(st, ostream = file_xyz, title = "Step: $step")
