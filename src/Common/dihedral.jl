@@ -58,7 +58,7 @@ the molecule.
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.rotate_dihedral(state.xyz, dihedral, π/2)
+julia> Mutators.Dihedral.rotate_dihedral!(state.xyz, dihedral, π/2)
 ```
 See also: [`Dihedral`](@ref Mutators)
 """
@@ -78,7 +78,7 @@ Base dihedral movement function. Especifies all arguments used in dihedral rotat
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.rotate_dihedral(xyz, dihedral.a2, dihedral.a3, π/2, dihedral.dtype, dihedral.movable, dihedral.residue)
+julia> Mutators.Dihedral.rotate_dihedral!(xyz, dihedral.a2, dihedral.a3, π/2, dihedral.dtype, dihedral.movable, dihedral.residue)
 ```
 See also: [`Aux.rotation_matrix_from_axis_angle`](@ref) [`Dihedral`](@ref Mutators) [`Crankshaft`](@ref Mutators)
 """

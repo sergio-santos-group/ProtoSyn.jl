@@ -11,7 +11,7 @@ makedocs(
     sitename = "ProtoSyn.jl",
     pages = [
         "Home" => "index.md",
-        "Guide" => "guide.md",
+        # "Guide" => "guide.md",
         "Manual" => [
             "Common" => "common.md",
             "Forcefield" => "forcefield.md",

@@ -16,3 +16,17 @@ movement according to a [`DihedralMutator`](@ref) set of parameters.
 DihedralMutator
 run!
 ```
+
+## Crankshaft
+
+```@meta
+CurrentModule = Mutators.Crankshaft
+```
+
+A Crankshaft movement is a rotation of all atoms between two randomly chosen alpha carbons according to a set of [`CrankshaftMutator`](@ref) parameters.
+
+```@docs
+CrankshaftMutator
+run!
+rotate_crankshaft!
+```

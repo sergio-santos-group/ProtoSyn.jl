@@ -1,7 +1,26 @@
 @doc raw"""
-    as_xyz(state::Common.State[, ostream::IO = stdout, title::String = "mol"])
+    as_xyz(io:IO, state::Common.State[, title::String = "mol"])
 
-Print the current [`Common.State`](@ref) as a .xyz file.
+Print the current [`Common.State`](@ref) as a .xyz file to the output `io`.
+
+# Examples
+```julia-repl
+julia> Drivers.MonteCarlo.load_parameters(file_xyz, state, title = "molecule")
+```
+"""
+function as_xyz(io::IO, state::Common.State; title::String="mol")
+    xyz = 10*state.xyz
+    write(io, "$(state.size)\n$title\n")
+    for i in 1:state.size
+        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", state.atnames[i][1], xyz[i,1], xyz[i,2], xyz[i,3]))")
+    end
+end
+
+
+@doc raw"""
+    as_xyz(state::Common.State[, title::String = "mol"])::String
+
+Print the current [`Common.State`](@ref) in .xyz format and returns a String.
 
 # Examples
 ```julia-repl
@@ -12,25 +31,14 @@ julia> Drivers.MonteCarlo.load_parameters(state, title = "molecule")
  H1      0.1200    1.3010    0.0000
 ```
 """
-function as_xyz(io::IO, state::Common.State, title::String="mol")
-    xyz = 10*state.xyz
-    write(io, "$(state.size)\n$title\n")
-    for i in 1:state.size
-        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", state.atnames[i][1], xyz[i,1], xyz[i,2], xyz[i,3]))")
-        # write(io, " $(@sprintf("%9.4f", xyz[i,1]))")
-        # write(io, " $(@sprintf("%9.4f", xyz[i,2]))") #Angstrom
-        # write(io, " $(@sprintf("%9.4f", xyz[i,3]))\n")
-    end
-end
-
-function as_xyz(state::Common.State, title::String = "mol")
+function as_xyz(state::Common.State; title::String = "mol")::String
     iobuffer = IOBuffer()
     as_xyz(iobuffer, state, title)
     return String(take!(iobuffer))
 end
 
 
-#TODO: Function is deprecated. Either return it to LIVE (and document it) or DELETE.
+#TODO: Function is DEPRECATED. Either return it to LIVE (and document it) or DELETE.
 function as_pdb(io::IO, state::Common.State, title::String="mol")
 
     write(io, "TITLE $title\nMODEL\n")

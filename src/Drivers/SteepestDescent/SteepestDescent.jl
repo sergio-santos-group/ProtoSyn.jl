@@ -30,9 +30,9 @@ julia> Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, f_tol = 1e-6
 SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0.1)
 ```
 !!! tip
-    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [`Forcefield`](@ref). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
+    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [Forcefield](@ref Forcefield). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
 
-See also: [`Forcefield.Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
+See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
 mutable struct SteepestDescentDriver
     
@@ -56,7 +56,7 @@ Run the main body of the Driver. If `driver.n_steps` is zero, a `single point` e
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.
 - `driver::SteepestDescentDriver`: Defines the parameters for the SteepestDescent simulation. See [`SteepestDescentDriver`](@ref).
-- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref)s (Default: empty).
+- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s (Default: empty).
 
 !!! tip
     The callback function often contains a [Print](@ref) function.

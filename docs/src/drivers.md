@@ -1,6 +1,6 @@
 # Drivers
 
-Drivers are a set set of functions that drive the simulation to new states, often exploring the conformational space of the system in Monte Carlo algorithms (with the combination of [Mutators](@ref) with acceptance/rejection rules) or the application of minimizers (such as the Steppest Descent Algorithm).
+Drivers are a set set of functions that drive the simulation to new states, often exploring the conformational space of the system in Monte Carlo algorithms (with the combination of [Mutators](@ref Mutators) with acceptance/rejection rules) or the application of minimizers (such as the Steppest Descent Algorithm).
 
 ## Monte Carlo
 

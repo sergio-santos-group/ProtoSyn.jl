@@ -31,7 +31,7 @@ julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!)
 MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, n_steps=0)
 ```
 !!! tip
-    Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [`Mutators`](@ref) and [`Forcefield`](@ref) modules, respectively.
+    Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [Mutators](@ref Mutators) and [Forcefield](@ref Forcefield) modules, respectively.
 
 See also: [`run!`](@ref)
 """

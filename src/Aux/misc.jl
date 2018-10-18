@@ -11,7 +11,7 @@ julia> Aux.rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
   0.944641    0.285714  0.16131 
  -0.320237    0.695833  0.642857
 ```
-See also: [`Common.rotate_dihedral!`](@ref Common)
+See also: [`rotate_dihedral!`](@ref Common)
 """
 function rotation_matrix_from_axis_angle(axis::Vector{Float64}, angle::Float64)
     q0 = cos(0.5 * angle)
@@ -33,7 +33,7 @@ Calculates the dihedral angle produced between a1, a2, a3 and a4, in degrees, by
 julia> Aux.calc_dih_angle([1.0, 1.0, 1.0], [2.1, 2.1, 2.1], [3.0, 2.0, 5.0], [5.0, 5.0, 5.0], radians = true)
 3.141592653589793
 ```
-See also: [`Common.apply_initial_conf!`](@ref Common)
+See also: [`apply_initial_conf!`](@ref Common)
 """
 function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64};
     radians::Bool = false)

@@ -4,34 +4,35 @@ using ..Common
 using ..Aux
 
 @doc raw"""
-    DihedralMutator(dihedrals::Vector{Common.Dihedral}, p_mut::Float64, angle_sampler::Function, step_size::Float64)
+    DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
 
 Holds all necessary parameters for the correct simulation of dihedral movements.
 
 # Arguments
 - `dihedrals::Vector{Common.Dihedral}`: List of dihedrals avaliable to be rotated in dihedral movements.
-- `p_mut::Float64`: Probability of rotation of each dihedral.
 - `angle_sampler::Function`: Function responsible for defining the new angle for the dihedral. Should return a `Float64`.
+- `p_mut::Float64`: Probability of rotation of each dihedral.
 - `step_size::Float64`: Scalar that defines the amount of change resulting for a dihedral movement.
 
 # Examples
 ```julia-repl
 julia> Mutators.Diehdral.DihedralMutator(dihedrals, 0.05, randn, 0.25)
-DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler="randn", step_size=0.25)
+DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)
 """
 mutable struct DihedralMutator
     dihedrals::Vector{Common.Dihedral}
-    p_mut::Float64
     angle_sampler::Function
+    p_mut::Float64
     step_size::Float64
 end
-Base.show(io::IO, b::DihedralMutator) = print(io, "DihedralMutator(dihedrals=$(length(b.dihedrals)), p_mut=$(b.p_mut), angle_sampler=$(string(b.angle_sampler)), step_size=$(b.step_size))")
+DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = DihedralMutator(dihedrals, angle_sampler, p_mut, step_size)
+Base.show(io::IO, b::DihedralMutator) = print(io, "DihedralMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
-#TODO: Document function
+
 @doc raw"""
-    run!(state::Common.State, dihedrals::Array{NewDihedral, 1}, params::Config.Parameters, angle_sampler::Function[, ostream::IO = stdout])
+    run!(state::Common.State, mutator::DihedralMutator)
 
 Iterate over a list of [`Common.Dihedral`](@ref) (`dihedrals`) and perform dihedral movements on the current
 [`Common.State`](@ref). The probability of each dihedral undergo movements is defined in the
@@ -41,7 +42,7 @@ After movement, the [`Common.State`](@ref) is updated with the new conformation.
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.run!(state, mutator)
+julia> Mutators.Dihedral.run!(state, mutator)
 ```
 See also: [`Common.rotate_dihedral!`](@ref Common)
 """
