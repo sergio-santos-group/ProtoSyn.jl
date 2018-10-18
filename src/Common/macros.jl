@@ -37,7 +37,7 @@ CallbackObject(callback=my_callback1, freq=10)
 ```
 """
 macro callback(f, freq)
-    ex = :(CallbackObject($f, $freq))
+    ex = :(Common.CallbackObject($f, $freq))
     esc(ex)
 end
 

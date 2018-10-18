@@ -77,6 +77,7 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
             acceptance_count += 1
         else
             state.xyz[:] = xyz0
+            state.energy.eTotal = ene0
         end
 
         @Common.cbcall callbacks step state driver (acceptance_count/step)

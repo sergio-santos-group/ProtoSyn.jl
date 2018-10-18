@@ -1,5 +1,5 @@
 # Examples
 
-## `ff_performance.jl`
+## 1CTF
 
-assess the performance of each forcefield evaluator.
+Performs various example simulations on the 1CTF protein structure.

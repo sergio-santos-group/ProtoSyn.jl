@@ -1,7 +1,0 @@
-{
-    "nsteps"      : 1000,
-    "print_every" : 10,
-    "fTol"        : 1e-8,
-    "max_step"    : 0.5,
-    "cut_off"     : 2.0
-}

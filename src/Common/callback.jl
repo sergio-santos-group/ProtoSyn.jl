@@ -8,7 +8,10 @@ Define the callback function parameters.
 
 # Arguments
 - `freq`: Frequency (in steps) that the callback function is called.
-- `callback`: Actual callback function.
+- `callback`: Actual callback function. This function should have the following signature:
+```
+callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+```
 
 # Examples
 ```julia-repl

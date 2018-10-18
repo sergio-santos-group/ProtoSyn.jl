@@ -9,10 +9,9 @@ julia> Drivers.MonteCarlo.load_parameters(file_xyz, state, title = "molecule")
 ```
 """
 function as_xyz(io::IO, state::Common.State; title::String="mol")
-    xyz = 10*state.xyz
     write(io, "$(state.size)\n$title\n")
-    for i in 1:state.size
-        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", state.atnames[i][1], xyz[i,1], xyz[i,2], xyz[i,3]))")
+    for (xyz, metadata) in state
+        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", metadata.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))")
     end
 end
 
