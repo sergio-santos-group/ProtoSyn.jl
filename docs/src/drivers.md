@@ -9,11 +9,9 @@ For each Driver a set of required `callback functions` is further explained, det
 CurrentModule = Drivers.MonteCarlo
 ```
 
-This section provides a description on the Monte Carlo Driver. This Driver iterates over a set amount of `steps` (defined in the [`ConfigParameters`](@ref)), sampling new conformations to the [`Common.State`](@ref) and accepting or rejecting them based on the Metropolis Algorithm.
+This section provides a description on the Monte Carlo Driver. This Driver iterates over a set amount of `steps` (defined in the [`MonteCarloDriver`](@ref)), sampling new conformations to the [`Common.State`](@ref) and accepting or rejecting them based on the Metropolis Algorithm.
 
 ```@docs
-ConfigParameters
-load_parameters
 run!
 ```
 

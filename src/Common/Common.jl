@@ -2,9 +2,14 @@ module Common
 
 using ..Aux
 
-include("components.jl")
+include("energy.jl")
+include("residue.jl")
+include("dihedral.jl")
+include("metadata.jl")
+include("state.jl")
+include("callback.jl")
 include("loaders.jl")
-include("dihedrals.jl")
 include("conf_gen.jl")
+include("macros.jl")
 
 end

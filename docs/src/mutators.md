@@ -10,12 +10,9 @@ CurrentModule = Mutators.Dihedral
 ```
 
 This section provides a description on the Dihedral mutator, responsible for performing a single dihedral
-movement according to a set of [`ConfigParameters`](@ref).
+movement according to a [`DihedralMutator`](@ref) set of parameters.
 
 ```@docs
-ConfigParameters
-NewDihedral
-load_topology
+DihedralMutator
 run!
-rotate_dihedral!
 ```
