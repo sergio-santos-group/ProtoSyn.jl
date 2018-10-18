@@ -57,15 +57,16 @@ function load_from_pdb(i_file::String)::State
 
     open(i_file, "r") do f
         for line in eachline(f)
-            if length(line) > 6 && line[1:6] == "ATOM  "
-                push!(xyz, map(x -> parse(Float64, x)/10, [line[31:38] line[39:46] line[47:54]]))
+            # if length(line) > 6 && line[1:6] == "ATOM  "
+            if startswith(line, "ATOM")
+                push!(xyz, map(x -> 0.1*parse(Float64, x), [line[31:38] line[39:46] line[47:54]]))
                 push!(metadata, AtomMetadata(string(strip(line[13:16])),
-                    elem = line[77:78],
+                    elem = string(strip(line[77:78])),
                     res_num = parse(Int64, line[23:26]),
-                    res_name = line[18:20],
+                    res_name = string(strip(line[18:20])),
                     chain_id = string(line[22]),
                     connects = nothing))
-            elseif length(line) > 6 && line[1:6] == "CONECT"
+            elseif startswith(line, "CONECT")
                 elem = split(line)
                 metadata[parse(Int64, elem[2])].connects = map(x -> parse(Int64, x), elem[3:end])
             end

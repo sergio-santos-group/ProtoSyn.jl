@@ -8,10 +8,10 @@ Print the current [`Common.State`](@ref) as a .xyz file to the output `io`.
 julia> Drivers.MonteCarlo.load_parameters(file_xyz, state, title = "molecule")
 ```
 """
-function as_xyz(io::IO, state::Common.State; title::String="mol")
+function as_xyz(io::IO, state::Common.State, title::String="mol")
     write(io, "$(state.size)\n$title\n")
     for (xyz, metadata) in state
-        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", metadata.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))")
+        write(io, @sprintf("%-4s %9.4f %9.4f %9.4f\n", metadata.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))
     end
 end
 
@@ -30,7 +30,7 @@ julia> Drivers.MonteCarlo.load_parameters(state, title = "molecule")
  H1      0.1200    1.3010    0.0000
 ```
 """
-function as_xyz(state::Common.State; title::String = "mol")::String
+function as_xyz(state::Common.State, title::String = "mol")::String
     iobuffer = IOBuffer()
     as_xyz(iobuffer, state, title)
     return String(take!(iobuffer))

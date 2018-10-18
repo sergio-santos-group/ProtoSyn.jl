@@ -1,10 +1,10 @@
 module Print
 
-    using Printf
+using Printf
 
-    using ..Common
-    using ..Forcefield
+using ..Common
+using ..Forcefield
 
-    include("state_printer.jl")
+include("state_printer.jl")
 
 end
