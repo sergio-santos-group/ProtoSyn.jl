@@ -13,21 +13,32 @@ julia> @Common.cbcall (callback_object1, callback_object2) 1
 ```
 """
 macro cbcall(cbs, step, args...)
-    println(eval(cbs))
-    tmp = eval(cbs)
 
-    if length(tmp) == 0
-        ex = :nothing
-    else
-        ex = quote
-            for cb in $cbs
-                if (getproperty(cb, :freq)>0) && ($step%getproperty(cb, :freq)==0)
-                    getproperty(cb, :callback)($step, $(args...))
-                end
+    ex = quote
+        for cb in $cbs
+            if (getproperty(cb, :freq)>0) && ($step%getproperty(cb, :freq)==0)
+                getproperty(cb, :callback)($step, $(args...))
             end
         end
     end
     return esc(ex)
+end
+
+
+@doc raw"""
+    @Common.callback f::Function freq::Int64
+
+(Macro) Create a [`CallbackObject`](@ref) with the given function `f` and output frequency `freq`. 
+
+# Examples
+```julia-repl
+julia> @Common.callback my_callback1 10
+CallbackObject(callback=my_callback1, freq=10)
+```
+"""
+macro callback(f, freq)
+    ex = :(CallbackObject($f, $freq))
+    esc(ex)
 end
 
 # ----------------------------------------------------------------------------------------------------------

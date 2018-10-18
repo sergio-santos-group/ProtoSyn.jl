@@ -8,7 +8,7 @@ using LinearAlgebra
 @doc raw"""
     SteepestDescentDriver(evaluator!::Function[, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1])
 
-Define the runtime parameters for the Monte Carlo simulation.
+Define the runtime parameters for the Steepest Descent simulation.
 If `n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
@@ -38,8 +38,8 @@ mutable struct SteepestDescentDriver
     f_tol::Float64
     max_step::Float64
 
-    SteepestDescentDriver(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = new(evaluator!, n_steps, f_tol, max_step)
 end
+SteepestDescentDriver(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = SteepestDescentDriver(evaluator!, n_steps, f_tol, max_step)
 Base.show(io::IO, b::SteepestDescentDriver) = print(io, "SteepestDescentDriver(evaluator!=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
 
 # ----------------------------------------------------------------------------------------------------------

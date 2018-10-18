@@ -4,7 +4,6 @@ mutable struct CallbackObject
 end
 
 macro callback(freq, f)
-    # println(f)
     ex = :(CallbackObject($freq, $f))
     println(ex)
     esc(ex)

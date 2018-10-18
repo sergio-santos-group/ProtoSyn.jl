@@ -27,6 +27,7 @@ Simple energy container.
 ```julia-repl
 julia> Common.Energy(1.15)
 Energy(eTotal=1.15)
+
 julia> Common.Energy()
 Energy(eTotal=0.0)
 ```

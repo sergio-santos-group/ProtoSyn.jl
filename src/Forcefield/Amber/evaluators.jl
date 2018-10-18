@@ -288,7 +288,7 @@ See also: [`evaluate!`](@ref)
 """
 function evaluate!(topology::Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
-
+    
     energy = 0.0
     energy += evaluate!(topology.bonds, state, do_forces = do_forces)
     energy += evaluate!(topology.angles, state, do_forces = do_forces)

@@ -12,14 +12,17 @@ Define the callback function parameters.
 
 # Examples
 ```julia-repl
-julia> Common.CallbackObject(1, Print.as_xyz)
-CallbackObject(freq=1, callback=Print.as_xyz)
+julia> Common.CallbackObject(100, Print.as_xyz)
+CallbackObject(callback=Print.as_xyz, freq=100)
 
-See also: [`Print.as_xyz`](@ref Print) [`cbcall`](@ref)
+julia> Common.CallbackObject(Print.as_xyz)
+CallbackObject(callback=Print.as_xyz, freq=1)
 ```
+See also: [`Print.as_xyz`](@ref Print) [`cbcall`](@ref)
 """
 mutable struct CallbackObject
-    freq::Int64
     callback::Function
+    freq::Int64
 end
-Base.show(io::IO, b::CallbackObject) = print(io, "CallbackObject(freq=$(b.freq), callback=$(string(b.callback)))")
+CallbackObject(callback::Function; freq::Int64 = 1) = CallbackObject(callback, freq)
+Base.show(io::IO, b::CallbackObject) = print(io, "CallbackObject(callback=$(string(b.callback)), freq=$(b.freq))")
