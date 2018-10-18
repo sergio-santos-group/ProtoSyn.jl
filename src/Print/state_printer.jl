@@ -12,42 +12,52 @@ julia> Drivers.MonteCarlo.load_parameters(state, title = "molecule")
  H1      0.1200    1.3010    0.0000
 ```
 """
-function as_xyz(state::Common.State;
-    ostream::IO = stdout, title::String = "mol")
-
-    atom_count = size(state.xyz, 1)
-    write(ostream, "$atom_count\n $title\n")
-    for atom_index in 1:atom_count
-        write(ostream, " $(@sprintf("%-4s", state.atnames[atom_index]))")
-        write(ostream, " $(@sprintf("%9.4f", state.xyz[atom_index, :][1]*10))")
-        write(ostream, " $(@sprintf("%9.4f", state.xyz[atom_index, :][2]*10))") #Angstrom
-        write(ostream, " $(@sprintf("%9.4f", state.xyz[atom_index, :][3]*10))\n")
+function as_xyz(io::IO, state::Common.State, title::String="mol")
+    xyz = 10*state.xyz
+    write(io, "$(state.size)\n$title\n")
+    for i in 1:state.size
+        write(io, "$(@sprintf("%-4s %9.4f %9.4f %9.4f\n", state.atnames[i][1], xyz[i,1], xyz[i,2], xyz[i,3]))")
+        # write(io, " $(@sprintf("%9.4f", xyz[i,1]))")
+        # write(io, " $(@sprintf("%9.4f", xyz[i,2]))") #Angstrom
+        # write(io, " $(@sprintf("%9.4f", xyz[i,3]))\n")
     end
 end
 
-#TODO: Function is deprecated. Either return it to LIVE (and document it) or DELETE.
-function as_pdb(state::Common.State;
-    ostream::IO = stdout, title::String = "mol")
+function as_xyz(state::Common.State, title::String = "mol")
+    iobuffer = IOBuffer()
+    as_xyz(iobuffer, state, title)
+    return String(take!(iobuffer))
+end
 
-    atom_count = size(state.xyz, 1)
-    write(ostream, "TITLE $title\n")
-    write(ostream, "MODEL $title\n")
-    for atom_index in 1:atom_count
-        write(ostream, "ATOM")
-        write(ostream, "$(@sprintf("%7d ", atom_index))")
-        write(ostream, "$(@sprintf("%-5s", state.atnames[atom_index]))")
-        write(ostream, "$(@sprintf("%-3s A", state.residues[atom_index][2]))")
-        write(ostream, "$(@sprintf("  %-3d   ", state.residues[atom_index][1]))")
-        write(ostream, "$(@sprintf("%8.3f", state.xyz[atom_index, :][1]*10))")
-        write(ostream, "$(@sprintf("%8.3f", state.xyz[atom_index, :][2]*10))") #Angstrom
-        write(ostream, "$(@sprintf("%8.3f  1.00  0.00", state.xyz[atom_index, :][3]*10))\n")
+
+#TODO: Function is deprecated. Either return it to LIVE (and document it) or DELETE.
+function as_pdb(io::IO, state::Common.State, title::String="mol")
+
+    write(io, "TITLE $title\nMODEL\n")
+    for atom_index in 1:state.size
+        write(io, "ATOM")
+        write(io, "$(@sprintf("%7d ", atom_index))")
+        write(io, "$(@sprintf("%-5s", state.atnames[atom_index]))")
+        write(io, "$(@sprintf("%-3s A", "ALA"))")
+        write(io, "$(@sprintf("  %-3d   ", 1))")
+        # write(io, "$(@sprintf("%-3s A", state.residues[atom_index][2]))")
+        # write(io, "$(@sprintf("  %-3d   ", state.residues[atom_index][1]))")
+        write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][1]*10))")
+        write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][2]*10))") #Angstrom
+        write(io, "$(@sprintf("%8.3f  1.00  0.00", state.xyz[atom_index, :][3]*10))\n")
     end
-    write(ostream, "TER")
-    for list in state.conects
-        write(ostream, "\nCONECT")
-        for at in list
-            write(ostream, "$(@sprintf("%5d", at))")  
-        end
-    end
-    write(ostream, "\nTER\nENDMDL\n")
+    # write(ostream, "TER")
+    # for list in state.conects
+    #     write(ostream, "\nCONECT")
+    #     for at in list
+    #         write(ostream, "$(@sprintf("%5d", at))")  
+    #     end
+    # end
+    write(io, "ENDMDL\n")
+end
+
+function as_pdb(state::Common.State, title::String = "mol")
+    iobuffer = IOBuffer()
+    as_pdb(iobuffer, state, title)
+    return String(take!(iobuffer))
 end
