@@ -80,8 +80,8 @@ end
 @doc raw"""
     load_topology(p::Dict{String, Any})
 
-Parse a dictionary containing the dihedral and residue topology. Return a [`NewDihedral`](@ref) array
-and a [`Common.Residue`](@ref) array.
+Parse a dictionary containing the dihedral and residue topology. Return a [`Dihedral`](@ref) array
+and a [`Residue`](@ref) array.
 
 # Examples
 ```julia-repl

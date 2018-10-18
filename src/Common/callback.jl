@@ -18,7 +18,7 @@ CallbackObject(callback=Print.as_xyz, freq=100)
 julia> Common.CallbackObject(Print.as_xyz)
 CallbackObject(callback=Print.as_xyz, freq=1)
 ```
-See also: [`Print.as_xyz`](@ref Print) [`cbcall`](@ref)
+See also: [`Print.as_xyz`](@ref Print) [`@cbcall`](@ref)
 """
 mutable struct CallbackObject
     callback::Function

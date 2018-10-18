@@ -166,8 +166,8 @@ julia> Forcefield.evaluate!(bonds, state)
 0.500
 ```
 
-See also: [`evalenergy!`](@ref) [`Forcefield.HarmonicBond`](@ref) [`Forcefield.HarmonicAngle`](@ref)
-[`Forcefield.DihedralCos`](@ref) [`Forcefield.Atom`](@ref)
+See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
+[`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
 function evaluate!(atoms::Vector{Atom}, state::Common.State;
     do_forces::Bool = false, cut_off::Float64 = 2.0)
@@ -273,7 +273,7 @@ end
 @doc raw"""
     evaluate!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
 
-Evaluate the current [`Common.State`](@ref) energy according to the defined [`Forcefield.Topology`](@ref).
+Evaluate the current [`Common.State`](@ref) energy according to the defined [`Amber.Topology`](@ref Forcefield).
 If `do_forces` bool is set to `true`, calculate and update `state.forces`.
 Non-bonded interactions are only assessed if the distance between atoms is below the defined `cut_off` value.
 Return `state.energy.eTotal` value (kJ mol⁻¹).
@@ -284,7 +284,7 @@ julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
 0.500
 ```
 
-See also: [`evaluate!`](@ref)
+See also: [`Amber.evaluate!`](@ref)
 """
 function evaluate!(topology::Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)

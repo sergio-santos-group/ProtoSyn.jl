@@ -5,29 +5,35 @@ using ..Common
 using Printf
 
 @doc raw"""
-    MonteCarloDriver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 1])
+    MonteCarloDriver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0])
+
 Define the runtime parameters for the Monte Carlo simulation.
-If `n_steps` is one, a `single point` Monte Carlo movement is performed and either accepted or not.
+No `sampler!` movement is performed by default, since n_steps = 0.
 
 # Arguments
-- `evaluator!::Function`: Responsible for evaluating the current `state.energy` and calculate the resulting forces. This function should have the following signature:
+- `sampler!::Function`: Responsible for generating a new structure to be evaluated. This function should have the following signature:
+```
+sampler!(state::Common.State)
+```
+- `evaluator!::Function`: Responsible for evaluating the system energy. This function should have the following signature:
 ```
 evaluator!(state::Common.State, do_forces::Bool)
 ```
-- `n_steps`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
-- `f_tol`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
-- `max_step`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
-- `ostream`: (Optional) Defines the output stream for logging
+- `temperature::Float64`: (Optional) Temperature of the system, determines acceptance in the Metropolis algorithm (Default: 1.0).
+- `n_steps`: (Optional) Total amount of steps to be performed (Default: 0).
 
 # Examples
 ```julia-repl
-julia> Drivers.SteepestDescent.ConfigParameters(Forcefield.evalenergy!, 100, 1e-3, 0.1)
-Drivers.SteepestDescent.ConfigParameters(evaluator!=Forcefield.evalenergy!, n_steps=100, f_tol=1e-3, max_step=0.1)
+julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!, 10.0, 1000)
+MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000)
 
-julia> Drivers.SteepestDescent.ConfigParameters(Forcefield.evalenergy!, f_tol = 1e-6)
-Drivers.SteepestDescent.ConfigParameters(evaluator!=Forcefield.evalenergy!, n_steps=0, f_tol=1e-6, max_step=0.1)
+julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!)
+MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, n_steps=0)
 ```
-See also: [`load_parameters`](@ref) [`Forcefield.Amber.evalenergy!`](@ref Forcefield)
+!!! tip
+    Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [`Mutators`](@ref) and [`Forcefield`](@ref) modules, respectively.
+
+See also: [`run!`](@ref)
 """
 mutable struct MonteCarloDriver
 
@@ -38,8 +44,21 @@ mutable struct MonteCarloDriver
 
 end
 MonteCarloDriver(sampler!::Function, evaluator!::Function; temperature::Float64 = 1.0, n_steps::Int64 = 0) = MonteCarloDriver(sampler!, evaluator!, temperature, n_steps)
+Base.show(io::IO, b::MonteCarloDriver) = print(io, "MonteCarloDriver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
 
-#TODO: Document function
+
+@doc raw"""
+    run!(state::Common.State, driver::MonteCarloDriver[, callbacks::Tuple{Common.CallbackObject}...])
+
+Run the main body of the driver. Creates a new conformation based on `driver.sampler!`, evaluates the new conformation energy using `driver.evaluator!`,
+accepting it or not depending on the `driver.temperature` in a Metropolis algorithm. This Monte Carlo process is repeated for `driver.n_steps`, saving the
+accepted structures to `state` and calling all the `callbacks`. 
+
+# Examples
+```julia-repl
+julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
+```
+"""
 function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.CallbackObject...)
     
     step = 0

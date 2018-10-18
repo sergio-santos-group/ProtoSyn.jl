@@ -1,7 +1,7 @@
 @doc raw"""
     load_from_json(i_file::String)::Forcefield.Topology
 
-Gather all topology components and return a [`Forcefield.Topology`](@ref) object, parsing a JSON file.
+Gather all topology components and return a [`Amber.Topology`](@ref Forcefield) object, parsing a JSON file.
 
 # Examples
 ```julia-repl

@@ -23,13 +23,16 @@ evaluator!(state::Common.State, do_forces::Bool)
 
 # Examples
 ```julia-repl
-julia> Drivers.SteepestDescent.ConfigParameters(Forcefield.evalenergy!, 100, 1e-3, 0.1)
-Drivers.SteepestDescent.ConfigParameters(evaluator!=Forcefield.evalenergy!, n_steps=100, f_tol=1e-3, max_step=0.1)
+julia> Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, 100, 1e-3, 0.1)
+SteepestDescentDriver(evaluator=my_evaluator!, n_steps=100, f_tol=1e-3, max_step=0.1)
 
-julia> Drivers.SteepestDescent.ConfigParameters(Forcefield.evalenergy!, f_tol = 1e-6)
-Drivers.SteepestDescent.ConfigParameters(evaluator!=Forcefield.evalenergy!, n_steps=0, f_tol=1e-6, max_step=0.1)
+julia> Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, f_tol = 1e-6)
+SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0.1)
 ```
-See also: [`load_parameters`](@ref) [`Forcefield.Amber.evalenergy!`](@ref Forcefield)
+!!! tip
+    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [`Forcefield`](@ref). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
+
+See also: [`Forcefield.Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
 mutable struct SteepestDescentDriver
     
@@ -40,7 +43,7 @@ mutable struct SteepestDescentDriver
 
 end
 SteepestDescentDriver(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = SteepestDescentDriver(evaluator!, n_steps, f_tol, max_step)
-Base.show(io::IO, b::SteepestDescentDriver) = print(io, "SteepestDescentDriver(evaluator!=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
+Base.show(io::IO, b::SteepestDescentDriver) = print(io, "SteepestDescentDriver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
@@ -65,8 +68,6 @@ julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, ca
 """
 function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Common.CallbackObject...)
 
-    println("CALLBACKS:", callbacks)
-
     @inline function get_max_force(f::Array{Float64, 2})
         return sqrt(maximum(sum(f.*f, dims = 2)))
     end
@@ -80,7 +81,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     step::Int64 = 0
     
     # Initial callback
-    # @Common.cbcall callbacks step state driver
+    @Common.cbcall callbacks step state driver
     
     while step < params.n_steps
         step += 1
@@ -99,7 +100,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         max_force = get_max_force(state.forces)
 
         # Call callback function and output information to log 
-        # @Common.cbcall callbacks step state driver
+        @Common.cbcall callbacks step state driver
         
         # Check if force convergence was achieved
         if max_force < params.f_tol
@@ -122,7 +123,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     end
 
     #Final callback
-    # @Common.cbcall callbacks step state driver
+    @Common.cbcall callbacks step state driver
 end
 
 end
