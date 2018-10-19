@@ -73,7 +73,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     end
 
     # Evaluate initial energy and forces
-    energy::Float64 = evaluator!(state, true)
+    energy::Float64 = driver.evaluator!(state, true)
     max_force::Float64  = get_max_force(state.forces)
     energy_old = energy
     
@@ -81,36 +81,36 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     step::Int64 = 0
     
     # Initial callback
-    @Common.cbcall callbacks step state driver
+    @Common.cbcall callbacks step state driver max_force gamma
     
-    while step < params.n_steps
+    while step < driver.n_steps
         step += 1
 
         # Update system coordinates
-        gamma = min(gamma, params.max_step)
-        stepsize = gamma / get_max_force(state.forces)
-        @. state.xyz += stepsize * state.forces
+        gamma = min(gamma, driver.max_step)
+        step_size = gamma / get_max_force(state.forces)
+        @. state.xyz += step_size * state.forces
 
         # Housekeep variables
         energy_old = energy
 
         # Calculate new energy and forces
         fill!(state.forces, 0.0)
-        energy = evaluator!(state, true)
+        energy = driver.evaluator!(state, true)
         max_force = get_max_force(state.forces)
 
         # Call callback function and output information to log 
-        @Common.cbcall callbacks step state driver
+        @Common.cbcall callbacks step state driver max_force gamma
         
         # Check if force convergence was achieved
-        if max_force < params.f_tol
-            write(driver.ostream, "Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
+        if max_force < driver.f_tol
+            println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
             break
         end
         
         # Check if gamma is below machine precision
         if gamma < eps()
-            write(driver.ostream, "Gamma below machine precision! Exiting ...\n")
+            println("Gamma below machine precision! Exiting ...\n")
             break
         end
         
@@ -123,7 +123,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     end
 
     #Final callback
-    @Common.cbcall callbacks step state driver
+    @Common.cbcall callbacks step state driver max_force gamma
 end
 
 end
