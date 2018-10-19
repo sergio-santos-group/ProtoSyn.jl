@@ -35,8 +35,7 @@ julia> Aux.calc_dih_angle([1.0, 1.0, 1.0], [2.1, 2.1, 2.1], [3.0, 2.0, 5.0], [5.
 ```
 See also: [`apply_initial_conf!`](@ref Common)
 """
-function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64};
-    radians::Bool = false)
+function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64})
 
     b1 = a2 - a1
     b2 = a3 - a2
@@ -45,11 +44,6 @@ function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Flo
     n2 = cross(b2, b3)
     x = dot(cross(n1, n2), b2) / sqrt(dot(b2, b2))
     y = dot(n1, n2)
-    v = atan(x, y)
+    return atan(x, y)
 
-    if radians
-        return v
-    else
-        return rad2deg(v)
-    end
 end

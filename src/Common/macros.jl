@@ -32,12 +32,15 @@ end
 
 # Examples
 ```julia-repl
-julia> @Common.callback my_callback1 10
-CallbackObject(callback=my_callback1, freq=10)
+julia> @Common.callback 10 my_callback1
+CallbackObject(freq=10, callback=my_callback1)
+
+julia> @Common.callback my_callback1
+CallbackObject(freq=1, callback=my_callback1)
 ```
 """
-macro callback(f, freq)
-    ex = :(Common.CallbackObject($f, $freq))
+macro callback(args...)
+    ex = :(Common.CallbackObject($(args...)))
     esc(ex)
 end
 

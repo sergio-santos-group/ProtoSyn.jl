@@ -16,16 +16,16 @@ callback(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver,
 # Examples
 ```julia-repl
 julia> Common.CallbackObject(100, Print.as_xyz)
-CallbackObject(callback=Print.as_xyz, freq=100)
+CallbackObject(freq=100, callback=Print.as_xyz)
 
 julia> Common.CallbackObject(Print.as_xyz)
-CallbackObject(callback=Print.as_xyz, freq=1)
+CallbackObject(freq=1, callback=Print.as_xyz)
 ```
 See also: [`Print.as_xyz`](@ref Print) [`@cbcall`](@ref)
 """
 mutable struct CallbackObject
-    callback::Function
     freq::Int64
+    callback::Function
 end
-CallbackObject(callback::Function; freq::Int64 = 1) = CallbackObject(callback, freq)
-Base.show(io::IO, b::CallbackObject) = print(io, "CallbackObject(callback=$(string(b.callback)), freq=$(b.freq))")
+CallbackObject(callback::Function) = CallbackObject(1, callback)
+Base.show(io::IO, b::CallbackObject) = print(io, "CallbackObject(freq=$(b.freq), callback=$(string(b.callback)))")
