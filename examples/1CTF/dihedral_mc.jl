@@ -43,17 +43,17 @@ end
 
 
 #8. DEFINE THE CALLBACKS --------------------------------------------------------------------------------------
-callback1 = @Common.callback function callback_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+callback1 = @Common.callback 10 function callback_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
-end 10
+end
 # callback1 = Common.CallbackObject(callback_status, 10)
 
 
 file_xyz = open("out/trajectory.xyz", "w")
 function callback_print(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
-    Print.as_xyz(file_xyz, st, title = "Step: $step")
+    Print.as_xyz(file_xyz, st, "Step: $step")
 end
-callback2 = Common.CallbackObject(callback_print, 100)
+callback2 = Common.CallbackObject(100, callback_print)
 
 
 #9. DEFINE THE DRIVER PARAMETERS AND RUN THE SIMULATION -------------------------------------------------------

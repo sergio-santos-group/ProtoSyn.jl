@@ -31,8 +31,7 @@ function apply_initial_conf!(state::State, dihedrals::Vector{Dihedral})
             state.xyz[dihedral.a1, :],
             state.xyz[dihedral.a2, :],
             state.xyz[dihedral.a3, :],
-            state.xyz[dihedral.a4, :],
-            radians = true)
+            state.xyz[dihedral.a4, :])
 
         #3) Calculate necessary displacement to target angles
         displacement = t_angles[dihedral.residue.ss][dihedral.dtype] - current_angle
