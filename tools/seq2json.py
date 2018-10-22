@@ -28,7 +28,6 @@ print len(m2.get_coordinates())
 m.set_coordinates(m2.get_coordinates())
 
 
-
 def re_place(target, pos1, pos2):
     target.insert(pos2, target[pos1])
     target.pop(pos1)

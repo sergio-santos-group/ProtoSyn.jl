@@ -38,30 +38,54 @@ end
 
 
 #TODO: Function is DEPRECATED. Either return it to LIVE (and document it) or DELETE.
-function as_pdb(io::IO, state::Common.State, title::String="mol")
-
-    write(io, "TITLE $title\nMODEL\n")
-    for atom_index in 1:state.size
-        write(io, "ATOM")
-        write(io, "$(@sprintf("%7d ", atom_index))")
-        write(io, "$(@sprintf("%-5s", state.atnames[atom_index]))")
-        write(io, "$(@sprintf("%-3s A", "ALA"))")
-        write(io, "$(@sprintf("  %-3d   ", 1))")
-        # write(io, "$(@sprintf("%-3s A", state.residues[atom_index][2]))")
-        # write(io, "$(@sprintf("  %-3d   ", state.residues[atom_index][1]))")
-        write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][1]*10))")
-        write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][2]*10))") #Angstrom
-        write(io, "$(@sprintf("%8.3f  1.00  0.00", state.xyz[atom_index, :][3]*10))\n")
+function as_pdb(io::IO, state::Common.State; title::String="mol", step::Int64=1)
+    write(io, "TITLE $title\nMODEL $step\n")
+    for (index, (xyz, metadata)) in enumerate(state)
+        write(io, "$(@sprintf("%-6s", "ATOM"))")
+        write(io, "$(@sprintf("%5d  ", index))")
+        write(io, "$(@sprintf("%-3s ", metadata.name))")
+        write(io, "$(@sprintf("%-3s A", metadata.res_name))")
+        write(io, "$(@sprintf("%4d    ", metadata.res_num))")
+        write(io, "$(@sprintf("%8.3f", xyz[1]*10))")
+        write(io, "$(@sprintf("%8.3f", xyz[2]*10))") #Angstrom
+        write(io, "$(@sprintf("%8.3f  1.00  0.00", xyz[3]*10))\n")
     end
-    # write(ostream, "TER")
-    # for list in state.conects
-    #     write(ostream, "\nCONECT")
-    #     for at in list
-    #         write(ostream, "$(@sprintf("%5d", at))")  
-    #     end
-    # end
-    write(io, "ENDMDL\n")
+    write(io, "TER")
+    for (index, (xyz, metadata)) in enumerate(state)
+        if metadata.connects != nothing
+            write(io, "\nCONECT$(@sprintf("%5d", index))")
+            for at in metadata.connects
+                write(io, "$(@sprintf("%5d", at))")  
+            end
+        end
+    end
+    write(io, "\nENDMDL\n")
 end
+
+# function as_pdb(io::IO, state::Common.State, title::String="mol")
+
+#     write(io, "TITLE $title\nMODEL\n")
+#     for atom_index in 1:state.size
+#         write(io, "ATOM")
+#         write(io, "$(@sprintf("%7d ", atom_index))")
+#         write(io, "$(@sprintf("%-5s", state.atnames[atom_index]))")
+#         write(io, "$(@sprintf("%-3s A", "ALA"))")
+#         write(io, "$(@sprintf("  %-3d   ", 1))")
+#         # write(io, "$(@sprintf("%-3s A", state.residues[atom_index][2]))")
+#         # write(io, "$(@sprintf("  %-3d   ", state.residues[atom_index][1]))")
+#         write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][1]*10))")
+#         write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][2]*10))") #Angstrom
+#         write(io, "$(@sprintf("%8.3f  1.00  0.00", state.xyz[atom_index, :][3]*10))\n")
+#     end
+#     # write(ostream, "TER")
+#     # for list in state.conects
+#     #     write(ostream, "\nCONECT")
+#     #     for at in list
+#     #         write(ostream, "$(@sprintf("%5d", at))")  
+#     #     end
+#     # end
+#     write(io, "ENDMDL\n")
+# end
 
 function as_pdb(state::Common.State, title::String = "mol")
     iobuffer = IOBuffer()

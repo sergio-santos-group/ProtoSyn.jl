@@ -60,7 +60,7 @@ function load_from_pdb(i_file::String)::State
             # if length(line) > 6 && line[1:6] == "ATOM  "
             if startswith(line, "ATOM")
                 push!(xyz, map(x -> 0.1*parse(Float64, x), [line[31:38] line[39:46] line[47:54]]))
-                push!(metadata, AtomMetadata(string(strip(line[13:16])),
+                push!(metadata, AtomMetadata(string(strip(line[14:16])),
                     elem = string(strip(line[77:78])),
                     res_num = parse(Int64, line[23:26]),
                     res_name = string(strip(line[18:20])),

@@ -47,11 +47,11 @@ julia> Mutators.Dihedral.run!(state, mutator)
 See also: [`Common.rotate_dihedral!`](@ref Common)
 """
 @inline function run!(state::Common.State, mutator::DihedralMutator)
+    
     for dihedral in mutator.dihedrals
         if rand() < mutator.p_mut
             Common.rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
         end
-        # xyz[idxs, :] = (rmat * (xyz[idxs, :] .- pivot)')' .+ pivot
     end
 end
 
