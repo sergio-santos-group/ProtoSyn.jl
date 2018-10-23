@@ -10,12 +10,23 @@ CurrentModule = Mutators.Dihedral
 ```
 
 This section provides a description on the Dihedral mutator, responsible for performing a single dihedral
-movement according to a set of [`ConfigParameters`](@ref).
+movement according to a [`DihedralMutator`](@ref) set of parameters.
 
 ```@docs
-ConfigParameters
-NewDihedral
-load_topology
+DihedralMutator
 run!
-rotate_dihedral!
+```
+
+## Crankshaft
+
+```@meta
+CurrentModule = Mutators.Crankshaft
+```
+
+A Crankshaft movement is a rotation of all atoms between two randomly chosen alpha carbons according to a set of [`CrankshaftMutator`](@ref) parameters.
+
+```@docs
+CrankshaftMutator
+run!
+rotate_crankshaft!
 ```

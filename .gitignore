@@ -9,3 +9,6 @@ docs/build/
 docs/site/
 .vscode/
 out/
+.ipynb_checkpoints/
+private/
+

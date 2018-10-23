@@ -23,7 +23,7 @@ r_{ab} = \|\vec{r_{ab}}\| = \|\vec{r_b} - \vec{r_a}\|
 julia> Forcefield.HarmonicBond(1, 2, 2500, 0.19)
 Forcefield.HarmonicBond(a1=1, a2=2, k=2500.0, b0=0.19)
 ```
-See algo: [`evaluate!`](@ref)
+See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
 mutable struct HarmonicBond
     
@@ -56,7 +56,7 @@ E(θ_{abc})=\frac{1}{2}k_{abc}(\theta_{abc}-\theta)^{2}
 julia> Forcefield.HarmonicAngle(1, 2, 3, 670.0, 1.92)
 Forcefield.HarmonicAngle(a1=1, a2=2, a3=3, k=670.0, θ=1.92)
 ```
-See algo: [`evaluate!`](@ref)
+See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
 mutable struct HarmonicAngle
     
@@ -108,7 +108,7 @@ E(\phi_{abcd})=K_{\phi}(1+cos(n\phi_{abcd}-\phi))
 julia> Forcefield.DihedralCos(1, 2, 3, 4, 10.46, 180.0, 2.0)
 Forcefield.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0)
 ```
-See algo: [`evaluate!`](@ref)
+See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
 mutable struct DihedralCos
 
@@ -172,7 +172,7 @@ as a result).
 julia> Forcefield.Atom("N", 0.325, 0.711, 0.0017, [0, 1, 2, 3, 4, 5], [4, 5])
 Forcefield.Atom(name="N", σ=0.325, ϵ=0.711, q=0.0017, excls=[0, 1, 2, 3, 4, 5], pairs=[4, 5])
 ```
-See algo: [`evaluate!`](@ref)
+See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
 mutable struct Atom
 
@@ -210,7 +210,7 @@ Forcefield.Topology(
  angles=ProtoSyn.Forcefield.HarmonicAngle[Forcefield.HarmonicAngle(a1=1, a2=2, a3=3, k=670.0, θ=1.92), ...],
  dihedralsCos=ProtoSyn.Forcefield.DihedralCos[Forcefield.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0), ...])
 ```
-See also: [`Forcefield.load_from_json`](@ref)
+See also: [`Amber.load_from_json`](@ref Forcefield)
 """
 mutable struct Topology
 
@@ -238,7 +238,7 @@ Forcefield.Energy(eBond=0.0, eAngle=0.0, eDihedral=0.0, eLJ=0.0, eLJ14=0.0, eCou
 julia> Forcefield.Energy(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 2.8)
 Forcefield.Energy(eBond=0.1, eAngle=0.2, eDihedral=0.3, eLJ=0.4, eLJ14=0.5, eCoulomb=0.6, eCoulomb14=0.7, eTotal=2.8)
 ```
-See also: [`Forcefield.evalenergy!`](@ref)
+See also: [`Amber.evaluate!`](@ref Forcefield)
 """
 mutable struct Energy <: Common.AbstractEnergy
     eBond::Float64

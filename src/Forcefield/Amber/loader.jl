@@ -1,7 +1,7 @@
 @doc raw"""
     load_from_json(i_file::String)::Forcefield.Topology
 
-Gather all topology components and return a [`Forcefield.Topology`](@ref) object, parsing a JSON file.
+Gather all topology components and return a [`Amber.Topology`](@ref Forcefield) object, parsing a JSON file.
 
 # Examples
 ```julia-repl
@@ -13,7 +13,7 @@ Forcefield.Topology(
  dihedralsCos=ProtoSyn.Forcefield.DihedralCos[Forcefield.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0), ...])
 ```
 """
-function load_from_json(i_file::String)::Forcefield.Topology
+function load_from_json(i_file::String)::Topology
     
     #Parse JSON file content to Dictionary
     ffield = Dict()
@@ -23,7 +23,7 @@ function load_from_json(i_file::String)::Forcefield.Topology
     end
 
     #Create atoms
-    atoms = Array{Forcefield.Atom, 1}()
+    atoms = Vector{Atom}()
     for (index, atom) in enumerate(ffield["atoms"])
         index = index - 1
         name = ffield["atomtypes"][string(atom["type"])]["name"]
@@ -32,7 +32,7 @@ function load_from_json(i_file::String)::Forcefield.Topology
         ε = ffield["atomtypes"][string(atom["type"])]["epsilon"]
         pre_excls = map(x -> x + 1, ffield["excls"][string(index)])
         excls = push!(pre_excls, -1)
-        pairs = Array{Int64, 1}()
+        pairs = Vector{Int64}()
         for pair in ffield["pairs"]
             if pair["a1"] == index
                 push!(pairs, (pair["a2"] + 1))
@@ -41,7 +41,7 @@ function load_from_json(i_file::String)::Forcefield.Topology
 
         #σ, ϵ and q are multiplied by the constants so that the geometric and arithmetic averages are
         #correct in the energy calculations (Inside the ATOM constructor)
-        push!(atoms, Forcefield.Atom(name, σ, ε, q, excls, pairs))
+        push!(atoms, Atom(name, σ, ε, q, excls, pairs))
     end
 
     #Fix bonds, angles and dihedrals numbering
@@ -56,33 +56,33 @@ function load_from_json(i_file::String)::Forcefield.Topology
     end
 
     #Create bonds
-    bonds = Array{Forcefield.HarmonicBond, 1}()
+    bonds = Vector{HarmonicBond}()
     for bond in ffield["bonds"]
         cb = ffield["bondtypes"][string(bond["type"])]["cb"]
         b0 = ffield["bondtypes"][string(bond["type"])]["b0"]
-        new_bond = Forcefield.HarmonicBond(bond["a1"], bond["a2"], cb, b0)
+        new_bond = HarmonicBond(bond["a1"], bond["a2"], cb, b0)
         push!(bonds, new_bond)
     end
 
     #Create angles
-    angles = Array{Forcefield.HarmonicAngle, 1}()
+    angles = Vector{HarmonicAngle}()
     for angle in ffield["angles"]
         th = ffield["angletypes"][string(angle["type"])]["th"]
         ct = ffield["angletypes"][string(angle["type"])]["ct"]
-        new_angle = Forcefield.HarmonicAngle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
+        new_angle = HarmonicAngle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
         push!(angles, new_angle)
     end
 
     #Create dihedrals
-    dihedralsCos = Array{Forcefield.DihedralCos, 1}()
+    dihedralsCos = Vector{DihedralCos}()
     for dihedral in ffield["dihedrals"]
         phi  = ffield["dihedraltypes"][string(dihedral["type"])]["phi"]
         cp   = ffield["dihedraltypes"][string(dihedral["type"])]["cp"]
         mult = ffield["dihedraltypes"][string(dihedral["type"])]["mult"]
-        new_dihedralCos = Forcefield.DihedralCos(dihedral["a1"], dihedral["a2"], dihedral["a3"], dihedral["a4"], cp, deg2rad(phi), mult)
+        new_dihedralCos = DihedralCos(dihedral["a1"], dihedral["a2"], dihedral["a3"], dihedral["a4"], cp, deg2rad(phi), mult)
         push!(dihedralsCos, new_dihedralCos)
     end
 
     #Create topology
-    return Forcefield.Topology(atoms, bonds, angles, dihedralsCos)
+    return Topology(atoms, bonds, angles, dihedralsCos)
 end

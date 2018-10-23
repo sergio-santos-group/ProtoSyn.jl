@@ -1,117 +1,86 @@
 module MonteCarlo
 
+using ..Aux
 using ..Common
 using Printf
 
 @doc raw"""
-    ConfigParameters(n_steps::Int64 = 1000, temperature::Float64 = 0.5)
+    MonteCarloDriver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0])
 
-Define the runtime parameters for the Monte Carlo Driver.
-
-# Arguments
-- `n_steps`: Total amount of steps to be performed (Default: 1000).
-- `temperature`: Temperature value to be used in the Metropolis Algorithm (Default: 0.5).
-
-# Examples
-```julia-repl
-julia> Drivers.MonteCarlo.ConfigParameters(1000, 0.5)
-Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=0.5)
-
-julia> Drivers.MonteCarlo.ConfigParameters(temperature = 1.2)
-Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=1.2)
-```
-See also: [`load_parameters`](@ref)
-"""
-struct ConfigParameters
-
-    n_steps::Int64        # (1000)
-    temperature::Float64 # (0.5)
-
-    ConfigParameters(; n_steps::Int64 = 1000, temperature::Float64 = 0.5) = new(n_steps, temperature)
-end
-Base.show(io::IO, b::ConfigParameters) = print(io, "Drivers.MonteCarlo.ConfigParameters(n_steps=$(b.n_steps), temperature=$(b.temperature))")
-
-# ------------------------------------------------------------------------------------------------------------
-
-@doc raw"""
-    load_parameters(p::Dict{String, Any})::ConfigParameters
-
-Load the [`ConfigParameters`](@ref) from a dictionary.
-
-# Examples
-```julia-repl
-julia> Drivers.MonteCarlo.load_parameters(p)
-Drivers.MonteCarlo.ConfigParameters(n_steps=1000, temperature=0.5)
-```
-See also: [`Aux.read_JSON`](@ref Aux)
-"""
-function load_parameters(p::Dict{String, Any})::ConfigParameters
-
-    return ConfigParameters(p["n_steps"], p["temperature"])
-
-end
-
-# ------------------------------------------------------------------------------------------------------------
-
-@doc raw"""
-    run!(state::Common.State, sampler!::Function, evaluator!::Function, params::ConfigParameters[, ostream::IO = stdout, callback::Union{Function, Nothing} = nothing])
-
-Run the main body of the Driver.
+Define the runtime parameters for the Monte Carlo simulation.
+No `sampler!` movement is performed by default, since n_steps = 0.
 
 # Arguments
-- `state::Common.State`: Current state of the system to be modified.
-- `sampler!::Function`: Responsible for mutating the current `state`. This function should have the following signature:
-```   
+- `sampler!::Function`: Responsible for generating a new structure to be evaluated. This function should have the following signature:
+```
 sampler!(state::Common.State)
 ```
-- `evaluator!::Function`: Responsible for evaluating the current `state.energy` for the Metropolis Algorithm. This function should have the following signature:
+- `evaluator!::Function`: Responsible for evaluating the system energy. This function should have the following signature:
 ```
 evaluator!(state::Common.State, do_forces::Bool)
 ```
-- `params::ConfigParameters`: Hold the runtime parameters of the Monte Carlo Driver. 
-- `ostream::IO`: (Optional) Any logging will be written to the supplied `ostream`.
-- `callback::Union{Function, Nothing}`: (Optional) If present, this function will be called if the new conformation was accepted. This function should have the following signature:
-```
-callback(state::Common.State, step::Int64)
-```
-!!! tip
-    The callback function is often a [Print](@ref) function.
+- `temperature::Float64`: (Optional) Temperature of the system, determines acceptance in the Metropolis algorithm (Default: 1.0).
+- `n_steps`: (Optional) Total amount of steps to be performed (Default: 0).
 
 # Examples
 ```julia-repl
-julia> Drivers.MonteCarlo.run(state, my_sampler!, my_evaluator!, params!, callback = my_callback)
+julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!, 10.0, 1000)
+MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000)
+
+julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!)
+MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, n_steps=0)
 ```
-See also: [Mutators](@ref) [`Forcefield.evalenergy!`](@ref Forcefield)
+!!! tip
+    Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [Mutators](@ref Mutators) and [Forcefield](@ref Forcefield) modules, respectively.
+
+See also: [`run!`](@ref)
 """
-function run!(
-    state::Common.State,
-    sampler!::Function,
-    evaluator!::Function,
-    params::ConfigParameters;
-    ostream::IO = stdout,
-    callback::Union{Function, Nothing} = nothing)
+mutable struct MonteCarloDriver
 
+    sampler! :: Function
+    evaluator! :: Function
+    temperature :: Float64
+    n_steps::Int64
+
+end
+MonteCarloDriver(sampler!::Function, evaluator!::Function; temperature::Float64 = 1.0, n_steps::Int64 = 0) = MonteCarloDriver(sampler!, evaluator!, temperature, n_steps)
+Base.show(io::IO, b::MonteCarloDriver) = print(io, "MonteCarloDriver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
+
+
+@doc raw"""
+    run!(state::Common.State, driver::MonteCarloDriver[, callbacks::Tuple{Common.CallbackObject}...])
+
+Run the main body of the driver. Creates a new conformation based on `driver.sampler!`, evaluates the new conformation energy using `driver.evaluator!`,
+accepting it or not depending on the `driver.temperature` in a Metropolis algorithm. This Monte Carlo process is repeated for `driver.n_steps`, saving the
+accepted structures to `state` and calling all the `callbacks`. 
+
+# Examples
+```julia-repl
+julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
+```
+"""
+function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.CallbackObject...)
+    
+    step = 0
     xyz0 = copy(state.xyz)
-    ene0 = evaluator!(state, false)
+    ene0 = driver.evaluator!(state, false)
+    acceptance_count = 0
 
-    step::Int64 = 0
-    while step < params.n_steps
+    while step < driver.n_steps
         step += 1
+        driver.sampler!(state)
+        ene1 = driver.evaluator!(state, false)
 
-        #Generate new state and evaluate its energy
-        sampler!(state)
-        ene1 = evaluator!(state, false)
-
-        if ene1 < ene0 || rand() < exp(-(ene1 - ene0) / params.temperature)
+        if (ene1 < ene0) || (rand() < exp(-(ene1 - ene0) / driver.temperature))
             ene0 = ene1
             xyz0[:] = state.xyz
-            if callback != nothing
-                callback(state, step)
-            end
-            write(ostream, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step ene1)
+            acceptance_count += 1
         else
             state.xyz[:] = xyz0
+            state.energy.eTotal = ene0
         end
+
+        @Common.cbcall callbacks step state driver (acceptance_count/step)
     end
 end
 
