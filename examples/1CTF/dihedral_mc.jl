@@ -18,7 +18,7 @@ Common.apply_initial_conf!(state, bb_dihedrals)
 
 
 # 3. FIX PROLINES ---------------------------------------------------------------------------------------------
-Common.fix_proline(state, dihedrals);
+Common.fix_proline!(state, dihedrals);
 
 
 # 4. DEFINE THE SAMPLER ----------------------------------------------------------------------------------------

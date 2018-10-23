@@ -41,7 +41,17 @@ function apply_initial_conf!(state::State, dihedrals::Vector{Dihedral})
     end
 end
 
-function apply_dihedrals_from_file(state::State, bb_dihedrals::Vector{Dihedral}, file_i::String)
+@doc raw"""
+    apply_dihedrals_from_file!(state::State, bb_dihedrals::Vector{Dihedral}, file_i::String)
+
+Read the input file `file_i`, extract the dihedrals angles and apply to the backbone dihedrals `bb_dihedrals` of `state`.
+
+# Examples
+```julia-repl
+julia> Common.apply_initial_conf(state, bb_dihedrals, "native_conf.pdb")
+```
+"""
+function apply_dihedrals_from_file!(state::State, bb_dihedrals::Vector{Dihedral}, file_i::String)
 
     #Extract backbone coordinates
     backbone = Vector{Vector{Float64}}()
@@ -69,13 +79,25 @@ function apply_dihedrals_from_file(state::State, bb_dihedrals::Vector{Dihedral},
 
 end
 
-function fix_proline(state::State, dihedrals::Vector{Dihedral})
+@doc raw"""
+fix_proline!(state::State, dihedrals::Vector{Dihedral})
+
+( TEMPORARY ) Find all Prolines in the `dihedrals` list and solve the two following issues:
+1. Add the first two atoms to the movables list.
+2. Rotate the dihedral to be at 0º instead of 180º.
+
+# Examples
+```julia-repl
+julia> Common.fix_proline(state, dihedrals)
+```
+"""
+function fix_proline!(state::State, dihedrals::Vector{Dihedral})
 
     for dihedral in dihedrals
         if dihedral.residue.name == "P" && dihedral.dtype == Common.phi
-            rotate_dihedral!(state.xyz, 565, 567, deg2rad(180), Common.phi, dihedral.residue.atoms, dihedral.residue)
-            insert!(dihedral.movable, 1, 569)
-            insert!(dihedral.movable, 1, 568)
+            rotate_dihedral!(state.xyz, dihedral.a2, dihedral.a1, deg2rad(180), Common.phi, dihedral.residue.atoms, dihedral.residue)
+            insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
+            insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
         end
     end
 end
