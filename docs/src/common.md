@@ -19,10 +19,9 @@ Energy
 
 ### Residue
 
-In ProtoSyn, a Residue object is a collection of atoms (normally an aminoacid) that are identified by a name, a secondary structure ([`SSTYPE`](@ref)) and are part of a continuous tree of other Residues (have a `next` Residue).
+In ProtoSyn, a Residue object is a collection of atoms (normally an aminoacid) that are identified by a name and are part of a continuous tree of other Residues (have a `next` Residue).
 
 ```@docs
-SSTYPE
 Residue
 ```
 
@@ -38,11 +37,13 @@ rotate_dihedral!
 
 ### Metadata
 
-ProtoSyn Metadata defines additional information of the system that is not necessarily necessary for the basic functions of the library, but allows for a better representation of the system. The [`AtomMetadata`](@ref) structure holds information related to each atom in the system, such as its element, connections, etc
+ProtoSyn Metadata defines additional information of the system that is not necessarily requeired for the basic functions of the library, but allows for a better representation of the system. The [`AtomMetadata`](@ref) structure holds information related to each atom in the system, such as its element, connections, etc, while the [`SecondaryStructureMetadata`](@ref) holds informations regarding the system secondary structure organization.
 
 ```@docs
+Metadata
 AtomMetadata
 iter
+SecondaryStructureMetadata
 ```
 
 ### State
@@ -63,7 +64,7 @@ CallbackObject
 
 ## Loaders
 
-This section provides a description on how to load a new [`State`](@ref), [`Residue`](@ref) and [`Dihedral`](@ref) arrays.
+This section provides a description on how to load a new [`State`](@ref), [`Residue`](@ref) and [`Dihedral`](@ref) arrays, including the system [`Metadata`](@ref).
 
 ```@docs
 load_from_gro
@@ -73,10 +74,13 @@ load_topology
 
 ## Conformation Generators
 
-Conformation generators are responsible to change the system [`State`](@ref) in a defined way.
+Conformation generators are responsible to change the system [`State`](@ref) in a limited and defined way.
 
 ```@docs
-apply_initial_conf!
+apply_ss!
+infer_ss
+apply_dihedrals_from_file!
+fix_proline!
 ```
 
 ## Macros

@@ -58,6 +58,10 @@ Run the main body of the Driver. If `driver.n_steps` is zero, a `single point` e
 - `driver::SteepestDescentDriver`: Defines the parameters for the SteepestDescent simulation. See [`SteepestDescentDriver`](@ref).
 - `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s (Default: empty).
 
+The [`CallbackObject`](@ref Common) in this Driver returns the following extra Varargs (in order):
+- `max_force::Float64`: The maximum force experienced by the system in the current step.
+- `gamma::Float64`: The simulation gamma (ɣ) value for the current step.
+
 !!! tip
     The callback function often contains a [Print](@ref) function.
 
