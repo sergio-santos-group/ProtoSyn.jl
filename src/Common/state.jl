@@ -19,7 +19,7 @@ If only `size::Int64` is provided, an empty State with the given `size` is creat
 julia> Common.State(3)
 Common.State(size=3, energy=Null, xyz=[0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], forces=[0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], metadata=(...))
 
-julia> Common.State(2, Common.NullEnergy(), [1.1 1.1 1.1; 2.2 2.2 2.2], zeros(2, 3), [AtomMetadata(...), AtomMetadata(...), ...])
+julia> Common.State(2, Common.NullEnergy(), [1.1 1.1 1.1; 2.2 2.2 2.2], zeros(2, 3), metadata)
 Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], metadata=(...))
 ```
 See also: [`AtomMetadata`](@ref)
@@ -30,10 +30,10 @@ mutable struct State
     energy::AbstractEnergy
     xyz::Array{Float64, 2}
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
-    metadata::Vector{AtomMetadata}
+    metadata::Metadata
 
 end
-State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Vector{AtomMetadata}(n))
+State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Metadata())
 Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), metadata=$(b.metadata))")
 
 function Base.iterate(st::State, idx = 1)
@@ -41,6 +41,6 @@ function Base.iterate(st::State, idx = 1)
     if idx > size(st.xyz, 1)
         return nothing
     else
-        return ((st.xyz[idx, :], st.metadata[idx]), idx+1)
+        return ((st.xyz[idx, :], st.metadata.atoms[idx]), idx+1)
     end
 end
