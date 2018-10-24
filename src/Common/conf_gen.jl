@@ -35,6 +35,55 @@ function apply_ss!(state::State, dihedrals::Vector{Dihedral}, ss::String)
 
         rotate_dihedral_to!(state.xyz, dihedral, t_angles[ss[index]][dihedral.dtype])
     end
+
+end
+
+
+@doc raw"""
+    infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
+"""
+function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
+    return infer_ss([x.residue for x in filter(x -> x.dtype == phi, dihedrals)], ss)
+end
+
+@doc raw"""
+    infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
+"""
+function infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
+    infer_ss(collect(values(residues)), ss)
+end
+
+@doc raw"""
+    infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
+
+Read the provided secondary structure string `ss` and infer the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues/dihedrals.
+
+# Examples
+```julia-repl
+julia> Common.infer_ss(dihedrals, "CCCHHHHCCEEEECCC")
+2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
+ SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
+ SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
+```
+"""
+function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
+
+    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET)
+    conv_name = Dict('H' => "HA", 'E' => "BA")
+
+    sec_str = SecondaryStructureMetadata[]
+    last_ss::Char = ss[1]
+    i_idx::Int64 = 1
+    for (index, curr_ss) in enumerate(ss)
+        if curr_ss != last_ss
+            if last_ss in ['H', 'E']
+                push!(sec_str, SecondaryStructureMetadata(conv_type[last_ss], conv_name[last_ss], residues[i_idx].name, i_idx, residues[index - 1].name, index - 1, 1))
+            end
+            i_idx = index
+        end
+        last_ss = curr_ss
+    end
+    return sec_str
 end
 
 
