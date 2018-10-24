@@ -62,11 +62,7 @@ julia> Mutators.Dihedral.rotate_dihedral!(state.xyz, dihedral, π/2)
 ```
 See also: [`Dihedral`](@ref Mutators)
 """
-function rotate_dihedral!(
-    xyz::Array{Float64, 2},
-    dihedral::Dihedral,
-    angle::Float64)
-
+function rotate_dihedral!(xyz::Array{Float64, 2}, dihedral::Dihedral, angle::Float64)
     rotate_dihedral!(xyz, dihedral.a2, dihedral.a3, angle, dihedral.dtype, dihedral.movable, dihedral.residue)
 end
 
@@ -109,4 +105,26 @@ See also: [`Aux.rotation_matrix_from_axis_angle`](@ref) [`Dihedral`](@ref Mutato
         end
         xyz[idxs, :] = (rmat * (xyz[idxs, :] .- pivot)')' .+ pivot
     end
+end
+
+
+@doc raw"""
+    rotate_dihedral_to!(xyz::Array{Float64, 2}, dihedral::Dihedral, target_angle::Float64)
+
+Perform a dihedral movement, adding the necessary angle to meet the provided `target_angle` (in radians).
+
+# Examples
+```julia-repl
+julia> Mutators.Dihedral.rotate_dihedral_to!(state.xyz, dihedral, π/2)
+```
+See also: [`apply_ss!`](@ref)
+"""
+function rotate_dihedral_to!(xyz::Array{Float64, 2}, dihedral::Dihedral, target_angle::Float64)
+
+    #Calculate the current angle
+    current_angle = Aux.calc_dih_angle(xyz[dihedral.a1, :], xyz[dihedral.a2, :], xyz[dihedral.a3, :], xyz[dihedral.a4, :])
+    # Calculate necessary displacement to target angles
+    displacement = target_angle - current_angle
+    # Apply displacement and rotate
+    rotate_dihedral!(xyz, dihedral, displacement)
 end

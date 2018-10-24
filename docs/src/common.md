@@ -33,6 +33,7 @@ A Dihedral is a collection of 4 atoms that define a dihedral in the simulated mo
 DIHEDRALTYPE
 Dihedral
 rotate_dihedral!
+rotate_dihedral_to!
 ```
 
 ### Metadata
@@ -44,6 +45,7 @@ Metadata
 AtomMetadata
 iter
 SecondaryStructureMetadata
+renumber_residues!
 ```
 
 ### State
@@ -80,6 +82,7 @@ Conformation generators are responsible to change the system [`State`](@ref) in 
 apply_ss!
 infer_ss
 apply_dihedrals_from_file!
+stretch_conformation!
 fix_proline!
 ```
 

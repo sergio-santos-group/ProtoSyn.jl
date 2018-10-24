@@ -22,34 +22,19 @@ function apply_ss!(state::State, dihedrals::Vector{Dihedral}, ss::String)
 
     # Define target values for dihedral angles
     t_angles = Dict(
-        'E'  => Dict(phi => deg2rad(-139.0), psi => deg2rad(135.0)),
-        'H' => Dict(phi => deg2rad(-57.0),  psi => deg2rad(-47.0))
-    )
+        'E' => Dict(phi => deg2rad(-139.0), psi => deg2rad(135.0)),
+        'H' => Dict(phi => deg2rad(-57.0),  psi => deg2rad(-47.0)))
 
     index::Int64 = 0
     for dihedral in dihedrals
         #Verify input so that only the phi and psi dihedrals are iterated over
         dihedral.dtype > omega ? continue : nothing
         dihedral.dtype == psi ? index += 1 : nothing
-        if index > length(ss)
-            error("The length of the secondary stucture string is inferior to the phi and psi count in the molecule.")
-        end
+        index > length(ss) ? error("The length of the secondary stucture string is inferior to the phi and psi count in the molecule.") : nothing
         ss[index] == 'C' ? continue : nothing
 
-        #Calculate the current angle
-        current_angle = Aux.calc_dih_angle(
-            state.xyz[dihedral.a1, :],
-            state.xyz[dihedral.a2, :],
-            state.xyz[dihedral.a3, :],
-            state.xyz[dihedral.a4, :])
-    
-        # Calculate necessary displacement to target angles
-        displacement = t_angles[ss[index]][dihedral.dtype] - current_angle
-
-        # Apply displacement and rotate
-        rotate_dihedral!(state.xyz, dihedral, displacement)
+        rotate_dihedral_to!(state.xyz, dihedral, t_angles[ss[index]][dihedral.dtype])
     end
-
 end
 
 
@@ -141,7 +126,27 @@ end
 
 
 @doc raw"""
-fix_proline!(state::State, dihedrals::Vector{Dihedral})
+    stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
+
+Iterate over the `dihedrals` list and rotate all PHI and PSI to 180º.
+
+# Examples
+```julia-repl
+julia> Common.stretch_conformation!(state, dihedrals)
+```
+"""
+function stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
+
+    for dihedral in dihedrals
+        dihedral.dtype > omega ? continue : nothing
+        rotate_dihedral_to!(state.xyz, dihedral, 3.1416)
+    end
+end
+
+
+
+@doc raw"""
+    fix_proline!(state::State, dihedrals::Vector{Dihedral})
 
 ( TEMPORARY ) Find all Prolines in the `dihedrals` list and solve the two following issues:
 1. Add the first two atoms to the movables list.

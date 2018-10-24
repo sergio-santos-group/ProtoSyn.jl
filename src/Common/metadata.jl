@@ -163,3 +163,24 @@ function iter(data::Vector{AtomMetadata}; property::Symbol = :res_num)
     end
     return f
 end
+
+
+@doc raw"""
+    renumber_residues!(atoms::Vector{AtomMetadata}[, start::Int64 = 1])
+
+Iterate over an array of AtomMetadata objects and renumber the list of `res_num` (starting at `start`).
+
+# Examples
+```julia-repl
+julia> renumber_residues!(state.metadata.atoms)
+```
+See also: [`AtomMetadata`](@ref)
+"""
+function renumber_residues!(atoms::Vector{AtomMetadata}, start::Int64 = 1)
+
+    i_res_num::Int64 = atoms[1].res_num
+    for (index, atom) in enumerate(atoms)
+        atom.res_num = atom.res_num - i_res_num + start
+    end
+
+end
