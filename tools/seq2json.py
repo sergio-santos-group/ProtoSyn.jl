@@ -18,15 +18,8 @@ be parsed by Catulia. mol.pdb is a PDB model that is adapted by Catulia to print
 
 #Grow molecule from sequence
 mol_sequence = "EFDVILKAAGANKVAVIKAVRGATGLGLKEAKDLVESAPAALKEGVSKDDAEALKKALEEAGAEVEVK"
-ss           = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC"
 m = grow("mol", mol_sequence)
-print len(m.get_coordinates())
-
-m2 = Molecule.LoadFromFile("1ctf_native.pdb")
 cap_chain(m)
-print len(m2.get_coordinates())
-m.set_coordinates(m2.get_coordinates())
-
 
 def re_place(target, pos1, pos2):
     target.insert(pos2, target[pos1])
@@ -65,8 +58,7 @@ for r in m.residues:
         'n': r.index + 1,
         'type': r.letter,
         'atoms': [x.index + 1 for x in r.atoms],
-        'next': _next,
-        'ss': ss[r.index]
+        'next': _next
     })
 
 #Create dihedrals dictionary

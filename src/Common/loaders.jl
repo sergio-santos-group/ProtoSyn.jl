@@ -40,7 +40,7 @@ end
 @doc raw"""
     load_from_pdb(i_file::String)::Common.State
 
-Return a new [`Common.State`](@ref) by loading the atom positions and names from the input .pdb file.
+Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .pdb file.
 As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
 
 # Examples
@@ -74,7 +74,7 @@ function load_from_pdb(i_file::String)::State
     end
 
     n = length(xyz)
-    return State(n, NullEnergy(), vcat(xyz...), zeros(n, 3), metadata)
+    return State(n, NullEnergy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
 end
 
 
@@ -93,13 +93,7 @@ See also: [`Aux.read_JSON`](@ref)
 """
 function load_topology(p::Dict{String, Any})
 
-    conv = Dict(
-        "C" => coil,
-        "H" => alpha,
-        "E" => beta,
-    )
-
-    residues = Dict(d["n"] => Residue(d["atoms"], d["next"], d["type"], conv[d["ss"]]) for d in p["residues"])
+    residues = Dict(d["n"] => Residue(d["atoms"], d["next"], d["type"]) for d in p["residues"])
     
     str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
     

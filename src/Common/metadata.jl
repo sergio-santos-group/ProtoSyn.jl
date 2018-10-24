@@ -54,6 +54,74 @@ function Array{AtomMetadata, 1}(n::Int64)
     return o
 end
 
+#Common.SS.HELIX | Common.SS.SHEET
+module SS
+@enum TYPE begin
+    HELIX   = 0
+    SHEET   = 1
+end
+end
+
+@doc raw"""
+    SecondaryStructureMetadata(ss_type::SS.TYPE, name::String, i_res_name::String, i_res_num::Int64, f_res_name::String, f_res_num::Int64, conf::Int64)
+
+Define a secondary structure metadata, containing extra information pertaining the [`State`](@ref).
+
+# Arguments
+- `ss_type::SS.TYPE`: Type of the SecondaryStructure (SS.HELIX, SS.SHEET, ...)
+- `name::String`: Name of the structure.
+- `i_res_name::String`: Name of the starting residue.
+- `i_res_num::Int64`: Index of the starting residue.
+- `f_res_name::String`: Name of the final residue.
+- `f_res_num::Int64`: Index of the final residue.
+- `conf::Int64`: Conformation of the secondary structure. See PDB FORMAT standards.
+
+# Examples
+```julia-repl
+julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1)
+SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1)
+```
+"""
+mutable struct SecondaryStructureMetadata
+
+    ss_type::SS.TYPE
+    name::String
+    i_res_name::String
+    i_res_num::Int64
+    f_res_name::String
+    f_res_num::Int64
+    conf::Int64
+
+end
+Base.show(io::IO, b::SecondaryStructureMetadata) = print(io, "SecondaryStructureMetadata(ss_type=$(b.ss_type), name=$(b.name), $(b.i_res_name)-$(b.i_res_num) <-> $(b.f_res_name)-$(b.f_res_num), conf=$(b.conf))")
+
+
+@doc raw"""
+    Metadata(atoms::Vector{AtomMetadata}, ss::Vector{SecondaryStructureMetadata})
+
+Define the state metadata, containing extra information regarding the atoms and secondary structure of the system.
+
+# Examples
+```julia-repl
+julia> Metadata(atoms, ss)
+Metadata(atoms=(...), ss=(...))
+
+julia> Metadata(atoms)
+Metadata(atoms=(...), ss=SecondaryStructureMetadata[])
+
+julia> Metadata()
+Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[])
+```
+"""
+mutable struct Metadata
+
+    atoms::Vector{AtomMetadata}
+    ss::Vector{SecondaryStructureMetadata}
+
+end
+Metadata(atoms::Vector{AtomMetadata}) = Metadata(atoms, SecondaryStructureMetadata[])
+Metadata() = Metadata(AtomMetadata[], SecondaryStructureMetadata[])
+Base.show(io::IO, b::Metadata) = print(io, "Metadata(atoms=$(b.atoms), ss=$(b.ss))")
 
 @doc raw"""
     iter(data::Vector{AtomMetadata}; property::Symbol = :res_num)

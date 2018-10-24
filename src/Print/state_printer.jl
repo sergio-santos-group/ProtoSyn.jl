@@ -5,7 +5,7 @@ Print the current [`Common.State`](@ref) as a .xyz file to the output `io`.
 
 # Examples
 ```julia-repl
-julia> Drivers.MonteCarlo.load_parameters(file_xyz, state, title = "molecule")
+julia> Print.as_xyz(file_xyz, state, title = "molecule")
 ```
 """
 function as_xyz(io::IO, state::Common.State, title::String="mol")
@@ -23,11 +23,12 @@ Print the current [`Common.State`](@ref) in .xyz format and returns a String.
 
 # Examples
 ```julia-repl
-julia> Drivers.MonteCarlo.load_parameters(state, title = "molecule")
+julia> Print.as_xyz(state, title = "molecule")
 2
  molecule
  N      -0.0040    0.2990    0.0000
  H1      0.1200    1.3010    0.0000
+...
 ```
 """
 function as_xyz(state::Common.State, title::String = "mol")::String
@@ -37,9 +38,33 @@ function as_xyz(state::Common.State, title::String = "mol")::String
 end
 
 
-#TODO: Function is DEPRECATED. Either return it to LIVE (and document it) or DELETE.
+@doc raw"""
+    as_pdb(io:IO, state::Common.State[, title::String = "mol", step::Int64 = 1])
+
+Print the current [`Common.State`](@ref) as a .pdb file to the output `io`.
+
+# Examples
+```julia-repl
+julia> Print.as_pdb(file_xyz, state, title = "molecule", step=2)
+```
+"""
 function as_pdb(io::IO, state::Common.State; title::String="mol", step::Int64=1)
     write(io, "TITLE $title\nMODEL $step\n")
+    if length(state.metadata.ss) > 0
+        n_sheets = length(filter(ss -> ss.ss_type == Common.SS.SHEET, state.metadata.ss))
+        for (index, ss) in enumerate(state.metadata.ss)
+            write(io, "$(@sprintf("%-6s", string(ss.ss_type)))")
+            write(io, "$(@sprintf("%4d", index))")
+            write(io, "$(@sprintf("%4s", ss.name))")
+            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%2d", n_sheets))") : nothing
+            write(io, "$(@sprintf("%4s A", Aux.conv_aa_123(ss.i_res_name)))")
+            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.i_res_num))") : write(io, "$(@sprintf("%5d ", ss.i_res_num))")
+            write(io, "$(@sprintf("%4s A", Aux.conv_aa_123(ss.f_res_name)))")
+            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.f_res_num))") : write(io, "$(@sprintf("%5d ", ss.f_res_num))")
+            write(io, "$(@sprintf("%2d", ss.conf))")
+            write(io, "$(@sprintf("%36d\n", ss.f_res_num - ss.i_res_num))")
+        end
+    end
     for (index, (xyz, metadata)) in enumerate(state)
         write(io, "$(@sprintf("%-6s", "ATOM"))")
         write(io, "$(@sprintf("%5d  ", index))")
@@ -62,31 +87,23 @@ function as_pdb(io::IO, state::Common.State; title::String="mol", step::Int64=1)
     write(io, "\nENDMDL\n")
 end
 
-# function as_pdb(io::IO, state::Common.State, title::String="mol")
 
-#     write(io, "TITLE $title\nMODEL\n")
-#     for atom_index in 1:state.size
-#         write(io, "ATOM")
-#         write(io, "$(@sprintf("%7d ", atom_index))")
-#         write(io, "$(@sprintf("%-5s", state.atnames[atom_index]))")
-#         write(io, "$(@sprintf("%-3s A", "ALA"))")
-#         write(io, "$(@sprintf("  %-3d   ", 1))")
-#         # write(io, "$(@sprintf("%-3s A", state.residues[atom_index][2]))")
-#         # write(io, "$(@sprintf("  %-3d   ", state.residues[atom_index][1]))")
-#         write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][1]*10))")
-#         write(io, "$(@sprintf("%8.3f", state.xyz[atom_index, :][2]*10))") #Angstrom
-#         write(io, "$(@sprintf("%8.3f  1.00  0.00", state.xyz[atom_index, :][3]*10))\n")
-#     end
-#     # write(ostream, "TER")
-#     # for list in state.conects
-#     #     write(ostream, "\nCONECT")
-#     #     for at in list
-#     #         write(ostream, "$(@sprintf("%5d", at))")  
-#     #     end
-#     # end
-#     write(io, "ENDMDL\n")
-# end
+@doc raw"""
+    as_pdb(state::Common.State[, title::String = "mol"])::String
 
+Print the current [`Common.State`](@ref) in .pdb format and returns a String.
+
+# Examples
+```julia-repl
+julia> Print.as_pdb(state, title = "molecule", step = 2)
+TITLE molecule
+MODEL 2
+SHEET    1  BA 3 ASP A   2  ALA A   8  1                                   6
+HELIX    2  HA VAL A   13  GLY A   24  1                                  11
+ATOM      1  N   GLU A   1      -0.004   0.299   0.000  1.00  0.00
+ATOM      2  H1  GLU A   1       0.120   1.301   0.000  1.00  0.00
+...
+"""
 function as_pdb(state::Common.State, title::String = "mol")
     iobuffer = IOBuffer()
     as_pdb(iobuffer, state, title)

@@ -14,7 +14,7 @@ state.energy = Forcefield.Amber.Energy()
 mc_topology = Aux.read_JSON("data/1ctf_mc_top.json")
 dihedrals, residues = Common.load_topology(mc_topology)
 bb_dihedrals = filter(x -> x.dtype < Common.omega, dihedrals)
-Common.apply_initial_conf!(state, bb_dihedrals)
+Common.apply_ss!(state, bb_dihedrals, "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC")
 
 
 # 3. FIX PROLINES ---------------------------------------------------------------------------------------------

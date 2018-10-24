@@ -54,6 +54,14 @@ Run the main body of the driver. Creates a new conformation based on `driver.sam
 accepting it or not depending on the `driver.temperature` in a Metropolis algorithm. This Monte Carlo process is repeated for `driver.n_steps`, saving the
 accepted structures to `state` and calling all the `callbacks`. 
 
+# Arguments
+- `state::Common.State`: Current state of the system to be modified.
+- `driver::MonteCarloDriver`: Defines the parameters for the SteepestDescent simulation. See [`MonteCarloDriver`](@ref).
+- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s (Default: empty).
+
+The [`CallbackObject`](@ref Common) in this Driver returns the following extra Varargs (in order):
+- `acceptance_ratio::Float64`: The acceptance ratio of the simulation, so far, calculated as `number_of_accepted_steps / current_step`.
+
 # Examples
 ```julia-repl
 julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
