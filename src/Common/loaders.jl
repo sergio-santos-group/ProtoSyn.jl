@@ -93,7 +93,8 @@ See also: [`Aux.read_JSON`](@ref)
 """
 function load_topology(p::Dict{String, Any})
 
-    residues = Dict(d["n"] => Residue(d["atoms"], d["next"], d["type"]) for d in p["residues"])
+    # println(p["residues"][1]["atoms"], typeof(p["residues"][1]["atoms"]))
+    residues = Dict(d["n"] => Residue(convert(Vector{Int64}, d["atoms"]), d["next"], d["type"]) for d in p["residues"])
     
     str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
     

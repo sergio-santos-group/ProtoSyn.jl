@@ -54,13 +54,6 @@ function Array{AtomMetadata, 1}(n::Int64)
     return o
 end
 
-#Common.SS.HELIX | Common.SS.SHEET
-module SS
-@enum TYPE begin
-    HELIX   = 0
-    SHEET   = 1
-end
-end
 
 @doc raw"""
     SecondaryStructureMetadata(ss_type::SS.TYPE, name::String, i_res_name::String, i_res_num::Int64, f_res_name::String, f_res_num::Int64, conf::Int64)
