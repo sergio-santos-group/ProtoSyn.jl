@@ -81,7 +81,7 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
         driver.evaluator!(state, false)
 
         if (state.energy.eTotal < ene0.eTotal) || (rand() < exp(-(state.energy.eTotal - ene0.eTotal) / driver.temperature))
-            ene0 = deepcopy(state.energy.eTotal)
+            ene0 = deepcopy(state.energy)
             xyz0[:] = state.xyz
             acceptance_count += 1
         else

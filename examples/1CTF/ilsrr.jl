@@ -19,7 +19,7 @@ const crankshaft_p_mut_prt     = 1.0   # For perturbator
 const crankshaft_step_size_prt = 0.01  # For perturbator
 const crankshaft_min_n_steps   = 25    # For Steepest Descent mini-minimization
 
-const temperature              = 0.1
+const temperature              = 1.0
 const acceptance_ratio         = 0.2
 const hb_acceptance_criteria   = 500.0 # The bigger, the easier to accept "worse" configurations as new homebases
 const prt_min_n_steps          = 1000  # For Steepest Descent minimization after perturbator
