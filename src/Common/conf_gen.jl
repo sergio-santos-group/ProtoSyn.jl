@@ -53,12 +53,6 @@ function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStru
     return infer_ss(residues, ss)
 end
 
-@doc raw"""
-    infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-    infer_ss(collect(values(residues)), ss)
-end
 
 @doc raw"""
     infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
@@ -151,7 +145,6 @@ function stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
         rotate_dihedral_to!(state.xyz, dihedral, 3.1416)
     end
 end
-
 
 
 @doc raw"""

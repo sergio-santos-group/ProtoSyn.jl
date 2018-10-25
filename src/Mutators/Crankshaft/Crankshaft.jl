@@ -29,6 +29,13 @@ mutable struct CrankshaftMutator
     angle_sampler::Function
     p_mut::Float64
     step_size::Float64
+
+    function CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
+        for dihedral in dihedrals
+            dihedral.dtype == Common.phi ? nothing : error("Tried to add a non-PHI dihedral to CrankshaftMutator ($dihedral)")
+        end
+        new(dihedrals, angle_sampler, p_mut, step_size)
+    end
 end
 CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = CrankshaftMutator(dihedrals, angle_sampler, p_mut, step_size)
 Base.show(io::IO, b::CrankshaftMutator) = print(io, "CrankshaftMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
@@ -80,10 +87,10 @@ function rotate_crankshaft!(xyz::Array{Float64, 2}, dihedral1::Common.Dihedral, 
 
     next = dihedral2.residue.next 
     dihedral2.residue.next = nothing
-    Common.rotate_dihedral!(xyz, dihedral1.a3, dihedral2.a3, angle, dihedral1.dtype, dihedral1.movable, dihedral1.residue)
+    Common.rotate_dihedral!(xyz, dihedral1.residue.cα, dihedral2.residue.cα, angle, dihedral1.dtype, dihedral1.movable, dihedral1.residue)
     dihedral2.residue.next = next
     
-    Common.rotate_dihedral!(xyz, dihedral1.a3, dihedral2.a3, -angle, dihedral1.dtype, dihedral2.movable)
+    Common.rotate_dihedral!(xyz, dihedral1.residue.cα, dihedral2.residue.cα, -angle, dihedral1.dtype, dihedral2.movable)
 end
 
 end

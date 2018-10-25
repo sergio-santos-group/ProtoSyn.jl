@@ -30,15 +30,21 @@ Common.Residue(atoms=[1, 2, 3, 4], next=V, name=E)
 """
 mutable struct Residue
     atoms::Vector{Int64}
+    cα::Int64
     next::Union{Residue, Int64, Nothing}
     name::String
     ss::SS.TYPE
 end
-Residue(atoms::Vector{Int64}, next::Union{Residue, Int64, Nothing}, name::String) = Residue(atoms, next, name, SS.COIL)
+Residue(atoms::Vector{Int64}, cα::Int64, next::Union{Residue, Int64, Nothing}, name::String) = Residue(atoms, cα, next, name, SS.COIL)
+Residue(atoms::Vector{Int64}, next::Union{Residue, Int64, Nothing}, name::String) = Residue(atoms, -1, next, name, SS.COIL)
 function Base.show(io::IO, b::Residue)
     if b.next == nothing
         print(io, "Common.Residue(atoms=$(b.atoms), next=nothing, name=$(b.name), ss=$(b.ss))")
     else
-        print(io, "Common.Residue(atoms=$(b.atoms), next=$(b.next.name), name=$(b.name), ss=$(b.ss))")
+        print(io, "Common.Residue(atoms=$(b.atoms), cα=$(b.cα), next=$(b.next.name), name=$(b.name), ss=$(b.ss))")
     end
+end
+
+function Base.collect(values::Base.ValueIterator{Dict{Int64, Residue}})
+    
 end

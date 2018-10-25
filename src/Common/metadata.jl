@@ -177,3 +177,13 @@ function renumber_residues!(atoms::Vector{AtomMetadata}, start::Int64 = 1)
     end
 
 end
+
+#TODO: Document function
+function identify_alphas_from_atom_name!(residues::Vector{Residue}, atomMetadata::Vector{AtomMetadata})
+
+    for (index, atom) in enumerate(atomMetadata)
+        if atom.name == "CA"
+            residues[atom.res_num].cα = index
+        end
+    end
+end
