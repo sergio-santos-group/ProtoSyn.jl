@@ -6,7 +6,7 @@ using Printf
 # ------------------
 n_outer_steps            = 20
 n_inner_steps            = 10000
-print_every_inner_cycle  = 1000
+print_every_inner_cycle  = 100
 
 dihedral_p_mut           = 0.03
 dihedral_step_size       = 1.0
@@ -39,7 +39,7 @@ best_destination         = open("out/best_trajectory.pdb", "w")
 # ------------------
 # Load state
 state = Common.load_from_pdb(input_pdb)
-state.energy = Forcefield.Amber.Energy()
+# state.energy = Forcefield.Amber.Energy()
 
 #Fix proline
 mc_topology = Aux.read_JSON(input_mc_json)
@@ -50,17 +50,20 @@ Common.fix_proline!(state, dihedrals)
 Common.apply_ss!(state, dihedrals, ss)
 
 # Create blocks -> Will rotate side-chains
-nb_dihedrals = filter(x -> Int(x.residue.ss) < 1, dihedrals)
+nb_dihedrals       = filter(x -> Int(x.residue.ss) < 1, dihedrals)
+nb_phi_dihedrals   = filter(x -> Int(x.residue.ss) < 1 && x.dtype == Common.phi, dihedrals) # For crankshaft movements and solvation evaluators
 
 # Define mutators
-dihedral_mutator = Mutators.Dihedral.DihedralMutator(nb_dihedrals, () -> (rand() * 2 - 1 * dihedral_mutator.step_size), dihedral_p_mut, dihedral_step_size)
-crankshaft_mutator = Mutators.Crankshaft.CrankshaftMutator(nb_dihedrals, () -> (rand() * 2 - 1 * crankshaft_mutator.step_size), crankshaft_p_mut, crankshaft_step_size)
+dihedral_mutator   = Mutators.Dihedral.DihedralMutator(nb_dihedrals, () -> (rand() * 2 - 1 * dihedral_mutator.step_size), dihedral_p_mut, dihedral_step_size)
+crankshaft_mutator = Mutators.Crankshaft.CrankshaftMutator(nb_phi_dihedrals, () -> (rand() * 2 - 1 * crankshaft_mutator.step_size), crankshaft_p_mut, crankshaft_step_size)
 
 # Define the Monte Carlo and Steepest Descent evaluator
 topology = Forcefield.Amber.load_from_json(input_amber_json)
 function my_evaluator!(st::Common.State, do_forces::Bool)
-    energy = Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
-    return energy
+    state.energy.eTotal = 0.0
+    Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
+    Forcefield.Other.calc_eSol!(st, nb_phi_dihedrals)
+    return state.energy.eTotal
 end
 
 # Define the Monte Carlo sampler
@@ -84,13 +87,15 @@ end
 print_status_sd = @Common.callback print_every_prt_minim function cb_status(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.SteepestDescentDriver, args...)
     write(log_destination, @sprintf "(%5s) %4d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n" "SD" step state.energy.eTotal args[1] args[2])
 end
+
 # 2. Check if the structure is better than the current inner_best and save it
 save_inner_best = @Common.callback 1 function cb_save(step::Int64, st::Common.State, dr::dr_type, args...)
-global inner_best
-if st.energy.eTotal < inner_best.energy.eTotal
-    inner_best = deepcopy(st)
+    global inner_best
+    if st.energy.eTotal < inner_best.energy.eTotal
+        inner_best = deepcopy(st)
+    end
 end
-end
+
 # 3. Adjust the step_size so that, on average, the acceptance_ration is as defined initially
 adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
     dcf = 0.02 # Dihedral change factor
@@ -103,8 +108,9 @@ adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, 
         crankshaft_mutator.step_size * (1.0 - ccf) > 1e-5 ? crankshaft_mutator.step_size *= (1.0 - ccf) : crankshaft_mutator.step_size = 1e-5
     end
 end
+
 # 4. Print current structure to a PDB file
-print_structure = @Common.callback 1 function cb_print(step::Int64, st::Common.State, dr::dr_type, args...)
+print_structure = @Common.callback print_every_inner_cycle function cb_print(step::Int64, st::Common.State, dr::dr_type, args...)
     Print.as_pdb(xyz_destination, st, step = step)
 end
 
@@ -119,17 +125,17 @@ homebase   = deepcopy(state)
 # Define the perturbator
 dihedral_perturbator = Mutators.Dihedral.DihedralMutator(nb_dihedrals, () -> (rand() * 2 - 1 * dihedral_mutator.step_size), dihedral_p_mut_prt, dihedral_step_size_prt)
 crankshaft_perturbator = Mutators.Crankshaft.CrankshaftMutator(nb_dihedrals, () -> (rand() * 2 - 1 * crankshaft_mutator.step_size), crankshaft_p_mut_prt, crankshaft_step_size_prt)
+sd_prt_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, n_steps = prt_min_n_steps)
 
 
 # ------------------
 # MAIN BODY:
 # ------------------
-sd_prt_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, n_steps = prt_min_n_steps)
 for outer_step in 1:n_outer_steps
     global state, inner_best, outer_best, homebase
 
     #Inner cycle
-    write(log_destination, @sprintf "\n(%5s) %12s \n%s\n" "ILSRR" @sprintf("Step: %4d", outer_step) "-"^96)
+    write(log_destination, @sprintf("\n(%5s) %12s \n%s\n", "ILSRR", @sprintf("Step: %4d", outer_step), "-"^96))
     Drivers.MonteCarlo.run!(state, mc_driver, print_status_mc, save_inner_best, adjust_step_size, print_structure)
     state = deepcopy(inner_best) # Output of the inner_cycle is always the inner_best
 

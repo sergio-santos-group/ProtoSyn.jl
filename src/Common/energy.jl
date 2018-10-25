@@ -33,7 +33,8 @@ Energy(eTotal=0.0)
 ```
 """
 mutable struct Energy <: AbstractEnergy
+    comp::Dict{String, Float64}
     eTotal::Float64
 end
-Energy() = Energy(0.0)
-Base.show(io::IO, b::Energy) = print(io, "Energy(eTotal=$(b.eTotal))")
+Energy() = Energy(Dict{String, Float64}(), 0.0)
+Base.show(io::IO, b::Energy) = print(io, "Energy(eTotal=$(b.eTotal), components=$(b.comp))")

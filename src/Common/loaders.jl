@@ -33,7 +33,7 @@ function load_from_gro(i_file::String)::Common.State
     end
 
     n = length(xyz)
-    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
+    return Common.State(n, Common.Energy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
 end
 
 
@@ -74,7 +74,7 @@ function load_from_pdb(i_file::String)::State
     end
 
     n = length(xyz)
-    return State(n, NullEnergy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
+    return State(n, Energy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
 end
 
 
