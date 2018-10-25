@@ -37,9 +37,9 @@ See also: [`run!`](@ref)
 """
 mutable struct MonteCarloDriver
 
-    sampler! :: Function
-    evaluator! :: Function
-    temperature :: Float64
+    sampler!::Function
+    evaluator!::Function
+    temperature::Float64
     n_steps::Int64
 
 end
@@ -76,7 +76,7 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
 
     while step < driver.n_steps
         step += 1
-        driver.sampler!(state)
+        mov_count = driver.sampler!(state)
         ene1 = driver.evaluator!(state, false)
 
         if (ene1 < ene0) || (rand() < exp(-(ene1 - ene0) / driver.temperature))
@@ -88,7 +88,7 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
             state.energy.eTotal = ene0
         end
 
-        @Common.cbcall callbacks step state driver (acceptance_count/step)
+        @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count
     end
 end
 

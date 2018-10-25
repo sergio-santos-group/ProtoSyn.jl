@@ -52,13 +52,16 @@ See also: [`rotate_crankshaft!`](@ref)
 @inline function run!(state::Common.State, mutator::CrankshaftMutator)
 
     l = length(mutator.dihedrals)
+    count::Int64 = 0
     for i in 1:(l-1)
         for j in (i + 1):l
             if rand() < mutator.p_mut
                 rotate_crankshaft!(state.xyz, mutator.dihedrals[i], mutator.dihedrals[j], mutator.angle_sampler())
+                count += 1
             end
         end
     end
+    return count
 end
 
 

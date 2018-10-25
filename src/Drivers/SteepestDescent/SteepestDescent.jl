@@ -19,7 +19,6 @@ evaluator!(state::Common.State, do_forces::Bool)
 - `n_steps`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
 - `f_tol`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
 - `max_step`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
-- `ostream`: (Optional) Defines the output stream for logging
 
 # Examples
 ```julia-repl
@@ -127,7 +126,7 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     end
 
     #Final callback
-    @Common.cbcall callbacks step state driver max_force gamma
+    # @Common.cbcall callbacks step state driver max_force gamma
 end
 
 end

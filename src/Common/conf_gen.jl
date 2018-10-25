@@ -171,8 +171,8 @@ function fix_proline!(state::State, dihedrals::Vector{Dihedral})
     for dihedral in dihedrals
         if dihedral.residue.name == "P" && dihedral.dtype == Common.phi
             rotate_dihedral!(state.xyz, dihedral.a2, dihedral.a1, deg2rad(180), Common.phi, dihedral.residue.atoms, dihedral.residue)
-            insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
-            insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
+            # insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
+            # insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
         end
     end
 end
