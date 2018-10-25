@@ -71,21 +71,22 @@ function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.C
     
     step = 0
     xyz0 = copy(state.xyz)
-    ene0 = driver.evaluator!(state, false)
+    driver.evaluator!(state, false)
+    ene0 = deepcopy(state.energy)
     acceptance_count = 0
 
     while step < driver.n_steps
         step += 1
         mov_count = driver.sampler!(state)
-        ene1 = driver.evaluator!(state, false)
+        driver.evaluator!(state, false)
 
-        if (ene1 < ene0) || (rand() < exp(-(ene1 - ene0) / driver.temperature))
-            ene0 = ene1
+        if (state.energy.eTotal < ene0.eTotal) || (rand() < exp(-(state.energy.eTotal - ene0.eTotal) / driver.temperature))
+            ene0 = deepcopy(state.energy.eTotal)
             xyz0[:] = state.xyz
             acceptance_count += 1
         else
             state.xyz[:] = xyz0
-            state.energy.eTotal = ene0
+            state.energy = deepcopy(ene0)
         end
 
         @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count
