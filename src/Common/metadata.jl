@@ -54,13 +54,6 @@ function Array{AtomMetadata, 1}(n::Int64)
     return o
 end
 
-#Common.SS.HELIX | Common.SS.SHEET
-module SS
-@enum TYPE begin
-    HELIX   = 0
-    SHEET   = 1
-end
-end
 
 @doc raw"""
     SecondaryStructureMetadata(ss_type::SS.TYPE, name::String, i_res_name::String, i_res_num::Int64, f_res_name::String, f_res_num::Int64, conf::Int64)
@@ -183,4 +176,14 @@ function renumber_residues!(atoms::Vector{AtomMetadata}, start::Int64 = 1)
         atom.res_num = atom.res_num - i_res_num + start
     end
 
+end
+
+#TODO: Document function
+function identify_alphas_from_atom_name!(residues::Vector{Residue}, atomMetadata::Vector{AtomMetadata})
+
+    for (index, atom) in enumerate(atomMetadata)
+        if atom.name == "CA"
+            residues[atom.res_num].cα = index
+        end
+    end
 end

@@ -225,31 +225,31 @@ Base.show(io::IO, b::Topology) = print(io, "Forcefield.Topology(\n atoms=$(b.ato
 
 # ----------------------------------------------------------------------------------------------------------
 
-@doc raw"""
-    Energy(eBond::Float64, eAngle::Float64, eDihedral::Float64, eLJ::Float64, eLJ14::Float64, eCoulomb::Float64, eCoulomb14::Float64, eTotal::Float64)
+# @doc raw"""
+#     Energy(eBond::Float64, eAngle::Float64, eDihedral::Float64, eLJ::Float64, eLJ14::Float64, eCoulomb::Float64, eCoulomb14::Float64, eTotal::Float64)
 
-Energy components.
+# Energy components.
 
-# Examples
-```julia-repl
-julia> Forcefield.Energy()
-Forcefield.Energy(eBond=0.0, eAngle=0.0, eDihedral=0.0, eLJ=0.0, eLJ14=0.0, eCoulomb=0.0, eCoulomb14=0.0, eTotal=0.0)
+# # Examples
+# ```julia-repl
+# julia> Forcefield.Energy()
+# Forcefield.Energy(eBond=0.0, eAngle=0.0, eDihedral=0.0, eLJ=0.0, eLJ14=0.0, eCoulomb=0.0, eCoulomb14=0.0, eTotal=0.0)
 
-julia> Forcefield.Energy(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 2.8)
-Forcefield.Energy(eBond=0.1, eAngle=0.2, eDihedral=0.3, eLJ=0.4, eLJ14=0.5, eCoulomb=0.6, eCoulomb14=0.7, eTotal=2.8)
-```
-See also: [`Amber.evaluate!`](@ref Forcefield)
-"""
-mutable struct Energy <: Common.AbstractEnergy
-    eBond::Float64
-    eAngle::Float64
-    eDihedral::Float64
-    eLJ::Float64
-    eLJ14::Float64
-    eCoulomb::Float64
-    eCoulomb14::Float64
-    eTotal::Float64
-end
+# julia> Forcefield.Energy(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 2.8)
+# Forcefield.Energy(eBond=0.1, eAngle=0.2, eDihedral=0.3, eLJ=0.4, eLJ14=0.5, eCoulomb=0.6, eCoulomb14=0.7, eTotal=2.8)
+# ```
+# See also: [`Amber.evaluate!`](@ref Forcefield)
+# """
+# mutable struct Energy <: Common.AbstractEnergy
+#     eBond::Float64
+#     eAngle::Float64
+#     eDihedral::Float64
+#     eLJ::Float64
+#     eLJ14::Float64
+#     eCoulomb::Float64
+#     eCoulomb14::Float64
+#     eTotal::Float64
+# end
 
-Energy() = Energy(zeros(Float64, 8)...)
-Base.show(io::IO, b::Energy) = print(io, "Forcefield.Energy(eBond=$(b.eBond), eAngle=$(b.eAngle), eDihedral=$(b.eDihedral), eLJ=$(b.eLJ), eLJ14=$(b.eLJ14), eCoulomb=$(b.eCoulomb), eCoulomb14=$(b.eCoulomb14), eTotal=$(b.eTotal))")
+# Energy() = Energy(zeros(Float64, 8)...)
+# Base.show(io::IO, b::Energy) = print(io, "Forcefield.Energy(eBond=$(b.eBond), eAngle=$(b.eAngle), eDihedral=$(b.eDihedral), eLJ=$(b.eLJ), eLJ14=$(b.eLJ14), eCoulomb=$(b.eCoulomb), eCoulomb14=$(b.eCoulomb14), eTotal=$(b.eTotal))")

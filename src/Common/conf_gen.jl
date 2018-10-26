@@ -43,63 +43,16 @@ end
     infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
 """
 function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-    return infer_ss([x.residue for x in filter(x -> x.dtype == phi, dihedrals)], ss)
-end
 
-@doc raw"""
-    infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-    infer_ss(collect(values(residues)), ss)
-end
-
-@doc raw"""
-    infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-
-Read the provided secondary structure string `ss` and infer the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues/dihedrals.
-
-# Examples
-```julia-repl
-julia> Common.infer_ss(dihedrals, "CCCHHHHCCEEEECCC")
-2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
- SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
- SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
-```
-"""
-function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-
-    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET)
-    conv_name = Dict('H' => "HA", 'E' => "BA")
-
-    sec_str = SecondaryStructureMetadata[]
-    last_ss::Char = ss[1]
-    i_idx::Int64 = 1
-    for (index, curr_ss) in enumerate(ss)
-        if curr_ss != last_ss
-            if last_ss in ['H', 'E']
-                push!(sec_str, SecondaryStructureMetadata(conv_type[last_ss], conv_name[last_ss], residues[i_idx].name, i_idx, residues[index - 1].name, index - 1, 1))
-            end
-            i_idx = index
+    residues = Vector{Residue}()
+    for dihedral in dihedrals
+        if !(dihedral.residue in residues)
+            push!(residues, dihedral.residue)
         end
-        last_ss = curr_ss
     end
-    return sec_str
+    return infer_ss(residues, ss)
 end
 
-
-@doc raw"""
-    infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-    return infer_ss([x.residue for x in filter(x -> x.dtype == phi, dihedrals)], ss)
-end
-
-@doc raw"""
-    infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(residues::Dict{Int64, Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-    infer_ss(collect(values(residues)), ss)
-end
 
 @doc raw"""
     infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
@@ -116,7 +69,7 @@ julia> Common.infer_ss(dihedrals, "CCCHHHHCCEEEECCC")
 """
 function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
 
-    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET)
+    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET, 'C' => SS.COIL)
     conv_name = Dict('H' => "HA", 'E' => "BA")
 
     sec_str = SecondaryStructureMetadata[]
@@ -129,6 +82,7 @@ function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStruct
             end
             i_idx = index
         end
+        residues[index].ss = conv_type[curr_ss] #If commented, will not apply ss to residue.ss
         last_ss = curr_ss
     end
     return sec_str
@@ -193,7 +147,6 @@ function stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
 end
 
 
-
 @doc raw"""
     fix_proline!(state::State, dihedrals::Vector{Dihedral})
 
@@ -211,8 +164,8 @@ function fix_proline!(state::State, dihedrals::Vector{Dihedral})
     for dihedral in dihedrals
         if dihedral.residue.name == "P" && dihedral.dtype == Common.phi
             rotate_dihedral!(state.xyz, dihedral.a2, dihedral.a1, deg2rad(180), Common.phi, dihedral.residue.atoms, dihedral.residue)
-            insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
-            insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
+            # insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
+            # insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
         end
     end
 end

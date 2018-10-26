@@ -48,11 +48,14 @@ See also: [`Common.rotate_dihedral!`](@ref Common)
 """
 @inline function run!(state::Common.State, mutator::DihedralMutator)
     
+    count::Int64 = 0
     for dihedral in mutator.dihedrals
         if rand() < mutator.p_mut
             Common.rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
+            count += 1
         end
     end
+    return count
 end
 
 end

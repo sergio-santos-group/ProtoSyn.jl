@@ -29,6 +29,13 @@ mutable struct CrankshaftMutator
     angle_sampler::Function
     p_mut::Float64
     step_size::Float64
+
+    function CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
+        for dihedral in dihedrals
+            dihedral.dtype == Common.phi ? nothing : error("Tried to add a non-PHI dihedral to CrankshaftMutator ($dihedral)")
+        end
+        new(dihedrals, angle_sampler, p_mut, step_size)
+    end
 end
 CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = CrankshaftMutator(dihedrals, angle_sampler, p_mut, step_size)
 Base.show(io::IO, b::CrankshaftMutator) = print(io, "CrankshaftMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
@@ -52,13 +59,16 @@ See also: [`rotate_crankshaft!`](@ref)
 @inline function run!(state::Common.State, mutator::CrankshaftMutator)
 
     l = length(mutator.dihedrals)
+    count::Int64 = 0
     for i in 1:(l-1)
         for j in (i + 1):l
             if rand() < mutator.p_mut
                 rotate_crankshaft!(state.xyz, mutator.dihedrals[i], mutator.dihedrals[j], mutator.angle_sampler())
+                count += 1
             end
         end
     end
+    return count
 end
 
 

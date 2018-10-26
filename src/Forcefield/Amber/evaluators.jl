@@ -19,8 +19,8 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
         end
     end
     
-    state.energy.eBond = 0.5 * energy
-    
+    state.energy.comp["eBond"] = 0.5 * energy
+    state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
 
@@ -58,46 +58,10 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
         end
     end
 
-    state.energy.eAngle = 0.5 * energy
-    
+    state.energy.comp["eAngle"] = 0.5 * energy
+    state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
-
-
-# export evaldihedralRB
-# function evaldihedralRB(dihedralsRB::Array{FFComponents.DihedralRB}, xyz::Array{Float64, 2}, forces::Array{Float64, 2};
-#     do_forces = false)
-
-#     energy = 0.0
-#     for dihedral in dihedralsRB
-#         v12 = xyz[dihedral.a2, :] - xyz[dihedral.a1, :]
-#         v32 = xyz[dihedral.a2, :] - xyz[dihedral.a3, :]
-#         v34 = xyz[dihedral.a4, :] - xyz[dihedral.a3, :]
-#         m = cross(v12, v32)
-#         n = cross(v32, v34)
-#         d32Sq = norm(v32) ^ 2
-#         d32 = norm(v32)
-#         phi = atan2(d32 * dot(v12, n), dot(m, n))
-#         cpsi = cos(phi - pi)
-        
-#         energy += dihedral.c0 + cpsi * (dihedral.c1 + cpsi * (dihedral.c2 + cpsi * (dihedral.c3 + cpsi * (dihedral.c4 + cpsi * dihedral.c5))))
-        
-#         if do_forces
-#             cphi = -cpsi
-#             dVdphi_x_d32 = sin(phi) * d32 * (dihedral.c1 + cphi * (-2.0 * dihedral.c2 + cphi * (3.0 * dihedral.c3 + cphi * (-4.0 * dihedral.c4 + cphi * 5.0 * dihedral.c5))))
-#             f1 = m .* -dVdphi_x_d32/dot(m, m)
-#             f4 = n .*  dVdphi_x_d32/dot(n, n)
-#             f3 = -f4
-#             f3 -= f1 .* dot(v12, v32)/d32Sq
-#             f3 += f4 .* dot(v34, v32)/d32Sq
-#             forces[dihedral.a1, :] += f1
-#             forces[dihedral.a2, :] += -f1 - f3 - f4
-#             forces[dihedral.a3, :] += f3
-#             forces[dihedral.a4, :] += f4
-#         end
-#     end
-#     return energy
-# end
 
 @doc raw"""
     evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
@@ -146,8 +110,8 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
         end
     end
 
-    state.energy.eDihedral = energy
-
+    state.energy.comp["eDihedral"] = energy
+    state.energy.eTotal = energy
     return energy
 end
 
@@ -230,8 +194,8 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State;
     end
 
     eLJ *= 4.0
-    state.energy.eLJ = eLJ
-    state.energy.eCoulomb = eCoulomb
+    state.energy.comp["eLJ"] = eLJ
+    state.energy.comp["eCoulomb"] = eCoulomb
 
     #Calculate 1-4 interactions
     evdw_scale = 0.5
@@ -264,9 +228,10 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State;
     end
 
     eLJ14 *= 4.0
-    state.energy.eLJ14 = eLJ14
-    state.energy.eCoulomb14 = eCoulomb14
+    state.energy.comp["eLJ14"] = eLJ14
+    state.energy.comp["eCoulomb14"] = eCoulomb14
 
+    state.energy.eTotal = (eLJ + eLJ14 + eCoulomb + eCoulomb14)
     return eLJ + eLJ14 + eCoulomb + eCoulomb14
 end
 
@@ -289,11 +254,9 @@ See also: [`Amber.evaluate!`](@ref)
 function evaluate!(topology::Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
     
-    energy = 0.0
-    energy += evaluate!(topology.bonds, state, do_forces = do_forces)
+    energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
     energy += evaluate!(topology.angles, state, do_forces = do_forces)
     energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
-    # energy += evaldihedralRB(topology.dihedralsRB, state, do_forces = do_forces)
     energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
     state.energy.eTotal = energy
     return energy

@@ -33,7 +33,7 @@ function load_from_gro(i_file::String)::Common.State
     end
 
     n = length(xyz)
-    return Common.State(n, Common.NullEnergy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
+    return Common.State(n, Common.Energy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
 end
 
 
@@ -74,7 +74,7 @@ function load_from_pdb(i_file::String)::State
     end
 
     n = length(xyz)
-    return State(n, NullEnergy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
+    return State(n, Energy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
 end
 
 
@@ -93,19 +93,27 @@ See also: [`Aux.read_JSON`](@ref)
 """
 function load_topology(p::Dict{String, Any})
 
-    residues = Dict(d["n"] => Residue(d["atoms"], d["next"], d["type"]) for d in p["residues"])
+    # println(p["tmp_tmp_residues"][1]["atoms"], typeof(p["tmp_residues"][1]["atoms"]))
+    tmp_residues = Dict(d["n"] => Residue(convert(Vector{Int64}, d["atoms"]), d["next"], d["type"]) for d in p["residues"])
     
     str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
     
     dihedrals = [
         Dihedral(d["a1"], d["a2"], d["a3"], d["a4"],
-            d["movable"], residues[d["parent"]], str2enum[lowercase(d["type"])])
+            d["movable"], tmp_residues[d["parent"]], str2enum[lowercase(d["type"])])
         for d in p["dihedrals"]
     ]
     
-    # Set correct references for dihedrals previous and next
-    for residue in values(residues)
-        residue.next = get(residues, residue.next, nothing)
+    # Set correct references for dihedrals next
+    for residue in values(tmp_residues)
+        residue.next = get(tmp_residues, residue.next, nothing)
+    end
+
+
+    #Export residues as an ordered dictionary
+    residues = Vector{Residue}()
+    for i in 1:length(tmp_residues)
+        push!(residues, tmp_residues[i])
     end
 
     return dihedrals, residues
