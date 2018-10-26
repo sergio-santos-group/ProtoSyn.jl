@@ -87,10 +87,10 @@ function rotate_crankshaft!(xyz::Array{Float64, 2}, dihedral1::Common.Dihedral, 
 
     next = dihedral2.residue.next 
     dihedral2.residue.next = nothing
-    Common.rotate_dihedral!(xyz, dihedral1.residue.cα, dihedral2.residue.cα, angle, dihedral1.dtype, dihedral1.movable, dihedral1.residue)
+    Common.rotate_dihedral!(xyz, dihedral1.a3, dihedral2.a3, angle, dihedral1.dtype, dihedral1.movable, dihedral1.residue)
     dihedral2.residue.next = next
     
-    Common.rotate_dihedral!(xyz, dihedral1.residue.cα, dihedral2.residue.cα, -angle, dihedral1.dtype, dihedral2.movable)
+    Common.rotate_dihedral!(xyz, dihedral1.a3, dihedral2.a3, -angle, dihedral1.dtype, dihedral2.movable)
 end
 
 end

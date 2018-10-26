@@ -20,7 +20,7 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
     end
     
     state.energy.comp["eBond"] = 0.5 * energy
-    state.energy.eTotal += 0.5 * energy
+    state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
 
@@ -59,7 +59,7 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
     end
 
     state.energy.comp["eAngle"] = 0.5 * energy
-    state.energy.eTotal += 0.5 * energy
+    state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
 
@@ -111,7 +111,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
     end
 
     state.energy.comp["eDihedral"] = energy
-    state.energy.eTotal += energy
+    state.energy.eTotal = energy
     return energy
 end
 
@@ -231,7 +231,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State;
     state.energy.comp["eLJ14"] = eLJ14
     state.energy.comp["eCoulomb14"] = eCoulomb14
 
-    state.energy.eTotal += (eLJ + eLJ14 + eCoulomb + eCoulomb14)
+    state.energy.eTotal = (eLJ + eLJ14 + eCoulomb + eCoulomb14)
     return eLJ + eLJ14 + eCoulomb + eCoulomb14
 end
 
@@ -254,9 +254,10 @@ See also: [`Amber.evaluate!`](@ref)
 function evaluate!(topology::Topology, state::Common.State;
     cut_off::Float64 = 2.0, do_forces = false)
     
-    evaluate!(topology.bonds, state, do_forces = do_forces)
-    evaluate!(topology.angles, state, do_forces = do_forces)
-    evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
-    evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
-    return state.energy.eTotal
+    energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
+    energy += evaluate!(topology.angles, state, do_forces = do_forces)
+    energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
+    energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
+    state.energy.eTotal = energy
+    return energy
 end

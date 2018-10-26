@@ -43,7 +43,7 @@ state = Common.load_from_pdb(input_pdb)
 #Fix proline
 mc_topology = Aux.read_JSON(input_mc_json)
 dihedrals, residues = Common.load_topology(mc_topology)
-Common.identify_alphas_from_atom_name!(residues, state.metadata.atoms)
+# Common.identify_alphas_from_atom_name!(residues, state.metadata.atoms)
 Common.fix_proline!(state, dihedrals)
 
 # Apply secondary structure
@@ -60,10 +60,10 @@ crankshaft_mutator = Mutators.Crankshaft.CrankshaftMutator(nb_phi_dihedrals, () 
 # Define the Monte Carlo and Steepest Descent evaluator
 topology = Forcefield.Amber.load_from_json(input_amber_json)
 function my_evaluator!(st::Common.State, do_forces::Bool)
-    state.energy.eTotal = 0.0
-    Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
-    Forcefield.Other.calc_eSol!(st, residues)
-    return state.energy.eTotal
+    energy = Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
+    # energy += Forcefield.Other.calc_eSol!(st, residues)
+    state.energy.eTotal = energy
+    return energy
 end
 
 # Define the Monte Carlo sampler
