@@ -30,7 +30,6 @@ mutable struct State
     energy::AbstractEnergy
     xyz::Array{Float64, 2}
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
-    metadata::Metadata
 
 end
 State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Metadata())

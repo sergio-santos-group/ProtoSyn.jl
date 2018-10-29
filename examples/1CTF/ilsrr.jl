@@ -9,7 +9,7 @@ const n_inner_steps            = 10000
 const print_every_inner_cycle  = 100
 
 const dihedral_p_mut           = 0.03
-dihedral_step_size             = 1.0
+dihedral_step_size             = π/2
 const dihedral_p_mut_prt       = 1.0   # (For perturbator
 const dihedral_step_size_prt   = 0.01  # For perturbator
 
@@ -38,11 +38,16 @@ const best_destination         = open("out/best_trajectory.pdb", "w")
 # INITIAL STEPS:
 # ------------------
 # Load state
-state = Common.load_from_pdb(input_pdb)
+state, metadata = Common.load_from_pdb(input_pdb)
+@time residues, dihedrals = Common.load_topology_from_pdb(metadata.atoms)
+# for dihedral in dihedrals
+#     println(dihedral, "\n")
+# end
+exit(1)
 
 #Fix proline
-mc_topology = Aux.read_JSON(input_mc_json)
-dihedrals, residues = Common.load_topology(mc_topology)
+# mc_topology = Aux.read_JSON(input_mc_json)
+# dihedrals, residues = Common.load_topology(mc_topology)
 # Common.identify_alphas_from_atom_name!(residues, state.metadata.atoms)
 Common.fix_proline!(state, dihedrals)
 
@@ -70,10 +75,11 @@ end
 sd_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, n_steps = crankshaft_min_n_steps)
 function my_sampler!(st::Common.State)
     dm = Mutators.Dihedral.run!(st, dihedral_mutator)
-    cm = Mutators.Crankshaft.run!(st, crankshaft_mutator)
+    # cm = Mutators.Crankshaft.run!(st, crankshaft_mutator)
+    cm = 0
 
     # Crankshaft movements require a minimization step
-    cm > 0 ? Drivers.SteepestDescent.run!(st, sd_driver) : nothing
+    # cm > 0 ? Drivers.SteepestDescent.run!(st, sd_driver) : nothing
 
     return Dict("Dihedral" => dm, "Crankshaft" => cm)
 end
@@ -97,16 +103,10 @@ save_inner_best = @Common.callback 1 function cb_save(step::Int64, st::Common.St
 end
 
 # 3. Adjust the step_size so that, on average, the acceptance_ration is as defined initially
-adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
-    dcf = 0.05 # Dihedral change factor
-    ccf = 0.05 # Crankshaft change factor
-    if args[1] > acceptance_ratio
-        dihedral_mutator.step_size * (1.0 + dcf) < π ? dihedral_mutator.step_size *= (1.0 + dcf) : dihedral_mutator.step_size = π
-        crankshaft_mutator.step_size * (1.0 + ccf) < π ? crankshaft_mutator.step_size *= (1.0 + ccf) : crankshaft_mutator.step_size = π
-    else
-        dihedral_mutator.step_size * (1.0 - dcf) > 1e-5 ? dihedral_mutator.step_size *= (1.0 - dcf) : dihedral_mutator.step_size = 1e-5
-        crankshaft_mutator.step_size * (1.0 - ccf) > 1e-5 ? crankshaft_mutator.step_size *= (1.0 - ccf) : crankshaft_mutator.step_size = 1e-5
-    end
+adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ac, args...)
+    d = ac > acceptance_ratio ? 1.05 : 0.95
+    dihedral_mutator.step_size = max(1e-5, min(dihedral_mutator.step_size * d, π))
+    # crankshaft_mutator.step_size = max(1e-5, min(crankshaft_mutator.step_size * d), π)
 end
 
 # 4. Print current structure to a PDB file
