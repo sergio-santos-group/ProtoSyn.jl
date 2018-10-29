@@ -199,17 +199,47 @@ function get_intra_residue_movables(atoms::Vector{AtomMetadata}, a3::Int64, curr
 end
 
 
-function compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, residues::Vector{Residue})::Vector{Dihedral}
+# function compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, residues::Vector{Residue})::Vector{Dihedral}
+
+#     # This function iterates over the backbone atoms' indices (found using find_backbone_atoms_from_metadata() function), grouping each 4 atoms in order:
+#     # PHI -> OMEGA -> PSI -> (...)
+#     # Movables are found using get_intra_residue_movables() function and the residue number is defined as the residue in position `a3.res_num`.
+#     dihedrals = Vector{Dihedral}()
+#     dtypes = [psi, omega, phi]
+#     dtype_index::Int64 = 1
+    
+#     indices = find_backbone_indices_from_metadata(atoms)
+#     for i in 1:(length(indices) - 3)
+#         # Define a3 for easiness
+#         a3 = atoms[indices[i + 2]]
+#         # Find this dihedral movables.
+#         movables = get_intra_residue_movables(atoms, indices[i + 2], a3.res_num, Int64[indices[i + 2]], indices[i + 1])
+#         # Add this dihedral to the dihedrals list.
+#         push!(dihedrals, Dihedral(indices[i], indices[i + 1], indices[i + 2], indices[i + 3], sort(movables), residues[a3.res_num], dtypes[dtype_index]))
+#         # If the iteration reached the end of the d_types list, return to the begining.
+#         dtype_index % length(dtypes) == 0 ? dtype_index = 1 : dtype_index += 1
+#     end
+#     return dihedrals
+# end
+
+
+function compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, residues::Vector{Residue}, ignore_omega::Bool = true)::Vector{Dihedral}
 
     # This function iterates over the backbone atoms' indices (found using find_backbone_atoms_from_metadata() function), grouping each 4 atoms in order:
     # PHI -> OMEGA -> PSI -> (...)
     # Movables are found using get_intra_residue_movables() function and the residue number is defined as the residue in position `a3.res_num`.
+    # If `ignore_omega` flag is set to true, will only return the PHI and PSI dihedrals from the backbone.
     dihedrals = Vector{Dihedral}()
-    dtypes = [phi, omega, psi]
-    dtype_index = 1
+    ignore_omega ? dtypes = [psi, phi] : dtypes = [psi, omega, phi]
+    dtype_index::Int64 = 1
+    ign::Int64 = 0
     
     indices = find_backbone_indices_from_metadata(atoms)
     for i in 1:(length(indices) - 3)
+        if ignore_omega && i == 2 + 3 * ign
+            ign += 1
+            continue
+        end
         # Define a3 for easiness
         a3 = atoms[indices[i + 2]]
         # Find this dihedral movables.

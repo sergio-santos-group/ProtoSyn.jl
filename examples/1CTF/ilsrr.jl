@@ -39,10 +39,10 @@ const best_destination         = open("out/best_trajectory.pdb", "w")
 # ------------------
 # Load state
 state, metadata = Common.load_from_pdb(input_pdb)
-@time residues, dihedrals = Common.load_topology_from_pdb(metadata.atoms)
-# for dihedral in dihedrals
-#     println(dihedral, "\n")
-# end
+residues, dihedrals = Common.load_topology_from_pdb(metadata.atoms)
+for dihedral in dihedrals
+    println(dihedral, "\n")
+end
 exit(1)
 
 #Fix proline
