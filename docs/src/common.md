@@ -27,10 +27,9 @@ Residue
 
 ### Dihedral
 
-A Dihedral is a collection of 4 atoms that define a dihedral in the simulated molecule. Many [Mutators](@ref Mutators) operate over this dihedrals, changing them in order to explore the conformational space of the system. A Dihedral is part of a [`Residue`](@ref) and has a defined [`DIHEDRALTYPE`](@ref).
+A Dihedral is a collection of 4 atoms that define a dihedral in the simulated molecule. Many [Mutators](@ref Mutators) operate over this dihedrals, changing them in order to explore the conformational space of the system. A Dihedral is part of a [`Residue`](@ref) and has a defined DIHEDRAL.TYPE.
 
 ```@docs
-DIHEDRALTYPE
 Dihedral
 rotate_dihedral!
 rotate_dihedral_to!
@@ -70,14 +69,10 @@ This section provides a description on how to load a new [`State`](@ref), [`Resi
 ```@docs
 load_from_gro
 load_from_pdb
-load_topology
+load_metadata_from_json
 compile_topology_from_metadata
 compile_residues_from_metadata
-compile_backbone_dihedrals_from_metadata
-compile_sidechain_dihedrals_from_metadata
-find_intra_residue_movables
-find_ca_indices_from_metadata
-find_backbone_indices_from_metadata
+compile_dihedrals_from_metadata
 ```
 
 ## Conformation Generators

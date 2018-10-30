@@ -107,7 +107,7 @@ function load_metadata_from_json(json_file::String)
     p::Dict{String, Any} = Aux.read_JSON(json_file)
     tmp_residues = Dict(d["n"] => Residue(convert(Vector{Int64}, d["atoms"]), d["next"], d["type"]) for d in p["residues"])
     
-    str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
+    str2enum = Dict(string(s) => s for s in instances(DIHEDRAL.TYPE))
     
     dihedrals = [
         Dihedral(d["a1"], d["a2"], d["a3"], d["a4"],
@@ -145,18 +145,20 @@ julia> residues, dihedrals = Common.compile_topology_from_metadata(metadata.atom
 julia> residues, dihedrals = Common.compile_topology_from_metadata(metadata)
 (...)
 ```
-See also: [`load_topology`](@ref)
+See also: [`load_metadata_from_json`](@ref)
 """
 function compile_topology_from_metadata(atoms::Vector{AtomMetadata})::Tuple{Vector{Residue}, Vector{Dihedral}}
 
     # This function returns the residues and dihedrals list of a molecule by parsing the atom motadata identified from the given PDB file.
-    # As a benchmark, identification of both residues and dihedrals in the 1CTF metadata is done in ~0.33 seconds.
     residues = compile_residues_from_metadata(atoms)
-    bb_dihedrals = compile_backbone_dihedrals_from_metadata(atoms, residues)
-    sc_dihedrals = compile_sidechain_dihedrals_from_metadata(atoms, residues)
+    dihedrals = compile_dihedrals_from_metadata(atoms)
     
-    #Since the mechanisms to identify backbone dihedrals and side-chain dihedrals are different, the two come separated in the final dihedrals list.
-    return residues, vcat(bb_dihedrals, sc_dihedrals)
+    #Switch Int64 to Residue object in `dihedral.residue` parameter
+    for dihedral in dihedrals
+        dihedral.residue = residues[dihedral.residue]
+    end
+
+    return residues, dihedrals
 end
 compile_topology_from_metadata(metadata::Metadata)::Tuple{Vector{Residue}, Vector{Dihedral}} = compile_topology_from_metadata(metadata.atoms)
 
@@ -175,7 +177,7 @@ julia> residues = Common.compile_residues_from_metadata(metadata.atoms)
 julia> residues = Common.compile_residues_from_metadata(metadata)
 (...)
 ```
-See also: [`load_topology`](@ref)
+See also: [`load_metadata_from_json`](@ref)
 """
 function compile_residues_from_metadata(atoms::Vector{AtomMetadata})::Vector{Residue}
 
@@ -215,213 +217,92 @@ compile_residues_from_metadata(metadata::Metadata)::Vector{Residue} = compile_re
 
 
 @doc raw"""
-    find_atoms_by_name_from_metadata(atoms::Vector{AtomMetadata}, query::Union{Vector{String}, String})::Vector{Int64}
-    find_atoms_by_name_from_metadata(metadata::Metadata, query::Union{Vector{String}, String})::Vector{Int64}
+    compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Dihedral}
+    compile_dihedrals_from_metadata(metadata::Metadata)::Vector{Dihedral}
 
-Return an array of the *global* indices of all atoms whose `name` is in the `query` array.
-
-# Examples
-```julia-repl
-julia> Common.find_atoms_by_name_from_metadata(metadata.atoms, ["CA", "CB"])
-[5, 6, 11, 12]
-
-julia> Common.find_atoms_by_name_from_metadata(metadata, "N")
-[1, 10, 20]
-```
-"""
-function find_atoms_by_name_from_metadata(atoms::Vector{AtomMetadata}, query::Vector{String})::Vector{Int64}
-
-    # This function will iterate over each atom metadata, returning the *global* indices of all atoms whose name is in query.
-    indices  = Vector{Int64}()
-    for (index, atom) in enumerate(atoms)
-        if atom.name in query
-            push!(indices, index)
-        end
-    end
-    return indices
-end
-find_atoms_by_name_from_metadata(atoms::Vector{AtomMetadata}, query::String)::Vector{Int64} = find_atoms_by_name_from_metadata(atoms, [query])
-find_atoms_by_name_from_metadata(metadata::Metadata, query::Vector{String})::Vector{Int64} = find_atoms_by_name_from_metadata(metadata.atoms, query)
-find_atoms_by_name_from_metadata(metadata::Metadata, query::String)::Vector{Int64} = find_atoms_by_name_from_metadata(metadata.atoms, [query])
-
-@doc raw"""
-    find_backbone_indices_from_metadata(atoms::Vector{AtomMetadata})::Vector{Int64}
-    find_backbone_indices_from_metadata(metadata::Metadata)::Vector{Int64}
-
-Return an array of the *global* indices of all atoms that constitute the backbone of the molecule ("N", "CA", "C").
+Return a dihedrals list, compiling the avaliable information from the metadata.
 
 # Examples
 ```julia-repl
-julia> Common.find_backbone_indices_from_metadata(metadata.atoms)
-[1, 5, 10, 12, 14, 21]
-```
-"""
-function find_backbone_indices_from_metadata(atoms::Vector{AtomMetadata})::Vector{Int64}
-    return find_atoms_by_name_from_metadata(atoms, ["N", "CA", "C"])
-end
-find_backbone_indices_from_metadata(metadata::Metadata)::Vector{Int64} = find_backbone_indices_from_metadata(metadata.atoms)
-
-@doc raw"""
-    find_ca_indices_from_metadata(atoms::Vector{AtomMetadata})::Vector{Int64}
-    find_ca_indices_from_metadata(metadata::Metadata)::Vector{Int64}
-
-Return an array of the *global* indices of all atoms that constitute the alpha carbons of the molecule ("CA").
-
-# Examples
-```julia-repl
-julia> Common.find_ca_indices_from_metadata(metadata)
-[10, 14, 25]
-```
-"""
-function find_ca_indices_from_metadata(atoms::Vector{AtomMetadata})::Vector{Int64}
-    return find_atoms_by_name_from_metadata(atoms, "CA")
-end
-find_ca_indices_from_metadata(metadata::Metadata)::Vector{Int64} = find_ca_indices_from_metadata(metadata.atoms)
-
-
-@doc raw"""
-    find_intra_residue_movables(atoms::Vector{AtomMetadata}, a3::Int64, current_res::Int64, current_list::Vector{Int64}, exclude::Int64)::Vector{Int64}
-
-Return an array of the *global* indices of all atoms that constitute this dihedral `movable` list. 
-
-# Arguments
-- `atoms::Vector{AtomMetadata}`: list of all atoms metadata.
-- `a3::Int64`: *global* index of the a3 atom of this dihedral.
-- `current_res::Int64`: Index of the residue this dihedral belongs to.
-- `current_list::Vector{Int64}`: All identified movables will be appended to this list. Used to make sure no duplicates are indentified.
-- `exclude::Int64`: *Global* index. Exclude this atom when recursively searching for movables. 
-
-# Examples
-```julia-repl
-julia> Common.find_intra_residue_movables(metadata.atoms, 5, 1, [5], 1)
-[6, 7, 8, 9, 10, 11, 12, 13]
-```
-"""
-function find_intra_residue_movables(atoms::Vector{AtomMetadata}, a3::Int64, current_res::Int64, current_list::Vector{Int64}, exclude::Int64)::Vector{Int64}
-
-    # This function receives the full atoms metadata list so it can look up the current atom `res_num` and make sure the recursive search does not extend to other
-    # residues AND to search for the `connects` records. The recursive search is also stopped if the connect is already in the `movables` list or is equal to the
-    # exclude atom (that identifies the previously looked up atom in the chain).
-    if atoms[a3].connects != nothing
-        for connect in atoms[a3].connects
-            (connect in current_list || atoms[connect].res_num != current_res || connect == exclude) ? continue : nothing
-
-            push!(current_list, connect)
-            current_list = find_intra_residue_movables(atoms, connect, current_res, current_list, a3)
-        end
-    end
-    return current_list
-end
-
-
-@doc raw"""
-    compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}[, residues::Vector{Residue}, ignore_omega::Bool = true])::Vector{Dihedral}
-    compile_backbone_dihedrals_from_metadata(metadata::Metadata[, residues::Vector{Residue}, ignore_omega::Bool = true])::Vector{Dihedral}
-
-Return a dihedrals (PHI, PSI and OMEGA) list, compiling the avaliable information from the metadata and residues list.
-If `ignore_omega` flag is set to true, returns only the PHI and PSI dihedrals.
-
-# Examples
-```julia-repl
-julia> bb_dihedrals = Common.compile_backbone_dihedrals_from_metadata(metadata.atoms, residues, false)
+julia> dihedrals = Common.compile_dihedrals_from_metadata(metadata.atoms)
 (...)
 
-julia> bb_dihedrals = Common.compile_backbone_dihedrals_from_metadata(metadata, residues)
-(...)
-
-julia> bb_dihedrals = Common.compile_backbone_dihedrals_from_metadata(metadata)
+julia> dihedrals = Common.compile_dihedrals_from_metadata(metadata)
 (...)
 ```
-See also: [`load_topology`](@ref) [`compile_sidechain_dihedrals_from_metadata`](@ref)
+See also: [`load_metadata_from_json`](@ref)
 """
-function compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, residues::Vector{Residue}, ignore_omega::Bool = true)::Vector{Dihedral}
+function compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Dihedral}
 
-    # This function iterates over the backbone atoms' indices (found using find_backbone_atoms_from_metadata() function), grouping each 4 atoms in order:
-    # PHI -> OMEGA -> PSI -> (...)
-    # Movables are found using find_intra_residue_movables() function and the residue number is defined as the residue in position `a3.res_num`.
-    # If `ignore_omega` flag is set to true, will only return the PHI and PSI dihedrals from the backbone.
-    dihedrals = Vector{Dihedral}()
-    ignore_omega ? dtypes = [psi, phi] : dtypes = [psi, omega, phi]
-    dtype_index::Int64 = 1
-    ign::Int64 = 0
+    function find_intra_residue_movables(atoms::Vector{AtomMetadata}, a3::Int64, current_res::Int64, current_list::Vector{Int64}, exclude::Int64)::Vector{Int64}
+        # This function receives the full atoms metadata list so it can look up the current atom `res_num` and make sure the recursive search does not extend to other
+        # residues AND to search for the `connects` records. The recursive search is also stopped if the connect is already in the `movables` list or is equal to the
+        # exclude atom (that identifies the previously looked up atom in the chain).
+        if atoms[a3].connects != nothing
+            for connect in atoms[a3].connects
+                (connect in current_list || atoms[connect].res_num != current_res || connect == exclude) ? continue : nothing
     
-    indices = find_backbone_indices_from_metadata(atoms)
-    for i in 1:(length(indices) - 3)
-        if ignore_omega && i == 2 + 3 * ign
-            ign += 1
-            continue
+                push!(current_list, connect)
+                current_list = find_intra_residue_movables(atoms, connect, current_res, current_list, a3)
+            end
         end
-        # Define a3 for easiness
-        a3 = atoms[indices[i + 2]]
-        # Find this dihedral movables.
-        movables = find_intra_residue_movables(atoms, indices[i + 2], a3.res_num, Int64[indices[i + 2]], indices[i + 1])
-        # Add this dihedral to the dihedrals list.
-        push!(dihedrals, Dihedral(indices[i], indices[i + 1], indices[i + 2], indices[i + 3], sort(movables), residues[a3.res_num], dtypes[dtype_index]))
-        # If the iteration reached the end of the d_types list, return to the begining.
-        dtype_index % length(dtypes) == 0 ? dtype_index = 1 : dtype_index += 1
+        return current_list
     end
-    return dihedrals
-end
-
-# Redundant functions
-function compile_backbone_dihedrals_from_metadata(metadata::Metadata, residues::Vector{Residue}, ignore_omega::Bool = true)::Vector{Dihedral}
-    return compile_backbone_dihedrals_from_metadata(metadata.atoms, residues, ignore_omega)
-end
-
-function compile_backbone_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, ignore_omega::Bool = true)::Vector{Dihedral}
-    residues = compile_residues_from_metadata(atoms)
-    return compile_backbone_dihedrals_from_metadata(atoms, residues, ignore_omega)
-end
-
-function compile_backbone_dihedrals_from_metadata(metadata::Metadata, ignore_omega::Bool = true)::Vector{Dihedral}
-    residues = compile_residues_from_metadata(metadata.atoms)
-    return compile_backbone_dihedrals_from_metadata(metadata.atoms, residues, ignore_omega)
-end
-
-
-@doc raw"""
-    compile_sidechain_dihedrals_from_metadata(atoms::Vector{AtomMetadata}[, residues::Vector{Residue}])::Vector{Dihedral}
-    compile_sidechain_dihedrals_from_metadata(metadata::Metadata[, residues::Vector{Residue}])::Vector{Dihedral}
-
-Return a dihedrals (CHI1, CHI2, etc) list, compiling the avaliable information from the metadata and residues list.
-
-# Examples
-```julia-repl
-julia> bb_dihedrals = Common.compile_sidechain_dihedrals_from_metadata(metadata.atoms, residues)
-(...)
-
-julia> bb_dihedrals = Common.compile_sidechain_dihedrals_from_metadata(metadata, residues)
-(...)
-
-julia> bb_dihedrals = Common.compile_sidechain_dihedrals_from_metadata(metadata)
-(...)
-```
-See also: [`load_topology`](@ref) [`compile_backbone_dihedrals_from_metadata`](@ref)
-"""
-function compile_sidechain_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, residues::Vector{Residue})::Vector{Dihedral}
 
     # This function iterates over each residue (ignoring Proline) and identifies the side-chain dihedrals. The atoms list (containing each atom metadata)
     # is necessary to identify atom's names.
     dihedrals = Vector{Dihedral}()
     
-    for residue in residues
+    # Identify residues from atom data
+    residues = Dict{Int64, Vector{AtomMetadata}}()
+    for atom in atoms
+        if !(atom.res_num in keys(residues))
+            residues[atom.res_num] = Vector{AtomMetadata}()
+        end
+        push!(residues[atom.res_num], atom)
+    end
+
+    for residue in values(residues)
         # Ignore Proline
-        residue.name == "PRO" ? continue : nothing
+        if residue[1].res_name == "PRO" continue end
         # Create a new atom_name -> atom_index conversion dictionary for each residue iterated over.
-        residue_atoms = Dict{String, Int64}()
-        for atom_index in residue.atoms
+        name2index = Dict{String, Int64}()
+        for atom in residue
             # Don't add hidrogens to the conversion dictionary since they will not be accounted for when identifying dihedrals.
-            startswith(atoms[atom_index].name, "H") ? continue : nothing
+            if startswith(atom.name, "H") continue end
             # The conversion dictionary basically gives the atom *global* index based on it's name.
-            residue_atoms[atoms[atom_index].name] = atom_index
+            name2index[atom.name] = atom.index
         end
 
+        # Identify Backbone Dihedrals
+        n, ca, c = filter!(atom -> atom.name in ["N", "CA", "C"], residue)
+        # PHI
+        prev_c = filter!(connect -> atoms[connect].name == "C", n.connects)
+        if length(prev_c) > 0
+            movables = find_intra_residue_movables(atoms, ca.index, ca.res_num, Int64[ca.index], n.index)
+            push!(dihedrals, Dihedral(prev_c[1], n.index, ca.index, c.index, sort(movables), ca.res_num, DIHEDRAL.phi))
+        end
+        # PSI
+        next_n = filter!(connect -> atoms[connect].name == "N", n.connects)
+        if length(next_n) > 0
+            movables = find_intra_residue_movables(atoms, c.index, c.res_num, Int64[c.index], ca.index)
+            push!(dihedrals, Dihedral(n.index, ca.index, c.index, next_n[1], sort(movables), c.res_num, DIHEDRAL.psi))
+            # OMEGA
+            next_n = atoms[next_n[1]]
+            next_ca = filter!(connect -> connect.name == "CA", next_n.connects)
+            if length(next_ca) > 0
+                movables = find_intra_residue_movables(atoms, next_n.index, next_n.res_num, Int64[next_n.index], c.index)
+                push!(dihedrals, Dihedral(ca.index, c.index, next_n.index, next_ca[1], sort(movables), next_n.res_num, DIHEDRAL.omega))
+            end
+        end
+
+        # Identify Side-chain Dihedrals
         # Start the dihedral path
         path = ["N", "CA"]
         # Based on the `residue.name`, the possible path taken by the iteration is different. This accounts for cyclic aminoacids.
-        possible_queries = residue.name in ("HIE", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
+        possible_queries = residue[1].res_name in ("HIE", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
         # Join all atom names in this residue in a single string, dividing atom names with ":". This will allow identification of the dihedral using regular expressions.
-        atnames = string(":", join(map(at -> atoms[at].name, residue.atoms), ":"), ":")
+        atnames = string(":", join(map(atom -> atom.name, residue), ":"), ":")
         # Iterate over the given possible path for the side-chain.
         for (chi_number, query) in enumerate(possible_queries)
             # The regular expression tries to identify the current query in the list of atom names. This is an overpowered version of looking for a key in the dictionary
@@ -433,17 +314,14 @@ function compile_sidechain_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, 
             end
             # If the dihedral path reaches 4 atoms (meaning a dihedral was identified), add a new Dihedral to the dihedrals list.
             if length(path) == 4
-                # The dihedral type is defined in order, starting in chi1, chi2, etc. Since the `enumerate` function, in Julia, starts in 1 and the first dihedral will
-                # only be identified in the second iteration of the loop (since on the first iteration only 3 atoms of the path have been identified), `$(chi_number - 1)`
-                # is used.
-                dtype = eval(Symbol("chi$(chi_number - 1)"))
                 # The previously defined atom_name -> atom_index conversion dictionary is employed to define the dihedral by its *global* indices.
-                atom_indices = map(at -> residue_atoms[at], path)
-                # a3 is defined for easiness.
-                a3 = atom_indices[3]
+                a1, a2, a3, a4 = map(atom_name -> name2index[atom_name], path)
                 # The dihedral movables are identified recursively using find_intra_residue_movables() function.
                 movables = find_intra_residue_movables(atoms, a3, atoms[a3].res_num, Int64[a3], atom_indices[2])
-                push!(dihedrals, Dihedral(atom_indices[1], atom_indices[2], a3, atom_indices[4], sort(movables), residue, dtype))
+                # The dihedral type is defined in order, starting in chi1, chi2, etc. Since the `enumerate` function, in Julia, starts in 1 and the first dihedral will
+                # only be identified in the second iteration of the loop (since on the first iteration only 3 atoms of the path have been identified), `chi_number - 1`
+                # is used.
+                push!(dihedrals, Dihedral(a1, a2, a3, a4, sort(movables), residue[1].res_num, DIHEDRAL.TYPE(chi_number - 1)))
                 # Delete the begining of the dihedral path. If a new atom is identified in the side-chain, the a2 of this dihedral becomes a1, etc
                 deleteat!(path, 1)
             end
@@ -451,18 +329,4 @@ function compile_sidechain_dihedrals_from_metadata(atoms::Vector{AtomMetadata}, 
     end
     return dihedrals
 end
-
-# Redundant functions
-function compile_sidechain_dihedrals_from_metadata(metadata::Metadata, residues::Vector{Residue})::Vector{Dihedral}
-    return compile_sidechain_dihedrals_from_metadata(metadata.atoms, residues)
-end
-
-function compile_sidechain_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Dihedral}
-    residues = compile_residues_from_metadata(atoms)
-    return compile_sidechain_dihedrals_from_metadata(atoms, residues)
-end
-
-function compile_sidechain_dihedrals_from_metadata(metadata::Metadata)::Vector{Dihedral}
-    residues = compile_residues_from_metadata(metadata.atoms)
-    return compile_sidechain_dihedrals_from_metadata(metadata.atoms, residues)
-end
+compile_dihedrals_from_metadata(metadata::Metadata)::Vector{Dihedral} = compile_dihedrals_from_metadata(metadata.atoms)

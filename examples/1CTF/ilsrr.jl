@@ -39,7 +39,7 @@ const best_destination         = open("out/best_trajectory.pdb", "w")
 # ------------------
 # Load state
 state, metadata = Common.load_from_pdb(input_pdb)
-println(metadata.atoms)
+println(metadata.dihedrals[1])
 exit(1)
 
 #Fix proline
