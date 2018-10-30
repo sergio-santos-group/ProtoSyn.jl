@@ -18,8 +18,8 @@ See also: [`load_from_pdb`](@ref)
 function load_from_gro(i_file::String)::Common.State
 
     #Initialize empty arrays
-    xyz     = Vector{Array{Float64, 2}}()
-    metadata = Vector{AtomMetadata}()
+    xyz   = Vector{Array{Float64, 2}}()
+    atoms = Vector{AtomMetadata}()
 
     #Read file (from file name) and recover XYZ and ATOM NAMES
     open(i_file, "r") do f
@@ -27,13 +27,13 @@ function load_from_gro(i_file::String)::Common.State
             elem = split(line)
             if length(elem) > 3 && index > 2
                 push!(xyz, map(x -> parse(Float64, x), [elem[4] elem[5] elem[6]]))
-                push!(metadata, AtomMetadata(string(elem[2]), elem=string(elem[2]), res_num=parse(Int64, strip(line[1:5])), res_name=string(strip(line[6:8]))))
+                push!(atoms, AtomMetadata(string(elem[2]), elem=string(elem[2]), res_num=parse(Int64, strip(line[1:5])), res_name=string(strip(line[6:8]))))
             end
         end
     end
 
     n = length(xyz)
-    return Common.State(n, Common.Energy(), vcat(xyz...), zeros(n, 3), Metadata(metadata))
+    return Common.State(n, Common.Energy(), vcat(xyz...), zeros(n, 3)), Metadata(atoms = atoms)
 end
 
 

@@ -40,6 +40,6 @@ function Base.iterate(st::State, idx = 1)
     if idx > size(st.xyz, 1)
         return nothing
     else
-        return ((st.xyz[idx, :], st.metadata.atoms[idx]), idx+1)
+        return (st.xyz[idx, :], idx+1)
     end
 end
