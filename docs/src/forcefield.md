@@ -17,7 +17,6 @@ Amber.HarmonicAngle
 Amber.DihedralCos
 Amber.Atom
 Amber.Topology
-Amber.Energy
 ```
 
 ## Evaluators

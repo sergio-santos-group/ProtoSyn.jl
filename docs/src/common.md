@@ -72,6 +72,13 @@ This section provides a description on how to load a new [`State`](@ref), [`Resi
 load_from_gro
 load_from_pdb
 load_topology
+compile_topology_from_metadata
+compile_residues_from_metadata
+compile_backbone_dihedrals_from_metadata
+compile_sidechain_dihedrals_from_metadata
+find_intra_residue_movables
+find_ca_indices_from_metadata
+find_backbone_indices_from_metadata
 ```
 
 ## Conformation Generators
