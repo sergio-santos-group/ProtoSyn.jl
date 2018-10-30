@@ -70,9 +70,8 @@ This section provides a description on how to load a new [`State`](@ref), [`Resi
 load_from_gro
 load_from_pdb
 load_metadata_from_json
-compile_topology_from_metadata
-compile_residues_from_metadata
-compile_dihedrals_from_metadata
+compile_residue_metadata
+compile_dihedral_metadata
 ```
 
 ## Conformation Generators

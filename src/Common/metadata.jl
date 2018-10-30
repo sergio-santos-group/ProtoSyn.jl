@@ -31,10 +31,11 @@ mutable struct AtomMetadata
     elem::String
     res_num::Int64
     res_name::String
+    residue::Union{Residue, Nothing}
     chain_id::Union{String, Nothing}
     connects::Union{Vector{Int64}, Nothing}
 
-    AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, chain_id, connects)
+    AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
 end
 function Base.show(io::IO, b::AtomMetadata) #SHOULD BE IMPROVED
     if b.chain_id != nothing && b.connects != nothing

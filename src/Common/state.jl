@@ -33,7 +33,7 @@ mutable struct State
 
 end
 State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Metadata())
-Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), metadata=$(b.metadata))")
+Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces))")
 
 function Base.iterate(st::State, idx = 1)
 

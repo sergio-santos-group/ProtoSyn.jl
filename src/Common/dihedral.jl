@@ -40,7 +40,7 @@ mutable struct Dihedral
     a3::Int64
     a4::Int64
     movable::Vector{Int64}
-    residue::Union{Residue, Int64}
+    residue::Residue
     dtype::DIHEDRAL.TYPE
 end
 Base.show(io::IO, b::Dihedral) = print(io, "Dihedral(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), movable=$(b.movable), residue=$(b.residue), type=$(b.dtype))")

@@ -79,8 +79,9 @@ function load_from_pdb(i_file::String, compile_metadata = true)
     n = length(xyz)
 
     if compile_metadata
-        residues, dihedrals = compile_topology_from_metadata(atoms)
-        metadata = Metadata(atoms = atoms, residues = residues, dihedrals = dihedrals)
+        metadata = Metadata(atoms = atoms)
+        compile_residue_metadata!(metadata)
+        compile_dihedral_metadata!(metadata)
     else
         metadata = Metadata()
     end
@@ -132,38 +133,6 @@ end
 
 
 @doc raw"""
-    compile_topology_from_metadata(atoms::Vector{AtomMetadata})::Tuple{Vector{Residue}, Vector{Dihedral}}
-    compile_topology_from_metadata(metadata::Metadata)::Tuple{Vector{Residue}, Vector{Dihedral}}
-
-Return both a residue and dihedrals list, compiling the avaliable information from the metadata.    
-
-# Examples
-```julia-repl
-julia> residues, dihedrals = Common.compile_topology_from_metadata(metadata.atoms)
-(...)
-
-julia> residues, dihedrals = Common.compile_topology_from_metadata(metadata)
-(...)
-```
-See also: [`load_metadata_from_json`](@ref)
-"""
-function compile_topology_from_metadata(atoms::Vector{AtomMetadata})::Tuple{Vector{Residue}, Vector{Dihedral}}
-
-    # This function returns the residues and dihedrals list of a molecule by parsing the atom motadata identified from the given PDB file.
-    residues = compile_residues_from_metadata(atoms)
-    dihedrals = compile_dihedrals_from_metadata(atoms)
-    
-    #Switch Int64 to Residue object in `dihedral.residue` parameter
-    for dihedral in dihedrals
-        dihedral.residue = residues[dihedral.residue]
-    end
-
-    return residues, dihedrals
-end
-compile_topology_from_metadata(metadata::Metadata)::Tuple{Vector{Residue}, Vector{Dihedral}} = compile_topology_from_metadata(metadata.atoms)
-
-
-@doc raw"""
     compile_residues_from_metadata(atoms::Vector{AtomMetadata})::Vector{Residue}
     compile_residues_from_metadata(metadata::Metadata)::Vector{Residue}
 
@@ -179,41 +148,42 @@ julia> residues = Common.compile_residues_from_metadata(metadata)
 ```
 See also: [`load_metadata_from_json`](@ref)
 """
-function compile_residues_from_metadata(atoms::Vector{AtomMetadata})::Vector{Residue}
+function compile_residue_metadata!(metadata::Metadata)
+
+    # Verify input
+    if length(metadata.atoms) <= 0 error("Metadata needs to have AtomMetadata information in order to compile residues.") end
 
     # This function will iterate over each atom metadata in reverse order. This allows to define the `residue.next` as the previously defined residue in the iteration,
     # since it is being looked up in reverse. The first residue defined does not have a `next`, so it is exeptionally set to `nothing`. A new residue is identified
     # whenever the atom being iterated over has a different `res_num` than the previous one. Newly identified residues are appended to the begining of the list, so
     # they are returned in order.
-    residues = Vector{Residue}()
-    residue_atoms = Vector{Int64}()
+    residue_metadata = Vector{Residue}()
     
     # Iterate over the atom list in reverse order
-    curr_res_num = atoms[length(atoms)].res_num
-    for index in length(atoms):-1:1
-
-        # A new residue is identified when the `atom.res_num` is different than the previous one.
-        if atoms[index].res_num != curr_res_num
-            # Exceptionally, the "first" residue (actually last, since it's in reverse order) will have `nothing` as its `next`.
-            if length(residues) == 0
-                insert!(residues, 1, Residue(reverse(residue_atoms), nothing, atoms[index + 1].res_name, SS.COIL))
-            else
-                # Add this residue to the residues list, appending it to the begining of the list.
-                # All other residues have the previously defined residue as its `next`.
-                insert!(residues, 1, Residue(reverse(residue_atoms), residues[1], atoms[index + 1].res_name, SS.COIL))
-            end
-            # Redefine the current residue number being looked up and create a new empty list of residue atoms.
-            curr_res_num = atoms[index].res_num
-            residue_atoms = Vector{Int64}()
+    residues = Dict{Int64, Vector{AtomMetadata}}()
+    for atom in metadata.atoms
+        if !(atom.res_num in keys(residues))
+            residues[atom.res_num] = Vector{AtomMetadata}()
         end
-        # Add the current atom to the residue atoms' list.
-        push!(residue_atoms, index)
+        push!(residues[atom.res_num], atom)
+    end
+
+    # Iterate over the reversed residues list
+    for residue in reverse(sort(collect(values(residues)), by = atoms -> atoms[1].index))
+        # Exceptionally, the "first" residue (actually last, since it's in reverse order) will have `nothing` as its `next`.
+        if length(residue_metadata) == 0
+            insert!(residue_metadata, 1, Residue([atom.index for atom in residue], nothing, residue[1].res_name, SS.COIL))
+            for atom in residue atom.residue = residue_metadata[1] end
+        else
+            # Add this residue to the residues list, appending it to the begining of the list.
+            # All other residues have the previously defined residue as its `next`.
+            insert!(residue_metadata, 1, Residue([atom.index for atom in residue], residue_metadata[1], residue[1].res_name, SS.COIL))
+            for atom in residue atom.residue = residue_metadata[1] end
+        end
     end
     # Append the first residue to the begining of the list
-    insert!(residues, 1, Residue(reverse(residue_atoms), residues[1], atoms[1].res_name, SS.COIL))
-    return residues
+    metadata.residues = residue_metadata
 end
-compile_residues_from_metadata(metadata::Metadata)::Vector{Residue} = compile_residues_from_metadata(metadata.atoms)
 
 
 @doc raw"""
@@ -232,7 +202,7 @@ julia> dihedrals = Common.compile_dihedrals_from_metadata(metadata)
 ```
 See also: [`load_metadata_from_json`](@ref)
 """
-function compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Dihedral}
+function compile_dihedral_metadata!(metadata::Metadata)
 
     function find_intra_residue_movables(atoms::Vector{AtomMetadata}, a3::Int64, current_res::Int64, current_list::Vector{Int64}, exclude::Int64)::Vector{Int64}
         # This function receives the full atoms metadata list so it can look up the current atom `res_num` and make sure the recursive search does not extend to other
@@ -249,20 +219,23 @@ function compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Di
         return current_list
     end
 
+    #Verify input
+    if length(metadata.atoms) <= 0 error("Metadata needs to have AtomMetadata information in order to compile dihedrals.") end
+
     # This function iterates over each residue (ignoring Proline) and identifies the side-chain dihedrals. The atoms list (containing each atom metadata)
     # is necessary to identify atom's names.
     dihedrals = Vector{Dihedral}()
     
     # Identify residues from atom data
     residues = Dict{Int64, Vector{AtomMetadata}}()
-    for atom in atoms
+    for atom in metadata.atoms
         if !(atom.res_num in keys(residues))
             residues[atom.res_num] = Vector{AtomMetadata}()
         end
         push!(residues[atom.res_num], atom)
     end
 
-    for residue in values(residues)
+    for residue in sort(collect(values(residues)), by = atoms -> atoms[1].index)
         # Ignore Proline
         if residue[1].res_name == "PRO" continue end
         # Create a new atom_name -> atom_index conversion dictionary for each residue iterated over.
@@ -275,24 +248,24 @@ function compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Di
         end
 
         # Identify Backbone Dihedrals
-        n, ca, c = filter!(atom -> atom.name in ["N", "CA", "C"], residue)
+        n, ca, c = filter(atom -> atom.name in ["N", "CA", "C"], residue)
         # PHI
-        prev_c = filter!(connect -> atoms[connect].name == "C", n.connects)
+        prev_c = filter(connect -> metadata.atoms[connect].name == "C", n.connects)
         if length(prev_c) > 0
-            movables = find_intra_residue_movables(atoms, ca.index, ca.res_num, Int64[ca.index], n.index)
-            push!(dihedrals, Dihedral(prev_c[1], n.index, ca.index, c.index, sort(movables), ca.res_num, DIHEDRAL.phi))
+            movables = find_intra_residue_movables(metadata.atoms, ca.index, ca.res_num, Int64[ca.index], n.index)
+            push!(dihedrals, Dihedral(prev_c[1], n.index, ca.index, c.index, sort(movables), ca.residue, DIHEDRAL.phi))
         end
         # PSI
-        next_n = filter!(connect -> atoms[connect].name == "N", n.connects)
+        next_n = filter(connect -> metadata.atoms[connect].name == "N", c.connects)
         if length(next_n) > 0
-            movables = find_intra_residue_movables(atoms, c.index, c.res_num, Int64[c.index], ca.index)
-            push!(dihedrals, Dihedral(n.index, ca.index, c.index, next_n[1], sort(movables), c.res_num, DIHEDRAL.psi))
+            movables = find_intra_residue_movables(metadata.atoms, c.index, c.res_num, Int64[c.index], ca.index)
+            push!(dihedrals, Dihedral(n.index, ca.index, c.index, next_n[1], sort(movables), c.residue, DIHEDRAL.psi))
             # OMEGA
-            next_n = atoms[next_n[1]]
-            next_ca = filter!(connect -> connect.name == "CA", next_n.connects)
+            next_n = metadata.atoms[next_n[1]]
+            next_ca = filter(connect -> metadata.atoms[connect].name == "CA", next_n.connects)
             if length(next_ca) > 0
-                movables = find_intra_residue_movables(atoms, next_n.index, next_n.res_num, Int64[next_n.index], c.index)
-                push!(dihedrals, Dihedral(ca.index, c.index, next_n.index, next_ca[1], sort(movables), next_n.res_num, DIHEDRAL.omega))
+                movables = find_intra_residue_movables(metadata.atoms, next_n.index, next_n.res_num, Int64[next_n.index], c.index)
+                push!(dihedrals, Dihedral(ca.index, c.index, next_n.index, next_ca[1], sort(movables), next_n.residue, DIHEDRAL.omega))
             end
         end
 
@@ -317,16 +290,15 @@ function compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Di
                 # The previously defined atom_name -> atom_index conversion dictionary is employed to define the dihedral by its *global* indices.
                 a1, a2, a3, a4 = map(atom_name -> name2index[atom_name], path)
                 # The dihedral movables are identified recursively using find_intra_residue_movables() function.
-                movables = find_intra_residue_movables(atoms, a3, atoms[a3].res_num, Int64[a3], atom_indices[2])
+                movables = find_intra_residue_movables(metadata.atoms, a3, metadata.atoms[a3].res_num, Int64[a3], a2)
                 # The dihedral type is defined in order, starting in chi1, chi2, etc. Since the `enumerate` function, in Julia, starts in 1 and the first dihedral will
                 # only be identified in the second iteration of the loop (since on the first iteration only 3 atoms of the path have been identified), `chi_number - 1`
                 # is used.
-                push!(dihedrals, Dihedral(a1, a2, a3, a4, sort(movables), residue[1].res_num, DIHEDRAL.TYPE(chi_number - 1)))
+                push!(dihedrals, Dihedral(a1, a2, a3, a4, sort(movables), residue[1].residue, DIHEDRAL.TYPE(chi_number - 1)))
                 # Delete the begining of the dihedral path. If a new atom is identified in the side-chain, the a2 of this dihedral becomes a1, etc
                 deleteat!(path, 1)
             end
         end
     end
-    return dihedrals
+    metadata.dihedrals = dihedrals
 end
-compile_dihedrals_from_metadata(metadata::Metadata)::Vector{Dihedral} = compile_dihedrals_from_metadata(metadata.atoms)
