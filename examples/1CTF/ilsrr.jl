@@ -38,7 +38,7 @@ const best_destination         = open("out/best_trajectory.pdb", "w")
 # INITIAL STEPS:
 # ------------------
 # Load state
-state, metadata = Common.load_from_pdb(input_pdb)
+state, metadata = Common.load_from_pdb("data/1ctf.pdb")
 Print.as_pdb(xyz_destination, state, metadata)
 exit(1)
 

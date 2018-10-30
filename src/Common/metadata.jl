@@ -12,12 +12,13 @@ Define an atom metadata, containing extra information pertaining the [`State`](@
 - `elem::String`: (Optional) Element of the atom (Default: `name`).
 - `res_num::Int64`: (Optional) Number of the residue this atom belongs to (Default: 1).
 - `res_name::Union{String, Nothing}`: (Optional) Name of the residue this atom belongs to (Default: "UNK").
+- `residue::Union{Residue, Nothing}`: (Optional) Reference to the residue this atom belong to (Deffault: nothing).
 - `chain_id::String`: (Optional) Name of the chain that contains the residue this atom belongs to (Default: nothing).
 - `connects::Union{Vector{Int64}, Nothing}`: (Optional) List of *global* atom indices that this atom is connected to (Default: nothing). 
 
 # Examples
 ```julia-repl
-julia> AtomMetadata("H1", "H", 2, "VAL", "A", [4])
+julia> AtomMetadata("H1", "H", 2, "VAL", Residue(...), "A", [4])
 AtomMetadata(name=H1, elem=H, res_num=2, res_name=VAL, chain_id=A, connects=[4])
 
 julia> AtomMetadata("H1")

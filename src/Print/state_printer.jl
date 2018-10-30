@@ -9,6 +9,10 @@ julia> Print.as_xyz(file_xyz, state, title = "molecule")
 ```
 """
 function as_xyz(io::IO, state::Common.State, metadata::Common.Metadata, title::String="mol")
+
+    #Verify input
+    if length(metadata.atoms) < size(state.xyz, 1) error("No metadata found or it is not in accordance with the given XYZ coordinates.") end
+
     write(io, "$(state.size)\n$title\n")
     for (xyz, atom) in zip(state, metadata.atoms)
         write(io, @sprintf("%-4s %9.4f %9.4f %9.4f\n", atom.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))
@@ -49,6 +53,10 @@ julia> Print.as_pdb(file_xyz, state, title = "molecule", step=2)
 ```
 """
 function as_pdb(io::IO, state::Common.State, metadata::Common.Metadata; title::String="mol", step::Int64=1)
+
+    #Verify input
+    if length(metadata.atoms) < size(state.xyz, 1) error("No metadata found or it is not in accordance with the given XYZ coordinates.") end
+
     write(io, "TITLE $title\nMODEL $step\n")
     if length(metadata.ss) > 0
         n_sheets = length(filter(ss -> ss.ss_type == Common.SS.SHEET, metadata.ss))

@@ -5,8 +5,9 @@
 @doc raw"""
     load_from_gro(i_file::String)::Common.State
 
-    Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .gro file.
+Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .gro file.
 As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+If `compile_metadata` flag is set to true, the returned Metadata object is compiled from the existing  information in the GRO file.
 
 # Examples
 ```julia-repl
@@ -15,11 +16,11 @@ Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.
 ```
 See also: [`load_from_pdb`](@ref)
 """
-function load_from_gro(i_file::String)::Common.State
+function load_from_gro(i_file::String, compile_metadata = true)::Tuple{State, Metadata}
 
     #Initialize empty arrays
     xyz   = Vector{Array{Float64, 2}}()
-    atoms = Vector{AtomMetadata}()
+    if compile_metadata atoms = Vector{AtomMetadata}() end
 
     #Read file (from file name) and recover XYZ and ATOM NAMES
     open(i_file, "r") do f
@@ -27,13 +28,20 @@ function load_from_gro(i_file::String)::Common.State
             elem = split(line)
             if length(elem) > 3 && index > 2
                 push!(xyz, map(x -> parse(Float64, x), [elem[4] elem[5] elem[6]]))
-                push!(atoms, AtomMetadata(string(elem[2]), elem=string(elem[2]), res_num=parse(Int64, strip(line[1:5])), res_name=string(strip(line[6:8]))))
+                if compile_metadata
+                    push!(atoms, AtomMetadata(index=index, name=string(elem[2]), elem=string(elem[2]), res_num=parse(Int64, strip(line[1:5])), res_name=string(strip(line[6:8]))))
+                end
             end
         end
     end
 
     n = length(xyz)
-    return Common.State(n, Common.Energy(), vcat(xyz...), zeros(n, 3)), Metadata(atoms = atoms)
+    if compile_metadata
+        metadata = Metadata(atoms = atoms)
+    else
+        metadata = Metadata()
+    end
+    return State(n, Common.Energy(), vcat(xyz...), zeros(n, 3)), metadata
 end
 
 
@@ -51,7 +59,7 @@ Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.
 ```
 See also: [`load_from_gro`](@ref)
 """
-function load_from_pdb(i_file::String, compile_metadata = true)
+function load_from_pdb(i_file::String, compile_metadata = true)::Tuple{State, Metadata}
 
     xyz   = Vector{Array{Float64, 2}}()
     if compile_metadata atoms = Vector{AtomMetadata}() end
@@ -133,18 +141,13 @@ end
 
 
 @doc raw"""
-    compile_residues_from_metadata(atoms::Vector{AtomMetadata})::Vector{Residue}
-    compile_residues_from_metadata(metadata::Metadata)::Vector{Residue}
+    compile_residue_metadata!(metadata::Metadata)
 
-Return a residue list, compiling the avaliable information from the metadata.
+Add residue information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
 
 # Examples
 ```julia-repl
-julia> residues = Common.compile_residues_from_metadata(metadata.atoms)
-(...)
-
-julia> residues = Common.compile_residues_from_metadata(metadata)
-(...)
+julia> Common.compile_residue_metadata!(metadata)
 ```
 See also: [`load_metadata_from_json`](@ref)
 """
@@ -187,18 +190,13 @@ end
 
 
 @doc raw"""
-    compile_dihedrals_from_metadata(atoms::Vector{AtomMetadata})::Vector{Dihedral}
-    compile_dihedrals_from_metadata(metadata::Metadata)::Vector{Dihedral}
+    compile_dihedral_metadata!(metadata::Metadata)
 
-Return a dihedrals list, compiling the avaliable information from the metadata.
+Add dihedrasl information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
 
 # Examples
 ```julia-repl
-julia> dihedrals = Common.compile_dihedrals_from_metadata(metadata.atoms)
-(...)
-
-julia> dihedrals = Common.compile_dihedrals_from_metadata(metadata)
-(...)
+julia> Common.compile_dihedral_metadata!(metadata)
 ```
 See also: [`load_metadata_from_json`](@ref)
 """
