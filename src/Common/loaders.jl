@@ -90,20 +90,21 @@ end
 
 
 @doc raw"""
-    load_topology(p::Dict{String, Any})
+    load_metadata_from_json(json_file::String)
 
-Parse a dictionary containing the dihedral and residue topology. Return a [`Dihedral`](@ref) array
+Parse a JSON file containing the dihedral and residue topology. Return a [`Dihedral`](@ref) array
 and a [`Residue`](@ref) array.
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.load_topology(p)
+julia> Mutators.Diehdral.load_topology("mc.json")
 (ProtoSyn.Mutators.Dihedral.NewDihedral[...], ProtoSyn.Common.Residue[...])
 ```
 See also: [`Aux.read_JSON`](@ref)
 """
-function load_topology(p::Dict{String, Any})
+function load_metadata_from_json(json_file::String)
 
+    p::Dict{String, Any} = Aux.read_JSON(json_file)
     tmp_residues = Dict(d["n"] => Residue(convert(Vector{Int64}, d["atoms"]), d["next"], d["type"]) for d in p["residues"])
     
     str2enum = Dict(string(s) => s for s in instances(DIHEDRALTYPE))
