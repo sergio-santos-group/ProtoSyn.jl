@@ -2,7 +2,7 @@
 #                                                 STATE
 
 @doc raw"""
-    State(size::Int64, energy::AbstractEnergy, xyz::Array{Float64, 2}, forces::Array{Float64, 2}, metadata::Vector{AtomMetadata})
+    State(size::Int64, energy::AbstractEnergy, xyz::Array{Float64, 2}, forces::Array{Float64, 2}, metadata::Vector{Metadata})
 
 Define the current state of the system, containing the atoms positions, energy and forces applied.
 If only `size::Int64` is provided, an empty State with the given `size` is created with zeros.
@@ -12,7 +12,7 @@ If only `size::Int64` is provided, an empty State with the given `size` is creat
 - `energy::AbstractEnergy`: Current energy of the system (kJ mol⁻¹).
 - `xyz::Array{Float64, 2}`: Atom positions in 3 dimensions.
 - `forces::Array{Float64, 2}`: Forces applied in each dimension to each atom (kJ mol⁻¹ nm⁻¹)
-- `metadata::Vector{AtomMetadata}`: List of atom names.
+- `metadata::Metadata`: Metadata object.
 
 # Examples
 ```julia-repl
@@ -22,7 +22,7 @@ Common.State(size=3, energy=Null, xyz=[0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0], f
 julia> Common.State(2, Common.NullEnergy(), [1.1 1.1 1.1; 2.2 2.2 2.2], zeros(2, 3), metadata)
 Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.0 0.0; 0.0 0.0 0.0], metadata=(...))
 ```
-See also: [`AtomMetadata`](@ref)
+See also: [`Metadata`](@ref)
 """
 mutable struct State
 

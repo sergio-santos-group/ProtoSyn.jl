@@ -43,7 +43,6 @@ ProtoSyn Metadata defines additional information of the system that is not neces
 ```@docs
 Metadata
 AtomMetadata
-iter
 SecondaryStructureMetadata
 renumber_residues!
 ```

@@ -38,10 +38,11 @@ end
 
 
 @doc raw"""
-    load_from_pdb(i_file::String)::Common.State
+    load_from_pdb(i_file::String[, compile_metadata::Bool = true])::Common.State
 
 Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .pdb file.
 As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+If `compile_metadata` flag is set to true, the returned Metadata object is compiled from the existing  information in the PDB file.
 
 # Examples
 ```julia-repl
@@ -50,31 +51,41 @@ Common.State(size=2, energy=Null, xyz=[1.1 1.1 1.1; 2.2 2.2 2.2], forces=[0.0 0.
 ```
 See also: [`load_from_gro`](@ref)
 """
-function load_from_pdb(i_file::String)
+function load_from_pdb(i_file::String, compile_metadata = true)
 
-    xyz      = Vector{Array{Float64, 2}}()
-    metadata = Vector{AtomMetadata}()
+    xyz   = Vector{Array{Float64, 2}}()
+    if compile_metadata atoms = Vector{AtomMetadata}() end
 
     open(i_file, "r") do f
         for line in eachline(f)
-            # if length(line) > 6 && line[1:6] == "ATOM  "
             if startswith(line, "ATOM")
                 push!(xyz, map(x -> 0.1*parse(Float64, x), [line[31:38] line[39:46] line[47:54]]))
-                push!(metadata, AtomMetadata(string(strip(line[14:16])),
-                    elem = string(strip(line[77:78])),
-                    res_num = parse(Int64, line[23:26]),
-                    res_name = string(strip(line[18:20])),
-                    chain_id = string(line[22]),
-                    connects = nothing))
-            elseif startswith(line, "CONECT")
+                if compile_metadata
+                    push!(atoms, AtomMetadata(
+                        index    = parse(Int64, strip(line[6:11])),
+                        name     = string(strip(line[14:16])),
+                        elem     = string(strip(line[77:78])),
+                        res_num  = parse(Int64, line[23:26]),
+                        res_name = string(strip(line[18:20])),
+                        chain_id = string(line[22]),
+                        connects = nothing))
+                end
+            elseif compile_metadata && startswith(line, "CONECT")
                 elem = split(line)
-                metadata[parse(Int64, elem[2])].connects = map(x -> parse(Int64, x), elem[3:end])
+                atoms[parse(Int64, elem[2])].connects = map(x -> parse(Int64, x), elem[3:end])
             end
         end
     end
-
     n = length(xyz)
-    return State(n, Energy(), vcat(xyz...), zeros(n, 3)), Metadata(metadata)
+
+    if compile_metadata
+        residues, dihedrals = compile_topology_from_metadata(atoms)
+        metadata = Metadata(atoms = atoms, residues = residues, dihedrals = dihedrals)
+    else
+        metadata = Metadata()
+    end
+
+    return State(n, Energy(), vcat(xyz...), zeros(n, 3)), metadata
 end
 
 
