@@ -8,10 +8,14 @@ Print the current [`Common.State`](@ref) as a .xyz file to the output `io`.
 julia> Print.as_xyz(file_xyz, state, title = "molecule")
 ```
 """
-function as_xyz(io::IO, state::Common.State, title::String="mol")
+function as_xyz(io::IO, state::Common.State, metadata::Common.Metadata, title::String="mol")
+
+    #Verify input
+    if length(metadata.atoms) < size(state.xyz, 1) error("No metadata found or it is not in accordance with the given XYZ coordinates.") end
+
     write(io, "$(state.size)\n$title\n")
-    for (xyz, metadata) in state
-        write(io, @sprintf("%-4s %9.4f %9.4f %9.4f\n", metadata.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))
+    for (xyz, atom) in zip(state, metadata.atoms)
+        write(io, @sprintf("%-4s %9.4f %9.4f %9.4f\n", atom.elem, xyz[1]*10, xyz[2]*10, xyz[3]*10))
     end
 end
 
@@ -31,9 +35,9 @@ julia> Print.as_xyz(state, title = "molecule")
 ...
 ```
 """
-function as_xyz(state::Common.State, title::String = "mol")::String
+function as_xyz(state::Common.State, metadata::Common.Metadata, title::String = "mol")::String
     iobuffer = IOBuffer()
-    as_xyz(iobuffer, state, title)
+    as_xyz(iobuffer, state, metadata, title)
     return String(take!(iobuffer))
 end
 
@@ -48,11 +52,15 @@ Print the current [`Common.State`](@ref) as a .pdb file to the output `io`.
 julia> Print.as_pdb(file_xyz, state, title = "molecule", step=2)
 ```
 """
-function as_pdb(io::IO, state::Common.State; title::String="mol", step::Int64=1)
+function as_pdb(io::IO, state::Common.State, metadata::Common.Metadata; title::String="mol", step::Int64=1)
+
+    #Verify input
+    if length(metadata.atoms) < size(state.xyz, 1) error("No metadata found or it is not in accordance with the given XYZ coordinates.") end
+
     write(io, "TITLE $title\nMODEL $step\n")
-    if length(state.metadata.ss) > 0
-        n_sheets = length(filter(ss -> ss.ss_type == Common.SS.SHEET, state.metadata.ss))
-        for (index, ss) in enumerate(state.metadata.ss)
+    if length(metadata.ss) > 0
+        n_sheets = length(filter(ss -> ss.ss_type == Common.SS.SHEET, metadata.ss))
+        for (index, ss) in enumerate(metadata.ss)
             write(io, "$(@sprintf("%-6s", string(ss.ss_type)))")
             write(io, "$(@sprintf("%4d", index))")
             write(io, "$(@sprintf("%4s", ss.name))")
@@ -65,21 +73,21 @@ function as_pdb(io::IO, state::Common.State; title::String="mol", step::Int64=1)
             write(io, "$(@sprintf("%36d\n", ss.f_res_num - ss.i_res_num))")
         end
     end
-    for (index, (xyz, metadata)) in enumerate(state)
+    for (xyz, atom) in zip(state, metadata.atoms)
         write(io, "$(@sprintf("%-6s", "ATOM"))")
-        write(io, "$(@sprintf("%5d  ", index))")
-        write(io, "$(@sprintf("%-3s ", metadata.name[1:min(end, 3)]))")
-        write(io, "$(@sprintf("%-3s A", metadata.res_name))")
-        write(io, "$(@sprintf("%4d    ", metadata.res_num))")
+        write(io, "$(@sprintf("%5d  ", atom.index))")
+        write(io, "$(@sprintf("%-3s ", atom.name[1:min(end, 3)]))")
+        write(io, "$(@sprintf("%-3s A", atom.res_name))")
+        write(io, "$(@sprintf("%4d    ", atom.res_num))")
         write(io, "$(@sprintf("%8.3f", xyz[1]*10))")
         write(io, "$(@sprintf("%8.3f", xyz[2]*10))") #Angstrom
         write(io, "$(@sprintf("%8.3f  1.00  0.00", xyz[3]*10))\n")
     end
     write(io, "TER")
-    for (index, (xyz, metadata)) in enumerate(state)
-        if metadata.connects != nothing
-            write(io, "\nCONECT$(@sprintf("%5d", index))")
-            for at in metadata.connects
+    for atom in metadata.atoms
+        if atom.connects != nothing
+            write(io, "\nCONECT$(@sprintf("%5d", atom.index))")
+            for at in atom.connects
                 write(io, "$(@sprintf("%5d", at))")  
             end
         end
@@ -104,8 +112,8 @@ ATOM      1  N   GLU A   1      -0.004   0.299   0.000  1.00  0.00
 ATOM      2  H1  GLU A   1       0.120   1.301   0.000  1.00  0.00
 ...
 """
-function as_pdb(state::Common.State, title::String = "mol")
+function as_pdb(state::Common.State, metadata::Common.Metadata; title::String="mol", step::Int64=1)
     iobuffer = IOBuffer()
-    as_pdb(iobuffer, state, title)
+    as_pdb(iobuffer, state, metadata, title = title, step = step)
     return String(take!(iobuffer))
 end
