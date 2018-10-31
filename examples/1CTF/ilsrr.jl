@@ -39,7 +39,13 @@ const best_destination         = open("out/best_trajectory.pdb", "w")
 # ------------------
 # Load state
 state, metadata = Common.load_from_pdb("data/1ctf.pdb")
+dihedral_mutator   = Mutators.Dihedral.DihedralMutator(metadata.dihedrals, () -> (rand() * 2 - 1 * dihedral_mutator.step_size), dihedral_p_mut, dihedral_step_size)
+println(dihedral_mutator)
 Print.as_pdb(xyz_destination, state, metadata)
+for i in 2:11
+    Mutators.Dihedral.run!(state, dihedral_mutator)
+    Print.as_pdb(xyz_destination, state, metadata, step = i)
+end
 exit(1)
 
 #Fix proline
