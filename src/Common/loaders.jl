@@ -174,7 +174,7 @@ function compile_residue_metadata!(metadata::Metadata)
     end
 
     # Iterate over the reversed residues list
-    for key in sort(collect(keys(residues)))
+    for key in reverse(sort(collect(keys(residues))))
         residue = residues[key]
         sort!(residue, by = atom -> atom.index)
         if length(residue_metadata) == 0
@@ -243,10 +243,6 @@ function compile_dihedral_metadata!(metadata::Metadata)
     end
 
     for residue in sort(collect(values(residues)), by = atoms -> atoms[1].index)
-        # Ignore Proline
-        if residue[1].res_name == "PRO"
-            continue
-        end
         
         # Create a new atom_name -> atom conversion dictionary for each residue iterated over.
         name2atom = Dict(atom.name => atom for atom in residue)
@@ -256,7 +252,7 @@ function compile_dihedral_metadata!(metadata::Metadata)
         ca = name2atom["CA"]
         c  = name2atom["C"]
         # PHI
-        if n.connects != nothing
+        if n.connects != nothing && residue[1].res_name != "PRO"
             prev_c = filter(connect -> metadata.atoms[connect].name == "C", n.connects)
             if length(prev_c) > 0
                 movables = find_intra_residue_movables!(metadata.atoms, ca.index, ca.res_num, Vector{Int64}(), n.index)
@@ -274,14 +270,18 @@ function compile_dihedral_metadata!(metadata::Metadata)
                 if next_n.connects != nothing
                     next_ca = filter(connect -> metadata.atoms[connect].name == "CA", next_n.connects)
                     if length(next_ca) > 0
-                        movables = find_intra_residue_movables!(metadata.atoms, next_n.index, next_n.res_num, Vector{Int64}(), c.index)
-                        push!(dihedrals, Dihedral(ca.index, c.index, next_n.index, next_ca[1], sort(movables), next_n.residue, DIHEDRAL.omega))
+                        # Omega dihedrals don't have movables
+                        push!(dihedrals, Dihedral(ca.index, c.index, next_n.index, next_ca[1], Vector{Int64}(), c.residue, DIHEDRAL.omega))
                     end
                 end
             end
         end
 
         # Identify Side-chain Dihedrals
+        # Ignore Proline
+        if residue[1].res_name == "PRO"
+            continue
+        end
         # Start the dihedral path
         path = ["N", "CA"]
         # Based on the `residue.name`, the possible path taken by the iteration is different. This accounts for cyclic aminoacids.

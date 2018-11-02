@@ -70,23 +70,24 @@ julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_cal
 function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.CallbackObject...)
     
     step = 0
-    xyz0 = copy(state.xyz)
+    backup = deepcopy(state)
     driver.evaluator!(state, false)
-    ene0 = deepcopy(state.energy)
     acceptance_count = 0
 
     while step < driver.n_steps
         step += 1
         mov_count = driver.sampler!(state)
+        if sum(values(mov_count)) == 0
+            @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count
+            continue
+        end
         driver.evaluator!(state, false)
 
-        if (state.energy.eTotal < ene0.eTotal) || (rand() < exp(-(state.energy.eTotal - ene0.eTotal) / driver.temperature))
-            ene0 = deepcopy(state.energy)
-            xyz0[:] = state.xyz
+        if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature))
+            backup = deepcopy(state)
             acceptance_count += 1
         else
-            state.xyz[:] = xyz0
-            state.energy = deepcopy(ene0)
+            state = deepcopy(backup)
         end
 
         @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count

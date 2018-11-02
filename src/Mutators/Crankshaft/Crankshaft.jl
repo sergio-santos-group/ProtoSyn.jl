@@ -32,7 +32,7 @@ mutable struct CrankshaftMutator
 
     function CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
         for dihedral in dihedrals
-            dihedral.dtype == Common.phi ? nothing : error("Tried to add a non-PHI dihedral to CrankshaftMutator ($dihedral)")
+            dihedral.dtype == Common.DIHEDRAL.phi ? nothing : error("Tried to add a non-PHI dihedral to CrankshaftMutator ($dihedral)")
         end
         new(dihedrals, angle_sampler, p_mut, step_size)
     end

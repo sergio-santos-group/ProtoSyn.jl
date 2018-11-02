@@ -221,7 +221,7 @@ mutable struct Topology
     dihedralsCos::Array{DihedralCos}
 
 end
-Base.show(io::IO, b::Topology) = print(io, "Forcefield.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")
+Base.show(io::IO, b::Topology) = print(io, "Forcefield.Amber.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")
 
 # ----------------------------------------------------------------------------------------------------------
 

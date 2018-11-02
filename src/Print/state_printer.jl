@@ -65,9 +65,9 @@ function as_pdb(io::IO, state::Common.State, metadata::Common.Metadata; title::S
             write(io, "$(@sprintf("%4d", index))")
             write(io, "$(@sprintf("%4s", ss.name))")
             ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%2d", n_sheets))") : nothing
-            write(io, "$(@sprintf("%4s A", Aux.conv_aa_123(ss.i_res_name)))")
+            write(io, "$(@sprintf("%4s A", Aux.conv123(ss.i_res_name)))")
             ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.i_res_num))") : write(io, "$(@sprintf("%5d ", ss.i_res_num))")
-            write(io, "$(@sprintf("%4s A", Aux.conv_aa_123(ss.f_res_name)))")
+            write(io, "$(@sprintf("%4s A", Aux.conv123(ss.f_res_name)))")
             ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.f_res_num))") : write(io, "$(@sprintf("%5d ", ss.f_res_num))")
             write(io, "$(@sprintf("%2d", ss.conf))")
             write(io, "$(@sprintf("%36d\n", ss.f_res_num - ss.i_res_num))")
@@ -97,13 +97,13 @@ end
 
 
 @doc raw"""
-    as_pdb(state::Common.State[, title::String = "mol"])::String
+    as_pdb(state::Common.State, metadata::Common.Metadata[, title::String = "mol"])::String
 
 Print the current [`Common.State`](@ref) in .pdb format and returns a String.
 
 # Examples
 ```julia-repl
-julia> Print.as_pdb(state, title = "molecule", step = 2)
+julia> Print.as_pdb(state, metadata, title = "molecule", step = 2)
 TITLE molecule
 MODEL 2
 SHEET    1  BA 3 ASP A   2  ALA A   8  1                                   6

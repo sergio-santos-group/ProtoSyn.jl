@@ -4,7 +4,7 @@
 #     # Create solvation pairs
 #     d = Dict("Q" => -3.5, "W" => -0.9, "T" => -0.7, "C" =>  2.5, "P" => -1.6, "V" =>  4.2, "L" =>  3.8, "M" =>  1.9, "N" => -3.5, "H" => -3.2,
 #              "A" =>  1.8, "D" => -3.5, "G" => -0.4, "E" => -3.5, "Y" => -1.3, "I" =>  4.5, "S" => -0.8, "K" => -3.9, "R" => -4.5, "F" =>  2.8)
-#     solv_pairs = map(x -> SolvPair(x.cα, d[Aux.conv_aa_321(string(x.name))]), residues)
+#     solv_pairs = map(x -> SolvPair(x.cα, d[Aux.conv321(string(x.name))]), residues)
     
 #     # Calculate solvation energy
 #     n_atoms = length(solv_pairs)
@@ -27,11 +27,31 @@
 #     end
 
 #     st.energy.comp["eSol"] = e_sol
-#     st.energy.eTotal += e_sol
+#     st.energy.eTotal = e_sol
 #     return e_sol
 # end
 
 
-# function calc_eContacts(st::Common.State)
+function prize(distance::Float64, prob::Float64, optimum::Float64 = 0.5, threshold::Float64 = 2.0)::Float64
+    # All distances are in nm.
 
-# end
+    if distance > optimum && distance < threshold
+        return -prob * abs2(distance - threshold)
+    else
+        return 0.0
+    end
+
+end
+
+function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}, prize::Function = prize)
+
+    eContact::Float64 = 0.0
+    for contact_pair in contact_pairs
+        distance::Float64 = norm(@. st.xyz[contact_pair.c1, :] - st.xyz[contact_pair.c2, :]) # nm
+        eContact += prize(distance, contact_pair.prob)
+    end
+
+    st.energy.comp["eContact"] = eContact
+    st.energy.eTotal = eContact
+    return eContact
+end

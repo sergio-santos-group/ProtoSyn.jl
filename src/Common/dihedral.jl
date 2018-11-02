@@ -94,7 +94,7 @@ See also: [`Aux.rotation_matrix_from_axis_angle`](@ref) [`Dihedral`](@ref Mutato
     xyz[movable, :] = (rmat * (xyz[movable, :] .- pivot)')' .+ pivot
 
     # Rotate all downstream residues
-    if (dtype < DIHEDRAL.omega) && (residue != nothing)
+    if dtype <= DIHEDRAL.omega && residue != nothing
         idxs = Vector{Int64}()
         while residue.next != nothing
             residue = residue.next
