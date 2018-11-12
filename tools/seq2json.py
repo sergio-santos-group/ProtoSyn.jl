@@ -19,31 +19,40 @@ be parsed by Catulia. mol.pdb is a PDB model that is adapted by Catulia to print
 #Grow molecule from sequence
 mol_sequence = "EFDVILKAAGANKVAVIKAVRGATGLGLKEAKDLVESAPAALKEGVSKDDAEALKKALEEAGAEVEVK"
 m = grow("mol", mol_sequence)
-cap_chain(m)
+# cap_chain(m)
 
-def re_place(target, pos1, pos2):
-    target.insert(pos2, target[pos1])
-    target.pop(pos1)
+# def re_place(target, pos1, pos2):
+#     target.insert(pos2, target[pos1])
+#     target.pop(pos1)
 
-for r in m.residues:
-    # switch_pos(r.atoms, 0, 1)
-    if r.index == 0: # Re-place H2 and H3 in correct order
-        re_place(r.atoms, -1, 2)
-        re_place(r.atoms, -1, 2)
-m.renumber()
+# def switch_pos(target, pos1, pos2):
+#     tmp = target[0]
+#     target[0] = target[1]
+#     target[1] = tmp
+
+# for r in m.residues:
+#     print r.atoms
+#     switch_pos(r.atoms, 0, 1)
+#     print r.atoms
+    # if r.index == 0: # Re-place H2 and H3 in correct order
+    #     re_place(r.atoms, -1, 2)
+    #     re_place(r.atoms, -1, 2)
+# m.renumber()
 
 #Reload molecule to update dihedrals and connectivities
 output = StringIO.StringIO()
 output.write(m.as_pdb())
+# print output.getvalue()
+# exit(1)
 m = Molecule.LoadFromFileHandle(output)
 output.close()
 
-#Renumerate atoms
+#Renumerate atoms (HOTFIX)
 for r in m.residues:
     l = len(r.atoms)
     for dtype,dihd in r.dihedrals.iteritems():
         if dtype == DType.PHI:
-            dihd.movable = range(3, l)
+            dihd.movable = range(2, l)
         elif dtype == DType.PSI:
             dihd.movable = range(l - 2, l)
 

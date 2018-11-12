@@ -81,7 +81,8 @@ function as_pdb(io::IO, state::Common.State, metadata::Common.Metadata; title::S
         write(io, "$(@sprintf("%4d    ", atom.res_num))")
         write(io, "$(@sprintf("%8.3f", xyz[1]*10))")
         write(io, "$(@sprintf("%8.3f", xyz[2]*10))") #Angstrom
-        write(io, "$(@sprintf("%8.3f  1.00  0.00", xyz[3]*10))\n")
+        write(io, "$(@sprintf("%8.3f  1.00  0.00", xyz[3]*10))")
+        write(io, "$(@sprintf("%12s\n", atom.elem))")
     end
     write(io, "TER")
     for atom in metadata.atoms

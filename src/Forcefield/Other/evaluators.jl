@@ -43,7 +43,7 @@ function prize(distance::Float64, prob::Float64, optimum::Float64 = 0.5, thresho
 
 end
 
-function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}, prize::Function = prize)
+function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}; prize::Function = prize, k::Float64 = 1.0)
 
     eContact::Float64 = 0.0
     for contact_pair in contact_pairs
@@ -51,6 +51,7 @@ function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}, pr
         eContact += prize(distance, contact_pair.prob)
     end
 
+    eContact *= k
     st.energy.comp["eContact"] = eContact
     st.energy.eTotal = eContact
     return eContact
