@@ -5,7 +5,9 @@ using Printf
 using ..Aux
 using ..Common
 using ..Forcefield
+using ..Drivers
 
-include("state_printer.jl")
+include("structure_printer.jl")
+include("status_printer.jl")
 
 end

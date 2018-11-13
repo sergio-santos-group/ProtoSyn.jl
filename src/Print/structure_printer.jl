@@ -112,6 +112,7 @@ HELIX    2  HA VAL A   13  GLY A   24  1                                  11
 ATOM      1  N   GLU A   1      -0.004   0.299   0.000  1.00  0.00
 ATOM      2  H1  GLU A   1       0.120   1.301   0.000  1.00  0.00
 ...
+```
 """
 function as_pdb(state::Common.State, metadata::Common.Metadata; title::String="mol", step::Int64=1)
     iobuffer = IOBuffer()

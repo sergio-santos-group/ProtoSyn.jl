@@ -4,25 +4,27 @@ using Printf
 # ------------------
 # SET CONFIGURATION:
 # ------------------
-const n_outer_steps            = 1
-const n_inner_steps            = 100000
-const print_every_inner_cycle  = 1000
+const n_outer_steps            = 100
+const n_inner_steps            = 1000
+const print_sts_every_ic       = 100
+const print_str_every_ic       = 0
+const min_step_size            = 0.01
 
-const dihedral_p_mut           = 0.02
+const dihedral_p_mut           = 0.025
 dihedral_step_size             = π/2
-const dihedral_p_mut_prt       = 1.0    # For perturbator
+const dihedral_p_mut_prt       = 0.25   # For perturbator
 const dihedral_step_size_prt   = 0.01   # For perturbator
 
-const crankshaft_p_mut         = 0.005
-crankshaft_step_size           = 1.0
-const crankshaft_p_mut_prt     = 1.0    # For perturbator
+const crankshaft_p_mut         = 0.007
+crankshaft_step_size           = π/2
+const crankshaft_p_mut_prt     = 0.07   # For perturbator
 const crankshaft_step_size_prt = 0.01   # For perturbator
 const crankshaft_min_n_steps   = 25     # For Steepest Descent mini-minimization
 
-const temperature              = 300.15
+const temperature              = 525.0
 const acceptance_ratio         = 0.2
-const hb_acceptance_criteria   = 500.0  # The bigger, the easier to accept "worse" configurations as new homebases
-const prt_min_n_steps          = 10000  # For Steepest Descent minimization after perturbator
+const hb_acceptance_criteria   = 1000.0 # The bigger, the easier to accept "worse" configurations as new homebases
+const prt_min_n_steps          = 1000   # For Steepest Descent minimization after perturbator
 const print_every_prt_minim    = 100    # For Steepest Descent minimization after perturbator
 
 const ss                       = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC"
@@ -33,7 +35,8 @@ const log_destination          = stdout
 const xyz_destination          = open("out/trajectory.pdb", "w")
 const best_destination         = open("out/best_trajectory.pdb", "w")
 const out_destination          = open("out/data.out", "w")
-
+const outer_best_destination   = open("out/outer_best_destination.pdb", "w")
+const status_destination       = [log_destination, out_destination]
 
 # ------------------
 # INITIAL STEPS:
@@ -61,10 +64,7 @@ contact_pairs      = Forcefield.Other.load_contact_maps_from_file(input_contact_
 function my_evaluator!(st::Common.State, do_forces::Bool)
     energy  = Forcefield.Amber.evaluate!(topology, st, cut_off=1.2, do_forces=do_forces)
     st.energy.comp["amber"] = energy
-    # println("AMBER: $energy")
-    energy += Forcefield.Other.calc_eContact!(st, contact_pairs, k = 400.0)
-    # println("CONTACTS: $(k * st.energy.comp["eContact"])")
-    # println("TOTAL: $energy")
+    energy += Forcefield.Other.calc_eContact!(st, contact_pairs, k = 300.0)
     st.energy.eTotal = energy
     return energy
 end
@@ -81,13 +81,6 @@ sd_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_sd_evaluator!, n_st
 function my_sampler!(st::Common.State)
     dm = Mutators.Dihedral.run!(st, dihedral_mutator)
     cm = Mutators.Crankshaft.run!(st, crankshaft_mutator)
-    # dm = 0
-    # cm = 0
-
-    # Crankshaft movements require a minimization step
-    # if cm > 0 
-    #     Drivers.SteepestDescent.run!(st, sd_driver)
-    # end
 
     return Dict("Dihedral" => dm, "Crankshaft" => cm)
 end
@@ -96,17 +89,23 @@ end
 # 1. Print status
 dr_type = Union{Drivers.MonteCarlo.MonteCarloDriver, Drivers.SteepestDescent.SteepestDescentDriver}
 function cb_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ar::Float64, mov_count::Dict{String, Int64}, args...)
-    for io in [log_destination, out_destination]
-        write(io, @sprintf "(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Dihedral: %2d ▶️ %8.2e | Crankshaft: %2d ▶️ %8.2e | AR: %.4f | T: %4.2f\n" "MC" step st.energy.eTotal st.energy.comp["amber"] st.energy.comp["eContact"] mov_count["Dihedral"] dihedral_mutator.step_size mov_count["Crankshaft"] crankshaft_mutator.step_size ar dr.temperature)
-        flush(io)
-    end
-    # write(out_destination, @sprintf "(%5s) %12d | ⚡E: %10.3e | Dihedral: %2d ▶️ %8.2e | Crankshaft: %2d ▶️ %8.2e | AR: %.4f | T: %4.2f\n" "MC" step st.energy.eTotal args[2]["Dihedral"] dihedral_mutator.step_size args[2]["Crankshaft"] crankshaft_mutator.step_size args[1] dr.temperature)
+    Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Dihedral: %2d ▶️ %8.2e | Crankshaft: %2d ▶️ %8.2e | AR: %.4f | T: %4.2f\n",
+        "MC",
+        step, st.energy.eTotal,
+        st.energy.comp["amber"],
+        st.energy.comp["eContact"],
+        mov_count["Dihedral"],
+        dihedral_mutator.step_size,
+        mov_count["Crankshaft"],
+        crankshaft_mutator.step_size,
+        ar,
+        dr.temperature),
+        status_destination)
 end
-print_status_mc = Common.CallbackObject(print_every_inner_cycle, cb_status) 
+print_status_mc = Common.CallbackObject(print_sts_every_ic, cb_status) 
 print_status_sd = @Common.callback 50 function cb_status(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.SteepestDescentDriver, args...)
-    write(log_destination, @sprintf "(%5s) %12d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n" "SD" step st.energy.eTotal args[1] args[2])
-    write(out_destination, @sprintf "(%5s) %12d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n" "SD" step st.energy.eTotal args[1] args[2])
-    flush(out_destination)
+    Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "SD", step, st.energy.eTotal, args[1], args[2]),
+        status_destination)
 end
 
 # 2. Check if the structure is better than the current inner_best and save it
@@ -123,13 +122,13 @@ prev_ac = 0
 adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, ac, args...)
     global prev_ac
     d = ac > acceptance_ratio ? 1.0005 : 0.9995
-    dihedral_mutator.step_size = max(1e-5, min(dihedral_mutator.step_size * d, π))
-    crankshaft_mutator.step_size = max(1e-5, min(crankshaft_mutator.step_size * d, π))
+    dihedral_mutator.step_size = max(min_step_size, min(dihedral_mutator.step_size * d, π))
+    crankshaft_mutator.step_size = max(min_step_size, min(crankshaft_mutator.step_size * d, π))
     prev_ac = ac
 end
 
 # 4. Print current structure to a PDB file
-print_structure = @Common.callback 0 function cb_print(step::Int64, st::Common.State, dr::dr_type, args...)
+print_structure = @Common.callback print_str_every_ic function cb_print(step::Int64, st::Common.State, dr::dr_type, args...)
     Print.as_pdb(xyz_destination, st, metadata, step = step)
 end
 
@@ -160,31 +159,40 @@ for outer_step in 1:n_outer_steps
     cb_status(0, state, mc_driver, 1.0, Dict("Dihedral" => 0, "Crankshaft" => 0))
     Drivers.MonteCarlo.run!(state, mc_driver, print_status_mc, save_inner_best, adjust_step_size, print_structure)
     state = deepcopy(inner_best) # Output of the inner_cycle is always the inner_best
-    # println("INNER BEST: $(inner_best.energy.eTotal)")
     
     # Save outer best
     if state.energy.eTotal < outer_best.energy.eTotal
         outer_best = deepcopy(state)
-        Print.as_pdb(best_destination, state, metadata)
-        write(log_destination, @sprintf "(%5s) %12s | ⚡E: %10.3e | ✔️ Accepted\n" "ILSRR" "Inner Best" state.energy.eTotal)
+        Print.as_pdb(outer_best_destination, state, metadata)
+        flush(outer_best_destination)
+        Print.status(@sprintf("(%5s) %12s | ⚡E: %10.3e | ✔️ Accepted\n", "ILSRR", "Inner Best", state.energy.eTotal), status_destination)
     else
-        write(log_destination, @sprintf "(%5s) %12s | ⚡E: %10.3e | ✖️ Not accepted\n" "ILSRR" "Inner Best" state.energy.eTotal)
+        Print.status(@sprintf("(%5s) %12s | ⚡E: %10.3e | ✖️️ Not accepted\n", "ILSRR", "Inner Best", state.energy.eTotal), status_destination)
     end
 
-    # Save new homebase (Pseudo Metropolis -> A worse configuration can still be a new homebase with a probability controled by `hb_acceptance_criteria`)
     if (state.energy.eTotal < homebase.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / hb_acceptance_criteria))
+        # Save new homebase (Pseudo Metropolis -> A worse configuration can still be a new homebase with a probability controled by `hb_acceptance_criteria`)
         homebase = deepcopy(state)
+        Print.status("(ILSRR) New homebase defined ✔️\n", status_destination)
+    else
+        # Otherwise, recover the previous homebase for perturbation
+        state = deepcopy(homebase)
     end
 
     # Perturb
     if outer_step != n_outer_steps
         dm = Mutators.Dihedral.run!(state, dihedral_perturbator)
         cm = Mutators.Crankshaft.run!(state, crankshaft_perturbator)
-        Drivers.SteepestDescent.run!(state, sd_prt_driver, print_status_sd)
+        my_evaluator!(state, false)
         inner_best = deepcopy(state)
-        write(log_destination, @sprintf "(%5s) %12s | ⚡E: %10.3e | Dihedral: %3d | Crankshaft: %3d |\n%s\n" "ILSRR" "Perturbator" state.energy.eTotal dm cm "-"^96)
+        Print.status(@sprintf("(%5s) %12s | ⚡E: %10.3e | Dihedral: %3d | Crankshaft: %3d |\n%s\n", "ILSRR", "Perturbator", state.energy.eTotal, dm, cm, "-"^110),
+            status_destination)
+        # Reset step sizes when jumping
+        dihedral_mutator.step_size = dihedral_step_size
+        crankshaft_mutator.step_size = crankshaft_step_size
     end
 end
 
 close(xyz_destination)
 close(best_destination)
+close(outer_best_destination)
