@@ -17,5 +17,5 @@ function status(content::String, destination::Array{IO})
     end
 end
 function status(content::String, destination::IO)
-    status(content, [destination])
+    status(content, IO[destination])
 end

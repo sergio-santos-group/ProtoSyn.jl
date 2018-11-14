@@ -32,23 +32,18 @@
 # end
 
 
-function prize(distance::Float64, prob::Float64, optimum::Float64 = 0.5, threshold::Float64 = 2.0)::Float64
-    # All distances are in nm.
-
-    if distance > optimum && distance < threshold
-        return -prob * abs2(distance - threshold)
-    else
-        return 0.0
-    end
-
-end
-
-function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}; prize::Function = prize, k::Float64 = 1.0)
+function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}; threshold::Float64 = 0.5, k::Float64 = 1.0)
 
     eContact::Float64 = 0.0
-    for contact_pair in contact_pairs
-        distance::Float64 = norm(@. st.xyz[contact_pair.c1, :] - st.xyz[contact_pair.c2, :]) # nm
-        eContact += prize(distance, contact_pair.prob)
+    v12 = zeros(Float64, 3)
+    d12Sq = 0.0
+    tSq = threshold^2
+    for pair in contact_pairs
+        @views @. v12 = st.xyz[pair.c1, :] - st.xyz[pair.c2, :]
+        d12Sq = dot(v12, v12)
+        if d12Sq > tSq
+            eContact += pair.prob * (sqrt(d12Sq) - threshold)^2
+        end
     end
 
     eContact *= k
