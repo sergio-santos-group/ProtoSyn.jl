@@ -32,21 +32,54 @@
 # end
 
 
-function calc_eContact!(st::Common.State, contact_pairs::Vector{ContactPair}; threshold::Float64 = 0.5, k::Float64 = 1.0)
+# function evaluate!(contact_pairs::Vector{ContactPair}, st::Common.State; threshold::Float64 = 0.5, k::Float64 = 1.0)
+
+#     eContact::Float64 = 0.0
+#     v12 = zeros(Float64, 3)
+#     d12Sq = 0.0
+#     tSq = threshold^2
+#     for pair in contact_pairs
+#         @views @. v12 = st.xyz[pair.c1, :] - st.xyz[pair.c2, :]
+#         d12Sq = dot(v12, v12)
+#         if d12Sq > tSq
+#             eContact += pair.prob * (sqrt(d12Sq) - threshold)^2
+#         end
+#     end
+
+#     eContact *= k
+#     st.energy.comp["eContact"] = eContact
+#     st.energy.eTotal = eContact
+#     return eContact
+# end
+
+function evaluate!(contact_topology::Vector{ContactPair}, st::Common.State; r1::Float64 = 0.5, r2::Float64 = 0.8, k::Float64 = 1.0, do_forces::Bool = false)
+    # All distances are in nm
 
     eContact::Float64 = 0.0
     v12 = zeros(Float64, 3)
-    d12Sq = 0.0
-    tSq = threshold^2
-    for pair in contact_pairs
+    e2 = (r2 - r1) * (r2 - r1)
+    for pair in contact_topology
         @views @. v12 = st.xyz[pair.c1, :] - st.xyz[pair.c2, :]
-        d12Sq = dot(v12, v12)
-        if d12Sq > tSq
-            eContact += pair.prob * (sqrt(d12Sq) - threshold)^2
+        d12 = norm(v12)
+        if r1 <= d12 < r2
+            dr = (d12 - r1)
+            eContact += pair.prob * dr * dr
+            if do_forces
+                @. v12 *= k * (pair.prob * dr / d12)
+                @. st.forces[pair.r1, :] -= v12'
+                @. st.forces[pair.r2, :] += v12'
+            end
+        elseif r2 <= d12
+            eContact += pair.prob * (e2 + d12 - r1)
+            if do_forces
+                @. v12 *= k * pair.prob * 0.5
+                @. st.forces[pair.r1, :] -= v12'
+                @. st.forces[pair.r2, :] += v12'
+            end
         end
     end
 
-    eContact *= k
+    eContact *= k * 0.5
     st.energy.comp["eContact"] = eContact
     st.energy.eTotal = eContact
     return eContact

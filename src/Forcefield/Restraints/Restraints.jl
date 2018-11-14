@@ -1,4 +1,4 @@
-module Other
+module Restraints
 
 using ..Aux
 using ..Common

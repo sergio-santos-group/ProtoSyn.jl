@@ -12,7 +12,9 @@ function load_contact_maps_from_file(input_file::String, metadata::Common.Metada
         for line in eachline(f)
             elem = split(line)
             if length(elem) > 0 && elem[1] != "i"
-                push!(contact_pairs, ContactPair(resnum2ca[parse(Int64, elem[1])], resnum2ca[parse(Int64, elem[2])], parse(Float64, elem[5])))
+                r1 = parse(Int64, elem[1])
+                r2 = parse(Int64, elem[2])
+                push!(contact_pairs, ContactPair(resnum2ca[r1], metadata.residues[r1].atoms, resnum2ca[r2], metadata.residues[r2].atoms, parse(Float64, elem[5])))
             end
         end
     end

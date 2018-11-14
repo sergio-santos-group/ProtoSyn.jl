@@ -56,5 +56,5 @@ end
 
 # 5. Adjust temperature according to a given annealing function
 adjust_temperature = @Common.callback 1 function cb_adjust_temperature(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
-    dr.temperature = -(temperature/n_inner_steps)*step + temperature
+    dr.temperature = -(inner_temperature/n_inner_steps)*step + inner_temperature
 end
