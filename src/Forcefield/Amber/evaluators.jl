@@ -89,7 +89,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
         n = cross(v32, v34)
         d32Sq = dot(v32,v32)
         d32 = sqrt(d32Sq)
-        phi = atan(d32 * dot(v12, n), dot(m, n))# - pi
+        phi = atan(d32 * dot(v12, n), dot(m, n))
         
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
         

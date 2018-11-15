@@ -32,54 +32,122 @@
 # end
 
 
-# function evaluate!(contact_pairs::Vector{ContactPair}, st::Common.State; threshold::Float64 = 0.5, k::Float64 = 1.0)
-
-#     eContact::Float64 = 0.0
-#     v12 = zeros(Float64, 3)
-#     d12Sq = 0.0
-#     tSq = threshold^2
-#     for pair in contact_pairs
-#         @views @. v12 = st.xyz[pair.c1, :] - st.xyz[pair.c2, :]
-#         d12Sq = dot(v12, v12)
-#         if d12Sq > tSq
-#             eContact += pair.prob * (sqrt(d12Sq) - threshold)^2
-#         end
-#     end
-
-#     eContact *= k
-#     st.energy.comp["eContact"] = eContact
-#     st.energy.eTotal = eContact
-#     return eContact
-# end
-
-function evaluate!(contact_topology::Vector{ContactPair}, st::Common.State; r1::Float64 = 0.5, r2::Float64 = 0.8, k::Float64 = 1.0, do_forces::Bool = false)
+function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::Bool = false)
     # All distances are in nm
 
-    eContact::Float64 = 0.0
-    v12 = zeros(Float64, 3)
-    e2 = (r2 - r1) * (r2 - r1)
-    for pair in contact_topology
-        @views @. v12 = st.xyz[pair.c1, :] - st.xyz[pair.c2, :]
-        d12 = norm(v12)
-        if r1 <= d12 < r2
-            dr = (d12 - r1)
-            eContact += pair.prob * dr * dr
+    eDistanceFBR::Float64 = 0.0
+    v12::Vector{Float64} = zeros(Float64, 3)
+    f::Vector{Float64} = zeros(Float64, 3)
+    for pair in topology
+        @views @. v12 = st.xyz[pair.a2, :] - st.xyz[pair.a1, :]
+        d::Float64 = norm(v12)
+        if d <= pair.r1
+            e1::Float64 = pair.c * (pair.r1 - pair.r2) * (pair.r1 - pair.r2)
+            dr = d - pair.r1
+            eDistanceFBR += - pair.c * dr + e1
             if do_forces
-                @. v12 *= k * (pair.prob * dr / d12)
-                @. st.forces[pair.r1, :] -= v12'
-                @. st.forces[pair.r2, :] += v12'
+                @. f = v12 * pair.c / d
             end
-        elseif r2 <= d12
-            eContact += pair.prob * (e2 + d12 - r1)
+        elseif d <= pair.r2
+            dr = d - pair.r2
+            eDistanceFBR += pair.c * dr * dr * 0.5
             if do_forces
-                @. v12 *= k * pair.prob * 0.5
-                @. st.forces[pair.r1, :] -= v12'
-                @. st.forces[pair.r2, :] += v12'
+                @. f = v12 * pair.c * dr / d
             end
+        elseif d <= pair.r3
+            continue
+        elseif d <= pair.r4
+            dr = d - pair.r3
+            eDistanceFBR += pair.c * dr * dr * 0.5
+            if do_forces
+                @. f = v12 * pair.c * dr / d
+            end
+        else
+            e2::Float64 = pair.c * (pair.r4 - pair.r3) * (pair.r4 - pair.r3)
+            dr = d - pair.r4
+            eDistanceFBR += pair.c * dr + e2
+            if do_forces
+                @. f = v12 * pair.c / d
+            end
+        end
+        if do_forces
+            @. st.forces[pair.a1, :] += f
+            @. st.forces[pair.a2, :] -= f
         end
     end
 
-    eContact *= k * 0.5
+    st.energy.comp["eDistanceFBR"] = eDistanceFBR
+    st.energy.eTotal = eDistanceFBR
+    return eDistanceFBR
+end
+
+
+function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::Bool = false)
+    # All distances are in nm
+
+    eDihedralFBR::Float64 = 0.0
+    v12 = zeros(Float64, 3)
+    v32 = zeros(Float64, 3)
+    v34 = zeros(Float64, 3)
+    f1 = zeros(Float64, 3)
+    f3 = zeros(Float64, 3)
+    f4 = zeros(Float64, 3)
+    m = zeros(Float64, 3)
+    n = zeros(Float64, 3)
+    # f::Vector{Float64} = zeros(Float64, 3)
+    for dihedral in topology
+        @views @. v12 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a1, :]
+        @views @. v32 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a3, :]
+        @views @. v34 = state.xyz[dihedral.a4, :] - state.xyz[dihedral.a3, :]
+        m = cross(v12, v32)
+        n = cross(v32, v34)
+        d32Sq = dot(v32,v32)
+        d32 = sqrt(d32Sq)
+        phi = atan(d32 * dot(v12, n), dot(m, n))
+
+        if phi <= dihedral.r1
+            # e1::Float64 = dihedral.c * (dihedral.r1 - dihedral.r2) * (dihedral.r1 - dihedral.r2)
+            # dr = phi - dihedral.r1
+            # eDihedralFBR += - dihedral.c * dr + e1
+            # if do_forces
+                
+            # end
+        elseif phi <= dihedral.r2
+            dr = phi - dihedral.r2
+            eDihedralFBR += dihedral.c * dr * dr * 0.5 
+            if do_forces
+                dVdphi_x_d32 = (?????? * dihedral.c * dr) * d32
+                f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
+                f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
+                f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
+            end
+        elseif phi <= dihedral.r3
+            continue
+        elseif phi <= dihedral.r4
+            dr = phi - dihedral.r3
+            eDihedralFBR += dihedral.c * dr * dr * 0.5
+            if do_forces
+                dVdphi_x_d32 = (?????? * dihedral.c * dr) * d32
+                f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
+                f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
+                f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
+            end
+        else
+            # e2::Float64 = pair.c * (dihedral.r4 - dihedral.r3) * (dihedral.r4 - dihedral.r3)
+            # dr = phi - dihedral.r4
+            # eDihedralFBR += dihedral.c * dr + e2
+            # if do_forces
+                
+            # end
+        end
+        if do_forces
+            @. state.forces[dihedral.a1, :] -= f1
+            @. state.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
+            @. state.forces[dihedral.a3, :] -= f3
+            @. state.forces[dihedral.a4, :] -= f4
+        end
+    end
+
     st.energy.comp["eContact"] = eContact
     st.energy.eTotal = eContact
     return eContact
