@@ -5,10 +5,8 @@
 # 1. Steepest Descent ---------------------------------------------------------------------
 # Load necessary tolopogies
 amber_topology = Forcefield.Amber.load_from_json(input_amber_json)
-println(amber_topology)
-exit(1)
 contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e4)
-dihedral_restraints = Forcefield.Restraints.load_dihedral_restraints_from_amber_topology(amber_topology)
+dihedral_restraints = Forcefield.Restraints.compile_dihedral_restraints_from_metadata(metadata, k = 1e4)
 # Define the evaluator
 function my_sd_evaluator!(st::Common.State, do_forces::Bool)
     energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)

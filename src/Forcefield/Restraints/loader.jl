@@ -36,18 +36,19 @@ end
 function compile_dihedral_restraints_from_metadata(metadata::Common.Metadata; k::Float64 = 1.0)::Vector{DihedralFBR}
 
     eq_angles = Dict(
-        Common.SS.SHEET => Dict(DIHEDRAL.phi => deg2rad(-139.0), DIHEDRAL.psi => deg2rad(135.0)),
-        Common.SS.HELIX => Dict(DIHEDRAL.phi => deg2rad(-57.0),  DIHEDRAL.psi => deg2rad(-47.0)))
+        Common.SS.SHEET => Dict(Common.DIHEDRAL.phi => deg2rad(-139.0), Common.DIHEDRAL.psi => deg2rad(135.0)),
+        Common.SS.HELIX => Dict(Common.DIHEDRAL.phi => deg2rad(-57.0),  Common.DIHEDRAL.psi => deg2rad(-47.0)))
 
     fr_angle = Dict(Common.SS.SHEET => deg2rad(10), Common.SS.HELIX => deg2rad(20))
 
     restraints::Vector{DihedralFBR} = Vector{DihedralFBR}()
     for dihedral in metadata.dihedrals
-        if dihedral.residue.ss == Common.SS.COIL
+        if dihedral.residue.ss == Common.SS.COIL || dihedral.dtype >= Common.DIHEDRAL.omega
             continue
         end
         r2 = eq_angles[dihedral.residue.ss][dihedral.dtype] - fr_angle[dihedral.residue.ss]
         r3 = eq_angles[dihedral.residue.ss][dihedral.dtype] + fr_angle[dihedral.residue.ss]
-        push!(restraints, DihedralFBR(dihedral.a1, dihedral.a2, dihedral.a3, dihedral.a4, dihedral.a5, -Inf, r2, r3, Inf, k))
+        push!(restraints, DihedralFBR(dihedral.a1, dihedral.a2, dihedral.a3, dihedral.a4, -Inf, r2, r3, Inf, k))
     end
+    return restraints
 end

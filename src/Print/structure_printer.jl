@@ -1,5 +1,5 @@
 @doc raw"""
-    as_xyz(io:IO, state::Common.State[, title::String = "mol"])
+    as_xyz(io:IO, state::Common.State, metadata::Common.Metadata[, title::String = "mol"])
 
 Print the current [`Common.State`](@ref) as a .xyz file to the output `io`.
 
@@ -21,7 +21,7 @@ end
 
 
 @doc raw"""
-    as_xyz(state::Common.State[, title::String = "mol"])::String
+    as_xyz(state::Common.State, metadata::Common.Metadata[, title::String = "mol"])::String
 
 Print the current [`Common.State`](@ref) in .xyz format and returns a String.
 

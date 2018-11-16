@@ -101,7 +101,6 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         fill!(state.forces, 0.0)
         energy = driver.evaluator!(state, true)
         max_force = get_max_force(state.forces)
-        # println("Energy: $energy | Max force: $max_force")
 
         # Call callback function and output information to log 
         @Common.cbcall callbacks step state driver max_force gamma
@@ -119,11 +118,11 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         end
         
         # Update gamma
-        # if energy > energy_old
-        #     gamma *= 0.90
-        # else
-        #     gamma *= 1.05
-        # end
+        if energy > energy_old
+            gamma *= 0.90
+        else
+            gamma *= 1.05
+        end
     end
 
     #Final callback

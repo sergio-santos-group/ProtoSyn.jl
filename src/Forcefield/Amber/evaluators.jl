@@ -18,7 +18,6 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
             @. state.forces[bond.a2, :] -= v12
         end
     end
-    
     state.energy.comp["eBond"] = 0.5 * energy
     state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
@@ -47,7 +46,6 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
         dtheta = acos(ctheta) - angle.θ
 
         energy += angle.k * dtheta * dtheta
-
         if do_forces
             fc = angle.k * dtheta / sqrt(1.0 - ctheta * ctheta)
             @. f1 = fc * (ctheta * v12/d12Sq - v32/d12xd32)
@@ -57,7 +55,6 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
             @. state.forces[angle.a2, :] -= (f1 + f3)
         end
     end
-
     state.energy.comp["eAngle"] = 0.5 * energy
     state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
@@ -109,7 +106,6 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
             @. state.forces[dihedral.a4, :] -= f4
         end
     end
-
     state.energy.comp["eDihedral"] = energy
     state.energy.eTotal = energy
     return energy

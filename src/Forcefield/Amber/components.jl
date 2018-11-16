@@ -69,24 +69,7 @@ mutable struct HarmonicAngle
 end
 Base.show(io::IO, b::HarmonicAngle) = print(io, "Forcefield.HarmonicAngle(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), k=$(b.k), θ=$(b.θ))")
 
-# ----------------------------------------------------------------------------------------------------------
-
-# struct DihedralRB <: FFComponent
-
-#     a1::Int64
-#     a2::Int64
-#     a3::Int64
-#     a4::Int64
-#     c0::Float64 #kJ mol⁻¹
-#     c1::Float64 #kJ mol⁻¹
-#     c2::Float64 #kJ mol⁻¹
-#     c3::Float64 #kJ mol⁻¹
-#     c4::Float64 #kJ mol⁻¹
-#     c5::Float64 #kJ mol⁻¹
-
-# end
-
-# ----------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
 
 @doc raw"""
     DihedralCos(a1::Int64, a2::Int64, a3::Int64, a4::Int64, k::Float64, θ::Float64, mult::Float64)
@@ -214,13 +197,13 @@ See also: [`Amber.load_from_json`](@ref Forcefield)
 """
 mutable struct Topology
 
-    atoms::Array{Atom}
-    bonds::Array{HarmonicBond}
-    angles::Array{HarmonicAngle}
-    # dihedralsRB::Array{DihedralRB}
-    dihedralsCos::Array{DihedralCos}
+    atoms::Vector{Atom}
+    bonds::Vector{HarmonicBond}
+    angles::Vector{HarmonicAngle}
+    dihedralsCos::Vector{DihedralCos}
 
 end
+Topology() = Topology(Vector{Atom}(), Vector{HarmonicBond}(), Vector{HarmonicAngle}(), Vector{DihedralCos}())
 Base.show(io::IO, b::Topology) = print(io, "Forcefield.Amber.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")
 
 # ----------------------------------------------------------------------------------------------------------
