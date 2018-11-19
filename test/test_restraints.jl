@@ -33,25 +33,25 @@ function test_dihedralFBR_energy(workload::Int64 = 360)
 end
 
 
-function test_dihedralFBR_forces()
+# function test_dihedralFBR_forces()
 
-    # Create 4 particles forming a dihedral
-    state = Common.State(4)
-    state.xyz = [0.0 1.0 0.0; 0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0]
-    # metadata = Common.Metadata(atoms = [Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata()])
+#     # Create 4 particles forming a dihedral
+#     state = Common.State(4)
+#     state.xyz = [0.0 1.0 0.0; 0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0]
+#     # metadata = Common.Metadata(atoms = [Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata()])
     
-    # Define the DihedralFBR
-    fbr = Forcefield.Restraints.DihedralFBR(1, 2, 3, 4, deg2rad(45), deg2rad(80), deg2rad(100), deg2rad(135), 1e3)
+#     # Define the DihedralFBR
+#     fbr = Forcefield.Restraints.DihedralFBR(1, 2, 3, 4, deg2rad(45), deg2rad(80), deg2rad(100), deg2rad(135), 1e3)
     
-    Δangle = deg2rad(1e-5)
-    e1 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=false)
-    Common.rotate_dihedral!(state.xyz, 2, 3, Δangle, Common.DIHEDRAL.omega, Int64[3, 4], nothing)
-    e2 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=true)
-    f1 = abs(- (e2 - e1) / (Δangle))
-    f2 = abs(-sum(state.forces[1, :]))
-    Δf = abs(f1 - f2)
-    println(@sprintf "DIHEDRAL | F1(numeric) = %6.2e | F2(analytical) = %6.2e | ΔF = %5.2e | %s" f1 f2 Δf string(Δf < 0.0001))
-end
+#     Δangle = deg2rad(1e-5)
+#     e1 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=false)
+#     Common.rotate_dihedral!(state.xyz, 2, 3, Δangle, Common.DIHEDRAL.omega, Int64[3, 4], nothing)
+#     e2 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=true)
+#     f1 = abs(- (e2 - e1) / (Δangle))
+#     f2 = abs(-sum(state.forces[1, :]))
+#     Δf = abs(f1 - f2)
+#     println(@sprintf "DIHEDRAL | F1(numeric) = %6.2e | F2(analytical) = %6.2e | ΔF = %5.2e | %s" f1 f2 Δf string(Δf < 0.0001))
+# end
 
 
 function test_distanceFBR_energy(workload::Int64 = 360)
@@ -99,5 +99,40 @@ end
 # test_dihedralFBR_energy()
 # test_distanceFBR_energy()
 
+function test_dihedralFBR_forces(workload::Int64 = 360)
+
+    state = Common.State(4)
+    state.xyz = [0.0 -1.0 0.0; 0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0]
+    metadata = Common.Metadata(atoms = [Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata(), Common.AtomMetadata()])
+    fbr = Forcefield.Restraints.DihedralFBR(1, 2, 3, 4, deg2rad(-90), deg2rad(-45), deg2rad(45), deg2rad(90), 1e3)
+    
+    for θ in [-180.0, 180.0]
+        θ = deg2rad(θ)
+        # Rotate atom 1, measure new energy and forces.
+        state.xyz[1, 2] = cos(θ)
+        state.xyz[1, 3] = sin(θ)
+        fill!(state.forces, zero(Float64))
+        e1 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=true)
+        f1 = deepcopy(state.forces)
+        f2 = zeros(size(f1, 1), size(f1, 2))
+
+        ϵ = 1e-8
+        for atom_index in 1:size(state.xyz, 1)
+            # Forces need to be measured and compared by moving one component at a time
+            for component in [1, 2, 3]
+                backup_component = state.xyz[atom_index, component]
+                state.xyz[atom_index, component] += ϵ
+                e2 = Forcefield.Restraints.evaluate!([fbr], state, do_forces=false)
+                f2[atom_index, component] = - (e2 - e1) / ϵ
+                state.xyz[atom_index, component] = backup_component
+            end
+        end
+        # Print.as_pdb(stdout, state, metadata)
+        println("$(floor(Int64, rad2deg(θ))) $e1 $(maximum(f2-f1)) $f1 $f2")
+        # println("$(floor(Int64, rad2deg(θ))) $e1 $(maximum(f2-f1))")
+    end
+
+end
+
 test_dihedralFBR_forces()
-test_distanceFBR_forces()
+# test_distanceFBR_forces()

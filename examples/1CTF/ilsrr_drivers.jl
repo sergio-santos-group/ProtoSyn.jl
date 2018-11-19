@@ -9,6 +9,7 @@ contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(in
 dihedral_restraints = Forcefield.Restraints.compile_dihedral_restraints_from_metadata(metadata, k = 1e4)
 # Define the evaluator
 function my_sd_evaluator!(st::Common.State, do_forces::Bool)
+    fill!(st.forces, zero(Float64))
     energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     st.energy.comp["amber"] = energy
     energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)

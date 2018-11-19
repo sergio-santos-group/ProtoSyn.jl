@@ -85,7 +85,7 @@ end
 
 
 function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::Bool = false)
-    # All distances are in nm
+    # All distances are in nm and angles in rad
 
     eDihedralFBR::Float64 = 0.0
     v12 = zeros(Float64, 3)
@@ -106,24 +106,31 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
         d32Sq = dot(v32,v32)
         d32 = sqrt(d32Sq)
         phi = atan(d32 * dot(v12, n), dot(m, n))
+        println("PHI: $(rad2deg(phi))")
 
         if phi <= dihedral.r1
+            # println("Stage 1")
             dr1::Float64 = dihedral.r1 - dihedral.r2
             e1::Float64 = dihedral.c * dr1 * dr1 * 0.5
             dr = phi - dihedral.r1
             eDihedralFBR += (dihedral.c * dr1) * dr + e1
             dVdphi_x_d32 = (dihedral.c * dr1) * d32
         elseif phi <= dihedral.r2
+            # println("Stage 2")
             dr = phi - dihedral.r2
             eDihedralFBR += dihedral.c * dr * dr * 0.5 
             dVdphi_x_d32 = dihedral.c * dr * d32
         elseif phi <= dihedral.r3
+            # println("Stage 3")
+            # println("   $(st.forces)")
             continue
         elseif phi <= dihedral.r4
+            # println("Stage 4")
             dr = phi - dihedral.r3
             eDihedralFBR += dihedral.c * dr * dr * 0.5
             dVdphi_x_d32 = dihedral.c * dr * d32
         else
+            # println("Stage 5")
             dr2::Float64 = dihedral.r4 - dihedral.r3
             e2::Float64 = dihedral.c * dr2 * dr2 * 0.5
             dr = phi - dihedral.r4
@@ -131,6 +138,7 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             dVdphi_x_d32 = (dihedral.c * dr2) * d32
         end
         if do_forces
+            # println("Adding forces ...")
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
             f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
             f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
@@ -138,6 +146,7 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             @. st.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
             @. st.forces[dihedral.a3, :] -= f3
             @. st.forces[dihedral.a4, :] -= f4
+            # println("   $(st.forces)")
         end
     end
 
