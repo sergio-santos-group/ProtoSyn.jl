@@ -44,6 +44,17 @@ function load_from_json(i_file::String)::Topology
         push!(atoms, Atom(name, σ, ε, q, excls, pairs))
     end
 
+    # Fix bonds, angles and dihedrals numbering
+    for component_type in ["bonds", "angles", "proper_dihedrals", "improper_dihedrals"]
+        for component in ffield[component_type]
+            for atom in ["a1", "a2", "a3", "a4"]
+                if atom in keys(component)
+                    component[atom] = component[atom] + 1
+                end
+            end
+        end
+    end
+
     #Create bonds
     bonds = Vector{HarmonicBond}()
     for bond in ffield["bonds"]

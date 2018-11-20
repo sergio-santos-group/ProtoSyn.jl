@@ -32,6 +32,20 @@
 # end
 
 
+@doc raw"""
+    evaluate!(topology::Vector{DistanceFBR}, state::Common.State[, do_forces::Bool = false])::Float64
+
+Evaluate an array of [Restraints.DistanceFBR](@ref Forcefield) using the current [`Common.State`](@ref),
+calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
+If `do_forces` flag is set to `true`, calculate and update `state.forces`.
+Return the component energy value (kJ mol⁻¹).
+
+# Examples
+```julia-repl
+julia> Forcefield.Restraints.evaluate!(distances, state)
+0.500
+```
+"""
 function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::Bool = false)
     # All distances are in nm
 
@@ -77,6 +91,20 @@ function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::B
 end
 
 
+@doc raw"""
+    evaluate!(topology::Vector{DihedralFBR}, state::Common.State[, do_forces::Bool = false])::Float64
+
+Evaluate an array of [Restraints.DihedralFBR](@ref Forcefield) using the current [`Common.State`](@ref),
+calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
+If `do_forces` flag is set to `true`, calculate and update `state.forces`.
+Return the component energy value (kJ mol⁻¹).
+
+# Examples
+```julia-repl
+julia> Forcefield.Restraints.evaluate!(dihedrals, state)
+0.500
+```
+"""
 function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::Bool = false)
     # All distances are in nm and angles in rad
 
@@ -96,39 +124,32 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
         @views @. v34 = st.xyz[dihedral.a4, :] - st.xyz[dihedral.a3, :]
         m = cross(v12, v32)
         n = cross(v32, v34)
-        d32Sq = dot(v32,v32)
+        d32Sq = dot(v32, v32)
         d32 = sqrt(d32Sq)
-        phi = atan(d32 * dot(v12, n), dot(m, n))
-        println(dihedral, rad2deg(phi))
+        phi = - atan(d32 * dot(v12, n), dot(m, n))
 
         if phi <= dihedral.r1
-            # println("Stage 1")
             dr1::Float64 = dihedral.r1 - dihedral.r2
             e1::Float64 = dihedral.c * dr1 * dr1 * 0.5
             dr = phi - dihedral.r1
             eDihedralFBR += (dihedral.c * dr1) * dr + e1
-            dVdphi_x_d32 = (dihedral.c * dr1) * d32
+            dVdphi_x_d32 = - (dihedral.c * dr1) * d32
         elseif phi <= dihedral.r2
-            # println("Stage 2")
             dr = phi - dihedral.r2
             eDihedralFBR += dihedral.c * dr * dr * 0.5 
-            dVdphi_x_d32 = dihedral.c * dr * d32
+            dVdphi_x_d32 = - dihedral.c * dr * d32
         elseif phi <= dihedral.r3
-            # println("Stage 3")
-            # println("   $(st.forces)")
             continue
         elseif phi <= dihedral.r4
-            # println("Stage 4")
             dr = phi - dihedral.r3
             eDihedralFBR += dihedral.c * dr * dr * 0.5
-            dVdphi_x_d32 = dihedral.c * dr * d32
+            dVdphi_x_d32 = - dihedral.c * dr * d32
         else
-            # println("Stage 5")
             dr2::Float64 = dihedral.r4 - dihedral.r3
             e2::Float64 = dihedral.c * dr2 * dr2 * 0.5
             dr = phi - dihedral.r4
             eDihedralFBR += (dihedral.c * dr2) * dr + e2
-            dVdphi_x_d32 = (dihedral.c * dr2) * d32
+            dVdphi_x_d32 = - (dihedral.c * dr2) * d32
         end
         if do_forces
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))

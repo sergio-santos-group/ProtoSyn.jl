@@ -39,7 +39,7 @@ const ar_buffer_zone           = 0.01   # Buffer zone limit around the target ac
 const ss                       = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC"
 
 # 8. Define the input files:
-const input_pdb                = "data/1ctf_no_sc.pdb"
+const input_pdb                = "data/1ctf_good_rmsd.pdb"
 const input_contact_map        = "data/gremlin_contact_map.txt"
 const input_amber_json         = "data/1ctf_amber_top.json"
 

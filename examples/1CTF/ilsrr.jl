@@ -14,17 +14,19 @@ include("ilsrr_callbacks.jl")
 # Load state and metadata
 state, metadata    = Common.load_from_pdb(input_pdb)
 #Fix proline
-Common.fix_proline!(state, metadata.dihedrals)
+# Common.fix_proline!(state, metadata.dihedrals)
 # Apply secondary structure
-Common.apply_ss!(state, metadata, ss)
+# Common.apply_ss!(state, metadata, ss)
+metadata.ss = Common.infer_ss(metadata.dihedrals, ss)
 # Create blocks -> Will rotate side-chains, if present
 nb_dihedrals       = filter(x -> x.residue.ss == Common.SS.COIL, metadata.dihedrals)
 nb_phi_dihedrals   = filter(x -> x.dtype == Common.DIHEDRAL.phi, nb_dihedrals) # For crankshaft movements
 
+Print.as_pdb(xyz_destination, state, metadata, title = "Init", step = 1)
+
 # DEFINE THE DRIVERS:
 # ------------------
 include("ilsrr_drivers.jl")
-
 # MAIN BODY:
 # ------------------
 # Define starting inner_best, outer_best and homebase *after minimization*

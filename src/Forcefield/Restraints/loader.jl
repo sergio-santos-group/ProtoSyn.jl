@@ -42,7 +42,7 @@ function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64
             continue
         end
         r0 = Common.ss2bbd[dihd.residue.ss][dihd.dtype]
-        push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, -Inf, r0-fbw, r0+fbw, Inf, k))
+        push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, r0-(fbw*2), r0-fbw, r0+fbw, r0+(fbw*2), k))
     end
     return restraints
 end
