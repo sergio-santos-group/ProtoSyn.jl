@@ -87,6 +87,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
         d32Sq = dot(v32,v32)
         d32 = sqrt(d32Sq)
         phi = atan(d32 * dot(v12, n), dot(m, n))
+        println(dihedral, " ", rad2deg(phi))
         
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
         
@@ -122,7 +123,7 @@ Return the component energy value (kJ mol⁻¹).
 
 # Examples
 ```julia-repl
-julia> Forcefield.evaluate!(bonds, state)
+julia> Forcefield.Amber.evaluate!(bonds, state)
 0.500
 ```
 
@@ -241,7 +242,7 @@ Return `state.energy.eTotal` value (kJ mol⁻¹).
 
 # Examples
 ```julia-repl
-julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
+julia> Forcefield.Amber.evaluate!(topology, state, cut_off = Inf)
 0.500
 ```
 

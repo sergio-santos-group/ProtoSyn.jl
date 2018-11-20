@@ -5,14 +5,24 @@
 # 1. Steepest Descent ---------------------------------------------------------------------
 # Load necessary tolopogies
 amber_topology = Forcefield.Amber.load_from_json(input_amber_json)
+for d in amber_topology.dihedralsCos
+    println(d)
+end
+exit(1)
 contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e4)
-dihedral_restraints = Forcefield.Restraints.compile_dihedral_restraints_from_metadata(metadata, k = 1e4)
+dihedral_restraints = Forcefield.Restraints.lock_block_bb(metadata, k = 1e4)
+#for d in dihedral_restraints
+#    println(d)
+#end
+Forcefield.Amber.evaluate!(amber_topology, state, cut_off=1.2, do_forces=true)
+Forcefield.Restraints.evaluate!(dihedral_restraints, state, do_forces=true)
+exit(1)
 # Define the evaluator
 function my_sd_evaluator!(st::Common.State, do_forces::Bool)
     fill!(st.forces, zero(Float64))
     energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     st.energy.comp["amber"] = energy
-    energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    # energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
     energy += Forcefield.Restraints.evaluate!(dihedral_restraints, st, do_forces=do_forces)
     st.energy.eTotal = energy
     # println("Amber: $(st.energy.comp["amber"]) | Contact: $(st.energy.comp["eContact"])")

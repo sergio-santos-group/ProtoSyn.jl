@@ -5,8 +5,8 @@ Gather all topology components and return a [`Amber.Topology`](@ref Forcefield) 
 
 # Examples
 ```julia-repl
-julia> Forcefield.load_from_json(json_file)
-Forcefield.Topology(
+julia> Forcefield.Amber.load_from_json(json_file)
+Forcefield.Amber.Topology(
  atoms=ProtoSyn.Forcefield.Atom[Forcefield.Atom(name="N", σ=0.325, ϵ=0.711, q=0.0017, excls=[0, 1, 2, 3, 4, 5], pairs=[4, 5]), ...],
  bonds=ProtoSyn.Forcefield.HarmonicBond[Forcefield.HarmonicBond(a1=1, a2=2, k=2500.0, b0=0.19), ...],
  angles=ProtoSyn.Forcefield.HarmonicAngle[Forcefield.HarmonicAngle(a1=1, a2=2, a3=3, k=670.0, θ=1.92), ...],
@@ -44,17 +44,6 @@ function load_from_json(i_file::String)::Topology
         push!(atoms, Atom(name, σ, ε, q, excls, pairs))
     end
 
-    #Fix bonds, angles and dihedrals numbering
-    for component_type in ["bonds", "angles", "dihedrals"]
-        for component in ffield[component_type]
-            for atom in ["a1", "a2", "a3", "a4"]
-                if atom in keys(component)
-                    component[atom] = component[atom] + 1
-                end
-            end
-        end
-    end
-
     #Create bonds
     bonds = Vector{HarmonicBond}()
     for bond in ffield["bonds"]
@@ -75,7 +64,14 @@ function load_from_json(i_file::String)::Topology
 
     #Create dihedrals
     dihedralsCos = Vector{DihedralCos}()
-    for dihedral in ffield["dihedrals"]
+    for dihedral in ffield["proper_dihedrals"]
+        phi  = ffield["dihedraltypes"][string(dihedral["type"])]["phi"]
+        cp   = ffield["dihedraltypes"][string(dihedral["type"])]["cp"]
+        mult = ffield["dihedraltypes"][string(dihedral["type"])]["mult"]
+        new_dihedralCos = DihedralCos(dihedral["a1"], dihedral["a2"], dihedral["a3"], dihedral["a4"], cp, deg2rad(phi), mult)
+        push!(dihedralsCos, new_dihedralCos)
+    end
+    for dihedral in ffield["improper_dihedrals"]
         phi  = ffield["dihedraltypes"][string(dihedral["type"])]["phi"]
         cp   = ffield["dihedraltypes"][string(dihedral["type"])]["cp"]
         mult = ffield["dihedraltypes"][string(dihedral["type"])]["mult"]

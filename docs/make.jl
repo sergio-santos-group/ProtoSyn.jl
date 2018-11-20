@@ -19,7 +19,8 @@ makedocs(
             "Drivers" => "drivers.md",
             "Print" => "print.md",
             "Aux" => "aux.md",
-            "Input JSON Schemas" => "json.md"
+            "Input JSON Schemas" => "json.md",
+            "Tests" => "tests.md"
         ],
     ]
 )

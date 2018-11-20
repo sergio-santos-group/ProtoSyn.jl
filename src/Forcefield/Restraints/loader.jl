@@ -33,22 +33,16 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
 end
 
 
-function compile_dihedral_restraints_from_metadata(metadata::Common.Metadata; k::Float64 = 1.0)::Vector{DihedralFBR}
+function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64 = 10.0)::Vector{DihedralFBR}
 
-    eq_angles = Dict(
-        Common.SS.SHEET => Dict(Common.DIHEDRAL.phi => deg2rad(-139.0), Common.DIHEDRAL.psi => deg2rad(135.0)),
-        Common.SS.HELIX => Dict(Common.DIHEDRAL.phi => deg2rad(-57.0),  Common.DIHEDRAL.psi => deg2rad(-47.0)))
-
-    fr_angle = Dict(Common.SS.SHEET => deg2rad(10), Common.SS.HELIX => deg2rad(20))
-
+    fbw = deg2rad(fbw)/2
     restraints::Vector{DihedralFBR} = Vector{DihedralFBR}()
-    for dihedral in metadata.dihedrals
-        if dihedral.residue.ss == Common.SS.COIL || dihedral.dtype >= Common.DIHEDRAL.omega
+    for dihd in metadata.dihedrals
+        if dihd.residue.ss == Common.SS.COIL || dihd.dtype >= Common.DIHEDRAL.omega
             continue
         end
-        r2 = eq_angles[dihedral.residue.ss][dihedral.dtype] - fr_angle[dihedral.residue.ss]
-        r3 = eq_angles[dihedral.residue.ss][dihedral.dtype] + fr_angle[dihedral.residue.ss]
-        push!(restraints, DihedralFBR(dihedral.a1, dihedral.a2, dihedral.a3, dihedral.a4, -Inf, r2, r3, Inf, k))
+        r0 = Common.ss2bbd[dihd.residue.ss][dihd.dtype]
+        push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, -Inf, r0-fbw, r0+fbw, Inf, k))
     end
     return restraints
 end

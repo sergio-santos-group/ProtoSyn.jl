@@ -40,39 +40,32 @@ function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::B
     f::Vector{Float64} = zeros(Float64, 3)
     for pair in topology
         @views @. v12 = st.xyz[pair.a2, :] - st.xyz[pair.a1, :]
-        d::Float64 = norm(v12)
-        if d < pair.r1
+        d12 = norm(v12)
+        if d12 < pair.r1
             dr1::Float64 = pair.r1 - pair.r2
             e1::Float64 = pair.c * dr1 * dr1 * 0.5
-            dr = d - pair.r1
+            dr = d12 - pair.r1
             eDistanceFBR += (pair.c * dr1) * dr + e1
-            if do_forces
-                @. f = v12 * (pair.c * dr1) / d
-            end
-        elseif d < pair.r2
-            dr = d - pair.r2
+            fconst = (pair.c * dr1)
+        elseif d12 < pair.r2
+            dr = d12 - pair.r2
             eDistanceFBR += pair.c * dr * dr * 0.5
-            if do_forces
-                @. f = v12 * pair.c * dr / d
-            end
-        elseif d < pair.r3
+            fconst = (pair.c * dr)
+        elseif d12 < pair.r3
             continue
-        elseif d < pair.r4
-            dr = d - pair.r3
+        elseif d12 < pair.r4
+            dr = d12 - pair.r3
             eDistanceFBR += pair.c * dr * dr * 0.5
-            if do_forces
-                @. f = v12 * pair.c * dr / d
-            end
+            fconst = (pair.c * dr)
         else
             dr2::Float64 = pair.r4 - pair.r3
             e2::Float64 = pair.c * dr2 * dr2 * 0.5
-            dr = d - pair.r4
+            dr = d12 - pair.r4
             eDistanceFBR += (pair.c * dr2) * dr + e2
-            if do_forces
-                @. f = v12 * (pair.c * dr2) / d
-            end
+            fconst = (pair.c * dr2)
         end
         if do_forces
+            @. f = v12 * fconst / d12
             @. st.forces[pair.a1, :] += f
             @. st.forces[pair.a2, :] -= f
         end
@@ -106,7 +99,7 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
         d32Sq = dot(v32,v32)
         d32 = sqrt(d32Sq)
         phi = atan(d32 * dot(v12, n), dot(m, n))
-        println("PHI: $(rad2deg(phi))")
+        println(dihedral, rad2deg(phi))
 
         if phi <= dihedral.r1
             # println("Stage 1")
@@ -138,7 +131,6 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             dVdphi_x_d32 = (dihedral.c * dr2) * d32
         end
         if do_forces
-            # println("Adding forces ...")
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
             f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
             f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
@@ -146,7 +138,6 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             @. st.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
             @. st.forces[dihedral.a3, :] -= f3
             @. st.forces[dihedral.a4, :] -= f4
-            # println("   $(st.forces)")
         end
     end
 
