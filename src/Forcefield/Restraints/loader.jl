@@ -39,9 +39,9 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
                 r2_ca = resnum2ca[r2_index]
                 c = parse(Float64, elem[5])
                 if r1.ss == r2.ss && r1.ss == Common.SS.SHEET
-                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.4, 0.6, c * k))
+                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
                 else
-                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.5, 1.0, c * k))
+                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
                 end
             end
         end

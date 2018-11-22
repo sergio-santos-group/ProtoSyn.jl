@@ -37,6 +37,7 @@
 
 Evaluate an array of [Restraints.DistanceFBR](@ref Forcefield) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
+If the calculated distance between particles is above the defined `threshold`, no energy or forces are calcualted.
 If `do_forces` flag is set to `true`, calculate and update `state.forces`.
 Return the component energy value (kJ mol⁻¹).
 
@@ -133,32 +134,32 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             e1::Float64 = dihedral.c * dr1 * dr1 * 0.5
             dr = phi - dihedral.r1
             eDihedralFBR += (dihedral.c * dr1) * dr + e1
-            dVdphi_x_d32 = - (dihedral.c * dr1) * d32
+            dVdphi_x_d32 = (dihedral.c * dr1) * d32
         elseif phi <= dihedral.r2
             dr = phi - dihedral.r2
             eDihedralFBR += dihedral.c * dr * dr * 0.5 
-            dVdphi_x_d32 = - dihedral.c * dr * d32
+            dVdphi_x_d32 = dihedral.c * dr * d32
         elseif phi <= dihedral.r3
             continue
         elseif phi <= dihedral.r4
             dr = phi - dihedral.r3
             eDihedralFBR += dihedral.c * dr * dr * 0.5
-            dVdphi_x_d32 = - dihedral.c * dr * d32
+            dVdphi_x_d32 = dihedral.c * dr * d32
         else
             dr2::Float64 = dihedral.r4 - dihedral.r3
             e2::Float64 = dihedral.c * dr2 * dr2 * 0.5
             dr = phi - dihedral.r4
             eDihedralFBR += (dihedral.c * dr2) * dr + e2
-            dVdphi_x_d32 = - (dihedral.c * dr2) * d32
+            dVdphi_x_d32 = (dihedral.c * dr2) * d32
         end
         if do_forces
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
             f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
             f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
-            @. st.forces[dihedral.a1, :] -= f1
-            @. st.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
-            @. st.forces[dihedral.a3, :] -= f3
-            @. st.forces[dihedral.a4, :] -= f4
+            @. st.forces[dihedral.a1, :] += f1
+            @. st.forces[dihedral.a2, :] += (-f1 - f3 - f4)
+            @. st.forces[dihedral.a3, :] += f3
+            @. st.forces[dihedral.a4, :] += f4
         end
     end
 

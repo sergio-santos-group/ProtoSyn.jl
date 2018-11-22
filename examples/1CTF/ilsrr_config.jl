@@ -40,7 +40,7 @@ const ss                       = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEE
 
 # 8. Define the input files:
 const input_pdb                = "data/1ctf_good_rmsd.pdb"
-const input_contact_map        = "data/gremlin_contact_map.txt"
+const input_contact_map        = "data/contact_map_gremlin.txt"
 const input_amber_json         = "data/1ctf_amber_top.json"
 
 # 9. Define the output destination:

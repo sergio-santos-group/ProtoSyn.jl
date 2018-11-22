@@ -5,7 +5,7 @@
 # 1. Steepest Descent ---------------------------------------------------------------------
 # Load necessary tolopogies
 amber_topology = Forcefield.Amber.load_from_json(input_amber_json)
-contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e15)
+contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e5)
 dihedral_restraints = Forcefield.Restraints.lock_block_bb(metadata, k = 1e3)
 
 # Define the evaluator
@@ -13,10 +13,9 @@ function my_sd_evaluator!(st::Common.State, do_forces::Bool)
     fill!(st.forces, zero(Float64))
     energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     st.energy.comp["amber"] = energy
-    energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    # energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces, threshold = 2.0)
     energy += Forcefield.Restraints.evaluate!(dihedral_restraints, st, do_forces=do_forces)
     st.energy.eTotal = energy
-    # println("Amber: $(st.energy.comp["amber"]) | Contact: $(st.energy.comp["eContact"])")
     return energy
 end
 #Define the driver itself
@@ -31,7 +30,7 @@ function my_evaluator!(st::Common.State, do_forces::Bool)
     Drivers.SteepestDescent.run!(state, sd_driver)
     energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     st.energy.comp["amber"] = energy
-    energy += Forcefield.Restraints.evaluate!(contact_restraints, st)
+    energy += Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
     st.energy.eTotal = energy
     return energy
 end

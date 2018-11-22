@@ -115,9 +115,53 @@ function test_dihedralFBR(workload::Int64 = 360)
     println(f2, " ", state.forces)
 end
 
+
+@doc raw"""
+    visualize_dihedralFBR()
+
+Minimize a dummy dihedral, applying both the Amber and Restraint Forcefield.
+
+# Examples
+```julia-repl
+julia> visualize_dihedralFBR()
+```
+"""
+function visualize_dihedralFBR()
+
+    state = Common.State(4)
+    state.xyz = [0.0 -1.0 0.0; 0.0 0.0 0.0; 1.0 0.0 0.0; 1.0 1.0 0.0]
+    metadata = Common.Metadata(atoms = map(i -> Common.AtomMetadata(index = i, name = "C"), 1:4))
+    fbr = Forcefield.Restraints.DihedralFBR(1, 2, 3, 4, deg2rad(-90), deg2rad(-45), deg2rad(-45), deg2rad(90), 1e3)
+    amber_topology = Forcefield.Amber.Topology()
+    amber_topology.dihedralsCos = [Forcefield.Amber.DihedralCos(1, 2, 3, 4, 10.0, -180.0, 1.0)]
+
+    function my_evaluator!(st::Common.State, do_forces::Bool)
+        fill!(st.forces, zero(Float64))
+        energy  = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
+        energy += Forcefield.Restraints.evaluate!([fbr], st, do_forces=do_forces)
+        st.energy.eTotal = energy
+        return energy
+    end
+
+    print_status = @Common.callback 1 function cb_status(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.SteepestDescentDriver, args...)
+        Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "SD", step, st.energy.eTotal, args[1], args[2]), stdout)
+    end
+
+    out = open("output.pdb", "w")
+    print_structure = @Common.callback 1 function cb_print(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.SteepestDescentDriver, args...)
+        Print.as_pdb(out, st, metadata, step = step)
+    end
+
+    sd_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, n_steps = 10000)
+    Drivers.SteepestDescent.run!(state, sd_driver, print_status, print_structure)
+    close(out)
+end
+
+
 # ---------------------------------------------------------------------------
-# NOTE: Running this file automatically runs both DistanceFBR and DihedralFBR test;
+# NOTE: Running this file automatically run all tests
 # ---------------------------------------------------------------------------
 
-# test_distanceFBR()
+test_distanceFBR()
 test_dihedralFBR()
+visualize_dihedralFBR()

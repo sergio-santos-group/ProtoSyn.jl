@@ -56,10 +56,10 @@ struct DihedralFBR
     c::Float64
 
     function DihedralFBR(a1::Int64, a2::Int64, a3::Int64, a4::Int64, r1::Float64, r2::Float64, r3::Float64, r4::Float64, c::Float64)
-        if !(r1 < r2 < r3 < r4)
+        if !(r1 <= r2 <= r3 <= r4)
             error("The DihedralFBR angles must obey the following sequence: r1 < r2 < r3 < r4.") 
         end
-        new(dihedrals, angle_sampler, p_mut, step_size)
+        new(a1, a2, a3, a4, r1, r2, r3, r4, c)
     end
 end
 Base.show(io::IO, b::DihedralFBR) = print(io, "Forcefield.Restraints.DihedralFBR(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), r1=$(rad2deg(b.r1)), r2=$(rad2deg(b.r2)), r3=$(rad2deg(b.r3)), r4=$(rad2deg(b.r4)), c=$(b.c))")
