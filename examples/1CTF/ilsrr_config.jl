@@ -5,13 +5,13 @@
 # 1. Define the algorithm length:
 const n_outer_steps            = 1000   # Number of inner cycles to perform;
 const n_inner_steps            = 250    # Number of steps on each inner cycle;
-const init_min_n_steps         = 100000  # Number of steps for Steepest Descent minimization (initial long minimization);
+const init_min_n_steps         = 5000   # Number of steps for Steepest Descent minimization (initial long minimization);
 const min_n_steps              = 10     # Number of steps for Steepest Descent minimization (every step of inner cycle);
 
 # 2. Define output frequency:
 const print_sts_every_ic       = 10     # Print system status every n steps;
 const print_str_every_ic       = 10     # Print structure to files every n steps;
-const print_sts_every_min      = 250     # Print status every n steps in Steepest Descent minimization;
+const print_sts_every_min      = 250    # Print status every n steps in Steepest Descent minimization;
 
 # 3. Define the step size:
 const min_step_size            = 0.01   # Minimum step_size allowed;

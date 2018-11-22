@@ -1,7 +1,7 @@
 @doc raw"""
-    load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata[, k::Float64 = 1.0])::Vector{DistanceFBR}
+    load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata[, k::Float64 = 1.0, threshold::Float64 = 0.0])::Vector{DistanceFBR}
 
-Read a contact map file and load the distances and force constants between Cα's in the structure.
+Read a contact map file and load the distances and force constants between Cα's in the structure, if the force constant is above the defined `threshold`.
 All force constants are multiplied by a factor `k` (Default: 1.0).
 By default, the distances between β-sheets are lower than r3=4Å (r4=6Å), while distances between different type of secondary structures or α-helixes are lower than
 r3=5Å (r4=10Å).
@@ -15,7 +15,7 @@ julia> Forcefield.Restraints.load_distance_restraints_from_file(contact_map, met
  (...)]
 ```
 """
-function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; k::Float64 = 1.0)::Vector{DistanceFBR}
+function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; k::Float64 = 1.0, threshold::Float64 = 0.0)::Vector{DistanceFBR}
     #All distances are in nm.
 
     #Gather residue information
@@ -31,21 +31,24 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
         for line in eachline(f)
             elem = split(line)
             if length(elem) > 0 && elem[1] != "i"
-                r1_index = parse(Int64, elem[1])
-                r2_index = parse(Int64, elem[2])
-                r1 = metadata.residues[r1_index]
-                r2 = metadata.residues[r2_index]
-                r1_ca = resnum2ca[r1_index]
-                r2_ca = resnum2ca[r2_index]
                 c = parse(Float64, elem[5])
-                if r1.ss == r2.ss && r1.ss == Common.SS.SHEET
-                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
-                else
-                    push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
+                if c >= threshold
+                    r1_index = parse(Int64, elem[1])
+                    r2_index = parse(Int64, elem[2])
+                    r1 = metadata.residues[r1_index]
+                    r2 = metadata.residues[r2_index]
+                    r1_ca = resnum2ca[r1_index]
+                    r2_ca = resnum2ca[r2_index]
+                    if r1.ss == r2.ss && r1.ss == Common.SS.SHEET
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
+                    else
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
+                    end
                 end
             end
         end
     end
+    println("Loaded $(length(restraints)) contacts.")
     return restraints
 end
 

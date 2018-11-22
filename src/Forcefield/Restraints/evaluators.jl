@@ -37,7 +37,6 @@
 
 Evaluate an array of [Restraints.DistanceFBR](@ref Forcefield) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
-If the calculated distance between particles is above the defined `threshold`, no energy or forces are calcualted.
 If `do_forces` flag is set to `true`, calculate and update `state.forces`.
 Return the component energy value (kJ mol⁻¹).
 

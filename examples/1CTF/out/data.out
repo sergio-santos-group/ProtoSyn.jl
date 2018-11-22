@@ -1,5 +1,6 @@
-(   SD)            0 | ⚡E:  7.346e+03 | Max Force:  1.230e+04 | Gamma:  1.000e+00
-(   SD)          250 | ⚡E:  3.775e+03 | Max Force:  6.055e+02 | Gamma:  6.932e-05
-(   SD)          500 | ⚡E:  3.751e+03 | Max Force:  5.961e+02 | Gamma:  9.347e-08
-(   SD)          750 | ⚡E:  3.795e+03 | Max Force:  5.961e+02 | Gamma:  6.803e-11
-(   SD)         1000 | ⚡E:  3.784e+03 | Max Force:  5.961e+02 | Gamma:  6.739e-14
+(   SD)            0 | ⚡E:  6.327e+04 | Max Force:  5.076e+04 | Gamma:  1.000e+00
+(   SD)          250 | ⚡E:  7.620e+03 | Max Force:  5.760e+02 | Gamma:  6.666e-04
+(   SD)          500 | ⚡E:  6.639e+03 | Max Force:  3.998e+02 | Gamma:  1.059e-05
+(   SD)          750 | ⚡E:  6.621e+03 | Max Force:  3.997e+02 | Gamma:  7.706e-09
+(   SD)         1000 | ⚡E:  6.667e+03 | Max Force:  3.997e+02 | Gamma:  4.808e-12
+(   SD)         1250 | ⚡E:  6.662e+03 | Max Force:  3.997e+02 | Gamma:  1.388e-15
