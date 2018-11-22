@@ -5,7 +5,7 @@
 # 1. Steepest Descent ---------------------------------------------------------------------
 # Load necessary tolopogies
 amber_topology = Forcefield.Amber.load_from_json(input_amber_json)
-contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e5, threshold = 0.5)
+contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = 1e5, threshold = 0.25)
 dihedral_restraints = Forcefield.Restraints.lock_block_bb(metadata, k = 1e3)
 
 # Define the evaluator
