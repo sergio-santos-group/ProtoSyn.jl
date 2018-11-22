@@ -39,19 +39,6 @@ class dihedraltypes:
         return title, content
 
 
-# class Lj14_Parameters:
-#     matcher = re.compile('^\s+functype\[\d+\]=LJ14')
-#     content_parser  = re.compile('(c6A|c12A)=([ \d\.\+\-e]+)')
-#     title_parser    = re.compile('^\s+functype\[(\d+)\]=LJ14')
-
-#     @staticmethod
-#     def parse(line, *args):
-#         title       = int(Lj14_Parameters.title_parser.findall(line)[0])
-#         pre_content = dict(Lj14_Parameters.content_parser.findall(line))
-#         content     = dict((k, float(v)) for k, v in pre_content.iteritems())
-#         return title, content
-
-
 class nonbondedtypes:
     matcher         = re.compile('^\s+functype\[\d+\]=LJ_SR')
     content_parser  = re.compile('(c6|c12)=([ \d\.\+\-e]+)')
@@ -76,13 +63,24 @@ class pairs:
         return content[0], {"a1": content[3], "a2": content[4]}
 
 
-class dihedrals:
-    matcher         = re.compile('^\s+\d+ type=\d+ \((PDIHS|PIDIHS)')
+class proper_dihedrals:
+    matcher         = re.compile('^\s+\d+ type=\d+ \(PDIHS')
     content_parser  = re.compile('\d+')
 
     @staticmethod
     def parse(line, *args):
-        content     = [int(k) for k in dihedrals.content_parser.findall(line)]
+        content     = [int(k) for k in proper_dihedrals.content_parser.findall(line)]
+        return content[0], {"type": content[1], "a1": content[2],
+            "a2": content[3], "a3": content[4], "a4": content[5]}
+
+
+class improper_dihedrals:
+    matcher         = re.compile('^\s+\d+ type=\d+ \(PIDIHS')
+    content_parser  = re.compile('\d+')
+
+    @staticmethod
+    def parse(line, *args):
+        content     = [int(k) for k in improper_dihedrals.content_parser.findall(line)]
         return content[0], {"type": content[1], "a1": content[2],
             "a2": content[3], "a3": content[4], "a4": content[5]}
 
@@ -166,7 +164,8 @@ class Parser(object):
         pairs,
         bonds,
         angles,
-        dihedrals,
+        proper_dihedrals,
+        improper_dihedrals,
         atomtypenames
     )
     
@@ -196,7 +195,7 @@ class Parser(object):
 
 def clean(pre_ffield):
     #Convert dictionaries to arrays
-    for key in ["bonds", "angles", "dihedrals", "pairs", "atoms"]:    
+    for key in ["bonds", "angles", "proper_dihedrals", "improper_dihedrals", "pairs", "atoms"]:    
         pre_ffield[key] = pre_ffield[key].values()
 
     #Remove 'A' characters from dictionary entries (ugly but it works)

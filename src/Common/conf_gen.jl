@@ -15,23 +15,31 @@ julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
 See also: [`infer_ss`](@ref)
 """
-function apply_ss!(state::State, dihedrals::Vector{Dihedral}, ss::String)
+function apply_ss!(state::State, metadata::Metadata, ss::String)
 
     # Save secondary structure as metadata
-    state.metadata.ss = infer_ss(dihedrals, ss)
+    metadata.ss = infer_ss(metadata.dihedrals, ss)
 
     # Define target values for dihedral angles
     t_angles = Dict(
-        'E' => Dict(phi => deg2rad(-139.0), psi => deg2rad(135.0)),
-        'H' => Dict(phi => deg2rad(-57.0),  psi => deg2rad(-47.0)))
+        'E' => Dict(DIHEDRAL.phi => deg2rad(-139.0), DIHEDRAL.psi => deg2rad(135.0)),
+        'H' => Dict(DIHEDRAL.phi => deg2rad(-57.0),  DIHEDRAL.psi => deg2rad(-47.0)))
 
     index::Int64 = 0
-    for dihedral in dihedrals
+    for dihedral in metadata.dihedrals
         #Verify input so that only the phi and psi dihedrals are iterated over
-        dihedral.dtype > omega ? continue : nothing
-        dihedral.dtype == psi ? index += 1 : nothing
-        index > length(ss) ? error("The length of the secondary stucture string is inferior to the phi and psi count in the molecule.") : nothing
-        ss[index] == 'C' ? continue : nothing
+        if dihedral.dtype >= DIHEDRAL.omega 
+            continue
+        end
+        if dihedral.dtype == DIHEDRAL.psi 
+            index += 1
+        end
+        if index > length(ss) 
+            error("The length of the secondary stucture string is inferior to the phi and psi count in the molecule.")
+        end
+        if ss[index] == 'C' 
+            continue
+        end
 
         rotate_dihedral_to!(state.xyz, dihedral, t_angles[ss[index]][dihedral.dtype])
     end
@@ -162,10 +170,8 @@ julia> Common.fix_proline(state, dihedrals)
 function fix_proline!(state::State, dihedrals::Vector{Dihedral})
 
     for dihedral in dihedrals
-        if dihedral.residue.name == "P" && dihedral.dtype == Common.phi
-            rotate_dihedral!(state.xyz, dihedral.a2, dihedral.a1, deg2rad(180), Common.phi, dihedral.residue.atoms, dihedral.residue)
-            # insert!(dihedral.movable, 1, dihedral.residue.atoms[2])
-            # insert!(dihedral.movable, 1, dihedral.residue.atoms[3])
+        if Aux.conv123(dihedral.residue.name) == "PRO" && dihedral.dtype == Common.DIHEDRAL.omega
+            rotate_dihedral!(state.xyz, dihedral.a3, dihedral.a2, deg2rad(180), Common.DIHEDRAL.omega, Vector{Int64}(), dihedral.residue)
         end
     end
 end

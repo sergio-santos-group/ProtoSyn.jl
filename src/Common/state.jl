@@ -32,7 +32,7 @@ mutable struct State
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
 
 end
-State(n::Int64) = State(n, NullEnergy(), zeros(n, 3), zeros(n, 3), Metadata())
+State(n::Int64) = State(n, Energy(), zeros(n, 3), zeros(n, 3))
 Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces))")
 
 function Base.iterate(st::State, idx = 1)

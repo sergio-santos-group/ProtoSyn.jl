@@ -5,6 +5,6 @@ using ..Common
 using LinearAlgebra, JSON
 
 include("Amber/Amber.jl")
-include("Other/Other.jl")
+include("Restraints/Restraints.jl")
 
 end

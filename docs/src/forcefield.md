@@ -1,14 +1,14 @@
 # Forcefield
 
-Currently, ProtoSyn only supports the Amber forcefield.
-
 ```@meta
 CurrentModule = Forcefield
 ```
 
-## Components
+## Amber
 
-This section provides a description on all the individual components that comprise the Forcefield.
+### Components
+
+This section provides a description on all the individual components that comprise the Amber Forcefield.
 
 
 ```@docs
@@ -19,7 +19,7 @@ Amber.Atom
 Amber.Topology
 ```
 
-## Evaluators
+### Evaluators
 
 This section provides a description on how to use [Forcefield.Components](#Components-1) to calculate their energy.
 
@@ -28,7 +28,7 @@ This section provides a description on how to use [Forcefield.Components](#Compo
 Amber.evaluate!
 ```
 
-## Loaders
+### Loaders
 
 This section provides a description on how to load [Forcefield.Components](#Components-1) from external sources.
 
@@ -36,3 +36,32 @@ This section provides a description on how to load [Forcefield.Components](#Comp
 Amber.load_from_json
 ```
 
+## Restraints
+
+### Components
+
+This section provides a description on all the individual components that comprise the Restraints.
+
+
+```@docs
+Restraints.DistanceFBR
+Restraints.DihedralFBR
+```
+
+### Evaluators
+
+This section provides a description on how to use [Forcefield.Components](#Components-1) to calculate their energy.
+
+
+```@docs
+Restraints.evaluate!
+```
+
+### Loaders
+
+This section provides a description on how to load [Forcefield.Components](#Components-1) from external sources.
+
+```@docs
+Restraints.load_distance_restraints_from_file
+Restraints.lock_block_bb
+```

@@ -19,17 +19,17 @@ end
 
 
 @doc raw"""
-    conv_aa_321(aa::String)
+    conv_21(aa::String)
 
 Converts an aminoacid representation from 3 letters to 1, according to convention.
 
 # Examples
 ```julia-repl
-julia> Aux.conv_aa_321("VAL")
+julia> Aux.conv321("VAL")
 V
 ```
 """
-function conv_aa_321(aa::String)
+function conv321(aa::String)
 
     conv321 = Dict(
     "CYS" => "C", "ASP" => "D", "SER" => "S", "GLN" => "Q", "LYS" => "K", "ILE" => "I", "PRO" => "P", "THR" => "T", "PHE" => "F", "ASN" => "N",
@@ -43,17 +43,17 @@ end
 
 
 @doc raw"""
-    conv_aa_123(aa::String)
+    conv123(aa::String)
 
 Converts an aminoacid representation from 1 letter to 3, according to convention.
 
 # Examples
 ```julia-repl
-julia> Aux.conv_aa_321("V")
+julia> Aux.conv321("V")
 VAL
 ```
 """
-function conv_aa_123(aa::String)
+function conv123(aa::String)
 
     conv123 = Dict(
     "Q" => "GLN", "W" => "TRP", "T" => "THR", "P" => "PRO", "C" => "CYS", "V" => "VAL", "L" => "LEU", "M" => "MET", "N" => "ASN", "H" => "HIS",

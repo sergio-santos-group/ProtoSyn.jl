@@ -9,4 +9,5 @@ CurrentModule = Print
 ```@docs
 as_xyz
 as_pdb
+status
 ```

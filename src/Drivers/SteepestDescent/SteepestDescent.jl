@@ -118,15 +118,12 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         end
         
         # Update gamma
-        if energy > energy_old
-            gamma *= 0.50
+        if energy >= energy_old
+            gamma *= 0.90
         else
             gamma *= 1.05
         end
     end
-
-    #Final callback
-    # @Common.cbcall callbacks step state driver max_force gamma
 end
 
 end

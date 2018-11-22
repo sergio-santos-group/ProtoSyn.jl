@@ -1,8 +1,7 @@
 @doc raw"""
-    evaluate!(bonds::Array{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(bonds::Vector{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
-function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
-    do_forces::Bool = false)
+function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
     energy = 0.0
     v12 = zeros(Float64, 3)
@@ -18,17 +17,15 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State;
             @. state.forces[bond.a2, :] -= v12
         end
     end
-    
     state.energy.comp["eBond"] = 0.5 * energy
     state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
 
 @doc raw"""
-    evaluate!(angles::Array{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(angles::Vector{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
-    do_forces::Bool = false)
+function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
     v12 = zeros(Float64, 3)
     v32 = zeros(Float64, 3)
@@ -47,7 +44,6 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
         dtheta = acos(ctheta) - angle.θ
 
         energy += angle.k * dtheta * dtheta
-
         if do_forces
             fc = angle.k * dtheta / sqrt(1.0 - ctheta * ctheta)
             @. f1 = fc * (ctheta * v12/d12Sq - v32/d12xd32)
@@ -57,17 +53,15 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State;
             @. state.forces[angle.a2, :] -= (f1 + f3)
         end
     end
-
     state.energy.comp["eAngle"] = 0.5 * energy
     state.energy.eTotal = 0.5 * energy
     return 0.5 * energy
 end
 
 @doc raw"""
-    evaluate!(dihedralsCos::Array{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(dihedralsCos::Vector{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
-    do_forces = false)
+function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
     v12 = zeros(Float64, 3)
     v32 = zeros(Float64, 3)
@@ -81,15 +75,14 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
     energy = 0.0
 
     for dihedral in dihedralsCos
-        
         @views @. v12 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a1, :]
         @views @. v32 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a3, :]
         @views @. v34 = state.xyz[dihedral.a4, :] - state.xyz[dihedral.a3, :]
         m = cross(v12, v32)
         n = cross(v32, v34)
-        d32Sq = dot(v32,v32)
+        d32Sq = dot(v32, v32)
         d32 = sqrt(d32Sq)
-        phi = atan(d32 * dot(v12, n), dot(m, n))# - pi
+        phi = atan(d32 * dot(v12, n), dot(m, n))
         
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
         
@@ -109,14 +102,13 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State;
             @. state.forces[dihedral.a4, :] -= f4
         end
     end
-
     state.energy.comp["eDihedral"] = energy
     state.energy.eTotal = energy
     return energy
 end
 
 @doc raw"""
-    evaluate!(atoms::Array{Forcefield.Atom}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(atoms::Vector{Forcefield.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
 
 Evaluate an array of [Forcefield.Components](#Components-1) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each component.
@@ -126,15 +118,14 @@ Return the component energy value (kJ mol⁻¹).
 
 # Examples
 ```julia-repl
-julia> Forcefield.evaluate!(bonds, state)
+julia> Forcefield.Amber.evaluate!(bonds, state)
 0.500
 ```
 
 See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
-function evaluate!(atoms::Vector{Atom}, state::Common.State;
-    do_forces::Bool = false, cut_off::Float64 = 2.0)
+function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0)::Float64
 
     eLJ = 0.0
     eLJ14 = 0.0
@@ -245,14 +236,13 @@ Return `state.energy.eTotal` value (kJ mol⁻¹).
 
 # Examples
 ```julia-repl
-julia> Forcefield.evalenergy!(topology, state, cut_off = Inf)
+julia> Forcefield.Amber.evaluate!(topology, state, cut_off = Inf)
 0.500
 ```
 
 See also: [`Amber.evaluate!`](@ref)
 """
-function evaluate!(topology::Topology, state::Common.State;
-    cut_off::Float64 = 2.0, do_forces = false)
+function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 2.0, do_forces = false)::Float64
     
     energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
     energy += evaluate!(topology.angles, state, do_forces = do_forces)
