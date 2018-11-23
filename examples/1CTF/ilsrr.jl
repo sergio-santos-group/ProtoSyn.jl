@@ -30,7 +30,7 @@ include("ilsrr_drivers.jl")
 # MAIN BODY:
 # ------------------
 # Define starting inner_best, outer_best and homebase *after minimization*
-init_sd_driver = Drivers.SteepestDescent.SteepestDescentDriver(my_sd_evaluator!, n_steps = init_min_n_steps)
+init_sd_driver = Drivers.SteepestDescent.Driver(my_sd_evaluator!, n_steps = init_min_n_steps)
 Drivers.SteepestDescent.run!(state, init_sd_driver, print_status_sd, print_structure)
 my_evaluator!(state, false)
 inner_best = deepcopy(state)

@@ -2,6 +2,7 @@ module MonteCarlo
 
 using ..Aux
 using ..Common
+using ..Drivers
 using Printf
 
 @doc raw"""
@@ -35,16 +36,17 @@ MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, 
 
 See also: [`run!`](@ref)
 """
-mutable struct MonteCarloDriver
+mutable struct Driver <: Drivers.AbstractDriver
 
     sampler!::Function
     evaluator!::Function
     temperature::Float64
     n_steps::Int64
+    run!::Function
 
 end
-MonteCarloDriver(sampler!::Function, evaluator!::Function; temperature::Float64 = 1.0, n_steps::Int64 = 0) = MonteCarloDriver(sampler!, evaluator!, temperature, n_steps)
-Base.show(io::IO, b::MonteCarloDriver) = print(io, "MonteCarloDriver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
+Driver(sampler!::Function, evaluator!::Function; temperature::Float64 = 1.0, n_steps::Int64 = 0) = Driver(sampler!, evaluator!, temperature, n_steps, run!)
+Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
 
 
 @doc raw"""
@@ -67,7 +69,7 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
 ```
 """
-function run!(state::Common.State, driver::MonteCarloDriver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
     
     step = 0
     backup = deepcopy(state)
