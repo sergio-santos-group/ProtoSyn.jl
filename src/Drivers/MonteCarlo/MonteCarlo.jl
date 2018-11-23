@@ -38,14 +38,15 @@ See also: [`run!`](@ref)
 """
 mutable struct Driver <: Drivers.AbstractDriver
 
+    run!::Function
     sampler!::Function
     evaluator!::Function
     temperature::Float64
     n_steps::Int64
-    run!::Function
+    callbacks::Tuple
 
 end
-Driver(sampler!::Function, evaluator!::Function; temperature::Float64 = 1.0, n_steps::Int64 = 0) = Driver(sampler!, evaluator!, temperature, n_steps, run!)
+Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, callbacks::Common.CallbackObject...) = Driver(run!, sampler!, evaluator!, temperature, n_steps, callbacks)
 Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
 
 
@@ -71,28 +72,25 @@ julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_cal
 """
 function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
     
-    step = 0
+    step = 1
     backup = deepcopy(state)
     driver.evaluator!(state, false)
     acceptance_count = 0
 
-    while step < driver.n_steps
-        step += 1
-        mov_count = driver.sampler!(state)
-        if sum(values(mov_count)) == 0
-            @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count
-            continue
-        end
+    @Common.cbcall driver.callbacks..., callbacks... 0 state driver (acceptance_count/step)
+    while step <= driver.n_steps
+        driver.sampler!(state)
         driver.evaluator!(state, false)
-
+        
         if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature))
             backup = deepcopy(state)
             acceptance_count += 1
         else
             state = deepcopy(backup)
         end
-
-        @Common.cbcall callbacks step state driver (acceptance_count/step) mov_count
+        
+        @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
+        step += 1
     end
 end
 

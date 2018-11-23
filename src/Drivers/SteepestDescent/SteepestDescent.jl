@@ -2,6 +2,7 @@ module SteepestDescent
 
 using ..Aux
 using ..Common
+using ..Drivers
 using Printf
 using LinearAlgebra
 
@@ -33,16 +34,18 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-mutable struct SteepestDescentDriver
+mutable struct Driver <: Drivers.AbstractDriver
     
+    run!::Function
     evaluator!::Function
     n_steps::Int64
-    f_tol::Float64
-    max_step::Float64
+    f_tol::Float64        # (Default: 1e-3)
+    max_step::Float64     # (Default: 0.1)
+    callbacks::Tuple
 
 end
-SteepestDescentDriver(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = SteepestDescentDriver(evaluator!, n_steps, f_tol, max_step)
-Base.show(io::IO, b::SteepestDescentDriver) = print(io, "SteepestDescentDriver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
+Driver(evaluator!::Function, n_steps::Int64 = 0, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, 1e-3, 0.1, callbacks)
+Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
@@ -69,7 +72,7 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
 
     @inline function get_max_force(f::Array{Float64, 2})
         return sqrt(maximum(sum(f.*f, dims = 2)))
@@ -81,15 +84,12 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
     energy_old = energy
     
     gamma::Float64 = 1.0
-    step::Int64 = 0
+    step::Int64 = 1
     
     # Initial callback
-    @Common.cbcall callbacks step state driver max_force gamma
+    @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
     
     while step < driver.n_steps
-        step += 1
-
-        # Update system coordinates
         gamma = min(gamma, driver.max_step)
         step_size = gamma / get_max_force(state.forces)
         @. state.xyz += step_size * state.forces
@@ -102,9 +102,6 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         energy = driver.evaluator!(state, true)
         max_force = get_max_force(state.forces)
 
-        # Call callback function and output information to log 
-        @Common.cbcall callbacks step state driver max_force gamma
-        
         # Check if force convergence was achieved
         if max_force < driver.f_tol
             println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
@@ -123,6 +120,9 @@ function run!(state::Common.State, driver::SteepestDescentDriver, callbacks::Com
         else
             gamma *= 1.05
         end
+
+        step += 1
+        @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
     end
 end
 

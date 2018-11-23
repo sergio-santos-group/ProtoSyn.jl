@@ -7,16 +7,16 @@ using Printf
 
 mutable struct Driver <: Drivers.AbstractDriver
 
+    run!::Function
     inner_cycle_driver::Drivers.AbstractDriver
     evaluator!::Function
     perturbator!::Function
     temperature::Float64
     n_steps::Int64
-    run!::Function
+    callbacks::Tuple
 
 end
-Driver(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::Function, perturbator!::Function; n_outer_steps::Int64 = 2, outer_temperature::Float64 = 0.0) = Driver(inner_cycle_driver, evaluator!, perturbator!, n_outer_steps, outer_temperature, run!)
-
+Driver(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::Function, perturbator!::Function, temperature::Float64 = 0.0, n_steps::Int64 = 0, callbacks::Common.CallbackObject...) = Driver(run!, inner_cycle_driver, evaluator!, perturbator!, temperature, n_steps, callbacks)
 
 
 function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
@@ -27,18 +27,14 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
     end
 
-    step = 0
+    step = 1
     driver.evaluator!(state, false)
     inner_best = deepcopy(state)
-    outer_best = deepcopy(state)
     homebase   = deepcopy(state)
-    while step < driver.n_steps
-        driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best, callbacks...)
+    @Common.cbcall driver.callbacks..., callbacks... step state driver
+    while step <= driver.n_steps
+        driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best)
         state = deepcopy(inner_best)
-
-        if state.energy.etotal < outer_best.energy.eTotal
-            outer_best = deepcopy(state)
-        end
 
         if state.energy.eTotal < homebase.energy.eTotal || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / driver.temperature))
             homebase = deepcopy(state)
@@ -46,14 +42,16 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
             state = deepcopy(homebase)
         end
 
-        if step != n_steps
-            movs = driver.perturbator!(state)
+        if step != driver.n_steps
+            driver.perturbator!(state)
             driver.evaluator!(state, false)
             inner_best = deepcopy(state)
         end
 
-        @Common.cbcall callbacks step state driver movs
-        outer_step += 1
+        step += 1
+        if step <= driver.n_steps
+            @Common.cbcall driver.callbacks..., callbacks... step state driver
+        end
     end
 end
 
