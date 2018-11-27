@@ -14,5 +14,5 @@ include("macros.jl")
 
 const ss2bbd = Dict(
         Common.SS.SHEET => Dict(Common.DIHEDRAL.phi => deg2rad(-139.0), Common.DIHEDRAL.psi => deg2rad(135.0)),
-        Common.SS.HELIX => Dict(Common.DIHEDRAL.phi => deg2rad(-57.0),  Common.DIHEDRAL.psi => deg2rad(-47.0)))
+        Common.SS.HELIX => Dict(Common.DIHEDRAL.phi => deg2rad(-38.0),  Common.DIHEDRAL.psi => deg2rad(-67.0)))
 end

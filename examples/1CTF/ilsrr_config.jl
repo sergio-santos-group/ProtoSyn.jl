@@ -3,16 +3,18 @@
 # ------------------
 
 # 1. Define the algorithm length:
-const n_inner_steps            = 20000  # Number of steps on each inner cycle;
-const n_outer_steps            = 10000  # Number of inner cycles to perform;
+const n_inner_steps            = 100    # Number of steps on each inner cycle;
+const n_outer_steps            = 1      # Number of inner cycles to perform;
 const init_min_n_steps         = 10000  # Number of steps for Steepest Descent minimization (initial long minimization);
-const min_n_steps              = 100    # Number of steps for Steepest Descent minimization (every step of inner cycle);
+const min_n_steps              = 20     # Number of steps for Steepest Descent minimization (every step of inner cycle);
 
 # 2. Define output frequency:
-const print_sts_every_ic       = 1000   # Print system status every n steps (Inner cycle);
+const print_sts_every_ic       = 1      # Print system status every n steps (Inner cycle);
 const print_sts_every_oc       = 1      # Print system status every n steps (Outer cycle);
 const print_sts_every_min      = 1000   # Print status every n steps in Steepest Descent minimization;
-const print_str_every_ic       = 0      # Print structure to files every n steps;
+const print_str_every_ic       = 1      # Print structure to files every n steps;
+const print_str_every_min      = 0      # Print structure to files every n steps in Steepest Descent minimization;
+
 
 # 3. Define the step size:
 const min_step_size            = 0.01   # Minimum step_size allowed;
@@ -39,8 +41,8 @@ const ss                       = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEE
 
 # 8. Define the contact/dihedral FBR settings
 const contact_threshold        = 0.31
-const contact_force_constant   = 1e2
-const dihedral_force_constant  = 1e10
+const contact_force_constant   = 100.0
+const dihedral_force_constant  = 1e4
 
 # 9. Define the input files:
 const input_pdb                = "data/1ctf_no_sc.pdb"

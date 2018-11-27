@@ -110,7 +110,7 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         
         # Check if gamma is below machine precision
         if gamma < eps()
-            println("Gamma below machine precision! Exiting ...\n")
+            println("Gamma below machine precision! Exiting after $step steps...\n")
             break
         end
         
