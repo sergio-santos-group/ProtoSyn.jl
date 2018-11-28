@@ -1,0 +1,5 @@
+(   SD)         1000 | ⚡E:  2.250e+03 ▶️ ⚡Amber:  1.783e+03 & ⚡Other:  4.668e+02 | Max Force:  9.642e+01 | Gamma:  1.117e-08
+(   SD)         2000 | ⚡E:  2.227e+03 ▶️ ⚡Amber:  1.760e+03 & ⚡Other:  4.668e+02 | Max Force:  9.642e+01 | Gamma:  2.093e-15
+(   MC)            0 | ⚡E:  2.250e+03 ▶️ ⚡Amber:  1.783e+03 & ⚡Other:  4.668e+02 | Dihedral: 1.57e+00 | Crankshaft: 1.57e+00 | AR: 0.0000 | T: 300.00
+(   SD)         1000 | ⚡E:  2.327e+03 ▶️ ⚡Amber:  1.866e+03 & ⚡Other:  4.611e+02 | Max Force:  1.017e+02 | Gamma:  5.555e-16
+(   MC)            1 | ⚡E:  2.327e+03 ▶️ ⚡Amber:  1.866e+03 & ⚡Other:  4.611e+02 | Dihedral: 1.57e+00 | Crankshaft: 1.57e+00 | AR: 1.0000 | T: 300.00

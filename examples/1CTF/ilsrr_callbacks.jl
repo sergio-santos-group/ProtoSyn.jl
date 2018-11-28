@@ -12,7 +12,8 @@ end
 #     Print.status(@sprintf("\n(%5s) %12s \n%s\n", "ILSRR", @sprintf("Step: %4d", step), "-"^146), status_destination)
 # end
 print_status_sd = @Common.callback print_sts_every_min function cb_status(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.Driver, max_force::Float64, gamma::Float64, args...)
-    Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "SD", step, st.energy.eTotal, max_force, gamma), status_destination)
+    Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "SD", step, st.energy.eTotal, st.energy.comp["amber"],
+        st.energy.comp["other"], max_force, gamma), status_destination)
 end
 
 

@@ -44,7 +44,7 @@ mutable struct Driver <: Drivers.AbstractDriver
     callbacks::Tuple
 
 end
-Driver(evaluator!::Function, n_steps::Int64 = 0, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, 1e-3, 0.1, callbacks)
+Driver(evaluator!::Function, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, f_tol, max_step, callbacks)
 Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
 
 # ----------------------------------------------------------------------------------------------------------
@@ -78,14 +78,28 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         return sqrt(maximum(sum(f.*f, dims = 2)))
     end
 
+    @inline function system_converged()::Bool
+        if max_force < driver.f_tol
+            println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
+            return true
+        end
+        if gamma < eps()
+            println("Gamma below machine precision! Exiting after $step steps...\n")
+            return true
+        end
+        return false
+    end
+
     # Evaluate initial energy and forces
+    step::Int64 = 1
+    gamma::Float64 = driver.max_step
     energy::Float64 = driver.evaluator!(state, true)
     max_force::Float64  = get_max_force(state.forces)
+    if system_converged()
+        return
+    end
     energy_old = energy
-    
-    gamma::Float64 = 1.0
-    step::Int64 = 1
-    
+        
     # Initial callback
     @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
     
@@ -102,15 +116,7 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         energy = driver.evaluator!(state, true)
         max_force = get_max_force(state.forces)
 
-        # Check if force convergence was achieved
-        if max_force < driver.f_tol
-            println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
-            break
-        end
-        
-        # Check if gamma is below machine precision
-        if gamma < eps()
-            println("Gamma below machine precision! Exiting after $step steps...\n")
+        if system_converged()
             break
         end
         
