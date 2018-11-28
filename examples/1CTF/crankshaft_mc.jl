@@ -40,20 +40,20 @@ end
 
 
 # 6. DEFINE THE DRIVER -----------------------------------------------------------------------------------------
-mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!, temperature=500.0, n_steps=1000)
+mc_driver = Drivers.MonteCarlo.Driver(my_sampler!, my_evaluator!, temperature=500.0, n_steps=1000)
 
 
 # 7. DEFINE THE CALLBACKS --------------------------------------------------------------------------------------
-callback1 = @Common.callback 100 function cb_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+callback1 = @Common.callback 100 function cb_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %.4ef | D step: %.3e | CS step: %.3e | AR: %.2f\n" step state.energy.eTotal dihedral_mutator.step_size crankshaft_mutator.step_size args[1])
 end
 
 file_xyz = open("out/trajectory.pdb", "w")
-callback2 = @Common.callback 100 function cb_print(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+callback2 = @Common.callback 100 function cb_print(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     Print.as_pdb(file_xyz, st, step = step)
 end
 
-callback3 = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+callback3 = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     acceptance_ratio = 0.2
     if args[1] > acceptance_ratio
         dihedral_mutator.step_size * 1.05 < π ? dihedral_mutator.step_size *= 1.05 : dihedral_mutator.step_size = π

@@ -7,7 +7,7 @@ using Printf
 using LinearAlgebra
 
 @doc raw"""
-    SteepestDescentDriver(evaluator!::Function[, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1])
+    Driver(evaluator!::Function[, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1, callbacks::Tuple{Common.CallbackObject}...])
 
 Define the runtime parameters for the Steepest Descent simulation.
 If `n_steps` is zero, a `single point` energy calculation is performed.
@@ -20,13 +20,14 @@ evaluator!(state::Common.State, do_forces::Bool)
 - `n_steps`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
 - `f_tol`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
 - `max_step`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
+- `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 # Examples
 ```julia-repl
-julia> Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, 100, 1e-3, 0.1)
+julia> Drivers.SteepestDescent.Driver(my_evaluator!)
 SteepestDescentDriver(evaluator=my_evaluator!, n_steps=100, f_tol=1e-3, max_step=0.1)
 
-julia> Drivers.SteepestDescent.SteepestDescentDriver(my_evaluator!, f_tol = 1e-6)
+julia> Drivers.SteepestDescent.Driver(my_evaluator!, 0, 1e-6, 0.1)
 SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0.1)
 ```
 !!! tip
@@ -45,20 +46,20 @@ mutable struct Driver <: Drivers.AbstractDriver
 
 end
 Driver(evaluator!::Function, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, f_tol, max_step, callbacks)
-Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol))")
+Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
 
 @doc raw"""
-    run!(state::Common.State, driver::SteepestDescentDriver[, callback::Union{Common.CallbackObject, Nothing} = nothing])
+    run!(state::Common.State, driver::SteepestDescentDriver[, callbacks::::Tuple{Common.CallbackObject}...])
 
 Run the main body of the Driver. If `driver.n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.
-- `driver::SteepestDescentDriver`: Defines the parameters for the SteepestDescent simulation. See [`SteepestDescentDriver`](@ref).
-- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s (Default: empty).
+- `driver::SteepestDescentDriver`: Defines the parameters for the SteepestDescent simulation. See [`Driver`](@ref).
+- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 The [`CallbackObject`](@ref Common) in this Driver returns the following extra Varargs (in order):
 - `max_force::Float64`: The maximum force experienced by the system in the current step.

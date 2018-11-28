@@ -6,7 +6,7 @@ using ..Drivers
 using Printf
 
 @doc raw"""
-    MonteCarloDriver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0])
+    Driver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0, callbacks::Tuple{Common.CallbackObject}...])
 
 Define the runtime parameters for the Monte Carlo simulation.
 No `sampler!` movement is performed by default, since n_steps = 0.
@@ -22,14 +22,15 @@ evaluator!(state::Common.State, do_forces::Bool)
 ```
 - `temperature::Float64`: (Optional) Temperature of the system, determines acceptance in the Metropolis algorithm (Default: 1.0).
 - `n_steps`: (Optional) Total amount of steps to be performed (Default: 0).
+- `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 # Examples
 ```julia-repl
-julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!, 10.0, 1000)
-MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000)
+julia> Drivers.MonteCarlo.Driver(my_sampler!, my_evaluator!, 10.0, 1000)
+MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000)
 
-julia> Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!)
-MonteCarloDriver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, n_steps=0)
+julia> Drivers.MonteCarlo.Driver(my_sampler!, my_evaluator!)
+MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0, n_steps=0)
 ```
 !!! tip
     Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [Mutators](@ref Mutators) and [Forcefield](@ref Forcefield) modules, respectively.
@@ -51,7 +52,7 @@ Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.s
 
 
 @doc raw"""
-    run!(state::Common.State, driver::MonteCarloDriver[, callbacks::Tuple{Common.CallbackObject}...])
+    run!(state::Common.State, driver::Driver[, callbacks::Tuple{Common.CallbackObject}...])
 
 Run the main body of the driver. Creates a new conformation based on `driver.sampler!`, evaluates the new conformation energy using `driver.evaluator!`,
 accepting it or not depending on the `driver.temperature` in a Metropolis algorithm. This Monte Carlo process is repeated for `driver.n_steps`, saving the
@@ -59,8 +60,8 @@ accepted structures to `state` and calling all the `callbacks`.
 
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.
-- `driver::MonteCarloDriver`: Defines the parameters for the SteepestDescent simulation. See [`MonteCarloDriver`](@ref).
-- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s (Default: empty).
+- `driver::Driver`: Defines the parameters for the MonteCarlo simulation. See [`Driver`](@ref).
+- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s. If any callbacks pre-exist in the driver, these are added.
 
 The [`CallbackObject`](@ref Common) in this Driver returns the following extra Varargs (in order):
 - `acceptance_ratio::Float64`: The acceptance ratio of the simulation, so far, calculated as `number_of_accepted_steps / current_step`.
