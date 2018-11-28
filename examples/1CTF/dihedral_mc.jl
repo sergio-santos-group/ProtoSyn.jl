@@ -38,16 +38,16 @@ end
 
 
 # 6. DEFINE THE DRIVER -----------------------------------------------------------------------------------------
-mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler, my_evaluator!, temperature=1.0, n_steps=1000)
+mc_driver = Drivers.MonteCarlo.Driver(my_sampler, my_evaluator!, temperature=1.0, n_steps=1000)
 
 
 # 7. DEFINE THE CALLBACKS --------------------------------------------------------------------------------------
-callback1 = @Common.callback 10 function callback_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+callback1 = @Common.callback 10 function callback_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     write(stdout, @sprintf "(MC) Step: %4d | Energy: %9.4f\n" step state.energy.eTotal)
 end
 
 file_xyz = open("out/trajectory.xyz", "w")
-function callback_print(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.MonteCarloDriver, args...)
+function callback_print(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     Print.as_xyz(file_xyz, st, "Step: $step")
 end
 callback2 = Common.CallbackObject(100, callback_print)

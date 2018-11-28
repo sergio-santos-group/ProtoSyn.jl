@@ -119,32 +119,43 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
     n = zeros(Float64, 3)
 
     for dihedral in topology
+        # println("Dihedral: $dihedral")
+        # println("eDihedral: $eDihedralFBR")
+        # println("State: $(st.xyz)")
         @views @. v12 = st.xyz[dihedral.a2, :] - st.xyz[dihedral.a1, :]
         @views @. v32 = st.xyz[dihedral.a2, :] - st.xyz[dihedral.a3, :]
         @views @. v34 = st.xyz[dihedral.a4, :] - st.xyz[dihedral.a3, :]
         m = cross(v12, v32)
         n = cross(v32, v34)
+        # println("M: $m | N: $n")
         d32Sq = dot(v32, v32)
         d32 = sqrt(d32Sq)
+        # println("V12: $v12 | D32: $d32")
         phi = - atan(d32 * dot(v12, n), dot(m, n))
+        # println("Current: $(rad2deg(phi))")
 
         if phi <= dihedral.r1
+            # println("Stage 1")
             dr1::Float64 = dihedral.r1 - dihedral.r2
             e1::Float64 = dihedral.c * dr1 * dr1 * 0.5
             dr = phi - dihedral.r1
             eDihedralFBR += (dihedral.c * dr1) * dr + e1
             dVdphi_x_d32 = (dihedral.c * dr1) * d32
         elseif phi <= dihedral.r2
+            # println("Stage 2")
             dr = phi - dihedral.r2
             eDihedralFBR += dihedral.c * dr * dr * 0.5 
             dVdphi_x_d32 = dihedral.c * dr * d32
         elseif phi <= dihedral.r3
+            # println("Stage 3")
             continue
         elseif phi <= dihedral.r4
+            # println("Stage 4")
             dr = phi - dihedral.r3
             eDihedralFBR += dihedral.c * dr * dr * 0.5
             dVdphi_x_d32 = dihedral.c * dr * d32
         else
+            # println("Stage 5")
             dr2::Float64 = dihedral.r4 - dihedral.r3
             e2::Float64 = dihedral.c * dr2 * dr2 * 0.5
             dr = phi - dihedral.r4
@@ -155,6 +166,7 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
             f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
             f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
+            # println("Forces:\n a1: $(f1)\n a1: $(-f1-f3-f4)\n a1: $(f3)\n a1: $(f4)")
             @. st.forces[dihedral.a1, :] += f1
             @. st.forces[dihedral.a2, :] += (-f1 - f3 - f4)
             @. st.forces[dihedral.a3, :] += f3

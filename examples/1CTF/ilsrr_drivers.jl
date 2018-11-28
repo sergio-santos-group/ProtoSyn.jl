@@ -45,7 +45,7 @@ function my_sampler!(st::Common.State)
     return Dict("d" => dm, "c" => cm)
 end
 # Define the driver itself
-mc_driver = Drivers.MonteCarlo.MonteCarloDriver(my_sampler!, my_evaluator!, temperature=inner_temperature, n_steps=n_inner_steps)
+mc_driver = Drivers.MonteCarlo.Driver(my_sampler!, my_evaluator!, temperature=inner_temperature, n_steps=n_inner_steps)
 
 # 3. Pertubator -------------------------------------------------------------------------------
 # Define the pertubator mutators

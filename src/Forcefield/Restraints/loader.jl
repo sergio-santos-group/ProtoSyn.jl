@@ -48,13 +48,13 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
             end
         end
     end
-    println("Loaded $(length(restraints)) contacts.")
+    println("Loaded $(length(restraints)) contacts")
     return restraints
 end
 
 
 @doc raw"""
-    lock_block_bb(metadata::Common.Metadata[, k::Float64 = 1.0, fbw::Float64 = 10.0])::Vector{DihedralFBR}
+    lock_block_bb(metadata::Common.Metadata[, k::Float64 = 1.0, fbw::Float64 = 2.5])::Vector{DihedralFBR}
 
 Add restraints to the PHI and PSI dihedrals of blocks in the structure (as defined in `metadata`).
 All force constants are multiplied by a factor `k` (Default: 1.0).
@@ -68,7 +68,7 @@ julia> Forcefield.Restraints.lock_block_bb(metadata, 1e4)
  (...)]
 ```
 """
-function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64 = 10.0)::Vector{DihedralFBR}
+function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64 = 2.5)::Vector{DihedralFBR}
 
     fbw = deg2rad(fbw)/2
     restraints::Vector{DihedralFBR} = Vector{DihedralFBR}()
@@ -77,6 +77,7 @@ function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64
             continue
         end
         r0 = Common.ss2bbd[dihd.residue.ss][dihd.dtype]
+        # println(" + DihedralFBR $(dihd.dtype)-$(dihd.residue.name)($(dihd.a1)|$(dihd.a2)|$(dihd.a3)|$(dihd.a4))")
         push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, r0-(fbw*2), r0-fbw, r0+fbw, r0+(fbw*2), k))
     end
     return restraints

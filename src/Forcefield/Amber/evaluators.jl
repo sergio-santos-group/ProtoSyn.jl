@@ -248,6 +248,7 @@ function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 2
     energy += evaluate!(topology.angles, state, do_forces = do_forces)
     energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
     energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
+    state.energy.comp["amber"] = energy
     state.energy.eTotal = energy
     return energy
 end

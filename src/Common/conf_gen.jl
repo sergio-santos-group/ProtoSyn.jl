@@ -20,30 +20,13 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
     # Save secondary structure as metadata
     metadata.ss = infer_ss(metadata.dihedrals, ss)
 
-    # Define target values for dihedral angles
-    t_angles = Dict(
-        'E' => Dict(DIHEDRAL.phi => deg2rad(-139.0), DIHEDRAL.psi => deg2rad(135.0)),
-        'H' => Dict(DIHEDRAL.phi => deg2rad(-57.0),  DIHEDRAL.psi => deg2rad(-47.0)))
-
-    index::Int64 = 0
+    index::Int64 = 1
     for dihedral in metadata.dihedrals
-        #Verify input so that only the phi and psi dihedrals are iterated over
-        if dihedral.dtype >= DIHEDRAL.omega 
-            continue
+        #Verify input so that only the phi and psi dihedrals are iterated over, and COILS remain "free"
+        if !(dihedral.dtype >= DIHEDRAL.omega || dihedral.residue.ss == Common.SS.COIL)
+            rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
-        if dihedral.dtype == DIHEDRAL.psi 
-            index += 1
-        end
-        if index > length(ss) 
-            error("The length of the secondary stucture string is inferior to the phi and psi count in the molecule.")
-        end
-        if ss[index] == 'C' 
-            continue
-        end
-
-        rotate_dihedral_to!(state.xyz, dihedral, t_angles[ss[index]][dihedral.dtype])
     end
-
 end
 
 
@@ -90,7 +73,7 @@ function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStruct
             end
             i_idx = index
         end
-        residues[index].ss = conv_type[curr_ss] #If commented, will not apply ss to residue.ss
+        residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
         last_ss = curr_ss
     end
     return sec_str
