@@ -47,3 +47,27 @@ function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Flo
     return atan(x, y)
 
 end
+
+
+@doc raw"""
+    rand_vector_in_sphere()::Vector{Float64}
+
+Return a random vector in a sphere.
+
+# Examples
+```julia-repl
+julia> Aux.rand_vector_in_sphere()
+3-element Array{Float64,1}:
+  0.34470440733141694
+ -0.746086857969672  
+  0.5696782178837796
+```
+"""
+function rand_vector_in_sphere()::Vector{Float64}
+    theta::Float64 = 2 * π * rand()
+    phi::Float64 = acos(1 - 2 * rand())
+    x::Float64 = sin(phi) * cos(theta)
+    y::Float64 = sin(phi) * sin(theta)
+    z::Float64 = cos(phi)
+    return [x, y, z]
+end

@@ -80,7 +80,7 @@ Conformation generators are responsible to change the system [`State`](@ref) in 
 
 ```@docs
 apply_ss!
-infer_ss
+compile_ss
 apply_dihedrals_from_file!
 stretch_conformation!
 fix_proline!

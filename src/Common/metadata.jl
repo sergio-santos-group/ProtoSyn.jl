@@ -64,11 +64,13 @@ Define a secondary structure metadata, containing extra information pertaining t
 - `f_res_name::String`: Name of the final residue.
 - `f_res_num::Int64`: Index of the final residue.
 - `conf::Int64`: Conformation of the secondary structure. See PDB FORMAT standards.
+- `atoms::Vector{Int64}`: List of atoms contained in this block
+- `pivot::Int64`: Atom as center of mass of this block
 
 # Examples
 ```julia-repl
-julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1)
-SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1)
+julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1, [1, 2, 3, 4], 2)
+SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1, atoms=[1, 2, 3, 4], pivot=2)
 ```
 """
 mutable struct SecondaryStructureMetadata
@@ -83,6 +85,18 @@ mutable struct SecondaryStructureMetadata
 
 end
 Base.show(io::IO, b::SecondaryStructureMetadata) = print(io, "SecondaryStructureMetadata(ss_type=$(b.ss_type), name=$(b.name), $(b.i_res_name)-$(b.i_res_num) <-> $(b.f_res_name)-$(b.f_res_num), conf=$(b.conf))")
+
+
+
+mutable struct BlockMetadata
+
+    atoms::Vector{Int64}
+    pivot::Int64
+    range_left::Float64
+    connector_left::Int64
+    connector_right::Int64
+end
+Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1])<->$(b.atoms[length(b.atoms)]), pivot=$(b.pivot), range_left=$(b.range_left), connector_left=$(b.connector_left), connector_right=$(b.connector_right))")
 
 
 @doc raw"""
@@ -108,9 +122,14 @@ mutable struct Metadata
     ss::Vector{SecondaryStructureMetadata}
     residues::Vector{Residue}
     dihedrals::Vector{Dihedral}
+    blocks::Vector{BlockMetadata}
 
 end
-Metadata(;atoms::Vector{AtomMetadata} = Vector{AtomMetadata}(), ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}(), residues::Vector{Residue} = Vector{Residue}(), dihedrals::Vector{Dihedral} = Vector{Dihedral}()) = Metadata(atoms, ss, residues, dihedrals)
+Metadata(;atoms::Vector{AtomMetadata}      = Vector{AtomMetadata}(),
+    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}(),
+    residues::Vector{Residue}              = Vector{Residue}(),
+    dihedrals::Vector{Dihedral}            = Vector{Dihedral}(),
+    blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}()) = Metadata(atoms, ss, residues, dihedrals, blocks)
 Base.show(io::IO, b::Metadata) = print(io, "Metadata(atoms=$(b.atoms), ss=$(b.ss), residues=$(b.residues), dihedrals=$(b.dihedrals))")
 
 

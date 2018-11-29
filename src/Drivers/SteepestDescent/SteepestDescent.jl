@@ -84,7 +84,8 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
             println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
             return true
         end
-        if gamma < eps()
+        # if gamma < eps()
+        if gamma < 1e-10
             println("Gamma below machine precision! Exiting after $step steps...\n")
             return true
         end

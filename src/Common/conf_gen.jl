@@ -13,12 +13,12 @@ PHI = -57.0  | PSI = -47.0
 ```julia-repl
 julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
-See also: [`infer_ss`](@ref)
+See also: [`compile_ss`](@ref)
 """
 function apply_ss!(state::State, metadata::Metadata, ss::String)
 
     # Save secondary structure as metadata
-    metadata.ss = infer_ss(metadata.dihedrals, ss)
+    metadata.ss = compile_ss(metadata.dihedrals, ss)
 
     index::Int64 = 1
     for dihedral in metadata.dihedrals
@@ -27,56 +27,6 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
             rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
     end
-end
-
-
-@doc raw"""
-    infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-
-    residues = Vector{Residue}()
-    for dihedral in dihedrals
-        if !(dihedral.residue in residues)
-            push!(residues, dihedral.residue)
-        end
-    end
-    return infer_ss(residues, ss)
-end
-
-
-@doc raw"""
-    infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-
-Read the provided secondary structure string `ss` and infer the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues/dihedrals.
-
-# Examples
-```julia-repl
-julia> Common.infer_ss(dihedrals, "CCCHHHHCCEEEECCC")
-2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
- SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
- SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
-```
-"""
-function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-
-    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET, 'C' => SS.COIL)
-    conv_name = Dict('H' => "HA", 'E' => "BA")
-
-    sec_str = SecondaryStructureMetadata[]
-    last_ss::Char = ss[1]
-    i_idx::Int64 = 1
-    for (index, curr_ss) in enumerate(ss)
-        if curr_ss != last_ss
-            if last_ss in ['H', 'E']
-                push!(sec_str, SecondaryStructureMetadata(conv_type[last_ss], conv_name[last_ss], residues[i_idx].name, i_idx, residues[index - 1].name, index - 1, 1))
-            end
-            i_idx = index
-        end
-        residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
-        last_ss = curr_ss
-    end
-    return sec_str
 end
 
 

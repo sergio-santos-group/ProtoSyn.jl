@@ -48,7 +48,7 @@ end
 
 inner_cycle_driver = Drivers.MonteCarlo.Driver(my_sampler!, my_evaluator!, temperature, n_inner_steps, print_status_mc, quench_temperature, print_structure_ic, adjust_step_size)
 ilsrr_driver = Drivers.ILSRR.Driver(inner_cycle_driver, my_evaluator!, my_pertubator!, temperature, n_outer_steps, reset_temperature, reset_step_size, print_outer_best)
-identify_angles_under_stress(metadata.dihedrals, dihedral_restraints)
-Print.as_pdb(xyz_destination, state, metadata)
-initial_sd_driver.run!(state, initial_sd_driver, print_structure_min)
+# identify_angles_under_stress(metadata.dihedrals, dihedral_restraints)
+# Print.as_pdb(xyz_destination, state, metadata)
+# initial_sd_driver.run!(state, initial_sd_driver, print_structure_min)
 ilsrr_driver.run!(state, ilsrr_driver)
