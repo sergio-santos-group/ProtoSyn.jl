@@ -50,6 +50,19 @@ end
 
 function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMetadata}
 
+    function count_blocks(string::String)::Int64
+        count::Int64 = 0
+        curr::Char = string[1]
+        for l in string
+            if l != curr && l in ['H', 'E']
+                count += 1
+            end
+            curr = l
+        end
+        return count
+    end
+
+    n_blocks = count_blocks(ss)
     blocks = BlockMetadata[]
     last_ss::Char = ss[1]
     atoms = Int64[]
@@ -62,14 +75,23 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
         if curr_ss != last_ss
             if last_ss in ['H', 'E']
                 connector_right = residues[index - 1].atoms[length(residues[index - 1].atoms)]
-                pivot       = atoms[floor(Int64, length(atoms)/2)]
+                pivot = atoms[floor(Int64, length(atoms)/2)]
+                if length(blocks) == n_blocks - 1
+                    atoms = vcat(atoms, residues[index].atoms)
+                end
                 push!(blocks, BlockMetadata(atoms, pivot, range_left, connector_left, connector_right))
                 i_idx = index
             else
                 connector_left = residues[index].atoms[1]
-                range_left = floor((((index - i_idx) * (connection_range * 3)) + connection_range) / 10, digits = 3)
+                if length(blocks) > 0
+                    range_left = floor((((index - i_idx) * (connection_range * 3)) + connection_range) / 10, digits = 3)
+                else
+                    range_left = Inf
+                end
             end
-            atoms = Int64[]
+            if length(blocks) > 0
+                atoms = Int64[]
+            end
         end
         last_ss = curr_ss
         atoms = vcat(atoms, residues[index].atoms)

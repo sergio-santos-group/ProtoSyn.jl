@@ -26,7 +26,8 @@ Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(b.bl
     
     count::Int64 = 0
     for (block_index, block) in enumerate(mutator.blocks)
-        if rand() < mutator.p_mut && block_index > 1
+        if rand() < mutator.p_mut
+            backup = copy(state.xyz)
             axis  = Aux.rand_vector_in_sphere()
             angle = mutator.angle_sampler()
             rmat = Aux.rotation_matrix_from_axis_angle(axis, angle)
@@ -38,7 +39,8 @@ Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(b.bl
                 d_left = zeros(Float64, 3)
                 d_left = norm(@. state.xyz[mutator.blocks[block_index - 1].connector_right, :] - state.xyz[block.connector_left, :])
                 if d_left > block.range_left
-                    println("$d_left/$(block.range_left)")
+                    println("Aborted blockrot movement on block $block_index (left): $d_left/$(block.range_left)")
+                    state.xyz[:] = backup
                     continue
                 end
             end
@@ -46,11 +48,13 @@ Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(b.bl
                 d_right = zeros(Float64, 3)
                 d_right = norm(@. state.xyz[mutator.blocks[block_index + 1].connector_left, :] - state.xyz[block.connector_right, :])
                 if d_right > mutator.blocks[block_index + 1].range_left
-                    println("$d_right/$(mutator.blocks[block_index + 1].range_left)")
+                    println("Aborted blockrot movement on block $block_index (right): $d_right/$(mutator.blocks[block_index + 1].range_left)")
+                    state.xyz[:] = backup
                     continue
                 end
             end
 
+            println("Attempting to close loops on block $block_index...")
             mutator.loop_closer.run!(state, mutator.loop_closer)
             count += 1
         end
