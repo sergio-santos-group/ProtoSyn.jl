@@ -18,7 +18,8 @@ See also: [`compile_ss`](@ref)
 function apply_ss!(state::State, metadata::Metadata, ss::String)
 
     # Save secondary structure as metadata
-    metadata.ss = compile_ss(metadata.dihedrals, ss)
+    metadata.ss     = compile_ss(metadata.dihedrals, ss)
+    metadata.blocks = compile_blocks(metadata.residues, ss)
 
     index::Int64 = 1
     for dihedral in metadata.dihedrals

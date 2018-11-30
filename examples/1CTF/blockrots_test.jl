@@ -29,7 +29,7 @@ metadata.blocks     = Common.compile_blocks(metadata.residues, ss)
 metadata.ss         = Common.compile_ss(metadata.residues, ss)
 amber_topology      = Forcefield.Amber.load_from_json(input_amber_json)
 dihedral_restraints = Forcefield.Restraints.lock_block_bb(metadata, fbw = dihedral_fb_width, k = 1e10)
-blockrot_mutator    = Mutators.Blockrot.BlockrotMutator(metadata.blocks, () -> (randn() * blockrot_mutator.step_size), 1.0, π/8, loop_closer)
+blockrot_mutator    = Mutators.Blockrot.BlockrotMutator(metadata.blocks, () -> (randn() * blockrot_mutator.step_size), 1.0, π/8, 10, loop_closer)
 
 # println("Starting initial minimization")
 # loop_closer.run!(state, minimizer)

@@ -1,36 +1,13 @@
-# # ----------------------
-# # DEFINE THE CALLBACKS:
-# # ----------------------
-
-# Print status ------------------------------------------------------------------------------------ 
 print_status_mc = @Common.callback print_sts_every_ic function cb_status(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ar::Float64, args...)
     Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Dihedral: %8.2e | Crankshaft: %8.2e | AR: %.4f | T: %4.2f\n",
         "MC", step, st.energy.eTotal, st.energy.comp["amber"], st.energy.comp["other"], dihedral_mutator.step_size, crankshaft_mutator.step_size,
         ar, dr.temperature), status_destination)
 end
-# print_status_ilsrr = @Common.callback print_sts_every_oc function cb_status(step::Int64, st::Common.State, dr::Drivers.ILSRR.Driver, args...)
-#     Print.status(@sprintf("\n(%5s) %12s \n%s\n", "ILSRR", @sprintf("Step: %4d", step), "-"^146), status_destination)
-# end
 print_status_sd = @Common.callback print_sts_every_min function cb_status(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.Driver, max_force::Float64, gamma::Float64, args...)
     Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "SD", step, st.energy.eTotal, st.energy.comp["amber"],
         st.energy.comp["other"], max_force, gamma), status_destination)
 end
 
-
-# Adjust the step_size so that, on average, the acceptance_ration is as defined initially -----------
-adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac, args...)
-    d::Float64 = 1.0
-    if ac > acceptance_ratio + ar_buffer_zone
-        d = 1.0005
-    elseif ac < acceptance_ratio - ar_buffer_zone
-        d = 0.9995
-    end
-    dihedral_mutator.step_size = max(min_step_size, min(dihedral_mutator.step_size * d, π))
-    crankshaft_mutator.step_size = max(min_step_size, min(crankshaft_mutator.step_size * d, π))
-end
-
-
-# 4. Print current structure to a PDB file -------------------------------------------------------------
 print_structure_ic = @Common.callback print_str_every_ic function cb_print_inner(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
     Print.as_pdb(xyz_destination, st, metadata, step = step)
     flush(xyz_destination)
@@ -39,7 +16,6 @@ print_structure_min = @Common.callback print_str_every_min function cb_print_min
     Print.as_pdb(xyz_destination, st, metadata, step = step)
     flush(xyz_destination)
 end
-
 
 outer_best_energy = Inf
 print_outer_best = @Common.callback 1 function cb_print_outer(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
@@ -52,9 +28,17 @@ print_outer_best = @Common.callback 1 function cb_print_outer(step::Int64, st::C
     end
 end
 
+adjust_step_size = @Common.callback 1 function cb_adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac, args...)
+    d::Float64 = 1.0
+    if ac > acceptance_ratio + ar_buffer_zone
+        d = 1.0005
+    elseif ac < acceptance_ratio - ar_buffer_zone
+        d = 0.9995
+    end
+    dihedral_mutator.step_size = max(min_step_size, min(dihedral_mutator.step_size * d, π))
+    crankshaft_mutator.step_size = max(min_step_size, min(crankshaft_mutator.step_size * d, π))
+end
 
-
-# 5. Adjust temperature according to a given annealing function
 quench_temperature = @Common.callback 1 function cb_adjust_temperature(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
     dr.temperature = -(temperature/(dr.n_steps - 1))*step + temperature
 end
