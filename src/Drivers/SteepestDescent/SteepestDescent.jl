@@ -81,37 +81,33 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
 
     @inline function system_converged()::Bool
         if max_force < driver.f_tol
-            println("Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.\n")
+            # println("⤷ Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.")
             return true
         end
-        # if gamma < eps()
-        if gamma < 1e-10
-            println("Gamma below machine precision! Exiting after $step steps...\n")
+        if gamma < eps()
+            # println("⤷ Gamma below machine precision! Exiting after $step steps...")
             return true
         end
         return false
     end
 
     # Evaluate initial energy and forces
-    step::Int64 = 1
+    step::Int64 = 0
     gamma::Float64 = driver.max_step
     energy::Float64 = driver.evaluator!(state, true)
     max_force::Float64  = get_max_force(state.forces)
     if system_converged()
         return
     end
-    energy_old = energy
         
     # Initial callback
     @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
     
     while step < driver.n_steps
+        backup_state = deepcopy(state)
         gamma = min(gamma, driver.max_step)
         step_size = gamma / get_max_force(state.forces)
         @. state.xyz += step_size * state.forces
-
-        # Housekeep variables
-        energy_old = energy
 
         # Calculate new energy and forces
         fill!(state.forces, 0.0)
@@ -123,8 +119,9 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
         
         # Update gamma
-        if energy >= energy_old
-            gamma *= 0.90
+        if energy >= backup_state.energy.eTotal
+            gamma *= 0.50
+            state = deepcopy(backup_state)
         else
             gamma *= 1.05
         end

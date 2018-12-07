@@ -82,7 +82,7 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
     homebase   = deepcopy(state)
     # @Common.cbcall driver.callbacks..., callbacks... step state driver
     while step <= driver.n_steps
-        println(@sprintf("\n(%5s) %12s \n%s\n", "ILSRR", @sprintf("Step: %4d", step), "-"^146))
+        println(@sprintf("\n(%5s) %12s \n%s", "ILSRR", @sprintf("Step: %4d", step), "-"^150))
 
         driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best)
         state = deepcopy(inner_best)

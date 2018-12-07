@@ -1,0 +1,6 @@
+( I_SD)            0 | ⚡E:  1.154e+08 ▶️ ⚡Amber:  1.154e+08 & ⚡Other:  0.000e+00 | Max Force:  2.324e+10 | Gamma:  1.000e-02
+( I_SD)           50 | ⚡E:  8.579e+02 ▶️ ⚡Amber:  8.579e+02 & ⚡Other:  0.000e+00 | Max Force:  2.524e+03 | Gamma:  2.890e-11
+(   MC)            0 | ⚡E:  1.384e+03 ▶️ ⚡Amber:  9.197e+02 & ⚡Other:  4.638e+02 | Dihedral: 7.85e-01 | Crankshaft: 7.85e-01 | AR: 0.0000 | T: 273.15
+(   MC)           10 | ⚡E:  3.535e+02 ▶️ ⚡Amber: -9.485e+01 & ⚡Other:  4.483e+02 | Dihedral: 7.88e-01 | Crankshaft: 7.88e-01 | AR: 0.5000 | T: 270.69
+(   MC)           20 | ⚡E:  6.192e+02 ▶️ ⚡Amber:  2.434e+02 & ⚡Other:  3.758e+02 | Dihedral: 7.92e-01 | Crankshaft: 7.92e-01 | AR: 0.5500 | T: 267.95
+(   MC)           30 | ⚡E:  2.957e+02 ▶️ ⚡Amber: -4.039e+02 & ⚡Other:  6.996e+02 | Dihedral: 7.96e-01 | Crankshaft: 7.96e-01 | AR: 0.4667 | T: 265.22

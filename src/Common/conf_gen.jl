@@ -28,6 +28,7 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
             rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
     end
+    println("(  PRE) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks")
 end
 
 

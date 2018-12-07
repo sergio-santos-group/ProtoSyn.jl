@@ -15,7 +15,7 @@ julia> Forcefield.Restraints.load_distance_restraints_from_file(contact_map, met
  (...)]
 ```
 """
-function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; k::Float64 = 1.0, threshold::Float64 = 0.0)::Vector{DistanceFBR}
+function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; k::Float64 = 1.0, threshold::Float64 = 0.0, min_distance::Float64 = 0.8)::Vector{DistanceFBR}
     #All distances are in nm.
 
     #Gather residue information
@@ -40,15 +40,15 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
                     r1_ca = resnum2ca[r1_index]
                     r2_ca = resnum2ca[r2_index]
                     if r1.ss == r2.ss && r1.ss == Common.SS.SHEET
-                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * k))
                     else
-                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, 0.8, 1.0, c * k))
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * k))
                     end
                 end
             end
         end
     end
-    println("Loaded $(length(restraints)) contacts")
+    println("(  PRE) ▲ Loaded $(length(restraints)) contacts")
     return restraints
 end
 

@@ -11,6 +11,10 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::
         d12 = norm(v12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
+        # printstyled(bond, color=:blue)
+        # println(": $d12")
+        # printstyled("Energy: ", color=:blue)
+        # println(0.5*(bond.k * dr * dr), "\n")
         if do_forces
             @. v12 *= (bond.k * dr / d12)
             @. state.forces[bond.a1, :] += v12
@@ -44,6 +48,10 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
         dtheta = acos(ctheta) - angle.θ
 
         energy += angle.k * dtheta * dtheta
+        # printstyled(angle, color=:blue)
+        # println(": $(acos(ctheta))")
+        # printstyled("Energy: ", color=:blue)
+        # println(0.5 * angle.k * dtheta * dtheta, "\n")
         if do_forces
             fc = angle.k * dtheta / sqrt(1.0 - ctheta * ctheta)
             @. f1 = fc * (ctheta * v12/d12Sq - v32/d12xd32)
@@ -85,7 +93,11 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
         phi = atan(d32 * dot(v12, n), dot(m, n))
         
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
-        
+        # printstyled(dihedral, color=:blue)
+        # println(": $phi")
+        # printstyled("Energy: ", color=:blue)
+        # println(dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ)), "\n")
+
         if do_forces
             dVdphi_x_d32 = dihedral.k * dihedral.mult * sin(dihedral.θ - dihedral.mult * phi) * d32
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
@@ -173,6 +185,10 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             eLJ += eij * (lj6 * lj6 - lj6)
             ecoul = atomi.q * atomj.q / sqrt(dijSq)
             eCoulomb += ecoul
+            # printstyled(i, " - ", atomi, "\n", j, " - ", atomj, color=:blue)
+            # println(": $(sqrt(dijSq))")
+            # printstyled("Energy: ", color=:blue)
+            # println(ecoul, "\n")
 
             #Calculate forces, if requested
             if do_forces

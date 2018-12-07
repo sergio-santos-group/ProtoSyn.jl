@@ -104,7 +104,7 @@ mutable struct DihedralCos
     mult::Float64 # multiplicity
 
 end
-Base.show(io::IO, b::DihedralCos) = print(io, "Forcefield.Amber.DihedralCos(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), k=$(b.k), θ=$(rad2deg(b.θ)), mult=$(b.mult)")
+Base.show(io::IO, b::DihedralCos) = print(io, "Forcefield.Amber.DihedralCos(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), k=$(b.k), θ=$(b.θ), mult=$(b.mult)")
 
 # ----------------------------------------------------------------------------------------------------------
 
