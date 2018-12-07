@@ -1,6 +1,6 @@
 using ProtoSyn
 
-state, metadata = Common.load_from_pdb("data/1ctf_native.pdb")
+state, metadata = Common.load_from_pdb("data/1ctf_native_fixed.pdb")
 amber_topology  = Forcefield.Amber.load_from_json("data/1ctf_amber_top.json")
 contact_restraints  = Forcefield.Restraints.load_distance_restraints_from_file("data/contact_map_raptorx.txt", metadata, k = 10.0, threshold = 0.31)
 

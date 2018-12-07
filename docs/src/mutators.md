@@ -30,3 +30,16 @@ CrankshaftMutator
 run!
 rotate_crankshaft!
 ```
+
+## Blockrot
+
+```@meta
+CurrentModule = Mutators.Blockrot
+```
+
+A Blockrot movement is the rotation/translation of a defined block according to a set of [`BlockrotMutator`](@ref) parameters.
+
+```@docs
+BlockrotMutator
+run!
+```

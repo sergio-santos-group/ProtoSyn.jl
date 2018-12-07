@@ -20,7 +20,7 @@ Read the provided secondary structure string `ss` and compile the [`SecondaryStr
 
 # Examples
 ```julia-repl
-julia> Common.compile_ss(dihedrals, "CCCHHHHCCEEEECCC")
+julia> Common.compile_ss(residues, "CCCHHHHCCEEEECCC")
 2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
  SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
  SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
@@ -49,6 +49,19 @@ function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStru
 end
 
 
+@doc raw"""
+    compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMetadata}
+
+Read the provided secondary structure string `ss` and compile the [`BlockMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues.
+
+# Examples
+```julia-repl
+julia> Common.compile_blocks(residues, "HHHHCCEEEECCC")
+2-element Array{ProtoSyn.Common.BlockMetadata,1}:
+ BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135)
+ BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)
+```
+"""
 function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMetadata}
 
     function count_blocks(string::String)::Int64
@@ -70,7 +83,6 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
     connector_left::Int64 = -1
     i_idx::Int64 = 1
     range_left::Float64 = -1.0
-    # single_residue_range::Float64 = 3.636
     connection_range::Float64 = 1.2
     for (index, curr_ss) in enumerate(ss)
         if curr_ss != last_ss

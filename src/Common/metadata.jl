@@ -87,7 +87,24 @@ end
 Base.show(io::IO, b::SecondaryStructureMetadata) = print(io, "SecondaryStructureMetadata(ss_type=$(b.ss_type), name=$(b.name), $(b.i_res_name)-$(b.i_res_num) <-> $(b.f_res_name)-$(b.f_res_num), conf=$(b.conf))")
 
 
+@doc raw"""
+    BlockMetadata(atoms::Vector{Int64}, pivot::Int64, range_left::Float64, connector_left::Int64, connector_right::Int64)
 
+Define a block, containing all the necessary information for [`BlockrotMutator`] (@ref Blockrot) movements.
+
+# Arguments
+- `atoms::Vector{Int64}`: List of *global* indexes of all atoms contained in the block.
+- `pivot::Int64`: *Global* index of the center atom of the block.
+- `range_left::Float64`: Range (in nm), of the left side coil.
+- `connector_left::Int64`: *Global* index of the left side connector of the block (N).
+- `connector_right::Int64`: *Global* index of the right side connector of the block (C).
+
+# Examples
+```julia-repl
+julia> Common.BlockMetadata([1, 2, 3], 2, 0.8, 1, 3)
+BlockMetadata(atoms=1<->3, pivot=2, range_left=0.8, connector_left=1, connector_right=3)
+```
+"""
 mutable struct BlockMetadata
 
     atoms::Vector{Int64}

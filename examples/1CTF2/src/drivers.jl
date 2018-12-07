@@ -29,7 +29,7 @@ end
 # MINIMIZERS ----
 initial_minimizer = Drivers.SteepestDescent.Driver(amber_evaluator!, n_init_min_steps, f_tol, max_step, print_status_init)
 loop_closer       = Drivers.SteepestDescent.Driver(amber_evaluator!, n_loop_closer_steps, f_tol, max_step, print_status_loop)
-sampler_minimizer = Drivers.SteepestDescent.Driver(amber_cr_dr_evaluator!, n_refine_min_steps, f_tol, max_step, print_status_smpl)
+sampler_minimizer = Drivers.SteepestDescent.Driver(amber_cr_dr_evaluator!, n_refine_min_steps, f_tol, max_step)
 
 
 # MUTATORS ----
@@ -52,8 +52,6 @@ hard_cs_mutator = Mutators.Crankshaft.CrankshaftMutator(nb_phi_dhs, () -> (randn
 function dh_cs_br_soft_sampler!(st::Common.State)
     dm = Mutators.Dihedral.run!(st, soft_dh_mutator)
     cm = Mutators.Crankshaft.run!(st, soft_cs_mutator)
-    # dm = 0
-    # cm = 0
     bm = Mutators.Blockrot.run!(st, soft_br_mutator)
     sampler_minimizer.run!(st, sampler_minimizer)
     return Dict("d" => dm, "c" => cm, "b" => bm)
@@ -63,6 +61,7 @@ end
 function dh_cs_reg_sampler!(st::Common.State)
     dm = Mutators.Dihedral.run!(st, reg_dh_mutator)
     cm = Mutators.Crankshaft.run!(st, reg_cs_mutator)
+    sampler_minimizer.run!(st, sampler_minimizer)
     return Dict("d" => dm, "c" => cm)
 end
 

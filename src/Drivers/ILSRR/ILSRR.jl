@@ -12,12 +12,12 @@ using Printf
 Define the runtime parameters for the ILSRR algorithm.
 
 # Arguments
-- `inner_cycle_driver!::Driver.AbstractDriver`: Responsible for driving the inner cycle of the ILSRR algorithm. Should be a Driver, such as [`Drivers.MonteCarlo`](@ ref)
+- `inner_cycle_driver!::Driver.AbstractDriver`: Responsible for driving the inner cycle of the ILSRR algorithm. Should be a Driver, such as [`MonteCarlo`](@ref Drivers)
 - `evaluator!::Function`: Responsible for evaluating the current `state.energy`. This function should have the following signature:
 ```
 evaluator!(state::Common.State, do_forces::Bool)
 ```
-- `pertubator!::Function`: Responsible for performing conformational changes in the system. It's usually an aggregation of [`Mutators`](@ ref).
+- `pertubator!::Function`: Responsible for performing conformational changes in the system. It's usually an aggregation of [Mutators](@ref Mutators).
 - `temperature::Float64`: (Optional) Temperature for the Metropolis criteria when performing system perturbation (Default: 0.0)
 - `n_steps`: (Optional) Total amount of outer cycles to be performed (Default: 0).
 - `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.

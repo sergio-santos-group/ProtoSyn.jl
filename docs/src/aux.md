@@ -11,5 +11,5 @@ conv123
 conv321
 rotation_matrix_from_axis_angle
 calc_dih_angle
-rand_vector_from_sphere
+rand_vector_in_sphere
 ```

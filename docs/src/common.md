@@ -43,6 +43,7 @@ ProtoSyn Metadata defines additional information of the system that is not neces
 Metadata
 AtomMetadata
 SecondaryStructureMetadata
+BlockMetadata
 renumber_residues!
 ```
 
@@ -72,6 +73,8 @@ load_from_pdb
 load_metadata_from_json
 compile_residue_metadata!
 compile_dihedral_metadata!
+compile_ss
+compile_blocks
 ```
 
 ## Conformation Generators
@@ -80,7 +83,6 @@ Conformation generators are responsible to change the system [`State`](@ref) in 
 
 ```@docs
 apply_ss!
-compile_ss
 apply_dihedrals_from_file!
 stretch_conformation!
 fix_proline!

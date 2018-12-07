@@ -1,6 +1,6 @@
 # 1. Define the algorithm length:
 const n_search_refine_cycles   = 1      # Number of cycles between Random Search / Refinement stages;
-const n_i_search_steps         = 1000    # Number of steps on each Monte Carlo Search inner cycle;
+const n_i_search_steps         = 100    # Number of steps on each Monte Carlo Search inner cycle;
 const n_o_search_steps         = 100     # Number of ILSRR outer cycles to perform;
 const n_init_min_steps         = 10000  # Number of steps for Steepest Descent minimization (initial long minimization);
 const n_refine_steps           = 2500   # Number of steps for Monte Carlo Refinement;
@@ -55,7 +55,7 @@ const refine_temp_static       = 273.15 # Temperature for Metropolois acceptance
 
 
 # 7. Define the target acceptance ratio for all Monte Carlo Drivers and respective buffer zone:
-const acceptance_ratio         = 0.25   # Target acceptance ration of new structures. Step_size will be updated to try and achieve this value;
+const acceptance_ratio         = 0.35   # Target acceptance ration of new structures. Step_size will be updated to try and achieve this value;
 const ar_buffer_zone           = 0.01   # Buffer zone limit around the target acceptance_ratio. Step_size will not be updated if it's currently inside the buffer zone;
 
 

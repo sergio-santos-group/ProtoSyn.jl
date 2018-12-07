@@ -32,16 +32,17 @@ print_structure = @Common.callback print_str_every_ic function _print_structure(
     flush(xyz_destination)
 end
 
-print_structure_rfnm = @Common.callback print_str_every_rfnm function _print_structure(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+print_structure_rfnm = @Common.callback print_str_every_rfnm function _print_structure_rfnm(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
     Print.as_pdb(xyz_destination, st, metadata, step = step)
     flush(xyz_destination)
 end
 
-print_structure_fl = @Common.callback n_init_min_steps function _print_structure_fl(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
-    Print.as_pdb(xyz_destination, st, metadata, step = step)
-    flush(xyz_destination)
-end
 
+#PRINT ENERGY
+print_energy = @Common.callback 1 function _print_energy(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+    println(out_ene, st.energy.eTotal)
+    flush(out_ene)
+end
 
 
 outer_best_energy = Inf

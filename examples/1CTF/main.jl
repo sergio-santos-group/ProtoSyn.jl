@@ -13,7 +13,8 @@ Common.apply_ss!(state, metadata, ss)
 
 contact_restraints  = Forcefield.Restraints.load_distance_restraints_from_file(input_contact_map, metadata, k = contact_force_constant, threshold = contact_threshold)
 dihedral_restraints = Forcefield.Restraints.lock_block_bb(metadata, fbw = dihedral_fb_width, k = dihedral_force_constant)
-nb_dhs              = filter(x -> x.residue.ss == Common.SS.COIL || x.dtype > Common.DIHEDRAL.omega, metadata.dihedrals)
+# nb_dhs              = filter(x -> x.residue.ss == Common.SS.COIL || x.dtype > Common.DIHEDRAL.omega, metadata.dihedrals)
+nb_dhs              = filter(x -> x.residue.ss == Common.SS.COIL, metadata.dihedrals)
 nb_phi_dhs          = filter(x -> x.dtype == Common.DIHEDRAL.phi, nb_dhs)
 
 include("src/callbacks.jl")
