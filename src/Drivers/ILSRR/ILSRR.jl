@@ -93,10 +93,10 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
 
         if state.energy.eTotal < homebase.energy.eTotal || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / driver.temperature))
-            println(@sprintf "(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)" homebase.energy.eTotal state.energy.eTotal)
+            printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :red)
             homebase = deepcopy(state)
         else
-            println(@sprintf "(ILSRR) Recovering to previous homebase: ⚡E: %10.3e (actual) ▶️ %10.3e (new)" state.energy.eTotal homebase.energy.eTotal)
+            printstyled(@sprintf("(ILSRR) Recovering to previous homebase: ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", state.energy.eTotal, homebase.energy.eTotal), color = :red)
             state = deepcopy(homebase)
         end
 

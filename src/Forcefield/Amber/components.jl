@@ -169,7 +169,7 @@ mutable struct Atom
     Atom(name::String, σ::Float64, ϵ::Float64, q::Float64, excls::Array{Int64, 1}, pairs::Array{Int64, 1}) = new(name, σ/2, sqrt(ϵ), 11.787089759563214*q, excls, pairs)
 end
 
-Base.show(io::IO, b::Atom) = print(io, "Forcefield.Amber.Atom(name=$(b.name), σ=$(b.σ), ϵ=$(b.ϵ), q=$(b.q), excls=$(b.excls), pairs=$(b.pairs))")
+Base.show(io::IO, b::Atom) = print(io, "Forcefield.Amber.Atom(name=$(b.name), σ=$(b.σ * 2), ϵ=$(b.ϵ^2), q=$(b.q), excls=$(b.excls), pairs=$(b.pairs))")
 
 # ----------------------------------------------------------------------------------------------------------
 

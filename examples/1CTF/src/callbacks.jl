@@ -13,7 +13,7 @@ end
 
 print_status_init = @Common.callback print_sts_every_min function _print_status_init(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.Driver, max_force::Float64, gamma::Float64, args...)
     Print.status(@sprintf("(%5s) %12d | ⚡E: %10.3e ▶️ ⚡Amber: %10.3e & ⚡Other: %10.3e | Max Force: %10.3e | Gamma: %10.3e\n", "I_SD", step, st.energy.eTotal,
-        st.energy.comp["amber"], st.energy.comp["other"], max_force, gamma), status_destination)
+        st.energy.comp["amber"], st.energy.comp["other"], max_force, gamma), status_destination, 11)
 end
 
 print_status_loop = @Common.callback print_sts_every_min function _print_status_loop(step::Int64, st::Common.State, dr::Drivers.SteepestDescent.Driver, max_force::Float64, gamma::Float64, args...)
@@ -39,8 +39,15 @@ end
 
 
 #PRINT ENERGY
-print_energy = @Common.callback 1 function _print_energy(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+print_energy = @Common.callback print_ene_every_ic function _print_energy(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
     println(out_ene, st.energy.eTotal)
+    flush(out_ene)
+end
+
+print_energy_components = @Common.callback 1 function _print_energy_components(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+    println(out_ene, @sprintf("%11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e", st.energy.eTotal, st.energy.comp["eBond"],
+        st.energy.comp["eAngle"], st.energy.comp["eDihedral"], st.energy.comp["eCoulomb"], st.energy.comp["eCoulomb14"], st.energy.comp["eLJ"],
+        st.energy.comp["eLJ14"], st.energy.comp["other"]))
     flush(out_ene)
 end
 
@@ -60,12 +67,12 @@ end
 adjust_step_size = @Common.callback 1 function _adjust_step_size(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac::Float64, args...)
     d::Float64 = 1.0
     if ac > acceptance_ratio + ar_buffer_zone
-        d = 1.0005
+        d = 1.0 + step_size_adjust_scale
     elseif ac < acceptance_ratio - ar_buffer_zone
-        d = 0.9995
+        d = 1.0 - step_size_adjust_scale
     end
-    reg_dh_mutator.step_size = max(min_step_size, min(reg_dh_mutator.step_size * d, π))
-    reg_cs_mutator.step_size = max(min_step_size, min(reg_cs_mutator.step_size * d, π))
+    reg_dh_mutator.step_size = max(min_step_s, min(reg_dh_mutator.step_size * d, π))
+    reg_cs_mutator.step_size = max(min_step_s, min(reg_cs_mutator.step_size * d, π))
 end
 
 adjust_step_size_rfnm = @Common.callback 1 function _adjust_step_size_refnm(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac::Float64, args...)
@@ -75,9 +82,9 @@ adjust_step_size_rfnm = @Common.callback 1 function _adjust_step_size_refnm(step
     elseif ac < acceptance_ratio - ar_buffer_zone
         d = 0.95
     end
-    # soft_dh_mutator.step_size = max(min_step_size, min(soft_dh_mutator.step_size * d, π))
-    # soft_cs_mutator.step_size = max(min_step_size, min(soft_cs_mutator.step_size * d, π))
-    soft_br_mutator.step_size = max(min_step_size, min(soft_br_mutator.step_size * d, π))
+    # soft_dh_mutator.step_size = max(min_step_s, min(soft_dh_mutator.step_size * d, π))
+    # soft_cs_mutator.step_size = max(min_step_s, min(soft_cs_mutator.step_size * d, π))
+    soft_br_mutator.step_size = max(min_step_s, min(soft_br_mutator.step_size * d, π))
 end
 
 quench_temperature = @Common.callback 1 function cb_adjust_temperature(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, args...)
@@ -89,6 +96,6 @@ reset_temperature = @Common.callback 1 function cb_reset_temperature(step::Int64
 end
 
 reset_step_size = @Common.callback 1 function cb_reset_step_size(step::Int64, st::Common.State, dr::Drivers.ILSRR.Driver, args...)
-    reg_dh_mutator.step_size = reg_dh_step_size
-    reg_cs_mutator.step_size = reg_cs_step_size
+    reg_dh_mutator.step_size = reg_dh_step_s
+    reg_cs_mutator.step_size = reg_cs_step_s
 end

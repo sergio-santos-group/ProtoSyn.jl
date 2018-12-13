@@ -44,3 +44,9 @@
 (   MC)           50 | ⚡E:  7.626e+02 ▶️ ⚡Amber:  2.923e+02 & ⚡Other:  4.703e+02 | Dihedral: 8.04e-01 | Crankshaft: 8.04e-01 | AR: 0.5600 | T: 0.00
 (   MC)            0 | ⚡E:  2.516e+10 ▶️ ⚡Amber:  2.516e+10 & ⚡Other:  3.761e+02 | Dihedral: 7.85e-01 | Crankshaft: 7.85e-01 | AR: 0.0000 | T: 273.15
 (   MC)           10 | ⚡E:  4.126e+03 ▶️ ⚡Amber:  3.678e+03 & ⚡Other:  4.473e+02 | Dihedral: 7.89e-01 | Crankshaft: 7.89e-01 | AR: 0.9000 | T: 222.98
+(   MC)           20 | ⚡E:  1.618e+03 ▶️ ⚡Amber:  1.220e+03 & ⚡Other:  3.973e+02 | Dihedral: 7.92e-01 | Crankshaft: 7.92e-01 | AR: 0.7000 | T: 167.23
+(   MC)           30 | ⚡E:  9.101e+02 ▶️ ⚡Amber:  5.135e+02 & ⚡Other:  3.966e+02 | Dihedral: 7.96e-01 | Crankshaft: 7.96e-01 | AR: 0.6667 | T: 111.49
+(   MC)           40 | ⚡E:  5.982e+02 ▶️ ⚡Amber:  2.215e+02 & ⚡Other:  3.767e+02 | Dihedral: 8.00e-01 | Crankshaft: 8.00e-01 | AR: 0.5750 | T: 55.74
+(   MC)           50 | ⚡E:  3.818e+02 ▶️ ⚡Amber: -3.669e+00 & ⚡Other:  3.855e+02 | Dihedral: 8.04e-01 | Crankshaft: 8.04e-01 | AR: 0.5000 | T: 0.00
+(   MC)            0 | ⚡E:  3.994e+13 ▶️ ⚡Amber:  3.994e+13 & ⚡Other:  4.738e+02 | Dihedral: 7.85e-01 | Crankshaft: 7.85e-01 | AR: 0.0000 | T: 273.15
+(   MC)           10 | ⚡E:  4.922e+03 ▶️ ⚡Amber:  4.578e+03 & ⚡Other:  3.443e+02 | Dihedral: 7.89e-01 | Crankshaft: 7.89e-01 | AR: 0.5000 | T: 222.98

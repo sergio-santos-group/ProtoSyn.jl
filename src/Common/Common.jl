@@ -1,6 +1,7 @@
 module Common
 
 using ..Aux
+using LinearAlgebra
 
 include("energy.jl")
 include("residue.jl")

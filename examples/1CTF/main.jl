@@ -22,7 +22,7 @@ include("src/drivers.jl")
 
 # MAIN
 Print.as_pdb(xyz_destination, state, metadata)
-initial_minimizer.run!(state, initial_minimizer, print_energy)
+initial_minimizer.run!(state, initial_minimizer)
 Print.as_pdb(xyz_destination, state, metadata)
 for cycle in 1:n_search_refine_cycles
     printstyled(@sprintf("\n(%5s) %12s\n", "MAIN", @sprintf("⟳ Cycle: %4d", cycle)), color=:blue)

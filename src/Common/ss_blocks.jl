@@ -44,7 +44,7 @@ function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStru
         residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
         last_ss = curr_ss
     end
-    println("(  PRE) ▲ Compiled metadata information of $(length(sec_str)) secondary structures")
+    printstyled("(  PRE) ▲ Compiled metadata information of $(length(sec_str)) secondary structures\n", color = 9)
     return sec_str
 end
 
@@ -109,6 +109,6 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
         last_ss = curr_ss
         atoms = vcat(atoms, residues[index].atoms)
     end
-    println("(  PRE) ▲ Compiled metadata information of $(length(blocks)) blocks")
+    printstyled("(  PRE) ▲ Compiled metadata information of $(length(blocks)) blocks\n", color = 9)
     return blocks
 end

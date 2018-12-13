@@ -64,8 +64,8 @@ adjust_step_size = @Common.callback 1 function _adjust_step_size(step::Int64, st
     elseif ac < acceptance_ratio - ar_buffer_zone
         d = 0.9995
     end
-    reg_dh_mutator.step_size = max(min_step_size, min(reg_dh_mutator.step_size * d, π))
-    reg_cs_mutator.step_size = max(min_step_size, min(reg_cs_mutator.step_size * d, π))
+    reg_dh_mutator.step_size = max(min_step_s, min(reg_dh_mutator.step_size * d, π))
+    reg_cs_mutator.step_size = max(min_step_s, min(reg_cs_mutator.step_size * d, π))
 end
 
 adjust_step_size_rfnm = @Common.callback 1 function _adjust_step_size_refnm(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac::Float64, args...)

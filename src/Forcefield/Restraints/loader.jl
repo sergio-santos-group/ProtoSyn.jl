@@ -48,7 +48,7 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
             end
         end
     end
-    println("(  PRE) ▲ Loaded $(length(restraints)) contacts")
+    printstyled("(  PRE) ▲ Loaded $(length(restraints)) contacts\n", color = 9)
     return restraints
 end
 

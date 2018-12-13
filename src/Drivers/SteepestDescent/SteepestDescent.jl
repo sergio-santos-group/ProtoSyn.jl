@@ -17,9 +17,10 @@ If `n_steps` is zero, a `single point` energy calculation is performed.
 ```
 evaluator!(state::Common.State, do_forces::Bool)
 ```
-- `n_steps`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
-- `f_tol`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
-- `max_step`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
+- `n_steps::Int64`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
+- `f_tol::Float64`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
+- `max_step::Float64`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
+- `verbose::Bool`: (Optional) Print convergence indicators if `true`.
 - `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 # Examples
@@ -42,10 +43,11 @@ mutable struct Driver <: Drivers.AbstractDriver
     n_steps::Int64
     f_tol::Float64        # (Default: 1e-3)
     max_step::Float64     # (Default: 0.1)
+    verbose::Bool         # (Default: False)
     callbacks::Tuple
 
 end
-Driver(evaluator!::Function, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, f_tol, max_step, callbacks)
+Driver(evaluator!::Function, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1, v::Bool = false, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, f_tol, max_step, v, callbacks)
 Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
 
 # ----------------------------------------------------------------------------------------------------------
@@ -81,11 +83,15 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
 
     @inline function system_converged()::Bool
         if max_force < driver.f_tol
-            # println("⤷ Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.")
+            if driver.verbose
+                println("⤷ Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.")
+            end
             return true
         end
         if gamma < eps()
-            # println("⤷ Gamma below machine precision! Exiting after $step steps...")
+            if driver.verbose
+                println("⤷ Gamma below machine precision! Exiting after $step steps...")
+            end
             return true
         end
         return false

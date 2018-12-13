@@ -17,7 +17,8 @@ Holds all necessary parameters for the correct simulation of blockrot movements.
 - `blocks::Vector{Common.BlockMetadata}`: List of blocks avaliable to be rotated in crankshaft movements, containing all necessary metadata information.
 - `angle_sampler::Function`: Function responsible for defining the rotation angle. Should return a `Float64`.
 - `p_mut::Float64`: Probability of rotation of each pair of alpha carbons.
-- `step_size::Float64`: Scalar that defines the amount of change resulting for a blockrot movement.
+- `step_size::Float64`: Scalar that defines the amount of rotation resulting for a blockrot movement.
+- `translation_step_size::Float64`: Scalar that defines the amount of translation resulting for a blockrot movement.
 - `n_tries::Int64`: Number of attempts to rotate an accepted block. A rotation is deemed invalid when the block ends rotate to a position where the loop cannot close.
 - `loop_closer::Drivers.AbstractDriver`: Driver responsible for closing the loops (e.g. Steepest Descent)
 
@@ -33,14 +34,15 @@ mutable struct BlockrotMutator
     angle_sampler::Function
     p_mut::Float64
     step_size::Float64
+    translation_step_size::Float64
     n_tries::Int64
     loop_closer::Drivers.AbstractDriver
 
-    function BlockrotMutator(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, n_tries::Int64, loop_closer::Drivers.AbstractDriver)
-        new(blocks, angle_sampler, p_mut, step_size, n_tries, loop_closer)
+    function BlockrotMutator(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Drivers.AbstractDriver)
+        new(blocks, angle_sampler, p_mut, step_size, translation_step_size, n_tries, loop_closer)
     end
 end
-Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), n_tries=$(b.n_tries))")
+Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries))")
 
 
 @doc raw"""
@@ -70,7 +72,8 @@ julia> Mutators.BlockrotMutator.run!(state, mutator)
                 axis  = Aux.rand_vector_in_sphere()
                 angle = mutator.angle_sampler()
                 rmat = Aux.rotation_matrix_from_axis_angle(axis, angle)
-                state.xyz[block.atoms, :] = (rmat * (state.xyz[block.atoms, :] .- pivot)')' .+ pivot
+                state.xyz[block.atoms, :] = (rmat * (state.xyz[block.atoms, :] .- pivot)')' .+ pivot # Rotation
+                state.xyz[block.atoms, :] .+= rand(1, 3) * mutator.translation_step_size             # Translation
                 
                 #Check if it's plausible to close
                 if block_index > 1

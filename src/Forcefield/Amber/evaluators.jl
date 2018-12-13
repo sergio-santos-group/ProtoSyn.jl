@@ -137,7 +137,7 @@ julia> Forcefield.Amber.evaluate!(bonds, state)
 See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
-function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0)::Float64
+function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0, eCoulomb_λ::Float64 = 1.0)::Float64
 
     eLJ = 0.0
     eLJ14 = 0.0
@@ -155,11 +155,13 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         atomi::Atom = atoms[i]
         
         # set the exclution index to the correct location and extract the exclude atom index
-        exclude_idx = 1
-        while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
-            exclude_idx += 1
+        if length(atomi.excls) > 0
+            exclude_idx = 1
+            while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
+                exclude_idx += 1
+            end
+            exclude = atomi.excls[exclude_idx]
         end
-        exclude = atomi.excls[exclude_idx]
 
         for j in (i+1):(n_atoms)
             
@@ -184,7 +186,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             lj6 = (sij * sij/dijSq) ^ 3
             eLJ += eij * (lj6 * lj6 - lj6)
             ecoul = atomi.q * atomj.q / sqrt(dijSq)
-            eCoulomb += ecoul
+            eCoulomb += eCoulomb_λ * ecoul
             # printstyled(i, " - ", atomi, "\n", j, " - ", atomj, color=:blue)
             # println(": $(sqrt(dijSq))")
             # printstyled("Energy: ", color=:blue)
@@ -222,7 +224,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             lj6 = (sij * sij/dijSq) ^ 3
             eLJ14 += eij * (lj6 * lj6 - lj6)
             ecoul = qij / sqrt(dijSq)
-            eCoulomb14 += ecoul
+            eCoulomb14 += eCoulomb_λ * ecoul
 
             # Calculate forces, if requested
             if do_forces

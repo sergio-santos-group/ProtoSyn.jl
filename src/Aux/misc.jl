@@ -45,7 +45,13 @@ function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Flo
     x = dot(cross(n1, n2), b2) / sqrt(dot(b2, b2))
     y = dot(n1, n2)
     return atan(x, y)
+end
 
+function calc_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64})::Float64
+
+    v21 = a1 - a2
+    v23 = a3 - a2
+    return acos(dot(v21, v23) / (norm(v21) * norm(v23)))
 end
 
 
