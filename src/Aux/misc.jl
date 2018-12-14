@@ -77,3 +77,25 @@ function rand_vector_in_sphere()::Vector{Float64}
     z::Float64 = cos(phi)
     return [x, y, z]
 end
+
+
+function linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float64}, Vector{Int64}})::Float64
+
+    x = convert(Vector{Float64}, x)
+    y = convert(Vector{Float64}, y)
+
+    avgx = sum(x)/length(x)
+    avgy = sum(y)/length(y)
+
+    x_avgx = x .- avgx
+    y_avgy = y .- avgy
+    x_avgx_y_avgy = x_avgx .* y_avgy
+    x_avgx_sq = x_avgx .* x_avgx
+    y_avgy_sq = y_avgy .* y_avgy
+
+    r = sum(x_avgx_y_avgy) / sqrt(sum(x_avgx_sq) * sum(y_avgy_sq))
+    sy = sqrt(sum(y_avgy_sq) / (length(y) - 1))
+    sx = sqrt(sum(x_avgx_sq) / (length(x) - 1))
+
+    return r * (sy/sx)
+end
