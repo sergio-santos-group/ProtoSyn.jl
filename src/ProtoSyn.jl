@@ -6,8 +6,8 @@ export Common, Aux, Forcefield, Print, Mutators, Drivers
 
 include("Aux/Aux.jl")
 include("Common/Common.jl")
-include("Print/Print.jl")
 include("Forcefield/Forcefield.jl")
+include("Print/Print.jl")
 include("Drivers/Drivers.jl")
 include("Mutators/Mutators.jl")
 

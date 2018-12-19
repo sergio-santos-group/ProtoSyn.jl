@@ -41,18 +41,21 @@ function energy_by_component(energy::Common.Energy, destination::IO = stdout)
     write(destination, "-"^31, "\n")
 end
 
-function energy_by_component(energy::Common.Energy, old_energy::Common.Energy, destination::IO = stdout)
+# TODO: Add documentation
+function energy_by_component(ref_energy::Common.Energy, sample_energy::Common.Energy; ref_title::String = "", sample_title = "", destination::IO = stdout)
 
-    write(destination, "-"^31)
-    printstyled(destination, @sprintf("\n%20s: %10.3e ", "⚡E_Total", energy.eTotal), color = :blue)
-    diff = energy.eTotal - old_energy.eTotal
+    write(destination, "-"^55)
+    write(destination, @sprintf("\n%31s %10s", ref_title, sample_title))
+    printstyled(destination, @sprintf("\n%20s: %10.3e %10.3e ", "⚡E_Total", ref_energy.eTotal, sample_energy.eTotal), color = :blue)
+    diff = ref_energy.eTotal - sample_energy.eTotal
     c = diff >= 0 ? :red : :green
     printstyled(destination, @sprintf("(%+10.3e)\n", diff), color = c)
-    for (i, (comp, value)) in enumerate(energy.comp)
+    for (i, (comp, value)) in enumerate(ref_energy.comp)
         write(destination, @sprintf "%2d: %15s: %10.3e " i comp value)
-        diff = value - old_energy.comp[comp]
+        write(destination, @sprintf "%10.3e " sample_energy.comp[comp])
+        diff = value - sample_energy.comp[comp]
         c = diff >= 0 ? :red : :green
         printstyled(destination, @sprintf("(%+10.3e)\n", diff), color = c)
     end
-    write(destination, "-"^31, "\n")
+    write(destination, "-"^55, "\n")
 end

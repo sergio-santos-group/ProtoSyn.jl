@@ -100,7 +100,9 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
-        if driver.evaluate_slope_every > 0 && length(history_x) > 0 && length(history_x) % driver.evaluate_slope_every == 0
+        
+        # Evaluate slope
+        if driver.evaluate_slope_every > 1 && length(history_x) > 0 && length(history_x) % driver.evaluate_slope_every == 0
             b::Float64 = Aux.linreg(history_x, history_y)
             if b >= driver.evaluate_slope_threshold
                 if driver.verbose
@@ -108,6 +110,8 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
                 end
                 break
             end
+            history_x = Vector{Int64}()
+            history_y = Vector{Float64}()
             if driver.verbose
                 printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Continuing inner search ✔\n", "MC", step, b), color = :green)
             end

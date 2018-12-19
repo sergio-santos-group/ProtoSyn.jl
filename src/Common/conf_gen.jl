@@ -96,9 +96,26 @@ julia> Common.stretch_conformation!(state, dihedrals)
 """
 function stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
 
+    angles = map(x -> deg2rad(x), [111.099, 119.651, 117.817])
+    index = 1
     for dihedral in dihedrals
-        dihedral.dtype > omega ? continue : nothing
         rotate_dihedral_to!(state.xyz, dihedral, 3.1416)
+
+        target_angle = angles[index]
+        current_angle = Aux.calc_angle(state.xyz[dihedral.a1, :], state.xyz[dihedral.a2, :], state.xyz[dihedral.a3, :])
+        displacement = target_angle - current_angle
+
+        v21   = state.xyz[dihedral.a1, :] - state.xyz[dihedral.a2, :]
+        v23   = state.xyz[dihedral.a3, :] - state.xyz[dihedral.a2, :]
+        pivot = state.xyz[dihedral.a2, :]
+        rmat  = Aux.rotation_matrix_from_axis_angle(cross(v21, v23), displacement)
+        movable = collect(dihedral.a2:size(state.xyz, 1))
+        state.xyz[movable, :] = ((rmat * (state.xyz[movable, :] .- pivot')') .+ pivot)'
+
+        index += 1
+        if index > length(angles)
+            index = 1
+        end
     end
 end
 

@@ -4,7 +4,7 @@ using Printf
 
 using ..Aux
 using ..Common
-# using ..Forcefield
+using ..Forcefield
 # using ..Drivers
 
 include("structure_printer.jl")

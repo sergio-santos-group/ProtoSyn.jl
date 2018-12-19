@@ -43,11 +43,14 @@ mutable struct Driver <: Drivers.AbstractDriver
     perturbator!::Function
     temperature::Float64
     n_steps::Int64
+    continue_after_n_attemps::Int64
     callbacks::Tuple
 
 end
-Driver(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::Function, perturbator!::Function, temperature::Float64 = 0.0, n_steps::Int64 = 0, callbacks::Common.CallbackObject...) = Driver(run!, inner_cycle_driver, evaluator!, perturbator!, temperature, n_steps, callbacks)
-Base.show(io::IO, b::Driver) = print(io, "ILSRR.Driver(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
+function Driver(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::Function, perturbator!::Function, temperature::Float64 = 0.0, n_steps::Int64 = 0, continue_after_n_attemps::Int64 = 0, callbacks::Common.CallbackObject...)
+    return Driver(run!, inner_cycle_driver, evaluator!, perturbator!, temperature, n_steps, continue_after_n_attemps, callbacks)
+end
+Base.show(io::IO, b::Driver) = print(io, "ILSRR.Driver(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step), continue_after_n_attemps=$(b.continue_after_n_attemps))")
 
 
 @doc raw"""
@@ -76,7 +79,8 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
     end
 
-    step = 1
+    step::Int64 = 1
+    failed_jumps_count::Int64 = 0
     driver.evaluator!(state, false)
     inner_best = deepcopy(state)
     homebase   = deepcopy(state)
@@ -95,8 +99,14 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         if state.energy.eTotal < homebase.energy.eTotal || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / driver.temperature))
             printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :red)
             homebase = deepcopy(state)
+            failed_jumps_count = 0
         else
-            printstyled(@sprintf("(ILSRR) Recovering to previous homebase: ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", state.energy.eTotal, homebase.energy.eTotal), color = :red)
+            failed_jumps_count += 1
+            if driver.continue_after_n_attemps > 0 && failed_jumps_count >= driver.continue_after_n_attemps
+                printstyled(@sprintf("(ILSRR) Exiting because %2d consecutive jumps failed to produce a new homebase\n", failed_jumps_count), color = :red)
+                break
+            end
+            printstyled(@sprintf("(ILSRR) Recovering to previous homebase (x%2d): ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", failed_jumps_count, state.energy.eTotal, homebase.energy.eTotal), color = :red)
             state = deepcopy(homebase)
         end
 

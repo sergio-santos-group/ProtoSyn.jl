@@ -252,7 +252,8 @@ function compile_dihedral_metadata!(metadata::Metadata)
         ca = name2atom["CA"]
         c  = name2atom["C"]
         # PHI
-        if n.connects != nothing && residue[1].res_name != "PRO"
+        # if n.connects != nothing && residue[1].res_name != "PRO"
+        if n.connects != nothing
             prev_c = filter(connect -> metadata.atoms[connect].name == "C", n.connects)
             if length(prev_c) > 0
                 movables = find_intra_residue_movables!(metadata.atoms, ca.index, ca.res_num, Vector{Int64}(), n.index)
