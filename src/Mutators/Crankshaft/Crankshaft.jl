@@ -44,11 +44,12 @@ Base.show(io::IO, b::CrankshaftMutator) = print(io, "CrankshaftMutator(dihedrals
 @doc raw"""
     run!(state::Common.State, mutator::CrankshaftMutator)
 
-Iterate over a list of [`Common.Dihedral`](@ref) (`dihedrals`) and perform crankshaft movements on the current
+Iterate over a list of [`Common.Dihedral`](@ref) and perform crankshaft movements on the current
 [`Common.State`](@ref). The probability of each pair of alpha carbons undergo movement is defined in the
 [`CrankshaftMutator`](@ref).`p_mut`. The new angle is obtained from [`CrankshaftMutator`](@ref).`angle_sampler`, who should
 return a `Float64` in radians.
 After movement, the [`Common.State`](@ref) is updated with the new conformation.
+Returns the number of rotations performed.
 
 # Examples
 ```julia-repl

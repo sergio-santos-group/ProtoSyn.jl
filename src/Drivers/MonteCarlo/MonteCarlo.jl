@@ -44,11 +44,16 @@ mutable struct Driver <: Drivers.AbstractDriver
     evaluator!::Function
     temperature::Float64
     n_steps::Int64
+    evaluate_slope_every::Int64
+    evaluate_slope_threshold::Float64
+    verbose::Bool
     callbacks::Tuple
 
 end
-Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, callbacks::Common.CallbackObject...) = Driver(run!, sampler!, evaluator!, temperature, n_steps, callbacks)
-Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps))")
+function Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, evaluate_slope_every::Int64, evaluate_slope_threshold::Float64, verbose::Bool, callbacks::Common.CallbackObject...) 
+    return Driver(run!, sampler!, evaluator!, temperature, n_steps, evaluate_slope_every, evaluate_slope_threshold, verbose, callbacks)
+end
+Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps), evaluate_slope_every=$(b.evaluate_slope_every), evaluate_slope_threshold=$(b.evaluate_slope_threshold), verbose=$(b.verbose))")
 
 
 @doc raw"""
@@ -77,6 +82,8 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
     backup = deepcopy(state)
     driver.evaluator!(state, false)
     acceptance_count = 0
+    history_x = Vector{Int64}()
+    history_y = Vector{Float64}()
 
     @Common.cbcall driver.callbacks..., callbacks... 0 state driver (acceptance_count/step)
     while step <= driver.n_steps
@@ -85,12 +92,30 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         
         if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature))
             backup = deepcopy(state)
+            push!(history_x, step)
+            push!(history_y, state.energy.eTotal)
             acceptance_count += 1
         else
             state = deepcopy(backup)
         end
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
+        
+        # Evaluate slope
+        if driver.evaluate_slope_every > 1 && length(history_x) > 0 && length(history_x) % driver.evaluate_slope_every == 0
+            b::Float64 = Aux.linreg(history_x, history_y)
+            if b >= driver.evaluate_slope_threshold
+                if driver.verbose
+                    printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Exiting inner search ✖\n", "MC", step, b), color = :red)
+                end
+                break
+            end
+            history_x = Vector{Int64}()
+            history_y = Vector{Float64}()
+            if driver.verbose
+                printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Continuing inner search ✔\n", "MC", step, b), color = :green)
+            end
+        end
         step += 1
     end
 end

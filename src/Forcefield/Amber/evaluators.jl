@@ -1,9 +1,9 @@
 @doc raw"""
-    evaluate!(bonds::Vector{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
 function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
-    energy = 0.0
+    energy::Float64 = 0.0
     v12 = zeros(Float64, 3)
 
     for bond in bonds
@@ -11,6 +11,10 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::
         d12 = norm(v12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
+        # printstyled(bond, color=:blue)
+        # println(": $d12")
+        # printstyled("Energy: ", color=:blue)
+        # println(0.5*(bond.k * dr * dr), "\n")
         if do_forces
             @. v12 *= (bond.k * dr / d12)
             @. state.forces[bond.a1, :] += v12
@@ -23,7 +27,7 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::
 end
 
 @doc raw"""
-    evaluate!(angles::Vector{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(angles::Vector{Forcefield.Amber.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
 """
 function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
@@ -44,6 +48,10 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
         dtheta = acos(ctheta) - angle.θ
 
         energy += angle.k * dtheta * dtheta
+        # printstyled(angle, color=:blue)
+        # println(": $(acos(ctheta))")
+        # printstyled("Energy: ", color=:blue)
+        # println(0.5 * angle.k * dtheta * dtheta, "\n")
         if do_forces
             fc = angle.k * dtheta / sqrt(1.0 - ctheta * ctheta)
             @. f1 = fc * (ctheta * v12/d12Sq - v32/d12xd32)
@@ -59,7 +67,7 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
 end
 
 @doc raw"""
-    evaluate!(dihedralsCos::Vector{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(dihedralsCos::Vector{Forcefield.Amber.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
 """
 function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
@@ -72,7 +80,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
     m = zeros(Float64, 3)
     n = zeros(Float64, 3)
     
-    energy = 0.0
+    energy::Float64 = 0.0
 
     for dihedral in dihedralsCos
         @views @. v12 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a1, :]
@@ -85,7 +93,11 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
         phi = atan(d32 * dot(v12, n), dot(m, n))
         
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
-        
+        # printstyled(dihedral, color=:blue)
+        # println(": $phi")
+        # printstyled("Energy: ", color=:blue)
+        # println(dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ)), "\n")
+
         if do_forces
             dVdphi_x_d32 = dihedral.k * dihedral.mult * sin(dihedral.θ - dihedral.mult * phi) * d32
             f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
@@ -108,7 +120,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
 end
 
 @doc raw"""
-    evaluate!(atoms::Vector{Forcefield.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
+    evaluate!(atoms::Vector{Forcefield.Amber.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
 
 Evaluate an array of [Forcefield.Components](#Components-1) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each component.
@@ -125,7 +137,7 @@ julia> Forcefield.Amber.evaluate!(bonds, state)
 See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
-function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0)::Float64
+function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0, eCoulomb_λ::Float64 = 1.0)::Float64
 
     eLJ = 0.0
     eLJ14 = 0.0
@@ -143,11 +155,13 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         atomi::Atom = atoms[i]
         
         # set the exclution index to the correct location and extract the exclude atom index
-        exclude_idx = 1
-        while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
-            exclude_idx += 1
+        if length(atomi.excls) > 0
+            exclude_idx = 1
+            while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
+                exclude_idx += 1
+            end
+            exclude = atomi.excls[exclude_idx]
         end
-        exclude = atomi.excls[exclude_idx]
 
         for j in (i+1):(n_atoms)
             
@@ -172,7 +186,11 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             lj6 = (sij * sij/dijSq) ^ 3
             eLJ += eij * (lj6 * lj6 - lj6)
             ecoul = atomi.q * atomj.q / sqrt(dijSq)
-            eCoulomb += ecoul
+            eCoulomb += eCoulomb_λ * ecoul
+            # printstyled(i, " - ", atomi, "\n", j, " - ", atomj, color=:blue)
+            # println(": $(sqrt(dijSq))")
+            # printstyled("Energy: ", color=:blue)
+            # println(ecoul, "\n")
 
             #Calculate forces, if requested
             if do_forces
@@ -206,7 +224,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             lj6 = (sij * sij/dijSq) ^ 3
             eLJ14 += eij * (lj6 * lj6 - lj6)
             ecoul = qij / sqrt(dijSq)
-            eCoulomb14 += ecoul
+            eCoulomb14 += eCoulomb_λ * ecoul
 
             # Calculate forces, if requested
             if do_forces

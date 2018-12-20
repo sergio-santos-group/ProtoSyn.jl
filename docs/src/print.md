@@ -10,4 +10,5 @@ CurrentModule = Print
 as_xyz
 as_pdb
 status
+energy_by_component
 ```

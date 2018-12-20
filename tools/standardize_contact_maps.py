@@ -1,3 +1,9 @@
+"""
+    standardize_contact_maps.py input.txt
+
+Read `input.txt` contact map and change the order of elements in columns to a readable format by ProtoSyn.
+"""
+
 import sys
 
 with open(sys.argv[1]) as fin:

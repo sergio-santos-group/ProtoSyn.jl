@@ -1,11 +1,13 @@
 module Common
 
 using ..Aux
+using LinearAlgebra
 
 include("energy.jl")
 include("residue.jl")
 include("dihedral.jl")
 include("metadata.jl")
+include("ss_blocks.jl")
 include("state.jl")
 include("callback.jl")
 include("loaders.jl")

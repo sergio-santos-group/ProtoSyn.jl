@@ -39,6 +39,7 @@ Iterate over a list of [`Common.Dihedral`](@ref) (`dihedrals`) and perform dihed
 [`DihedralMutator`](@ref).`p_mut`. The new angle is obtained from [`DihedralMutator`](@ref).`angle_sampler`, who should
 return a `Float64` in radians.
 After movement, the [`Common.State`](@ref) is updated with the new conformation.
+Returns the number of rotations performed.
 
 # Examples
 ```julia-repl

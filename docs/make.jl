@@ -7,7 +7,7 @@ using Documenter, ProtoSyn
 push!(LOAD_PATH,"../src/")
 
 makedocs(
-    format = :html,
+    format = Documenter.HTML(),
     sitename = "ProtoSyn.jl",
     pages = [
         "Home" => "index.md",

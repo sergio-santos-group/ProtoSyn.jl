@@ -13,12 +13,13 @@ PHI = -57.0  | PSI = -47.0
 ```julia-repl
 julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
-See also: [`infer_ss`](@ref)
+See also: [`compile_ss`](@ref)
 """
 function apply_ss!(state::State, metadata::Metadata, ss::String)
 
     # Save secondary structure as metadata
-    metadata.ss = infer_ss(metadata.dihedrals, ss)
+    metadata.ss     = compile_ss(metadata.dihedrals, ss)
+    metadata.blocks = compile_blocks(metadata.residues, ss)
 
     index::Int64 = 1
     for dihedral in metadata.dihedrals
@@ -27,96 +28,84 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
             rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
     end
+    printstyled("(  PRE) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks\n", color = 9)
 end
 
 
 @doc raw"""
-    infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
-"""
-function infer_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
+    apply_backbone_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
-    residues = Vector{Residue}()
-    for dihedral in dihedrals
-        if !(dihedral.residue in residues)
-            push!(residues, dihedral.residue)
-        end
-    end
-    return infer_ss(residues, ss)
-end
-
-
-@doc raw"""
-    infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
-
-Read the provided secondary structure string `ss` and infer the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues/dihedrals.
+Read the input file `template_file`, and apply both dihedral and regular angles to the backbone of `target_state`.
+`target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
+Note: `template_file` needs to have CONECT records.
 
 # Examples
 ```julia-repl
-julia> Common.infer_ss(dihedrals, "CCCHHHHCCEEEECCC")
-2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
- SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
- SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
+julia> Common.apply_backbone_dihedrals_from_file(state, bb_dihedrals, "native_conf.pdb")
 ```
 """
-function infer_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
+function apply_backbone_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
+    Common.apply_backbone_angles_from_file!(target_state, target_dihedrals, template_file)
+    Common.apply_backbone_dihedrals_from_file!(target_state, target_dihedrals, template_file)
+end
 
-    conv_type = Dict('H' => SS.HELIX, 'E' => SS.SHEET, 'C' => SS.COIL)
-    conv_name = Dict('H' => "HA", 'E' => "BA")
+@doc raw"""
+    apply_backbone_dihedrals_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
-    sec_str = SecondaryStructureMetadata[]
-    last_ss::Char = ss[1]
-    i_idx::Int64 = 1
-    for (index, curr_ss) in enumerate(ss)
-        if curr_ss != last_ss
-            if last_ss in ['H', 'E']
-                push!(sec_str, SecondaryStructureMetadata(conv_type[last_ss], conv_name[last_ss], residues[i_idx].name, i_idx, residues[index - 1].name, index - 1, 1))
-            end
-            i_idx = index
-        end
-        residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
-        last_ss = curr_ss
+Read the input file `template_file`, extract the dihedrals angles and apply to the backbone dihedrals `target_dihedrals` of `target_state`.
+`target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
+Note: `template_file` needs to have CONECT records.
+
+# Examples
+```julia-repl
+julia> Common.apply_backbone_dihedrals_from_file(state, bb_dihedrals, "native_conf.pdb")
+```
+"""
+function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
+
+    template_state, template_metadata = Common.load_from_pdb(template_file)
+    template_dihedrals = filter(x -> x.dtype <= Common.DIHEDRAL.omega, template_metadata.dihedrals)
+    for (cd, template_dihedral) in enumerate(template_dihedrals)
+        target_angle = Aux.calc_dih_angle(target_state.xyz[target_dihedrals[cd].a1, :], target_state.xyz[target_dihedrals[cd].a2, :], target_state.xyz[target_dihedrals[cd].a3, :], target_state.xyz[target_dihedrals[cd].a4, :])
+        template_angle = Aux.calc_dih_angle(template_state.xyz[template_dihedral.a1, :], template_state.xyz[template_dihedral.a2, :], template_state.xyz[template_dihedral.a3, :], template_state.xyz[template_dihedral.a4, :])
+        displacement = template_angle - target_angle
+        rotate_dihedral!(target_state.xyz, target_dihedrals[cd], displacement)
     end
-    return sec_str
+    printstyled("(  PRE) ▲ Applied backbone dihedral angles to $(length(template_dihedrals)) dihedrals\n", color = 9)
 end
 
 
 @doc raw"""
-    apply_dihedrals_from_file!(state::State, bb_dihedrals::Vector{Dihedral}, file_i::String)
+    apply_backbone_angles_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
-Read the input file `file_i`, extract the dihedrals angles and apply to the backbone dihedrals `bb_dihedrals` of `state`.
+Read the input file `template_file`, extract the backbone angles and apply to the backbone atoms of `target_state`.
+`target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
+Note: `template_file` needs to have CONECT records.
 
 # Examples
 ```julia-repl
-julia> Common.apply_initial_conf(state, bb_dihedrals, "native_conf.pdb")
+julia> Common.apply_backbone_angles_from_file(state, bb_dihedrals, "native_conf.pdb")
 ```
 """
-function apply_dihedrals_from_file!(state::State, bb_dihedrals::Vector{Dihedral}, file_i::String)
+function apply_backbone_angles_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
-    #Extract backbone coordinates
-    backbone = Vector{Vector{Float64}}()
-    open(file_i, "r") do f
-        for line in eachline(f)
-            if startswith(line, "ATOM") && string(strip(line[13:16])) in ["N", "CA", "C"]
-                push!(backbone, map(x -> 0.1*parse(Float64, x), [line[31:38], line[39:46], line[47:54]]))
-            end
-        end
+    template_state, template_metadata = Common.load_from_pdb(template_file)
+    template_dihedrals = filter(x -> x.dtype <= Common.DIHEDRAL.omega, template_metadata.dihedrals)
+    for (cd, template_dihedral) in enumerate(template_dihedrals)
+        target_angle = Aux.calc_angle(target_state.xyz[target_dihedrals[cd].a1, :], target_state.xyz[target_dihedrals[cd].a2, :], target_state.xyz[target_dihedrals[cd].a3, :])
+        template_angle = Aux.calc_angle(template_state.xyz[template_dihedral.a1, :], template_state.xyz[template_dihedral.a2, :], template_state.xyz[template_dihedral.a3, :])
+        displacement = template_angle - target_angle
+
+        v21   = target_state.xyz[target_dihedrals[cd].a1, :] - target_state.xyz[target_dihedrals[cd].a2, :]
+        v23   = target_state.xyz[target_dihedrals[cd].a3, :] - target_state.xyz[target_dihedrals[cd].a2, :]
+        pivot = target_state.xyz[target_dihedrals[cd].a2, :]
+        rmat  = Aux.rotation_matrix_from_axis_angle(cross(v21, v23), displacement)
+        movable = collect(target_dihedrals[cd].a2:size(target_state.xyz, 1))
+        target_state.xyz[movable, :] = ((rmat * (target_state.xyz[movable, :] .- pivot')') .+ pivot)'
     end
-
-    #Calculate native dihedrals and rotate on state
-    count::Int64 = 0
-    cd = 1
-    for i in 1:(length(backbone) - 3)
-        if i == (2 + 3 * count)
-            count += 1
-            continue
-        end
-        current_angle = Aux.calc_dih_angle(state.xyz[bb_dihedrals[cd].a1, :], state.xyz[bb_dihedrals[cd].a2, :], state.xyz[bb_dihedrals[cd].a3, :], state.xyz[bb_dihedrals[cd].a4, :])
-        displacement = Aux.calc_dih_angle(backbone[i], backbone[i + 1], backbone[i + 2], backbone[i + 3]) - current_angle
-        rotate_dihedral!(state.xyz, bb_dihedrals[cd], displacement)
-        cd += 1
-    end
-
+    printstyled("(  PRE) ▲ Applied backbone angles to $(length(template_dihedrals)) angles\n", color = 9)
 end
+
 
 
 @doc raw"""
@@ -131,9 +120,26 @@ julia> Common.stretch_conformation!(state, dihedrals)
 """
 function stretch_conformation!(state::State, dihedrals::Vector{Dihedral})
 
+    angles = map(x -> deg2rad(x), [111.099, 119.651, 117.817])
+    index = 1
     for dihedral in dihedrals
-        dihedral.dtype > omega ? continue : nothing
         rotate_dihedral_to!(state.xyz, dihedral, 3.1416)
+
+        target_angle = angles[index]
+        current_angle = Aux.calc_angle(state.xyz[dihedral.a1, :], state.xyz[dihedral.a2, :], state.xyz[dihedral.a3, :])
+        displacement = target_angle - current_angle
+
+        v21   = state.xyz[dihedral.a1, :] - state.xyz[dihedral.a2, :]
+        v23   = state.xyz[dihedral.a3, :] - state.xyz[dihedral.a2, :]
+        pivot = state.xyz[dihedral.a2, :]
+        rmat  = Aux.rotation_matrix_from_axis_angle(cross(v21, v23), displacement)
+        movable = collect(dihedral.a2:size(state.xyz, 1))
+        state.xyz[movable, :] = ((rmat * (state.xyz[movable, :] .- pivot')') .+ pivot)'
+
+        index += 1
+        if index > length(angles)
+            index = 1
+        end
     end
 end
 
