@@ -19,7 +19,7 @@ end
 
 
 @doc raw"""
-    conv_21(aa::String)
+    conv321(aa::String)
 
 Converts an aminoacid representation from 3 letters to 1, according to convention.
 

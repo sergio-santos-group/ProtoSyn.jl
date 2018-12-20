@@ -1,5 +1,6 @@
 module CoarseGrain
 
+using ..Aux
 using ..Common
 using JSON
 using LinearAlgebra

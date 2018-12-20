@@ -62,7 +62,9 @@ See also: [`load_from_gro`](@ref)
 function load_from_pdb(i_file::String, compile_metadata = true)::Tuple{State, Metadata}
 
     xyz   = Vector{Array{Float64, 2}}()
-    if compile_metadata atoms = Vector{AtomMetadata}() end
+    if compile_metadata
+        atoms = Vector{AtomMetadata}()
+    end
 
     open(i_file, "r") do f
         for line in eachline(f)
