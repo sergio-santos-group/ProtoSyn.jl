@@ -1,12 +1,13 @@
 """
-__________________________________________________________________________________________________________
+    clean_topol.py
+
+Used when parametrizing backbone-only models for JSON amber topology.
 clean_topol.py reads a "topol.top" file and performs the following functions:
 - Turns N3 atoms to N.
 - Turns O2 atoms to O and only accounts for 1 of them.
 - Removes all "HP" and "H1".
 - Only accounts for 1 H in each residue, removing all others.
 - Renumbers all atoms to account for removed atoms, fixing the respective bonds, angles and dihedrals.
-__________________________________________________________________________________________________________
 """
 atom_count = 1
 h_count    = 0

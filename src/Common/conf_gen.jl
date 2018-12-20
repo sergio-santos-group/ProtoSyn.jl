@@ -32,13 +32,25 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
 end
 
 
+@doc raw"""
+    apply_backbone_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
+
+Read the input file `template_file`, and apply both dihedral and regular angles to the backbone of `target_state`.
+`target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
+Note: `template_file` needs to have CONECT records.
+
+# Examples
+```julia-repl
+julia> Common.apply_backbone_dihedrals_from_file(state, bb_dihedrals, "native_conf.pdb")
+```
+"""
 function apply_backbone_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
     Common.apply_backbone_angles_from_file!(target_state, target_dihedrals, template_file)
     Common.apply_backbone_dihedrals_from_file!(target_state, target_dihedrals, template_file)
 end
 
 @doc raw"""
-    apply_dihedrals_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
+    apply_backbone_dihedrals_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
 Read the input file `template_file`, extract the dihedrals angles and apply to the backbone dihedrals `target_dihedrals` of `target_state`.
 `target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
@@ -46,7 +58,7 @@ Note: `template_file` needs to have CONECT records.
 
 # Examples
 ```julia-repl
-julia> Common.apply_initial_conf(state, bb_dihedrals, "native_conf.pdb")
+julia> Common.apply_backbone_dihedrals_from_file(state, bb_dihedrals, "native_conf.pdb")
 ```
 """
 function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
@@ -63,6 +75,18 @@ function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedra
 end
 
 
+@doc raw"""
+    apply_backbone_angles_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
+
+Read the input file `template_file`, extract the backbone angles and apply to the backbone atoms of `target_state`.
+`target_dihedrals` should contain backbone dihedrals only (phi, psi, omega).
+Note: `template_file` needs to have CONECT records.
+
+# Examples
+```julia-repl
+julia> Common.apply_backbone_angles_from_file(state, bb_dihedrals, "native_conf.pdb")
+```
+"""
 function apply_backbone_angles_from_file!(target_state::State, target_dihedrals::Vector{Dihedral}, template_file::String)
 
     template_state, template_metadata = Common.load_from_pdb(template_file)

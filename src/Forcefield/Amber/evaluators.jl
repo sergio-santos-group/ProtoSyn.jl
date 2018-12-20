@@ -1,9 +1,9 @@
 @doc raw"""
-    evaluate!(bonds::Vector{Forcefield.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
 function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
-    energy = 0.0
+    energy::Float64 = 0.0
     v12 = zeros(Float64, 3)
 
     for bond in bonds
@@ -27,7 +27,7 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::
 end
 
 @doc raw"""
-    evaluate!(angles::Vector{Forcefield.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(angles::Vector{Forcefield.Amber.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
 """
 function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
@@ -67,7 +67,7 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
 end
 
 @doc raw"""
-    evaluate!(dihedralsCos::Vector{Forcefield.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(dihedralsCos::Vector{Forcefield.Amber.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
 """
 function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
@@ -80,7 +80,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
     m = zeros(Float64, 3)
     n = zeros(Float64, 3)
     
-    energy = 0.0
+    energy::Float64 = 0.0
 
     for dihedral in dihedralsCos
         @views @. v12 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a1, :]
@@ -120,7 +120,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
 end
 
 @doc raw"""
-    evaluate!(atoms::Vector{Forcefield.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
+    evaluate!(atoms::Vector{Forcefield.Amber.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
 
 Evaluate an array of [Forcefield.Components](#Components-1) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each component.

@@ -10,8 +10,8 @@ function amber_evaluator_nc!(st::Common.State, do_forces::Bool)::Float64
     energy += Forcefield.Amber.evaluate!(amber_topology.angles, state, do_forces = do_forces)
     energy += Forcefield.Amber.evaluate!(amber_topology.atoms, state, do_forces = do_forces, cut_off = nonbonded_cut_off, eCoulomb_λ = 0.0)
     energy += Forcefield.Amber.evaluate!(amber_topology.dihedralsCos, state, do_forces = do_forces)
-    state.energy.comp["amber"] = energy
-    state.energy.eTotal = energy
+    st.energy.comp["amber"] = energy
+    st.energy.eTotal = energy
     return energy
 end
 
@@ -19,27 +19,13 @@ function amber_cr_evaluator!(st::Common.State, do_forces::Bool)::Float64
     fill!(st.forces, zero(Float64))
     amber_e   = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     contact_e = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
-    energy    = amber_e + contact_e
-    st.energy.comp["other"] = contact_e
-    st.energy.eTotal = energy
-    return energy
+    st.energy.comp["amber"] = amber_e
+    st.energy.comp["other"]    = contact_e
+    st.energy.eTotal           = amber_e + contact_e
+    return amber_e + contact_e
 end
 
-function amber_cr_evaluator_nc!(st::Common.State, do_forces::Bool)::Float64
-    fill!(st.forces, zero(Float64))
-    amber_e   = Forcefield.Amber.evaluate!(amber_topology.bonds, st, do_forces = do_forces)
-    amber_e  += Forcefield.Amber.evaluate!(amber_topology.angles, st, do_forces = do_forces)
-    amber_e  += Forcefield.Amber.evaluate!(amber_topology.atoms, st, do_forces = do_forces, cut_off = nonbonded_cut_off, eCoulomb_λ = 0.0)
-    amber_e  += Forcefield.Amber.evaluate!(amber_topology.dihedralsCos, st, do_forces = do_forces)
-    state.energy.comp["amber"] = amber_e
-    contact_e = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
-    energy    = amber_e + contact_e
-    st.energy.comp["other"] = contact_e
-    st.energy.eTotal = energy
-    return energy
-end
-
-function amber_cr_dr_evaluator!(st::Common.State, do_forces::Bool)::Float64
+function amber_cr_dr_evaluator_rfnm!(st::Common.State, do_forces::Bool)::Float64
     fill!(st.forces, zero(Float64))
     amber_e    = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
     contact_e  = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
@@ -50,11 +36,71 @@ function amber_cr_dr_evaluator!(st::Common.State, do_forces::Bool)::Float64
     return energy
 end
 
+function amber_cr_es_evaluator!(st::Common.State, do_forces::Bool)::Float64
+    fill!(st.forces, zero(Float64))
+    amber_e   = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
+    contact_e = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    sol_e     = Forcefield.CoarseGrain.evaluate!(solv_pairs, st)
+    st.energy.comp["amber"] = amber_e
+    st.energy.comp["other"]    = contact_e + sol_e
+    st.energy.eTotal           = amber_e + contact_e + sol_e
+    return amber_e + contact_e + sol_e
+end
+
+function amber_cr_es_evaluator_rfnm!(st::Common.State, do_forces::Bool)::Float64
+    fill!(st.forces, zero(Float64))
+    amber_e   = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
+    contact_e = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    sol_e     = Forcefield.CoarseGrain.evaluate!(solv_pairs, st)
+    st.energy.comp["amber"] = amber_e
+    st.energy.comp["other"] = contact_e + sol_e
+    st.energy.eTotal        = amber_e + contact_e + sol_e
+    return amber_e + contact_e + sol_e
+end
+
+function amber_cr_es_evaluator_nc!(st::Common.State, do_forces::Bool)::Float64
+    fill!(st.forces, zero(Float64))
+    amber_e   = Forcefield.Amber.evaluate!(amber_topology.bonds, st, do_forces = do_forces)
+    amber_e  += Forcefield.Amber.evaluate!(amber_topology.angles, st, do_forces = do_forces)
+    amber_e  += Forcefield.Amber.evaluate!(amber_topology.atoms, st, do_forces = do_forces, cut_off = 1.2, eCoulomb_λ = 0.0)
+    amber_e  += Forcefield.Amber.evaluate!(amber_topology.dihedralsCos, st, do_forces = do_forces)
+    contact_e = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    sol_e     = Forcefield.CoarseGrain.evaluate!(solv_pairs, st)
+    st.energy.comp["amber"] = amber_e
+    st.energy.comp["other"]    = contact_e + sol_e
+    st.energy.eTotal           = amber_e + contact_e + sol_e
+    return amber_e + contact_e + sol_e
+end
+
+function amber_cr_dr_es_evaluator!(st::Common.State, do_forces::Bool)::Float64
+    fill!(st.forces, zero(Float64))
+    amber_e    = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
+    contact_e  = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    dihedral_e = Forcefield.Restraints.evaluate!(dihedral_restraints, st, do_forces=do_forces)
+    sol_e      = Forcefield.CoarseGrain.evaluate!(solv_pairs, st, do_forces=do_forces)
+    energy = amber_e + contact_e + dihedral_e + sol_e
+    st.energy.comp["other"] = contact_e + dihedral_e + sol_e
+    st.energy.eTotal = energy
+    return energy
+end
+
+function amber_cr_dr_es_evaluator_rfnm!(st::Common.State, do_forces::Bool)::Float64
+    fill!(st.forces, zero(Float64))
+    amber_e    = Forcefield.Amber.evaluate!(amber_topology, st, cut_off=1.2, do_forces=do_forces)
+    contact_e  = Forcefield.Restraints.evaluate!(contact_restraints, st, do_forces=do_forces)
+    dihedral_e = Forcefield.Restraints.evaluate!(dihedral_restraints, st, do_forces=do_forces)
+    sol_e      = Forcefield.CoarseGrain.evaluate!(solv_pairs, st, do_forces=do_forces)
+    energy = amber_e + contact_e + dihedral_e + sol_e
+    st.energy.comp["other"] = contact_e + dihedral_e + sol_e
+    st.energy.eTotal = energy
+    return energy
+end
+
 
 # MINIMIZERS ----
-initial_minimizer = Drivers.SteepestDescent.Driver(amber_evaluator_nc!, n_init_min_steps, f_tol, max_step, true, print_status_init)
-loop_closer       = Drivers.SteepestDescent.Driver(amber_evaluator!, n_loop_closer_steps, f_tol, max_step, false, print_status_loop)
-sampler_minimizer = Drivers.SteepestDescent.Driver(amber_cr_evaluator_nc!, n_refine_min_steps, f_tol, max_step, false)
+initial_minimizer = Drivers.SteepestDescent.Driver(amber_evaluator_nc!        , n_init_min_steps   , f_tol, max_step, true, print_status_init)
+loop_closer       = Drivers.SteepestDescent.Driver(amber_evaluator!           , n_loop_closer_steps, f_tol, max_step, true, print_status_loop)
+sampler_minimizer = Drivers.SteepestDescent.Driver(amber_cr_dr_evaluator_rfnm!, n_refine_min_steps , f_tol, max_step, true, print_status_smpl)
 
 
 # MUTATORS ----
@@ -77,8 +123,11 @@ hard_cs_mutator = Mutators.Crankshaft.CrankshaftMutator(nb_phi_dhs, () -> (randn
 function dh_cs_br_soft_sampler!(st::Common.State)
     dm = Mutators.Dihedral.run!(st, soft_dh_mutator)
     cm = Mutators.Crankshaft.run!(st, soft_cs_mutator)
+    # dm = 0
+    # cm = 0
     bm = Mutators.Blockrot.run!(st, soft_br_mutator)
     sampler_minimizer.run!(st, sampler_minimizer)
+    println("D: $dm | C: $cm | B: $bm")
     return Dict("d" => dm, "c" => cm, "b" => bm)
 end
 
@@ -101,11 +150,11 @@ end
 
 # DRIVERS ----
 # SEARCH
-i_search_driver = Drivers.MonteCarlo.Driver(dh_cs_reg_sampler!, amber_cr_evaluator_nc!, i_search_temp_init, n_i_search_steps,
-    print_status_mc, quench_temperature, print_structure, print_energy_components, adjust_step_size)
-search_driver   = Drivers.ILSRR.Driver(i_search_driver, amber_cr_evaluator_nc!, dh_cs_hard_sampler!, o_search_temp_static, n_o_search_steps,
-    reset_temperature, reset_step_size, print_structure_best)
+i_search_driver = Drivers.MonteCarlo.Driver(dh_cs_reg_sampler!, amber_cr_es_evaluator_nc!, i_search_temp_init, n_i_search_steps, evaluate_slope_every, evaluate_slope_threshold,
+    true, print_status_mc, quench_temperature, print_energy_components, adjust_step_size)
+search_driver   = Drivers.ILSRR.Driver(i_search_driver, amber_cr_es_evaluator_nc!, dh_cs_hard_sampler!, o_search_temp_static, n_o_search_steps, continue_after_n_attemps,
+    reset_temperature, reset_step_size, print_structure_best, print_structure)
 
 # REFINEMENT
-refine_driver   = Drivers.MonteCarlo.Driver(dh_cs_br_soft_sampler!, amber_cr_evaluator!, refine_temp_static, n_refine_steps,
-    print_status_refnm, print_structure_best, print_structure_rfnm)
+refine_driver   = Drivers.MonteCarlo.Driver(dh_cs_br_soft_sampler!, amber_cr_es_evaluator_rfnm!, refine_temp_static, n_refine_steps, evaluate_slope_every, evaluate_slope_threshold,
+    true, print_status_refnm, print_structure_best, print_structure_rfnm)

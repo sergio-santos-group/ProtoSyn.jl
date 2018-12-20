@@ -27,7 +27,7 @@ print_status_smpl = @Common.callback print_sts_every_min function _print_status_
 end
 
 # PRINT STRUCTURE ----
-print_structure = @Common.callback print_str_every_ic function _print_structure(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+print_structure = @Common.callback print_str_every_oc function _print_structure(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
     Print.as_pdb(xyz_destination, st, metadata, step = step)
     flush(xyz_destination)
 end
@@ -44,10 +44,24 @@ print_energy = @Common.callback print_ene_every_ic function _print_energy(step::
     flush(out_ene)
 end
 
-print_energy_components = @Common.callback 1 function _print_energy_components(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
-    println(out_ene, @sprintf("%11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e %11.4e", st.energy.eTotal, st.energy.comp["eBond"],
-        st.energy.comp["eAngle"], st.energy.comp["eDihedral"], st.energy.comp["eCoulomb"], st.energy.comp["eCoulomb14"], st.energy.comp["eLJ"],
-        st.energy.comp["eLJ14"], st.energy.comp["other"]))
+print_energy_components = @Common.callback print_ene_every_ic function _print_energy_components(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
+    
+    title = ""
+    try
+        title = args[2]
+    catch
+        nothing
+    end
+    write(out_ene, @sprintf("\n%6s %6s ", title, step))
+    for component in energy_components_list
+        if component == "eTotal"
+            write(out_ene, @sprintf("%11.4e ", st.energy.eTotal))
+        elseif component in keys(st.energy.comp)
+            write(out_ene, @sprintf("%11.4e ", st.energy.comp[component]))
+        else
+            write(out_ene, @sprintf("%11s ", "NaN"))
+        end
+    end
     flush(out_ene)
 end
 
@@ -60,6 +74,9 @@ print_structure_best = @Common.callback 1 function _print_structure_best(step::I
         flush(outer_best_destination)
         printstyled(@sprintf("(ILSRR) New outer best defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", outer_best_energy, st.energy.eTotal), color = :red)
         outer_best_energy = st.energy.eTotal
+        
+        #Print energy
+        _print_energy_components(step, st, dr, 0.0, "(BEST)")
     end
 end
 

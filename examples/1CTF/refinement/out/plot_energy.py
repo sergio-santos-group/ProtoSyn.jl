@@ -1,10 +1,3 @@
-"""
-    plot_energy.py
-
-Read an energy.out file (containing all the energy components of the BEST structures from ProtoSyn sampling/refinement stages) and plot the energy values.
-Dotted lines represent the reference structure energy.
-"""
-
 from matplotlib import pyplot as plt
 
 keys = ["eTotal", "eBond", "eAngle", "eDihedral", "eCoulomb", "eCoulomb14", "eLJ", "eLJ14", "eContact", "eSol", "eDihedralFBR"]
@@ -45,6 +38,9 @@ for line_index, line in enumerate(fin):
             else:
                 data[key].append(elem[index + 1])
 fin.close()
+
+# print targets
+# print data['eBond']
 
 for color_index, key in enumerate(keys):
     axis[key].axhline(targets[key], color = colors[color_index], linewidth = 2, linestyle = "--", alpha = 0.35)

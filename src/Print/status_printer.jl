@@ -22,26 +22,29 @@ end
 
 
 @doc raw"""
-    energy_by_component(energy::Common.Energy,[ destination::IO = stdout])
+    energy_by_component(ref_energy::Common.Energy,[ sample_energy::Common.Energy, ref_title::String = "", sample_title = "", destination::IO = stdout])
 
-Print the `energy` content to the IO stream defined in `destination`, by component.
+Print the `ref_energy` content to the IO stream defined in `destination`, by component.
+If a `sample_energy` is supplied, print both `ref_energy` and `sample_energy` content and the differences, per component, between them.
+Use `ref_title` and `sample_title` to identify both Energy objects.
 
 # Examples
 ```julia-repl
 julia> Print.energy_by_component(state.energy, file_name)
+
+julia> Print.energy_by_component(state.energy, ref_state.energy, ref_title = "Current", sample_title = "Reference", destination = file_name)
 ```
 """
-function energy_by_component(energy::Common.Energy, destination::IO = stdout)
+function energy_by_component(ref_energy::Common.Energy, destination::IO = stdout)
 
     write(destination, "-"^31)
-    printstyled(destination, @sprintf("\n%20s: %10.3e\n", "⚡E_Total", energy.eTotal), color = :blue)
-    for (i, (comp, value)) in enumerate(energy.comp)
+    printstyled(destination, @sprintf("\n%20s: %10.3e\n", "⚡E_Total", ref_energy.eTotal), color = :blue)
+    for (i, (comp, value)) in enumerate(ref_energy.comp)
         write(destination, @sprintf "%2d: %15s: %10.3e\n" i comp value)
     end
     write(destination, "-"^31, "\n")
 end
 
-# TODO: Add documentation
 function energy_by_component(ref_energy::Common.Energy, sample_energy::Common.Energy; ref_title::String = "", sample_title = "", destination::IO = stdout)
 
     write(destination, "-"^55)

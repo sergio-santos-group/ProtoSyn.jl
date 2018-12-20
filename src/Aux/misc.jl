@@ -78,7 +78,17 @@ function rand_vector_in_sphere()::Vector{Float64}
     return [x, y, z]
 end
 
+@doc raw"""
+    linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float64}, Vector{Int64}})::Float64
 
+Returns the linear regression slope value for the x and y values.
+
+# Examples
+```julia-repl
+julia> Aux.linreg([1, 2, 3], [1, 2, 3])
+1.0
+```
+"""
 function linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float64}, Vector{Int64}})::Float64
 
     x = convert(Vector{Float64}, x)

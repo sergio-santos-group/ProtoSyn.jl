@@ -1,3 +1,9 @@
+"""
+    renumber_pdb.py input.pdb
+
+Read an input.pdb and restart residue numbering from 1.
+"""
+
 from __future__ import print_function
 import sys
 index = 0

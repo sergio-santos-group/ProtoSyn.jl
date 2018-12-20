@@ -83,7 +83,9 @@ Conformation generators are responsible to change the system [`State`](@ref) in 
 
 ```@docs
 apply_ss!
-apply_dihedrals_from_file!
+apply_backbone_from_file!
+apply_backbone_dihedrals_from_file!
+apply_backbone_angles_from_file!
 stretch_conformation!
 fix_proline!
 ```

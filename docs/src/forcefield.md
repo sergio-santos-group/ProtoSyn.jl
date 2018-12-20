@@ -50,7 +50,7 @@ Restraints.DihedralFBR
 
 ### Evaluators
 
-This section provides a description on how to use [Forcefield.Components](#Components-1) to calculate their energy.
+This section provides a description on how to use [Forcefield.Components](#Components-2) to calculate their energy.
 
 
 ```@docs
@@ -59,9 +59,38 @@ Restraints.evaluate!
 
 ### Loaders
 
-This section provides a description on how to load [Forcefield.Components](#Components-1) from external sources.
+This section provides a description on how to load [Forcefield.Components](#Components-2) from external sources.
 
 ```@docs
 Restraints.load_distance_restraints_from_file
 Restraints.lock_block_bb
+```
+
+## Coarse Grain
+
+### Components
+
+This section provides a description on all the individual components that comprise the Coarse Grain energy functions.
+
+
+```@docs
+CoarseGrain.SolvPair
+```
+
+### Evaluators
+
+This section provides a description on how to use [Forcefield.Components](#Components-3) to calculate their energy.
+
+
+```@docs
+CoarseGrain.evaluate!
+```
+
+### Loaders
+
+This section provides a description on how to load [Forcefield.Components](#Components-3) from external sources.
+
+```@docs
+CoarseGrain.load_solv_pairs_from_file
+CoarseGrain.load_solv_pairs_default
 ```
