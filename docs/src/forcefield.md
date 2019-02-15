@@ -75,6 +75,7 @@ This section provides a description on all the individual components that compri
 
 ```@docs
 CoarseGrain.SolvPair
+CoarseGrain.HbGroup
 ```
 
 ### Evaluators
@@ -93,4 +94,5 @@ This section provides a description on how to load [Forcefield.Components](#Comp
 ```@docs
 CoarseGrain.load_solv_pairs_from_file
 CoarseGrain.load_solv_pairs_default
+CoarseGrain.compile_hb_groups
 ```

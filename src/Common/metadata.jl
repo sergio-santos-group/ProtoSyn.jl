@@ -50,6 +50,23 @@ function Base.show(io::IO, b::AtomMetadata) #SHOULD BE IMPROVED
     end
 end
 
+function iterate_by_residue(atoms::Vector{AtomMetadata})::Vector{Vector{AtomMetadata}}
+
+    residue::Vector{AtomMetadata} = AtomMetadata[]
+    chain::Vector{Vector{AtomMetadata}} = []
+    old_res_num = 1
+    for atom in atoms
+        if atom.res_num != old_res_num
+            old_res_num = atom.res_num
+            push!(chain, residue)
+            residue = AtomMetadata[]
+        end
+        push!(residue, atom)
+    end
+    push!(chain, residue)
+    return chain
+end
+
 
 @doc raw"""
     SecondaryStructureMetadata(ss_type::SS.TYPE, name::String, i_res_name::String, i_res_num::Int64, f_res_name::String, f_res_num::Int64, conf::Int64)

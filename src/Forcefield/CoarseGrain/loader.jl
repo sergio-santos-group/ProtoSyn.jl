@@ -47,3 +47,32 @@ julia> Forcefield.CoarseGrain.load_solv_pairs_default(phi_dihedrals, 0.01)
 function load_solv_pairs_default(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
     return map(x -> SolvPair(x.a3, default_aa_coef[string(x.residue.name[1])] * λ_eSol), phi_dihedrals)
 end
+
+
+@doc raw"""
+    compile_hb_groups(atoms::Vector{Common.AtomMetadata}, λ_eSol::Float64)::Vector{HbGroup}
+
+Compile hydrogen bonding groups from atom metadata.
+
+# Examples
+```julia-repl
+julia> Forcefield.CoarseGrain.compile_hb_groups(metadata.atoms, 1.0)
+[Forcefield.CoarseGrain.HbGroup(n=1, h=2, c=4, o=5, coef=1.0), Forcefield.CoarseGrain.HbGroup(n=6, h=7, c=9, o=10, coef=1.0), ...]
+```
+"""
+function compile_hb_groups(atoms::Vector{Common.AtomMetadata}, λ_eSol::Float64)::Vector{HbGroup}
+
+    hb_groups::Vector{HbGroup} = HbGroup[]
+    for residue in Common.iterate_by_residue(atoms)
+        if Aux.conv123(residue[1].res_name) == "PRO"
+            continue
+        end
+        push!(hb_groups, HbGroup(
+            filter(atom -> atom.name == "N", residue)[1].index,
+            filter(atom -> atom.name == "H", residue)[1].index,
+            filter(atom -> atom.name == "C", residue)[1].index,
+            filter(atom -> atom.name == "O", residue)[1].index,
+            λ_eSol))
+    end
+    return hb_groups
+end
