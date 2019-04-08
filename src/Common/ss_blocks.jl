@@ -1,4 +1,56 @@
 @doc raw"""
+    compile_ss_blocks(metadata::Metadata, ss::String)
+
+Read the provided secondary structure string `ss` and return the [`SecondaryStructureMetadata`](@ref) and [`BlockMetadata`](@ref) from the provided list of residues or dihedrals in `metadata`.
+
+# Examples
+```julia-repl
+julia> Common.compile_ss_blocks(metadata, "CCCHHHHCCEEEECCC"
+([SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1),
+SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)],
+[BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135),
+BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)])
+```
+"""
+function compile_ss_blocks(metadata::Metadata, ss::String)
+    if length(metadata.residues) != 0
+        ss     = compile_ss(metadata.residues, ss)
+        blocks = compile_blocks(metadata.residues, ss)
+        return ss, blocks
+    elseif length(metadata.dihedrals) != 0
+        ss     = compile_ss(metadata.dihedrals, ss)
+        blocks = compile_blocks(metadata.dihedrals, ss)
+        return ss, blocks
+    else
+        error("Tried to compile secondary structure information from both metadata.residues and metadata.dihedrals, but no metadata information was found (Residues = $(length(metadata.residues)) | Dihedrals = $(length(metadata.residues)))")
+    end
+end
+
+@doc raw"""
+    compile_ss_blocks!(metadata::Metadata, ss::String)
+
+Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) and [`BlockMetadata`](@ref) from the provided list of residues or dihedrals in `metadata`.
+
+# Examples
+```julia-repl
+julia> Common.compile_ss_blocks!(metadata, "CCCHHHHCCEEEECCC")
+```
+"""
+function compile_ss_blocks!(metadata::Metadata, ss::String)
+    if length(metadata.residues) != 0
+        metadata.ss     = compile_ss(metadata.residues, ss)
+        metadata.blocks = compile_blocks(metadata.residues, ss)
+        return
+    elseif length(metadata.dihedrals) != 0
+        metadata.ss     = compile_ss(metadata.dihedrals, ss)
+        metadata.blocks = compile_blocks(metadata.dihedrals, ss)
+        return
+    else
+        error("Tried to compile secondary structure information from both metadata.residues and metadata.dihedrals, but no metadata information was found (Residues = $(length(metadata.residues)) | Dihedrals = $(length(metadata.residues)))")
+    end
+end
+
+@doc raw"""
     compile_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
 
 Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of dihedrals.
@@ -58,6 +110,29 @@ function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStru
     return sec_str
 end
 
+@doc raw"""
+    compile_blocks(dihedrals::Vector{Dihedral}, ss::String)::Vector{BlockMetadata}
+
+Read the provided secondary structure string `ss` and compile the [`BlockMetadata`](@ref) [`Metadata`](@ref) from the provided list of dihedrals.
+
+# Examples
+```julia-repl
+julia> Common.compile_blocks(dihedrals, "HHHHCCEEEECCC")
+2-element Array{ProtoSyn.Common.BlockMetadata,1}:
+ BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135)
+ BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)
+```
+"""
+function compile_blocks(dihedrals::Vector{Dihedral}, ss::String)::Vector{BlockMetadata}
+
+    residues = Vector{Residue}()
+    for dihedral in dihedrals
+        if !(dihedral.residue in residues)
+            push!(residues, dihedral.residue)
+        end
+    end
+    return compile_blocks(residues, ss)
+end
 
 @doc raw"""
     compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMetadata}

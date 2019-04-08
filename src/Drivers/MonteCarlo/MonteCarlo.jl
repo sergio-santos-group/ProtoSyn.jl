@@ -89,17 +89,20 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
     while step <= driver.n_steps
         driver.sampler!(state)
         driver.evaluator!(state, false)
-        if driver.verbose
-            printstyled(@sprintf("(%5s) %12d | Sampled energy: %10.4e\n", "MC", step, state.energy.eTotal), color = :green)
-        end
         
         if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature)) # Metropolis
             backup = deepcopy(state)
             push!(history_x, step)
             push!(history_y, state.energy.eTotal)
             acceptance_count += 1
+            if driver.verbose
+                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (ACCEPTED ✔)\n", "MC", step, state.energy.eTotal), color = :green)
+            end
         else
             state = deepcopy(backup)
+            if driver.verbose
+                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (REJECTED ❌)\n", "MC", step, state.energy.eTotal), color = 9)
+            end
         end
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)

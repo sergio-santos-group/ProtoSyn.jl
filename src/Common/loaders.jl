@@ -317,3 +317,52 @@ function compile_dihedral_metadata!(metadata::Metadata)
     end
     metadata.dihedrals = dihedrals
 end
+
+# DOC
+function compile_sidechains(metadata::Metadata, rl::Dict{String, Any})::Vector{SidechainMetadata}
+    if length(metadata.dihedrals) != 0
+        return compile_sidechains(metadata.dihedrals, rl)
+    else
+        error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
+    end
+end
+
+function compile_sidechains!(metadata::Metadata, rl::Dict{String, Any})
+    if length(metadata.dihedrals) != 0
+        metadata.sidechains  = compile_sidechains(metadata.dihedrals, rl)
+    else
+        error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
+    end
+end
+
+function compile_sidechains(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})::Vector{SidechainMetadata}
+    if length(dihedrals) == 0
+        error("Tried to compile sidechain information from the provided dihedrals list (Length: $(length(dihedrals))), but no dihedral information was found.")
+    end
+
+    all_sidechain_dihedrals = filter(x -> x.dtype > Common.DIHEDRAL.omega, dihedrals)
+    cur_res                 = all_sidechain_dihedrals[1].residue
+    cur_res_index           = 1
+    sidechain_dihedrals     = Vector{Dihedral}()
+    sidechains              = Vector{SidechainMetadata}()
+    rotamers                = Vector{Rotamer}()
+
+    for dihedral in all_sidechain_dihedrals
+        if cur_res == dihedral.residue
+            push!(sidechain_dihedrals, dihedral)
+        else
+            aa = Aux.conv321(cur_res.name)
+            for chi_index in 1:length(rl[aa]["rot"])
+                push!(rotamers, Rotamer(rl[aa]["rot"][chi_index], rl[aa]["range"][chi_index]))
+            end
+            sidechain = SidechainMetadata(sidechain_dihedrals, rotamers, convert(Array{Float64, 1}, rl[aa]["w"]))
+            push!(sidechains, sidechain)
+            sidechain_dihedrals = Vector{Dihedral}()
+            push!(sidechain_dihedrals, dihedral)
+            rotamers = Vector{Rotamer}()
+            cur_res = dihedral.residue
+        end
+    end
+    printstyled("(SETUP) ▲ Compiled metadata information of $(length(sidechains)) sidechains\n", color = 9)
+    return sidechains
+end

@@ -9,17 +9,23 @@ PHI = -139.0 | PSI = 135.0
 Alpha helix ("H"):
 PHI = -57.0  | PSI = -47.0
 
+If `override` (Default: `false`) is set to `true`, any previous information saved in `metadata.ss` and `metadata.blocks` is recompiled.
+
 # Examples
 ```julia-repl
 julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
-See also: [`compile_ss`](@ref)
+See also: [`compile_ss`](@ref) [`compile_blocks`](@ref)
 """
-function apply_ss!(state::State, metadata::Metadata, ss::String)
+function apply_ss!(state::State, metadata::Metadata, ss::String, override::Bool = false)
 
     # Save secondary structure as metadata
-    metadata.ss     = compile_ss(metadata.dihedrals, ss)
-    metadata.blocks = compile_blocks(metadata.residues, ss)
+    if length(metadata.ss) == 0 || override
+        metadata.ss     = compile_ss(metadata.dihedrals, ss)
+    end
+    if length(metadata.blocks) == 0 || override
+        metadata.blocks = compile_blocks(metadata.residues, ss)
+    end
 
     index::Int64 = 1
     for dihedral in metadata.dihedrals
