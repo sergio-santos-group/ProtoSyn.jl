@@ -1,5 +1,15 @@
 @doc raw"""
     compile_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
+
+Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of dihedrals.
+
+# Examples
+```julia-repl
+julia> Common.compile_ss(dihedrals, "CCCHHHHCCEEEECCC")
+2-element Array{ProtoSyn.Common.SecondaryStructureMetadata,1}:
+ SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
+ SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
+```
 """
 function compile_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
 
@@ -16,7 +26,7 @@ end
 @doc raw"""
     compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
 
-Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues/dihedrals.
+Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) [`Metadata`](@ref) from the provided list of residues.
 
 # Examples
 ```julia-repl
@@ -44,7 +54,7 @@ function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStru
         residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
         last_ss = curr_ss
     end
-    printstyled("(  PRE) ▲ Compiled metadata information of $(length(sec_str)) secondary structures\n", color = 9)
+    printstyled("(SETUP) ▲ Compiled metadata information of $(length(sec_str)) secondary structures\n", color = 9)
     return sec_str
 end
 
@@ -109,6 +119,6 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
         last_ss = curr_ss
         atoms = vcat(atoms, residues[index].atoms)
     end
-    printstyled("(  PRE) ▲ Compiled metadata information of $(length(blocks)) blocks\n", color = 9)
+    printstyled("(SETUP) ▲ Compiled metadata information of $(length(blocks)) blocks\n", color = 9)
     return blocks
 end

@@ -1,6 +1,6 @@
 module ProtoSyn
 
-using LinearAlgebra, JSON, Printf
+using LinearAlgebra, JSON, Printf, StatsBase
 
 export Common, Aux, Forcefield, Print, Mutators, Drivers
 

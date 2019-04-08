@@ -288,7 +288,7 @@ function compile_dihedral_metadata!(metadata::Metadata)
         # Start the dihedral path
         path = ["N", "CA"]
         # Based on the `residue.name`, the possible path taken by the iteration is different. This accounts for cyclic aminoacids.
-        possible_queries = residue[1].res_name in ("HIE", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
+        possible_queries = residue[1].res_name in ("HIS", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
         # Join all atom names in this residue in a single string, dividing atom names with ":". This will allow identification of the dihedral using regular expressions.
         atnames = string(":", join(map(atom -> atom.name, residue), ":"), ":")
         # Iterate over the given possible path for the side-chain.

@@ -28,7 +28,7 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
             rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
     end
-    printstyled("(  PRE) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks\n", color = 9)
+    printstyled("(SETUP) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks\n", color = 9)
 end
 
 
@@ -71,7 +71,7 @@ function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedra
         displacement = template_angle - target_angle
         rotate_dihedral!(target_state.xyz, target_dihedrals[cd], displacement)
     end
-    printstyled("(  PRE) ▲ Applied backbone dihedral angles to $(length(template_dihedrals)) dihedrals\n", color = 9)
+    printstyled("(SETUP) ▲ Applied backbone dihedrals to $(length(template_dihedrals)) dihedrals\n", color = 9)
 end
 
 
@@ -103,7 +103,7 @@ function apply_backbone_angles_from_file!(target_state::State, target_dihedrals:
         movable = collect(target_dihedrals[cd].a2:size(target_state.xyz, 1))
         target_state.xyz[movable, :] = ((rmat * (target_state.xyz[movable, :] .- pivot')') .+ pivot)'
     end
-    printstyled("(  PRE) ▲ Applied backbone angles to $(length(template_dihedrals)) angles\n", color = 9)
+    printstyled("(SETUP) ▲ Applied backbone angles to $(length(template_dihedrals)) angles\n", color = 9)
 end
 
 
