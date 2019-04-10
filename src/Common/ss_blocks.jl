@@ -1,18 +1,18 @@
 @doc raw"""
-    compile_ss_blocks(metadata::Metadata, ss::String)
+    compile_ss_blocks_metadata(metadata::Metadata, ss::String)
 
 Read the provided secondary structure string `ss` and return the [`SecondaryStructureMetadata`](@ref) and [`BlockMetadata`](@ref) from the provided list of residues or dihedrals in `metadata`.
 
 # Examples
 ```julia-repl
-julia> Common.compile_ss_blocks(metadata, "CCCHHHHCCEEEECCC"
+julia> Common.compile_ss_blocks_metadata(metadata, "CCCHHHHCCEEEECCC"
 ([SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1),
 SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)],
 [BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135),
 BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)])
 ```
 """
-function compile_ss_blocks(metadata::Metadata, ss::String)
+function compile_ss_blocks_metadata(metadata::Metadata, ss::String)
     if length(metadata.residues) != 0
         ss     = compile_ss(metadata.residues, ss)
         blocks = compile_blocks(metadata.residues, ss)
@@ -27,16 +27,16 @@ function compile_ss_blocks(metadata::Metadata, ss::String)
 end
 
 @doc raw"""
-    compile_ss_blocks!(metadata::Metadata, ss::String)
+    compile_ss_blocks_metadata!(metadata::Metadata, ss::String)
 
 Read the provided secondary structure string `ss` and compile the [`SecondaryStructureMetadata`](@ref) and [`BlockMetadata`](@ref) from the provided list of residues or dihedrals in `metadata`.
 
 # Examples
 ```julia-repl
-julia> Common.compile_ss_blocks!(metadata, "CCCHHHHCCEEEECCC")
+julia> Common.compile_ss_blocks_metadata!(metadata, "CCCHHHHCCEEEECCC")
 ```
 """
-function compile_ss_blocks!(metadata::Metadata, ss::String)
+function compile_ss_blocks_metadata!(metadata::Metadata, ss::String)
     if length(metadata.residues) != 0
         metadata.ss     = compile_ss(metadata.residues, ss)
         metadata.blocks = compile_blocks(metadata.residues, ss)

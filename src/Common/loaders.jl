@@ -200,7 +200,7 @@ end
 @doc raw"""
     compile_dihedral_metadata!(metadata::Metadata)
 
-Add dihedrasl information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
+Add dihedrals information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
 
 # Examples
 ```julia-repl
@@ -318,24 +318,62 @@ function compile_dihedral_metadata!(metadata::Metadata)
     metadata.dihedrals = dihedrals
 end
 
-# DOC
-function compile_sidechains(metadata::Metadata, rl::Dict{String, Any})::Vector{SidechainMetadata}
+@doc raw"""
+    compile_sidechains_metadata(metadata::Metadata)
+
+Return sidechains information, compiling the avaliable information from the metadata
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata, aux.read_JSON(rotamer_library))
+45-element Array{ProtoSyn.Common.SidechainMetadata,1}:
+ [SidechainMetadata(dihedrals=3, rotamers=2, weights=[0.0254237, 0.0360169],
+ (...)]
+```
+"""
+function compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})::Vector{SidechainMetadata}
     if length(metadata.dihedrals) != 0
-        return compile_sidechains(metadata.dihedrals, rl)
+        return compile_sidechains_metadata(metadata.dihedrals, rl)
     else
         error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
     end
 end
 
-function compile_sidechains!(metadata::Metadata, rl::Dict{String, Any})
+@doc raw"""
+    compile_sidechains_metadata(metadata::Metadata)
+
+Add sidechains information to `metadata`, compiling the avaliable information from the metadata
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata, aux.read_JSON(rotamer_library))
+```
+"""
+function compile_sidechains_metadata!(metadata::Metadata, rl::Dict{String, Any})
     if length(metadata.dihedrals) != 0
-        metadata.sidechains  = compile_sidechains(metadata.dihedrals, rl)
+        metadata.sidechains  = compile_sidechains_metadata(metadata.dihedrals, rl)
     else
         error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
     end
 end
 
-function compile_sidechains(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})::Vector{SidechainMetadata}
+@doc raw"""
+    compile_sidechains_metadata(metadata::Metadata)
+
+Return sidechains information, compiling the avaliable information from the provided dihedrals list
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata.dihedrals, aux.read_JSON(rotamer_library))
+45-element Array{ProtoSyn.Common.SidechainMetadata,1}:
+ [SidechainMetadata(dihedrals=3, rotamers=2, weights=[0.0254237, 0.0360169],
+ (...)]
+```
+"""
+function compile_sidechains_metadata(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})::Vector{SidechainMetadata}
     if length(dihedrals) == 0
         error("Tried to compile sidechain information from the provided dihedrals list (Length: $(length(dihedrals))), but no dihedral information was found.")
     end

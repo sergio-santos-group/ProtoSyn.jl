@@ -163,8 +163,8 @@ mutable struct Atom
     σ::Float64 #nm
     ϵ::Float64 #kJ mol⁻¹
     q::Float64 #electron
-    excls::Array{Int64, 1}
-    pairs::Array{Int64, 1}
+    excls::Vector{Int64}
+    pairs::Vector{Int64}
     
     Atom(name::String, σ::Float64, ϵ::Float64, q::Float64, excls::Array{Int64, 1}, pairs::Array{Int64, 1}) = new(name, σ/2, sqrt(ϵ), 11.787089759563214*q, excls, pairs)
 end

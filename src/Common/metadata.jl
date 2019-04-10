@@ -81,13 +81,11 @@ Define a secondary structure metadata, containing extra information pertaining t
 - `f_res_name::String`: Name of the final residue.
 - `f_res_num::Int64`: Index of the final residue.
 - `conf::Int64`: Conformation of the secondary structure. See PDB FORMAT standards.
-- `atoms::Vector{Int64}`: List of atoms contained in this block
-- `pivot::Int64`: Atom as center of mass of this block
 
 # Examples
 ```julia-repl
-julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1, [1, 2, 3, 4], 2)
-SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1, atoms=[1, 2, 3, 4], pivot=2)
+julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1)
+SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1)
 ```
 """
 mutable struct SecondaryStructureMetadata
@@ -131,6 +129,7 @@ mutable struct BlockMetadata
     connector_right::Int64
 end
 Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1])<->$(b.atoms[length(b.atoms)]), pivot=$(b.pivot), range_left=$(b.range_left), connector_left=$(b.connector_left), connector_right=$(b.connector_right))")
+
 
 @doc raw"""
     Rotamer(center::Float64, range::Float64)

@@ -34,18 +34,18 @@ Base.show(io::IO, b::SidechainMutator) = print(io, "SidechainMutator(sidechains=
 @doc raw"""
     run!(state::Common.State, mutator::SidechainMutator)
 
-Iterate over a list of [`Common.Dihedral`](@ref) (`dihedrals`) and perform dihedral movements on the current
-[`Common.State`](@ref). The probability of each dihedral undergo movements is defined in the
-[`DihedralMutator`](@ref).`p_mut`. The new angle is obtained from [`DihedralMutator`](@ref).`angle_sampler`, who should
-return a `Float64` in radians.
-After movement, the [`Common.State`](@ref) is updated with the new conformation.
-Returns the number of rotations performed.
+Iterate over a list of [`Common.SidechainMetadata`](@ref) and perform sidechain mutations on the current
+[`Common.State`](@ref). The probability of each sidechain undergo movements is defined in the
+[`SidechainMutator`](@ref).`p_mut`. The new list of angles (one of each `chi` in the sidechain) is obtained
+from [`SidechainMetadata`](@ref).`rotamers`, and sampled with a random weighted probability, defined in
+[`SidechainMetadata`](@ref).`weights`. After mutation, the [`Common.State`](@ref) is updated with the new conformation.
+Returns the number of mutations performed.
 
 # Examples
 ```julia-repl
-julia> Mutators.Dihedral.run!(state, mutator)
+julia> Mutators.Sidechain.run!(state, mutator)
 ```
-See also: [`Common.rotate_dihedral!`](@ref Common)
+See also: [`Common.rotate_dihedral_to!`](@ref Common)
 """
 @inline function run!(state::Common.State, mutator::SidechainMutator)
     
