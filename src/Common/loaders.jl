@@ -363,7 +363,7 @@ end
     compile_sidechains_metadata(metadata::Metadata)
 
 Return sidechains information, compiling the avaliable information from the provided dihedrals list
-(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
 
 # Examples
 ```julia-repl
@@ -391,7 +391,7 @@ function compile_sidechains_metadata(dihedrals::Vector{Dihedral}, rl::Dict{Strin
         else
             aa = Aux.conv321(cur_res.name)
             for chi_index in 1:length(rl[aa]["rot"])
-                push!(rotamers, Rotamer(rl[aa]["rot"][chi_index], rl[aa]["range"][chi_index]))
+                push!(rotamers, Rotamer(map(deg2rad, rl[aa]["rot"][chi_index]), map(deg2rad, rl[aa]["range"][chi_index])))
             end
             sidechain = SidechainMetadata(sidechain_dihedrals, rotamers, convert(Array{Float64, 1}, rl[aa]["w"]))
             push!(sidechains, sidechain)
