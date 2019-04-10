@@ -37,13 +37,15 @@ rotate_dihedral_to!
 
 ### Metadata
 
-ProtoSyn Metadata defines additional information of the system that is not necessarily requeired for the basic functions of the library, but allows for a better representation of the system. The [`AtomMetadata`](@ref) structure holds information related to each atom in the system, such as its element, connections, etc, while the [`SecondaryStructureMetadata`](@ref) holds informations regarding the system secondary structure organization.
+ProtoSyn [`Metadata`](@ref) defines additional information of the system that is not necessarily requeired for the most basic functions of the library, but allows for a better representation of the system. The structures here defined are "organizations" of the [`State`](@ref).
 
 ```@docs
 Metadata
 AtomMetadata
 SecondaryStructureMetadata
 BlockMetadata
+Rotamer
+SidechainMetadata
 renumber_residues!
 ```
 
@@ -65,7 +67,7 @@ CallbackObject
 
 ## Loaders
 
-This section provides a description on how to load a new [`State`](@ref), [`Residue`](@ref) and [`Dihedral`](@ref) arrays, including the system [`Metadata`](@ref).
+This section provides a description on how to load a new [`State`](@ref) and [`Metadata`](@ref).
 
 ```@docs
 load_from_gro
@@ -73,8 +75,12 @@ load_from_pdb
 load_metadata_from_json
 compile_residue_metadata!
 compile_dihedral_metadata!
+compile_ss_blocks_metadata
+compile_ss_blocks_metadata!
 compile_ss
 compile_blocks
+compile_sidechains_metadata
+compile_sidechains_metadata!
 ```
 
 ## Conformation Generators

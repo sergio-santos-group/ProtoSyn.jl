@@ -43,3 +43,19 @@ A Blockrot movement is the rotation/translation of a defined block according to 
 BlockrotMutator
 run!
 ```
+
+## Sidechain
+
+```@meta
+CurrentModule = Mutators.Sidechain
+```
+
+A Sidechain movement is the mutation of a defined sidechain according to a set of [`SidechainMutator`](@ref) parameters.
+The sidechain mutation implied the rotation of all `Chi` angles to a new set of probable angles defined in
+[`SidechainMetadata`](@ref Common.SidechainMetadata).rotamers, who are sampled based on a random weighted distribution, defined in
+[`SidechainMetadata`](@ref Common.SidechainMetadata).weights.
+
+```@docs
+SidechainMutator
+run!
+```

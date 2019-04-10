@@ -35,6 +35,7 @@ Read the provided secondary structure string `ss` and compile the [`SecondaryStr
 ```julia-repl
 julia> Common.compile_ss_blocks_metadata!(metadata, "CCCHHHHCCEEEECCC")
 ```
+See also: [`compile_ss`](@ref) [`compile_blocks`](@ref)
 """
 function compile_ss_blocks_metadata!(metadata::Metadata, ss::String)
     if length(metadata.residues) != 0
@@ -62,6 +63,7 @@ julia> Common.compile_ss(dihedrals, "CCCHHHHCCEEEECCC")
  SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
  SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
 ```
+See also: [`compile_ss_blocks_metadata!`](@ref Common.compile_ss_blocks_metadata!)
 """
 function compile_ss(dihedrals::Vector{Dihedral}, ss::String)::Vector{SecondaryStructureMetadata}
 
@@ -87,6 +89,7 @@ julia> Common.compile_ss(residues, "CCCHHHHCCEEEECCC")
  SecondaryStructureMetadata(ss_type=HELIX, name=HA, I-4 <-> A-7, conf=1)  
  SecondaryStructureMetadata(ss_type=SHEET, name=BA, A-10 <-> V-13, conf=1)
 ```
+See also: [`compile_ss_blocks_metadata!`](@ref Common.compile_ss_blocks_metadata!)
 """
 function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStructureMetadata}
 
@@ -122,6 +125,7 @@ julia> Common.compile_blocks(dihedrals, "HHHHCCEEEECCC")
  BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135)
  BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)
 ```
+See also: [`compile_ss_blocks_metadata!`](@ref Common.compile_ss_blocks_metadata!)
 """
 function compile_blocks(dihedrals::Vector{Dihedral}, ss::String)::Vector{BlockMetadata}
 
@@ -146,6 +150,7 @@ julia> Common.compile_blocks(residues, "HHHHCCEEEECCC")
  BlockMetadata(atoms=1<->135, pivot=67, range_left=Inf, connector_left=18, connector_right=135)
  BlockMetadata(atoms=177<->362, pivot=269, range_left=1.559, connector_left=177, connector_right=362)
 ```
+See also: [`compile_ss_blocks_metadata!`](@ref Common.compile_ss_blocks_metadata!)
 """
 function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMetadata}
 

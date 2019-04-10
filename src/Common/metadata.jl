@@ -119,6 +119,7 @@ Define a block, containing all the necessary information for [`BlockrotMutator`]
 julia> Common.BlockMetadata([1, 2, 3], 2, 0.8, 1, 3)
 BlockMetadata(atoms=1<->3, pivot=2, range_left=0.8, connector_left=1, connector_right=3)
 ```
+See also: 
 """
 mutable struct BlockMetadata
 

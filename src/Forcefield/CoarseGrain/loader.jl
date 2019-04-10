@@ -37,7 +37,8 @@ end
 @doc raw"""
     compile_solv_pairs(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
 
-Apply default solvation coeficients to the correspondent residue in [`SolvPair`] (@ref)'s.
+Apply default solvation coeficients to the correspondent residue in [`SolvPair`] (@ref)s.
+Return list of [`SolvPair`] (@ref)s.
 
 # Examples
 ```julia-repl

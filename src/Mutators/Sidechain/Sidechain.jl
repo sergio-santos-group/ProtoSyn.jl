@@ -34,18 +34,18 @@ Base.show(io::IO, b::SidechainMutator) = print(io, "SidechainMutator(sidechains=
 @doc raw"""
     run!(state::Common.State, mutator::SidechainMutator)
 
-Iterate over a list of [`Common.SidechainMetadata`](@ref) and perform sidechain mutations on the current
+Iterate over a list of [`SidechainMetadata`](@ref Common.SidechainMetadata) and perform sidechain mutations on the current
 [`Common.State`](@ref). The probability of each sidechain undergo movements is defined in the
 [`SidechainMutator`](@ref).`p_mut`. The new list of angles (one of each `chi` in the sidechain) is obtained
-from [`SidechainMetadata`](@ref).`rotamers`, and sampled with a random weighted probability, defined in
-[`SidechainMetadata`](@ref).`weights`. After mutation, the [`Common.State`](@ref) is updated with the new conformation.
+from [`SidechainMetadata`](@ref Common.SidechainMetadata).`rotamers`, and sampled with a random weighted probability, defined in
+[`SidechainMetadata`](@ref Common.SidechainMetadata).`weights`. After mutation, the [`Common.State`](@ref) is updated with the new conformation.
 Returns the number of mutations performed.
 
 # Examples
 ```julia-repl
 julia> Mutators.Sidechain.run!(state, mutator)
 ```
-See also: [`Common.rotate_dihedral_to!`](@ref Common)
+See also: [`rotate_dihedral_to!`](@ref Common.rotate_dihedral_to!)
 """
 @inline function run!(state::Common.State, mutator::SidechainMutator)
     

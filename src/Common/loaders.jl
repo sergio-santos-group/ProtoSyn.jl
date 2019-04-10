@@ -319,10 +319,10 @@ function compile_dihedral_metadata!(metadata::Metadata)
 end
 
 @doc raw"""
-    compile_sidechains_metadata(metadata::Metadata)
+    compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})
 
-Return sidechains information, compiling the avaliable information from the metadata
-(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+Return sidechains information, compiling the avaliable information from the [`Metadata`](@ref)
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
 
 # Examples
 ```julia-repl
@@ -341,10 +341,10 @@ function compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any}):
 end
 
 @doc raw"""
-    compile_sidechains_metadata(metadata::Metadata)
+    compile_sidechains_metadata!(metadata::Metadata, rl::Dict{String, Any})
 
 Add sidechains information to `metadata`, compiling the avaliable information from the metadata
-(requires pre-existing information regarding the Rotamer Library, from an external JSON file).
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
 
 # Examples
 ```julia-repl
@@ -360,9 +360,9 @@ function compile_sidechains_metadata!(metadata::Metadata, rl::Dict{String, Any})
 end
 
 @doc raw"""
-    compile_sidechains_metadata(metadata::Metadata)
+    compile_sidechains_metadata(dihedrals::Vecotr{Dihedral}, rl::Dict{String, Any})
 
-Return sidechains information, compiling the avaliable information from the provided dihedrals list
+Return [`SidechainMetadata`](@ref) information, compiling the avaliable information from the provided [`Dihedral`](@ref)s list
 (requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
 
 # Examples
@@ -372,6 +372,7 @@ julia> Common.compile_sidechains_metadata!(metadata.dihedrals, aux.read_JSON(rot
  [SidechainMetadata(dihedrals=3, rotamers=2, weights=[0.0254237, 0.0360169],
  (...)]
 ```
+See also: [`SidechainMutator`](@ref Sidechain)
 """
 function compile_sidechains_metadata(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})::Vector{SidechainMetadata}
     if length(dihedrals) == 0
