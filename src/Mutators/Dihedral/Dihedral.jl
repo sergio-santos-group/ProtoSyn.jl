@@ -16,7 +16,7 @@ Holds all necessary parameters for the correct simulation of dihedral movements.
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.DihedralMutator(dihedrals, 0.05, randn, 0.25)
+julia> Mutators.Diehdral.DihedralMutator(dihedrals, randn, 0.05, 0.25)
 DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)
@@ -39,6 +39,7 @@ Iterate over a list of [`Common.Dihedral`](@ref) (`dihedrals`) and perform dihed
 [`DihedralMutator`](@ref).`p_mut`. The new angle is obtained from [`DihedralMutator`](@ref).`angle_sampler`, who should
 return a `Float64` in radians.
 After movement, the [`Common.State`](@ref) is updated with the new conformation.
+Returns the number of rotations performed.
 
 # Examples
 ```julia-repl
@@ -48,11 +49,14 @@ See also: [`Common.rotate_dihedral!`](@ref Common)
 """
 @inline function run!(state::Common.State, mutator::DihedralMutator)
     
+    count::Int64 = 0
     for dihedral in mutator.dihedrals
         if rand() < mutator.p_mut
             Common.rotate_dihedral!(state.xyz, dihedral, mutator.angle_sampler())
+            count += 1
         end
     end
+    return count
 end
 
 end

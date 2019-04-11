@@ -45,5 +45,67 @@ function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Flo
     x = dot(cross(n1, n2), b2) / sqrt(dot(b2, b2))
     y = dot(n1, n2)
     return atan(x, y)
+end
 
+function calc_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64})::Float64
+
+    v21 = a1 - a2
+    v23 = a3 - a2
+    return acos(dot(v21, v23) / (norm(v21) * norm(v23)))
+end
+
+
+@doc raw"""
+    rand_vector_in_sphere()::Vector{Float64}
+
+Return a random vector in a sphere.
+
+# Examples
+```julia-repl
+julia> Aux.rand_vector_in_sphere()
+3-element Array{Float64,1}:
+  0.34470440733141694
+ -0.746086857969672  
+  0.5696782178837796
+```
+"""
+function rand_vector_in_sphere()::Vector{Float64}
+    theta::Float64 = 2 * π * rand()
+    phi::Float64 = acos(1 - 2 * rand())
+    x::Float64 = sin(phi) * cos(theta)
+    y::Float64 = sin(phi) * sin(theta)
+    z::Float64 = cos(phi)
+    return [x, y, z]
+end
+
+@doc raw"""
+    linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float64}, Vector{Int64}})::Float64
+
+Returns the linear regression slope value for the x and y values.
+
+# Examples
+```julia-repl
+julia> Aux.linreg([1, 2, 3], [1, 2, 3])
+1.0
+```
+"""
+function linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float64}, Vector{Int64}})::Float64
+
+    x = convert(Vector{Float64}, x)
+    y = convert(Vector{Float64}, y)
+
+    avgx = sum(x)/length(x)
+    avgy = sum(y)/length(y)
+
+    x_avgx = x .- avgx
+    y_avgy = y .- avgy
+    x_avgx_y_avgy = x_avgx .* y_avgy
+    x_avgx_sq = x_avgx .* x_avgx
+    y_avgy_sq = y_avgy .* y_avgy
+
+    r = sum(x_avgx_y_avgy) / sqrt(sum(x_avgx_sq) * sum(y_avgy_sq))
+    sy = sqrt(sum(y_avgy_sq) / (length(y) - 1))
+    sx = sqrt(sum(x_avgx_sq) / (length(x) - 1))
+
+    return r * (sy/sx)
 end
