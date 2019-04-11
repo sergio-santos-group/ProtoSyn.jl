@@ -19,30 +19,34 @@ Energy
 
 ### Residue
 
-In ProtoSyn, a Residue object is a collection of atoms (normally an aminoacid) that are identified by a name, a secondary structure ([`SSTYPE`](@ref)) and are part of a continuous tree of other Residues (have a `next` Residue).
+In ProtoSyn, a Residue object is a collection of atoms (normally an aminoacid) that are identified by a name and are part of a continuous tree of other Residues (have a `next` Residue).
 
 ```@docs
-SSTYPE
 Residue
 ```
 
 ### Dihedral
 
-A Dihedral is a collection of 4 atoms that define a dihedral in the simulated molecule. Many [Mutators](@ref Mutators) operate over this dihedrals, changing them in order to explore the conformational space of the system. A Dihedral is part of a [`Residue`](@ref) and has a defined [`DIHEDRALTYPE`](@ref).
+A Dihedral is a collection of 4 atoms that define a dihedral in the simulated molecule. Many [Mutators](@ref Mutators) operate over this dihedrals, changing them in order to explore the conformational space of the system. A Dihedral is part of a [`Residue`](@ref) and has a defined DIHEDRAL.TYPE.
 
 ```@docs
-DIHEDRALTYPE
 Dihedral
 rotate_dihedral!
+rotate_dihedral_to!
 ```
 
 ### Metadata
 
-ProtoSyn Metadata defines additional information of the system that is not necessarily necessary for the basic functions of the library, but allows for a better representation of the system. The [`AtomMetadata`](@ref) structure holds information related to each atom in the system, such as its element, connections, etc
+ProtoSyn [`Metadata`](@ref) defines additional information of the system that is not necessarily requeired for the most basic functions of the library, but allows for a better representation of the system. The structures here defined are "organizations" of the [`State`](@ref).
 
 ```@docs
+Metadata
 AtomMetadata
-iter
+SecondaryStructureMetadata
+BlockMetadata
+Rotamer
+SidechainMetadata
+renumber_residues!
 ```
 
 ### State
@@ -63,20 +67,33 @@ CallbackObject
 
 ## Loaders
 
-This section provides a description on how to load a new [`State`](@ref), [`Residue`](@ref) and [`Dihedral`](@ref) arrays.
+This section provides a description on how to load a new [`State`](@ref) and [`Metadata`](@ref).
 
 ```@docs
 load_from_gro
 load_from_pdb
-load_topology
+load_metadata_from_json
+compile_residue_metadata!
+compile_dihedral_metadata!
+compile_ss_blocks_metadata
+compile_ss_blocks_metadata!
+compile_ss
+compile_blocks
+compile_sidechains_metadata
+compile_sidechains_metadata!
 ```
 
 ## Conformation Generators
 
-Conformation generators are responsible to change the system [`State`](@ref) in a defined way.
+Conformation generators are responsible to change the system [`State`](@ref) in a limited and defined way.
 
 ```@docs
-apply_initial_conf!
+apply_ss!
+apply_backbone_from_file!
+apply_backbone_dihedrals_from_file!
+apply_backbone_angles_from_file!
+stretch_conformation!
+fix_proline!
 ```
 
 ## Macros

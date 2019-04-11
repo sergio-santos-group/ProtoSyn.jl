@@ -7,19 +7,17 @@ using Documenter, ProtoSyn
 push!(LOAD_PATH,"../src/")
 
 makedocs(
-    format = :html,
+    format = Documenter.HTML(),
     sitename = "ProtoSyn.jl",
     pages = [
         "Home" => "index.md",
-        # "Guide" => "guide.md",
         "Manual" => [
             "Common" => "common.md",
             "Forcefield" => "forcefield.md",
             "Mutators" => "mutators.md",
             "Drivers" => "drivers.md",
             "Print" => "print.md",
-            "Aux" => "aux.md",
-            "Input JSON Schemas" => "json.md"
+            "Aux" => "aux.md"
         ],
     ]
 )
