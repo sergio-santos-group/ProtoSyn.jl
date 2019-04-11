@@ -3,15 +3,6 @@
 
 #Common.SS.HELIX | Common.SS.SHEET
 module SS
-@doc raw"""
-    SS.TYPE
-
-Define the types of secondary structures currently supported by ProtoSyn library:
-
-- `COIL = 0`
-- `HELIX = 1`
-- `SHEET = 2`
-"""
 @enum TYPE begin
     COIL  = 0
     HELIX = 1
