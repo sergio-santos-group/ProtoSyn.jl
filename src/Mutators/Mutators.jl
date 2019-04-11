@@ -9,5 +9,6 @@ using ..Print
 include("Dihedral/Dihedral.jl")
 include("Crankshaft/Crankshaft.jl")
 include("Blockrot/Blockrot.jl")
+include("Sidechain/Sidechain.jl")
 
 end

@@ -16,7 +16,7 @@ Holds all necessary parameters for the correct simulation of dihedral movements.
 
 # Examples
 ```julia-repl
-julia> Mutators.Diehdral.DihedralMutator(dihedrals, 0.05, randn, 0.25)
+julia> Mutators.Diehdral.DihedralMutator(dihedrals, randn, 0.05, 0.25)
 DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)

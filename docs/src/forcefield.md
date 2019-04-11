@@ -93,6 +93,6 @@ This section provides a description on how to load [Forcefield.Components](#Comp
 
 ```@docs
 CoarseGrain.load_solv_pairs_from_file
-CoarseGrain.load_solv_pairs_default
+CoarseGrain.compile_solv_pairs
 CoarseGrain.compile_hb_groups
 ```

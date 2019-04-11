@@ -30,22 +30,26 @@ function load_solv_pairs_from_file(c_αs::Vector{Int64}, λ_eSol::Float64, input
     for (index, c_α) in enumerate(c_αs)
         push!(solv_pairs, SolvPair(c_α, coefs[index] * confidences[index] * λ_eSol))
     end
+    printstyled("(SETUP) ▲ Loaded $(length(solv_pairs)) solvation pairs\n", color = 9)
     return solv_pairs
 end
 
 @doc raw"""
-    load_solv_pairs_default(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
+    compile_solv_pairs(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
 
-Apply default solvation coeficients to the correspondent residue in [`SolvPair`] (@ref)'s.
+Apply default solvation coeficients to the correspondent residue in [`SolvPair`] (@ref)s.
+Return list of [`SolvPair`] (@ref)s.
 
 # Examples
 ```julia-repl
-julia> Forcefield.CoarseGrain.load_solv_pairs_default(phi_dihedrals, 0.01)
+julia> Forcefield.CoarseGrain.compile_solv_pairs(phi_dihedrals, 0.01)
 [Forcefield.CoarseGrain.SolvPair(i=1, coef=-3.5), Forcefield.CoarseGrain.SolvPair(i=2, coef=2.0), ...]
 ```
 """
-function load_solv_pairs_default(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
-    return map(x -> SolvPair(x.a3, default_aa_coef[string(x.residue.name[1])] * λ_eSol), phi_dihedrals)
+function compile_solv_pairs(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
+    solv_pairs = map(x -> SolvPair(x.a3, default_aa_coef[string(x.residue.name[1])] * λ_eSol), phi_dihedrals)
+    printstyled("(SETUP) ▲ Compiled $(length(solv_pairs)) solvation pairs\n", color = 9)
+    return solv_pairs
 end
 
 
@@ -74,5 +78,6 @@ function compile_hb_groups(atoms::Vector{Common.AtomMetadata}, λ_eSol::Float64)
             filter(atom -> atom.name == "O", residue)[1].index,
             λ_eSol))
     end
+    printstyled("(SETUP) ▲ Compiled $(length(hb_groups)) hydrogen bonding groups\n", color = 9)
     return hb_groups
 end

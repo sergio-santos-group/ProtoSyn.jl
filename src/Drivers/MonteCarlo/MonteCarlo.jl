@@ -79,8 +79,8 @@ julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_cal
 function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
     
     step = 1
-    backup = deepcopy(state)
     driver.evaluator!(state, false)
+    backup = deepcopy(state)
     acceptance_count = 0
     history_x = Vector{Int64}()
     history_y = Vector{Float64}()
@@ -90,13 +90,19 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         driver.sampler!(state)
         driver.evaluator!(state, false)
         
-        if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature))
+        if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature)) # Metropolis
             backup = deepcopy(state)
             push!(history_x, step)
             push!(history_y, state.energy.eTotal)
             acceptance_count += 1
+            if driver.verbose
+                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (ACCEPTED ✔)\n", "MC", step, state.energy.eTotal), color = :green)
+            end
         else
             state = deepcopy(backup)
+            if driver.verbose
+                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (REJECTED ❌)\n", "MC", step, state.energy.eTotal), color = 9)
+            end
         end
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)

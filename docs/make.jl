@@ -17,8 +17,7 @@ makedocs(
             "Mutators" => "mutators.md",
             "Drivers" => "drivers.md",
             "Print" => "print.md",
-            "Aux" => "aux.md",
-            "Input JSON Schemas" => "json.md"
+            "Aux" => "aux.md"
         ],
     ]
 )
