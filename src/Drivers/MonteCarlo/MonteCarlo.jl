@@ -59,7 +59,7 @@ Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.s
 @doc raw"""
     run!(state::Common.State, driver::Driver[, callbacks::Tuple{Common.CallbackObject}...])
 
-Run the main body of the driver. Creates a new conformation based on `driver.sampler!`, evaluates the new conformation energy using `driver.evaluator!`,
+Run the main body of the driver. Create a new conformation based on `driver.sampler!`, evaluates the new conformation energy using `driver.evaluator!`,
 accepting it or not depending on the `driver.temperature` in a Metropolis algorithm. This Monte Carlo process is repeated for `driver.n_steps`, saving the
 accepted structures to `state` and calling all the `callbacks`. 
 
