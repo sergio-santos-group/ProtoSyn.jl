@@ -58,13 +58,13 @@ end
 
 
 @doc raw"""
-    evaluate!(hb_groups::Vector{HbGroup}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(hb_networks::HbNetwork, state::Common.State[, do_forces::Bool = false])::Float64
 
-Evaluate an array of [`HbGroup`](@ref)'s using the current [`Common.State`](@ref),
+Evaluate a [`HbNetwork`](@ref)'s using the current [`Common.State`](@ref),
 calculate and update state.energy according to the coarse-grain model function defined.
 
 ```math
-eH = - \sum_{i = 1}^{n_{i}} \sum_{j = 1}^{n_{i}}  -3.1[cos(\theta _{1})cos(\theta _{2})]^{2}\times \left
+eH = - \sum_{i = 1}^{n_{i}} \sum_{j = 1}^{n_{i}}  -[cos(\theta _{1})cos(\theta _{2})]^{2}\times \left
 [ 5.0 \left (\frac{0.2}{d_{OH}} \right )^{12} - 6.0 \left (\frac{0.2}{d_{OH}} \right )^{10}\right ]
 ```
 
@@ -74,13 +74,13 @@ eH = - \sum_{i = 1}^{n_{i}} \sum_{j = 1}^{n_{i}}  -3.1[cos(\theta _{1})cos(\thet
 
 # Examples
 ```julia-repl
-julia> Forcefield.CoarseGrain.evaluate!(hb_groups, state)
+julia> Forcefield.CoarseGrain.evaluate!(hb_network, state)
 -0.500
 ```
 """
-function evaluate!(hb_groups::Vector{HbGroup}, st::Common.State; do_forces::Bool = false)::Float64
+function evaluate!(hb_network::HbNetwork, st::Common.State; do_forces::Bool = false)::Float64
 
-    n_res::Int64         = length(hb_groups)
+    # n_res::Int64         = length(hb_groups)
     vHN::Vector{Float64} = zeros(Float64, 3)
     vOC::Vector{Float64} = zeros(Float64, 3)
     vHO::Vector{Float64} = zeros(Float64, 3)
@@ -88,27 +88,28 @@ function evaluate!(hb_groups::Vector{HbGroup}, st::Common.State; do_forces::Bool
     c2::Float64          = 0.0
     e_H::Float64         = 0.0 
 
-    for i in 1:(n_res)
-        N = @view st.xyz[hb_groups[i].n, :]
-        H = @view st.xyz[hb_groups[i].h, :]
+    for donor in hb_network.donors
+        N = @view st.xyz[donor.base,    :]
+        H = @view st.xyz[donor.charged, :]
         @. vHN[:] = N - H
 
-        for j in 1:n_res
-            if i==j
+        for acceptor in hb_network.acceptors
+            if acceptor.base == donor.base
                 continue
             end
-            C = @view st.xyz[hb_groups[j].c, :]
-            O = @view st.xyz[hb_groups[j].o, :]
+            C = @view st.xyz[acceptor.base,    :]
+            O = @view st.xyz[acceptor.charged, :]
             @. vOC[:] = C - O
             @. vHO[:] = O - H
             dHO = norm(vHO)
 
             c1 = dot(vHN, vHO) / dHO
             c2 = dot(vOC, vHO) / dHO
-            e_H -= -3.1 * ((c1 * c2)^2) * (5.0 * ((0.2 / dHO)^12) - 6.0 * ((0.2 / dHO)^10)) * hb_groups[i].coef
+            e_H -= - ((c1 * c2)^2) * (5.0 * ((0.2 / dHO)^12) - 6.0 * ((0.2 / dHO)^10))
         end
     end
 
+    e_H *= hb_network.coef
     st.energy.comp["eH"] = e_H
     st.energy.eTotal = e_H
     return e_H

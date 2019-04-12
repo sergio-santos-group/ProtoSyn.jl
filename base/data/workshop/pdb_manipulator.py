@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+     Created   José Pereira     March      2019
+Last updated   José Pereira     April      2019
+"""
 import argparse
 import sys
 import re
@@ -10,16 +14,16 @@ class Atom:
 
     def __init__(self, id=-1, name='NaN', res_name='NaN', chain_name='A', res_id=-1, x=0.0, y=0.0, z=0.0, occ=1.0, tf=0.0, elem='X'):
         self.id         = int(id)
-        self.name       = name
-        self.res_name   = res_name
-        self.chain_name = chain_name
+        self.name       = name.strip()
+        self.res_name   = res_name.strip()
+        self.chain_name = chain_name.strip()
         self.res_id     = int(res_id)
         self.x          = float(x)
         self.y          = float(y)
         self.z          = float(z)
         self.occ        = float(occ)
         self.tf         = float(tf)
-        self.elem       = elem
+        self.elem       = elem.strip()
 
     def as_pdb(self):
         """
@@ -86,7 +90,7 @@ class Protein:
         Usage:
             protein.load_from_pdb("input_file.pdb")
         """
-        pattern = re.compile('ATOM\s+([0-9]+)\s+([A-Z]*[0-9]*)\s+([A-Z]{3})\s+([A-Z]{1})\s*([0-9]+)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s{6}\w?\s+(\w)', flags=re.S)
+        pattern = re.compile('ATOM\s+([0-9]+)\s{2}(.{3})(?:\s+|A)([A-Z]{3})\s+([A-Z]{1})\s*([0-9]+)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s{6}\w?\s+(\w)', flags=re.S)
         with open(file_name, 'r') as file_in:
             results = pattern.findall(file_in.read())
         self.atoms = [Atom(*atom_info) for atom_info in results]
@@ -168,12 +172,13 @@ if __name__ == "__main__":
     parser.add_argument('-gh', help='Group hydrogens (coarse-grain mode only): Distribute, in the present order, all hydrogens, 1 per residue;', action = 'store_true')
     parser.add_argument('-ra', help='Renumber atoms', action = 'store_true')
     parser.add_argument('-rr', help='Renumber residues', action = 'store_true')
+    parser.add_argument('-a', '--all', help='Do all possible functions', action = 'store_true')
     args = parser.parse_args()
 
     protein = Protein()
     protein.load_from_pdb(args.file)
-    if args.rn: protein.uniform_names_as_elem()
-    if args.gh: protein.regroup_hydrogens()
-    if args.ra: protein.renumber_atoms()
-    if args.rr: protein.renumber_residues()
+    if args.rn or args.all: protein.uniform_names_as_elem()
+    if args.gh or args.all: protein.regroup_hydrogens()
+    if args.ra or args.all: protein.renumber_atoms()
+    if args.rr or args.all: protein.renumber_residues()
     protein.as_pdb(args.title, args.out)
