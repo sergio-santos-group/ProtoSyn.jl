@@ -5,30 +5,30 @@ using Random
 using ..Common
 using ..Aux
 
-rng = MersenneTwister(1234)
-
 @doc raw"""
-    SidechainMutator(sidechains::Vector{Common.SidechainMetadata}, p_mut::Float64)
+    SidechainMutator(sidechains::Vector{Common.SidechainMetadata}, rot_lib::Dict{String, Any}, p_mut::Float64)
 
 Holds all necessary parameters for the correct simulation of sidechain movements.
 
 # Arguments
 - `sidechains::Vector{Common.SidechainMetadata}`: List of sidechains avaliable to be mutated in sidechain movements.
+- `rot_lib::Dict{String, Any}`: Dictionary containing all possible dihedrals for each chi of an aminoacid. 
 - `p_mut::Float64`: Probability of mutation of each sidechain.
 
 # Examples
 ```julia-repl
-julia> Mutators.Sidechain.SidechainMutator(sidechains, 0.25)
-SidechainMutator(sidechains=68, p_pmut=0.05)
+julia> Mutators.Sidechain.SidechainMutator(sidechains, rot_lib 0.25)
+SidechainMutator(sidechains=68, (...), p_pmut=0.05)
 ```
 See also: [`run!`](@ref)
 """
 mutable struct SidechainMutator
-    sidechains::Vector{Common.SidechainMetadata}
+    sidechains::Vector{Vector{Common.Dihedral}}
+    rot_lib::Dict{String, Any}
     p_mut::Float64
 end
-SidechainMutator(sidechains::Vector{Common.SidechainMetadata}, p_mut=0.0) = SidechainMutator(sidechains, p_mut)
-Base.show(io::IO, b::SidechainMutator) = print(io, "SidechainMutator(sidechains=$(length(b.sidechains)), p_mut=$(b.p_mut)")
+SidechainMutator(sidechains::Vector{Vector{Common.Dihedral}}, rot_lib::Dict{String, Any}, p_mut=0.0) = SidechainMutator(sidechains, rot_lib, p_mut)
+Base.show(io::IO, b::SidechainMutator) = print(io, "SidechainMutator(sidechains=$(length(b.sidechains)), rot_lib=$(b.rot_lib), p_mut=$(b.p_mut)")
 
 
 @doc raw"""
@@ -52,12 +52,14 @@ See also: [`rotate_dihedral_to!`](@ref Common.rotate_dihedral_to!)
     count::Int64 = 0
     for sidechain in mutator.sidechains
         if rand() < mutator.p_mut
-            rotamer = sidechain.rotamers[sample(1:length(sidechain.weights), Weights(sidechain.weights))]
-            for chi_index in 1:length(rotamer.chis)
-                chi_center = rotamer.chis[chi_index]
-                chi_range  = rotamer.ranges[chi_index]
-                chi_value  = (chi_range/1.175) * randn(rng, Float64, 1) .+ chi_center
-                Common.rotate_dihedral_to!(state.xyz, sidechain.dihedrals[chi_index], chi_value[1])
+            aa = Aux.conv321(sidechain[1].residue.name)
+            rotamer_index = sample(1:length(mutator.rot_lib[aa]["w"]), Weights(convert(Vector{Float64}, mutator.rot_lib[aa]["w"])))
+            rotamer = mutator.rot_lib[aa]["rot"][rotamer_index]
+            for chi_index in 1:length(rotamer)
+                chi_center = rotamer[chi_index]
+                chi_range  = mutator.rot_lib[aa]["range"][rotamer_index][chi_index]
+                chi_value  = (chi_range/1.175) * randn() + chi_center
+                Common.rotate_dihedral_to!(state.xyz, sidechain[chi_index], chi_value)
             end
             count += 1
         end

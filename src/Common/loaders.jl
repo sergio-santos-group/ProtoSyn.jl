@@ -362,19 +362,18 @@ end
 @doc raw"""
     compile_sidechains_metadata(dihedrals::Vecotr{Dihedral}, rl::Dict{String, Any})
 
-Return [`SidechainMetadata`](@ref) information, compiling the avaliable information from the provided [`Dihedral`](@ref)s list
-(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
+Return sidecahin information, as a vector of [`Dihedral`](@ref) vectors, compiling the avaliable information from the provided [`Dihedral`](@ref)s list
 
 # Examples
 ```julia-repl
-julia> Common.compile_sidechains_metadata!(metadata.dihedrals, aux.read_JSON(rotamer_library))
-45-element Array{ProtoSyn.Common.SidechainMetadata,1}:
- [SidechainMetadata(dihedrals=3, rotamers=2, weights=[0.0254237, 0.0360169],
+julia> Common.compile_sidechains_metadata!(metadata.dihedrals)
+45-element Array{Array{ProtoSyn.Common.Dihedral,1}, 1}:
+ [Dihedral(a1=2, a2=3, a3=5, a4=7, movable=[5, 6], residue=Common.Residue(atoms=[1, 2, 3, 4, 5, 6], next=V, name=A), type=phi),
  (...)]
 ```
 See also: [`SidechainMutator`](@ref Sidechain)
 """
-function compile_sidechains_metadata(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})::Vector{SidechainMetadata}
+function compile_sidechains(dihedrals::Vector{Dihedral})::Vector{Vector{Dihedral}}
     if length(dihedrals) == 0
         error("Tried to compile sidechain information from the provided dihedrals list (Length: $(length(dihedrals))), but no dihedral information was found.")
     end
@@ -383,22 +382,15 @@ function compile_sidechains_metadata(dihedrals::Vector{Dihedral}, rl::Dict{Strin
     cur_res                 = all_sidechain_dihedrals[1].residue
     cur_res_index           = 1
     sidechain_dihedrals     = Vector{Dihedral}()
-    sidechains              = Vector{SidechainMetadata}()
-    rotamers                = Vector{Rotamer}()
+    sidechains              = Vector{Vector{Dihedral}}()
 
     for dihedral in all_sidechain_dihedrals
         if cur_res == dihedral.residue
             push!(sidechain_dihedrals, dihedral)
         else
-            aa = Aux.conv321(cur_res.name)
-            for chi_index in 1:length(rl[aa]["rot"])
-                push!(rotamers, Rotamer(map(deg2rad, rl[aa]["rot"][chi_index]), map(deg2rad, rl[aa]["range"][chi_index])))
-            end
-            sidechain = SidechainMetadata(sidechain_dihedrals, rotamers, convert(Array{Float64, 1}, rl[aa]["w"]))
-            push!(sidechains, sidechain)
+            push!(sidechains, sidechain_dihedrals)
             sidechain_dihedrals = Vector{Dihedral}()
             push!(sidechain_dihedrals, dihedral)
-            rotamers = Vector{Rotamer}()
             cur_res = dihedral.residue
         end
     end
