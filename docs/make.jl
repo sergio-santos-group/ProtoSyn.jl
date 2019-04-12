@@ -1,14 +1,6 @@
-if Base.HOME_PROJECT[] !== nothing
-    Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
-  end
-
 using Documenter, ProtoSyn
-
-push!(LOAD_PATH,"../src/")
-
 makedocs(
-    format = Documenter.HTML(),
-    sitename = "ProtoSyn.jl",
+    sitename = "ProtoSyn",
     pages = [
         "Home" => "index.md",
         "Manual" => [
@@ -19,12 +11,5 @@ makedocs(
             "Print" => "print.md",
             "Aux" => "aux.md"
         ],
-    ]
-)
-
-deploydocs(
-    repo = "github.com/sergio-santos-group/ProtoSyn.jl.git",
-    deps = nothing,
-    make = nothing,
-    target = "build",
-)
+])
+deploydocs(repo = "github.com/JosePereiraUA/ProtoSyn.jl.git")

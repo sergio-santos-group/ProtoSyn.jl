@@ -2,19 +2,12 @@
 language: julia
 os:
   - linux
-  #- osx
 julia:
-  #- 0.6
-  #- nightly
   - 1.0
 notifications:
   email: false
 git:
   depth: 99999999
-
-env:
-  - TRAVIS_PULL_REQUEST: false
-
 jobs:
   include:
     - stage: "Documentation"
