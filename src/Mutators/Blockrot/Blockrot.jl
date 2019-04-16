@@ -69,11 +69,15 @@ julia> Mutators.BlockrotMutator.run!(state, mutator)
             pivot = state.xyz[block.pivot, :]'
             for n_try in 1:mutator.n_tries
                 # println("Try $n_try")
-                axis  = Aux.rand_vector_in_sphere()
+                rotation_axis  = Aux.rand_vector_in_sphere()
+                # println("   Rotation Axis: $rotation_axis")
                 angle = mutator.angle_sampler()
-                rmat = Aux.rotation_matrix_from_axis_angle(axis, angle)
+                # println("  Rotation Angle: $angle")
+                rmat = Aux.rotation_matrix_from_axis_angle(rotation_axis, angle)
                 state.xyz[block.atoms, :] = (rmat * (state.xyz[block.atoms, :] .- pivot)')' .+ pivot # Rotation
-                state.xyz[block.atoms, :] .+= rand(1, 3) * mutator.translation_step_size             # Translation
+                translation_axis  = Aux.rand_vector_in_sphere()
+                # println("Translation Axis: $translation_axis")
+                state.xyz[block.atoms, :] .+= translation_axis' * mutator.translation_step_size       # Translation
                 
                 #Check if it's plausible to close
                 if block_index > 1

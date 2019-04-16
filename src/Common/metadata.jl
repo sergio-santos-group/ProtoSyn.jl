@@ -81,13 +81,11 @@ Define a secondary structure metadata, containing extra information pertaining t
 - `f_res_name::String`: Name of the final residue.
 - `f_res_num::Int64`: Index of the final residue.
 - `conf::Int64`: Conformation of the secondary structure. See PDB FORMAT standards.
-- `atoms::Vector{Int64}`: List of atoms contained in this block
-- `pivot::Int64`: Atom as center of mass of this block
 
 # Examples
 ```julia-repl
-julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1, [1, 2, 3, 4], 2)
-SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1, atoms=[1, 2, 3, 4], pivot=2)
+julia> SecondaryStructureMetadata(SS.HELIX, "HA", "V", 4, "A", 7, 1)
+SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1)
 ```
 """
 mutable struct SecondaryStructureMetadata
@@ -121,6 +119,7 @@ Define a block, containing all the necessary information for [`BlockrotMutator`]
 julia> Common.BlockMetadata([1, 2, 3], 2, 0.8, 1, 3)
 BlockMetadata(atoms=1<->3, pivot=2, range_left=0.8, connector_left=1, connector_right=3)
 ```
+See also: 
 """
 mutable struct BlockMetadata
 
@@ -134,20 +133,17 @@ Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1
 
 
 @doc raw"""
-    Metadata([, atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = []])
+    Metadata([, atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [], sidechains::Vector{SidechainMetadata} = []])
 
 Define the state metadata, containing extra information regarding the atoms and secondary structure of the system.
 
 # Examples
 ```julia-repl
-julia> Metadata(atoms, ss, residues, dihedrals)
-Metadata(atoms=(...), ss=(...), residues=(...), dihedrals=(...))
-
-julia> Metadata(atoms = atoms, residues = residues)
-Metadata(atoms=(...), ss=SecondaryStructureMetadata[], residues=(...), dihedrals = Diehdral[])
+julia> Metadata(atoms, ss, residues, dihedrals, blocks, sidechains)
+Metadata(atoms=(...), ss=(...), residues=(...), dihedrals=(...), blocks=(...), sidechains=(...))
 
 julia> Metadata()
-Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[])
+Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[], blocks=[], sidechains=[])
 ```
 """
 mutable struct Metadata
@@ -157,7 +153,6 @@ mutable struct Metadata
     residues::Vector{Residue}
     dihedrals::Vector{Dihedral}
     blocks::Vector{BlockMetadata}
-
 end
 Metadata(;atoms::Vector{AtomMetadata}      = Vector{AtomMetadata}(),
     ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}(),

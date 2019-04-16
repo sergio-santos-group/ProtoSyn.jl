@@ -18,8 +18,9 @@ Define the runtime parameters for the ILSRR algorithm.
 evaluator!(state::Common.State, do_forces::Bool)
 ```
 - `pertubator!::Function`: Responsible for performing conformational changes in the system. It's usually an aggregation of [Mutators](@ref Mutators).
-- `temperature::Float64`: (Optional) Temperature for the Metropolis criteria when performing system perturbation (Default: 0.0)
+- `temperature::Float64`: (Optional) Temperature for the Metropolis criteria when performing system perturbation (Default: 0.0).
 - `n_steps`: (Optional) Total amount of outer cycles to be performed (Default: 0).
+- `continue_after_n_attemps`: (Optional) If defined, will reset to initial structure after `continue_after_n_attemps` jumps who consecutively fail to produce a new optimum (Default: 0).
 - `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 # Examples
@@ -79,41 +80,51 @@ function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObj
         end
     end
 
+    function set_homebase()
+        printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :green)
+        homebase = deepcopy(state)
+        failed_jumps_count = 0
+    end
+
     step::Int64 = 1
     failed_jumps_count::Int64 = 0
     driver.evaluator!(state, false)
-    inner_best = deepcopy(state)
-    homebase   = deepcopy(state)
-    # @Common.cbcall driver.callbacks..., callbacks... step state driver
-    while step <= driver.n_steps
+    inner_best    = deepcopy(state)
+    homebase      = deepcopy(state)
+    initial_state = deepcopy(state)
+    best_energy   = Inf 
+
+    for step in 1:driver.n_steps
         println(@sprintf("\n(%5s) %12s \n%s", "ILSRR", @sprintf("Step: %4d", step), "-"^150))
 
+        inner_best = deepcopy(initial_state)
         driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best)
         state = deepcopy(inner_best)
-
-        step += 1
-        if step <= driver.n_steps
-            @Common.cbcall driver.callbacks..., callbacks... step state driver
-        end
-
-        if state.energy.eTotal < homebase.energy.eTotal || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / driver.temperature))
-            printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :red)
-            homebase = deepcopy(state)
-            failed_jumps_count = 0
+        
+        @Common.cbcall driver.callbacks..., callbacks... step state driver
+        
+        if state.energy.eTotal < best_energy
+            best_energy = state.energy.eTotal
+            set_homebase()
         else
-            failed_jumps_count += 1
-            if driver.continue_after_n_attemps > 0 && failed_jumps_count >= driver.continue_after_n_attemps
-                printstyled(@sprintf("(ILSRR) Exiting because %2d consecutive jumps failed to produce a new homebase\n", failed_jumps_count), color = :red)
-                break
+            if state.energy.eTotal < homebase.energy.eTotal || (rand() < exp(-(state.energy.eTotal - homebase.energy.eTotal) / driver.temperature)) # Metropolis Criteria
+                set_homebase()
+            else
+                failed_jumps_count += 1
+                if driver.continue_after_n_attemps > 0 && failed_jumps_count >= driver.continue_after_n_attemps
+                    printstyled(@sprintf("(ILSRR) Reseting because %2d consecutive jumps failed to produce a new homebase\n", failed_jumps_count), color = :red)
+                    state    = deepcopy(initial_state)
+                    homebase = deepcopy(initial_state)
+                    failed_jumps_count = 0
+                    continue
+                end
+                printstyled(@sprintf("(ILSRR) Recovering to previous homebase (x%2d): ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", failed_jumps_count, state.energy.eTotal, homebase.energy.eTotal), color = 9)
+                state = deepcopy(homebase)
             end
-            printstyled(@sprintf("(ILSRR) Recovering to previous homebase (x%2d): ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", failed_jumps_count, state.energy.eTotal, homebase.energy.eTotal), color = :red)
-            state = deepcopy(homebase)
-        end
-
-        if (step-1) != driver.n_steps
-            driver.perturbator!(state)
-            driver.evaluator!(state, false)
-            inner_best = deepcopy(state)
+            if step != driver.n_steps
+                driver.perturbator!(state)
+                driver.evaluator!(state, false)
+            end
         end
     end
 end

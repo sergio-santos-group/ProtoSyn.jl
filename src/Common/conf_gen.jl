@@ -9,17 +9,23 @@ PHI = -139.0 | PSI = 135.0
 Alpha helix ("H"):
 PHI = -57.0  | PSI = -47.0
 
+If `override` (Default: `false`) is set to `true`, any previous information saved in `metadata.ss` and `metadata.blocks` is recompiled.
+
 # Examples
 ```julia-repl
 julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
-See also: [`compile_ss`](@ref)
+See also: [`compile_ss`](@ref) [`compile_blocks`](@ref)
 """
-function apply_ss!(state::State, metadata::Metadata, ss::String)
+function apply_ss!(state::State, metadata::Metadata, ss::String, override::Bool = false)
 
     # Save secondary structure as metadata
-    metadata.ss     = compile_ss(metadata.dihedrals, ss)
-    metadata.blocks = compile_blocks(metadata.residues, ss)
+    if length(metadata.ss) == 0 || override
+        metadata.ss     = compile_ss(metadata.dihedrals, ss)
+    end
+    if length(metadata.blocks) == 0 || override
+        metadata.blocks = compile_blocks(metadata.residues, ss)
+    end
 
     index::Int64 = 1
     for dihedral in metadata.dihedrals
@@ -28,7 +34,7 @@ function apply_ss!(state::State, metadata::Metadata, ss::String)
             rotate_dihedral_to!(state.xyz, dihedral, Common.ss2bbd[dihedral.residue.ss][dihedral.dtype])
         end
     end
-    printstyled("(  PRE) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks\n", color = 9)
+    printstyled("(SETUP) ▲ Applied secondary structure angles to $(length(metadata.blocks)) blocks\n", color = 9)
 end
 
 
@@ -71,7 +77,7 @@ function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedra
         displacement = template_angle - target_angle
         rotate_dihedral!(target_state.xyz, target_dihedrals[cd], displacement)
     end
-    printstyled("(  PRE) ▲ Applied backbone dihedral angles to $(length(template_dihedrals)) dihedrals\n", color = 9)
+    printstyled("(SETUP) ▲ Applied backbone dihedrals to $(length(template_dihedrals)) dihedrals\n", color = 9)
 end
 
 
@@ -103,7 +109,7 @@ function apply_backbone_angles_from_file!(target_state::State, target_dihedrals:
         movable = collect(target_dihedrals[cd].a2:size(target_state.xyz, 1))
         target_state.xyz[movable, :] = ((rmat * (target_state.xyz[movable, :] .- pivot')') .+ pivot)'
     end
-    printstyled("(  PRE) ▲ Applied backbone angles to $(length(template_dihedrals)) angles\n", color = 9)
+    printstyled("(SETUP) ▲ Applied backbone angles to $(length(template_dihedrals)) angles\n", color = 9)
 end
 
 

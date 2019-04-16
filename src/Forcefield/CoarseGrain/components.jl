@@ -21,27 +21,78 @@ end
 Base.show(io::IO, b::SolvPair) = print(io, "Forcefield.CoarseGrain.SolvPair(i=$(b.i), coef=$(b.coef))")
 
 
-@doc raw"""
-    HbGroup(n::Int64, h::Int64, c::Int64, o::Int64)
+# @doc raw"""
+#     HbGroup(n::Int64, h::Int64, c::Int64, o::Int64)
 
-Hydrogen Bonding group.
+# Hydrogen Bonding group.
+
+# # Arguments
+# - `n::Int64, h::Int64, c::Int64, o::Int64`: *global* indices of the N, H, C and O atoms of one residue;
+# - `coef::Float64`: aminoacid hydrogen bonding coeficient.
+
+# # Examples
+# ```julia-repl
+# julia> Forcefield.CoarseGrain.HbGroup(1, 2, 4, 5, 1.0)
+# Forcefield.CoarseGrain.HbGroup(n=1, h=2, c=4, o=5, coef=1.0)
+# ```
+# See algo: [`CoarseGrain.evaluate!`](@ref)
+# """
+# mutable struct HbGroup
+#     n::Int64
+#     h::Int64
+#     c::Int64
+#     o::Int64
+#     coef::Float64
+# end
+# Base.show(io::IO, b::HbGroup) = print(io, "Forcefield.CoarseGrain.HbGroup(N=$(b.n), H=$(b.h), C=$(b.c), O=$(b.o), coef=$(b.coef))")
+
+
+@doc raw"""
+    HbPair(donors::Vector{HbPair}, acceptors::Vector{HbPair}, coef::Float64)
+
+Hydrogen Bonding pair.
 
 # Arguments
-- `n::Int64, h::Int64, c::Int64, o::Int64`: *global* indices of the N, H, C and O atoms of one residue;
-- `coef::Float64`: aminoacid hydrogen bonding coeficient.
+- `charged::Int64`: *global* index for the charged atom in the HbPair (ex: hydrogen in N-H or oxygen in C=O pairs).
+- `base::Int64`: *global* index for the anchor atom in the HbPair (ex: nitrogen in N-H or carbon in C=O pairs).
 
 # Examples
 ```julia-repl
-julia> Forcefield.CoarseGrain.HbGroup(1, 2, 4, 5, 1.0)
-Forcefield.CoarseGrain.HbGroup(n=1, h=2, c=4, o=5, coef=1.0)
+julia> Forcefield.CoarseGrain.HbPair(13, 14)
+Forcefield.CoarseGrain.HbGroup(charged=13, base=14)
 ```
 See algo: [`CoarseGrain.evaluate!`](@ref)
 """
-mutable struct HbGroup
-    n::Int64
-    h::Int64
-    c::Int64
-    o::Int64
+mutable struct HbPair
+    charged::Int64
+    base::Int64
+end
+Base.show(io::IO, b::HbPair) = print(io, "Forcefield.CoarseGrain.HbPair(charged=$(b.charged), base=$(b.base))")
+
+
+@doc raw"""
+    HbNetwork(donors::Vector{HbPair}, acceptors::Vector{HbPair}, coef::Float64)
+
+Hydrogen Bonding network, defined by the combination os all `donors` and `acceptors` here defined. The energy contribution of this
+`HbNetwork` is multiplied by the defined `coef`.
+
+# Arguments
+- `donors::Vector{HbPair}`: List of hydrogen bond donor pairs.
+- `acceptors::Vector{HbPair}`: List of hydrogen bond acceptor pairs.
+- `coef::Float64`: λ hydrogen bond energy coeficient.
+
+# Examples
+```julia-repl
+julia> Forcefield.CoarseGrain.HbNetwork(donors, acceptors, 1.0)
+Forcefield.CoarseGrain.HbGroup(donors=10, acceptors=10, coef=1.0)
+```
+See algo: [`CoarseGrain.evaluate!`](@ref)
+"""
+mutable struct HbNetwork
+    donors::Vector{HbPair}
+    acceptors::Vector{HbPair}
     coef::Float64
 end
-Base.show(io::IO, b::HbGroup) = print(io, "Forcefield.CoarseGrain.HbGroup(N=$(b.n), H=$(b.h), C=$(b.c), O=$(b.o), coef=$(b.coef))")
+HbNetwork(; coef = 0.0) = HbNetwork(Vector{HbPair}(), Vector{HbPair}(), coef)
+Base.show(io::IO, b::HbNetwork) = print(io, "Forcefield.CoarseGrain.HbNetwork(donors=$(length(b.donors)), acceptors=$(length(b.acceptors)), coef=$(b.coef))")
+Base.length(b::HbNetwork) = (length(b.donors), length(b.acceptors))

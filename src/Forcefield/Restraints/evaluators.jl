@@ -1,37 +1,3 @@
-#TODO: Document function
-# function calc_eSol!(st::Common.State, residues::Vector{Common.Residue})
-    
-#     # Create solvation pairs
-#     d = Dict("Q" => -3.5, "W" => -0.9, "T" => -0.7, "C" =>  2.5, "P" => -1.6, "V" =>  4.2, "L" =>  3.8, "M" =>  1.9, "N" => -3.5, "H" => -3.2,
-#              "A" =>  1.8, "D" => -3.5, "G" => -0.4, "E" => -3.5, "Y" => -1.3, "I" =>  4.5, "S" => -0.8, "K" => -3.9, "R" => -4.5, "F" =>  2.8)
-#     solv_pairs = map(x -> SolvPair(x.cα, d[Aux.conv321(string(x.name))]), residues)
-    
-#     # Calculate solvation energy
-#     n_atoms = length(solv_pairs)
-#     l = zeros(Float64, 3)
-#     e_sol::Float64 = 0.0
-#     sum_f::Float64 = 0.0
-#     for i in 1:(n_atoms - 1)
-#         Ai = @view st.xyz[solv_pairs[i].i,:]
-#         sum_f = 0.0
-#         for j in (i+1):n_atoms
-#             Aj = @view st.xyz[solv_pairs[j].i,:]
-#             @. l[:] = Aj - Ai
-#             dIJ = norm(l)
-#             f = 1.0 / (1.0 + exp(-(12.0-dIJ) / 0.4))
-#             sum_f += f
-#         end
-#         if ((sum_f < 21.0) && (solv_pairs[i].coef > 0.0)) || ((sum_f > 21.0) && (solv_pairs[i].coef < 0.0))
-#             e_sol += solv_pairs[i].coef * (21.0 - sum_f)
-#         end
-#     end
-
-#     st.energy.comp["eSol"] = e_sol
-#     st.energy.eTotal = e_sol
-#     return e_sol
-# end
-
-
 @doc raw"""
     evaluate!(topology::Vector{DistanceFBR}, state::Common.State[, do_forces::Bool = false])::Float64
 
@@ -49,39 +15,47 @@ julia> Forcefield.Restraints.evaluate!(distances, state)
 function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::Bool = false)
     # All distances are in nm
 
-    eDistanceFBR::Float64 = 0.0
-    v12::Vector{Float64} = zeros(Float64, 3)
-    f::Vector{Float64} = zeros(Float64, 3)
+    eDistanceFBR = .0
+    v12          = [.0, .0, .0]
+    f            = [.0, .0, .0]
+    forces       = st.forces
     for pair in topology
-        @views @. v12 = st.xyz[pair.a2, :] - st.xyz[pair.a1, :]
-        d12 = norm(v12)
+        d12 = .0
+        @inbounds for i=1:3
+            delta  = st.xyz[pair.a2, i] - st.xyz[pair.a1, i]
+            v12[i] = delta
+            d12   += delta ^ 2
+        end
+        d12 = sqrt(d12)
         if d12 < pair.r1
-            dr1::Float64 = pair.r1 - pair.r2
-            e1::Float64 = pair.c * dr1 * dr1 * 0.5
-            dr = d12 - pair.r1
-            eDistanceFBR += (pair.c * dr1) * dr + e1
-            fconst = (pair.c * dr1)
+            dr1           = pair.r1 - pair.r2
+            fconst        = pair.c * dr1
+            e1            = fconst * dr1
+            dr            = d12 - pair.r1
+            eDistanceFBR += fconst * dr + e1 * 0.5
         elseif d12 < pair.r2
-            dr = d12 - pair.r2
-            eDistanceFBR += pair.c * dr * dr * 0.5
-            fconst = (pair.c * dr)
+            dr            = d12 - pair.r2
+            fconst        = pair.c * dr
+            eDistanceFBR += fconst * dr * 0.5
         elseif d12 < pair.r3
             continue
         elseif d12 < pair.r4
-            dr = d12 - pair.r3
-            eDistanceFBR += pair.c * dr * dr * 0.5
-            fconst = (pair.c * dr)
+            dr            = d12 - pair.r3
+            fconst        = pair.c * dr
+            eDistanceFBR += fconst * dr * 0.5
         else
-            dr2::Float64 = pair.r4 - pair.r3
-            e2::Float64 = pair.c * dr2 * dr2 * 0.5
-            dr = d12 - pair.r4
-            eDistanceFBR += (pair.c * dr2) * dr + e2
-            fconst = (pair.c * dr2)
+            dr2           = pair.r4 - pair.r3
+            fconst        = (pair.c * dr2)
+            e2            = fconst * dr2
+            dr            = d12 - pair.r4
+            eDistanceFBR += fconst * dr + e2 * 0.5
         end
         if do_forces
-            @. f = v12 * fconst / d12
-            @. st.forces[pair.a1, :] += f
-            @. st.forces[pair.a2, :] -= f
+            @inbounds for i=1:3
+                f = v12[i] * fconst / d12
+                forces[pair.a1, i] += f
+                forces[pair.a2, i] -= f
+            end
         end
     end
 
@@ -108,69 +82,91 @@ julia> Forcefield.Restraints.evaluate!(dihedrals, state)
 function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::Bool = false)
     # All distances are in nm and angles in rad
 
-    eDihedralFBR::Float64 = 0.0
-    v12 = zeros(Float64, 3)
-    v32 = zeros(Float64, 3)
-    v34 = zeros(Float64, 3)
-    f1 = zeros(Float64, 3)
-    f3 = zeros(Float64, 3)
-    f4 = zeros(Float64, 3)
-    m = zeros(Float64, 3)
-    n = zeros(Float64, 3)
+    eDihedralFBR = .0
+    v12          = [.0, .0, .0]
+    v32          = [.0, .0, .0]
+    v34          = [.0, .0, .0]
+    f1           = [.0, .0, .0]
+    f3           = [.0, .0, .0]
+    f4           = [.0, .0, .0]
+    m            = [.0, .0, .0]
+    n            = [.0, .0, .0]
+    coords       = st.xyz
+    forces       = st.forces
 
     for dihedral in topology
-        # println("Dihedral: $dihedral")
-        # println("eDihedral: $eDihedralFBR")
-        # println("State: $(st.xyz)")
-        @views @. v12 = st.xyz[dihedral.a2, :] - st.xyz[dihedral.a1, :]
-        @views @. v32 = st.xyz[dihedral.a2, :] - st.xyz[dihedral.a3, :]
-        @views @. v34 = st.xyz[dihedral.a4, :] - st.xyz[dihedral.a3, :]
-        m = cross(v12, v32)
-        n = cross(v32, v34)
-        # println("M: $m | N: $n")
-        d32Sq = dot(v32, v32)
-        d32 = sqrt(d32Sq)
-        # println("V12: $v12 | D32: $d32")
-        phi = - atan(d32 * dot(v12, n), dot(m, n))
-        # println("Current: $(rad2deg(phi))")
+
+        d32Sq  = .0
+        d3432  = .0
+        d1232  = .0
+
+        @inbounds for i=1:3
+            a1 = coords[dihedral.a1, i]
+            a2 = coords[dihedral.a2, i]
+            a3 = coords[dihedral.a3, i]
+            a4 = coords[dihedral.a4, i]
+
+            delta12 = a2 - a1
+            v12[i]  = delta12
+
+            delta32 = a2 - a3
+            v32[i]  = delta32
+            d32Sq  += delta32*delta32
+
+            delta34 = a4 - a3
+            v34[i]  = delta34
+
+            d3432  += delta34 * delta32
+            d1232  += delta12 * delta32
+        end
+
+        m       = cross(v12, v32)
+        n       = cross(v32, v34)
+        d32     = sqrt(d32Sq)
+        phi     = - atan(d32 * dot(v12, n), dot(m, n))
 
         if phi <= dihedral.r1
-            # println("Stage 1")
-            dr1::Float64 = dihedral.r1 - dihedral.r2
-            e1::Float64 = dihedral.c * dr1 * dr1 * 0.5
-            dr = phi - dihedral.r1
-            eDihedralFBR += (dihedral.c * dr1) * dr + e1
-            dVdphi_x_d32 = (dihedral.c * dr1) * d32
+            dr1           = dihedral.r1 - dihedral.r2
+            cdr1          = dihedral.c * dr1
+            e1            = cdr1 * dr1 * 0.5
+            dr            = phi - dihedral.r1
+            eDihedralFBR += cdr1 * dr + e1
+            dVdphi_x_d32  = cdr1 * d32
         elseif phi <= dihedral.r2
-            # println("Stage 2")
-            dr = phi - dihedral.r2
-            eDihedralFBR += dihedral.c * dr * dr * 0.5 
-            dVdphi_x_d32 = dihedral.c * dr * d32
+            dr            = phi - dihedral.r2
+            cdr2          = dihedral.c * dr
+            eDihedralFBR += cdr2 * dr * 0.5 
+            dVdphi_x_d32  = cdr2 * d32
         elseif phi <= dihedral.r3
-            # println("Stage 3")
             continue
         elseif phi <= dihedral.r4
-            # println("Stage 4")
-            dr = phi - dihedral.r3
-            eDihedralFBR += dihedral.c * dr * dr * 0.5
-            dVdphi_x_d32 = dihedral.c * dr * d32
+            dr            = phi - dihedral.r3
+            cdr4          = dihedral.c * dr
+            eDihedralFBR += cdr4 * dr * 0.5
+            dVdphi_x_d32  = cdr4 * d32
         else
-            # println("Stage 5")
-            dr2::Float64 = dihedral.r4 - dihedral.r3
-            e2::Float64 = dihedral.c * dr2 * dr2 * 0.5
-            dr = phi - dihedral.r4
-            eDihedralFBR += (dihedral.c * dr2) * dr + e2
-            dVdphi_x_d32 = (dihedral.c * dr2) * d32
+            dr2           = dihedral.r4 - dihedral.r3
+            cdr5          = dihedral.c * dr2
+            e2            = cdr5 * dr2 * 0.5
+            dr            = phi - dihedral.r4
+            eDihedralFBR += cdr5 * dr + e2
+            dVdphi_x_d32  = cdr5 * d32
         end
         if do_forces
-            f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
-            f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
-            f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
-            # println("Forces:\n a1: $(f1)\n a1: $(-f1-f3-f4)\n a1: $(f3)\n a1: $(f4)")
-            @. st.forces[dihedral.a1, :] += f1
-            @. st.forces[dihedral.a2, :] += (-f1 - f3 - f4)
-            @. st.forces[dihedral.a3, :] += f3
-            @. st.forces[dihedral.a4, :] += f4
+            f1mm = -dVdphi_x_d32 / dot(m, m)
+            f4nn = dVdphi_x_d32 / dot(n, n)
+            f3_1 = (d3432/d32Sq - 1.0)
+            f3_2 = (d1232/d32Sq)
+            @inbounds for i=1:3
+                f1 = m[i] * f1mm
+                f4 = n[i] * f4nn
+                f3 = f4 * f3_1 - f1 * f3_2
+
+                forces[dihedral.a1, i] += f1
+                forces[dihedral.a2, i] += (-f1 - f3 - f4)
+                forces[dihedral.a3, i] += f3
+                forces[dihedral.a4, i] += f4
+            end
         end
     end
 

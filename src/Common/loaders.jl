@@ -200,7 +200,7 @@ end
 @doc raw"""
     compile_dihedral_metadata!(metadata::Metadata)
 
-Add dihedrasl information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
+Add dihedrals information to `metadata`, compiling the avaliable information from the metadata (requires pre-existing information regarding the AtomMetadata).
 
 # Examples
 ```julia-repl
@@ -288,7 +288,7 @@ function compile_dihedral_metadata!(metadata::Metadata)
         # Start the dihedral path
         path = ["N", "CA"]
         # Based on the `residue.name`, the possible path taken by the iteration is different. This accounts for cyclic aminoacids.
-        possible_queries = residue[1].res_name in ("HIE", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
+        possible_queries = residue[1].res_name in ("HIS", "PHE", "TRP", "TYR") ? "BGD" : "BGDEZH"
         # Join all atom names in this residue in a single string, dividing atom names with ":". This will allow identification of the dihedral using regular expressions.
         atnames = string(":", join(map(atom -> atom.name, residue), ":"), ":")
         # Iterate over the given possible path for the side-chain.
@@ -316,4 +316,84 @@ function compile_dihedral_metadata!(metadata::Metadata)
         end
     end
     metadata.dihedrals = dihedrals
+end
+
+@doc raw"""
+    compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})
+
+Return sidechains information, compiling the avaliable information from the [`Metadata`](@ref)
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata, aux.read_JSON(rotamer_library))
+45-element Array{ProtoSyn.Common.SidechainMetadata,1}:
+ [SidechainMetadata(dihedrals=3, rotamers=2, weights=[0.0254237, 0.0360169],
+ (...)]
+```
+"""
+function compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})::Vector{SidechainMetadata}
+    if length(metadata.dihedrals) != 0
+        return compile_sidechains_metadata(metadata.dihedrals, rl)
+    else
+        error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
+    end
+end
+
+@doc raw"""
+    compile_sidechains_metadata!(metadata::Metadata, rl::Dict{String, Any})
+
+Add sidechains information to `metadata`, compiling the avaliable information from the metadata
+(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata, aux.read_JSON(rotamer_library))
+```
+"""
+function compile_sidechains_metadata!(metadata::Metadata, rl::Dict{String, Any})
+    if length(metadata.dihedrals) != 0
+        metadata.sidechains  = compile_sidechains_metadata(metadata.dihedrals, rl)
+    else
+        error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
+    end
+end
+
+@doc raw"""
+    compile_sidechains_metadata(dihedrals::Vecotr{Dihedral}, rl::Dict{String, Any})
+
+Return sidecahin information, as a vector of [`Dihedral`](@ref) vectors, compiling the avaliable information from the provided [`Dihedral`](@ref)s list
+
+# Examples
+```julia-repl
+julia> Common.compile_sidechains_metadata!(metadata.dihedrals)
+45-element Array{Array{ProtoSyn.Common.Dihedral,1}, 1}:
+ [Dihedral(a1=2, a2=3, a3=5, a4=7, movable=[5, 6], residue=Common.Residue(atoms=[1, 2, 3, 4, 5, 6], next=V, name=A), type=phi),
+ (...)]
+```
+See also: [`SidechainMutator`](@ref Sidechain)
+"""
+function compile_sidechains(dihedrals::Vector{Dihedral})::Vector{Vector{Dihedral}}
+    if length(dihedrals) == 0
+        error("Tried to compile sidechain information from the provided dihedrals list (Length: $(length(dihedrals))), but no dihedral information was found.")
+    end
+
+    all_sidechain_dihedrals = filter(x -> x.dtype > Common.DIHEDRAL.omega, dihedrals)
+    cur_res                 = all_sidechain_dihedrals[1].residue
+    cur_res_index           = 1
+    sidechain_dihedrals     = Vector{Dihedral}()
+    sidechains              = Vector{Vector{Dihedral}}()
+
+    for dihedral in all_sidechain_dihedrals
+        if cur_res == dihedral.residue
+            push!(sidechain_dihedrals, dihedral)
+        else
+            push!(sidechains, sidechain_dihedrals)
+            sidechain_dihedrals = Vector{Dihedral}()
+            push!(sidechain_dihedrals, dihedral)
+            cur_res = dihedral.residue
+        end
+    end
+    printstyled("(SETUP) ▲ Compiled metadata information of $(length(sidechains)) sidechains\n", color = 9)
+    return sidechains
 end

@@ -72,7 +72,7 @@ print_structure_best = @Common.callback 1 function _print_structure_best(step::I
     if st.energy.eTotal < outer_best_energy
         Print.as_pdb(outer_best_destination, st, metadata, step = step)
         flush(outer_best_destination)
-        printstyled(@sprintf("(ILSRR) New outer best defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", outer_best_energy, st.energy.eTotal), color = :red)
+        printstyled(@sprintf("(ILSRR) New outer best defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", outer_best_energy, st.energy.eTotal), color = :green)
         outer_best_energy = st.energy.eTotal
         
         #Print energy
@@ -116,3 +116,5 @@ reset_step_size = @Common.callback 1 function cb_reset_step_size(step::Int64, st
     reg_dh_mutator.step_size = reg_dh_step_s
     reg_cs_mutator.step_size = reg_cs_step_s
 end
+
+println(out_ene, @sprintf("%6s %6s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s %11s", "", "Step", "eTotal", "eBond", "eAngle", "eDihedral", "eCoulomb", "eCoulomb14", "eLJ", "eLJ14", "eContacts", "eSol", "eH", "eDihedralFBR"))

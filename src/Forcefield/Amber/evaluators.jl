@@ -3,27 +3,36 @@
 """
 function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
-    energy::Float64 = 0.0
-    v12 = zeros(Float64, 3)
+    energy = .0
+    delta  = .0
+    d12    = .0
+    v12    = [.0, .0, .0]
+    forces = state.forces
+    coords = state.xyz
 
-    for bond in bonds
-        @views @. v12 = state.xyz[bond.a2, :] - state.xyz[bond.a1, :]
-        d12 = norm(v12)
+    @inbounds for bond in bonds
+        d12 = .0
+        @inbounds for i=1:3
+            delta = coords[bond.a2, i] - coords[bond.a1, i]
+            v12[i] = delta
+            d12 += delta ^ 2
+        end
+        d12 = sqrt(d12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
-        # printstyled(bond, color=:blue)
-        # println(": $d12")
-        # printstyled("Energy: ", color=:blue)
-        # println(0.5*(bond.k * dr * dr), "\n")
+        delta = bond.k * dr / d12
         if do_forces
-            @. v12 *= (bond.k * dr / d12)
-            @. state.forces[bond.a1, :] += v12
-            @. state.forces[bond.a2, :] -= v12
+            @inbounds for i=1:3
+                forces[bond.a1, i] += delta * v12[i]
+                forces[bond.a2, i] -= delta * v12[i]
+            end
         end
     end
-    state.energy.comp["eBond"] = 0.5 * energy
-    state.energy.eTotal = 0.5 * energy
-    return 0.5 * energy
+
+    energy *= .5
+    state.energy.comp["eBond"] = energy
+    state.energy.eTotal = energy
+    return energy
 end
 
 @doc raw"""
@@ -31,39 +40,58 @@ end
 """
 function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
-    v12 = zeros(Float64, 3)
-    v32 = zeros(Float64, 3)
-    f1 = zeros(Float64, 3)
-    f3 = zeros(Float64, 3)
-    energy = 0.0
+    energy     = .0
+    delta      = .0
+    d12        = .0
+    v12        = [.0, .0, .0]
+    v32        = [.0, .0, .0]
+    forces     = state.forces
+    coords     = state.xyz
 
-    for angle in angles
-        @views @. v12 = state.xyz[angle.a2, :] - state.xyz[angle.a1, :]
-        @views @. v32 = state.xyz[angle.a2, :] - state.xyz[angle.a3, :]
-        
-        d12Sq = dot(v12, v12)
-        d32Sq = dot(v32, v32)
+    @inbounds for angle in angles
+        ctheta = .0
+        d12Sq  = .0
+        d32Sq  = .0
+
+        @inbounds for i=1:3
+            a1 = coords[angle.a1, i]
+            a2 = coords[angle.a2, i]
+            a3 = coords[angle.a3, i]
+
+            delta  = a2 - a1
+            v12[i] = delta
+            d12Sq += delta*delta
+
+            delta2  = a2 - a3
+            v32[i] = delta2
+            d32Sq += delta2*delta2
+
+            ctheta += delta*delta2
+        end
+
         d12xd32 = sqrt(d12Sq * d32Sq)
-        ctheta = dot(v12, v32) / d12xd32
-        dtheta = acos(ctheta) - angle.θ
-
-        energy += angle.k * dtheta * dtheta
-        # printstyled(angle, color=:blue)
-        # println(": $(acos(ctheta))")
-        # printstyled("Energy: ", color=:blue)
-        # println(0.5 * angle.k * dtheta * dtheta, "\n")
+        ctheta /= d12xd32
+        dtheta  = acos(ctheta) - angle.θ
+        kdtheta = angle.k * dtheta
+        energy += kdtheta * dtheta
+        
         if do_forces
-            fc = angle.k * dtheta / sqrt(1.0 - ctheta * ctheta)
-            @. f1 = fc * (ctheta * v12/d12Sq - v32/d12xd32)
-            @. f3 = fc * (ctheta * v32/d32Sq - v12/d12xd32)
-            @. state.forces[angle.a1, :] += f1
-            @. state.forces[angle.a3, :] += f3
-            @. state.forces[angle.a2, :] -= (f1 + f3)
+            fc = kdtheta / sqrt(1.0 - ctheta * ctheta)
+            @inbounds for i=1:3
+                f1 = fc*(ctheta * v12[i]/d12Sq - v32[i]/d12xd32)
+                f3 = fc*(ctheta * v32[i]/d32Sq - v12[i]/d12xd32)
+
+                forces[angle.a1, i] += f1 
+                forces[angle.a3, i] += f3
+                forces[angle.a2, i] -= (f3+f1)
+            end
         end
     end
-    state.energy.comp["eAngle"] = 0.5 * energy
-    state.energy.eTotal = 0.5 * energy
-    return 0.5 * energy
+
+    energy *= 0.5
+    state.energy.comp["eAngle"] = energy
+    state.energy.eTotal = energy
+    return energy
 end
 
 @doc raw"""
@@ -71,49 +99,66 @@ end
 """
 function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
-    v12 = zeros(Float64, 3)
-    v32 = zeros(Float64, 3)
-    v34 = zeros(Float64, 3)
-    f1 = zeros(Float64, 3)
-    f3 = zeros(Float64, 3)
-    f4 = zeros(Float64, 3)
-    m = zeros(Float64, 3)
-    n = zeros(Float64, 3)
-    
-    energy::Float64 = 0.0
+    energy     = .0
+    delta12    = .0
+    delta32    = .0
+    delta34    = .0
+    v12        = [.0, .0, .0]
+    v32        = [.0, .0, .0]
+    v34        = [.0, .0, .0]
+    forces     = state.forces
+    coords     = state.xyz
 
-    for dihedral in dihedralsCos
-        @views @. v12 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a1, :]
-        @views @. v32 = state.xyz[dihedral.a2, :] - state.xyz[dihedral.a3, :]
-        @views @. v34 = state.xyz[dihedral.a4, :] - state.xyz[dihedral.a3, :]
-        m = cross(v12, v32)
-        n = cross(v32, v34)
-        d32Sq = dot(v32, v32)
-        d32 = sqrt(d32Sq)
-        phi = atan(d32 * dot(v12, n), dot(m, n))
-        
+    @inbounds for dihedral in dihedralsCos
+        d32Sq  = .0
+        d3432  = .0
+        d1232  = .0
+
+        @inbounds for i=1:3
+            a1 = coords[dihedral.a1, i]
+            a2 = coords[dihedral.a2, i]
+            a3 = coords[dihedral.a3, i]
+            a4 = coords[dihedral.a4, i]
+
+            delta12 = a2 - a1
+            v12[i]  = delta12
+
+            delta32 = a2 - a3
+            v32[i]  = delta32
+            d32Sq  += delta32*delta32
+
+            delta34 = a4 - a3
+            v34[i]  = delta34
+
+            d3432  += delta34 * delta32
+            d1232  += delta12 * delta32
+        end
+
+        m       = cross(v12, v32)
+        n       = cross(v32, v34)
+        d32     = sqrt(d32Sq)
+        phi     = atan(d32 * dot(v12, n), dot(m, n))
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
-        # printstyled(dihedral, color=:blue)
-        # println(": $phi")
-        # printstyled("Energy: ", color=:blue)
-        # println(dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ)), "\n")
-
+        
         if do_forces
             dVdphi_x_d32 = dihedral.k * dihedral.mult * sin(dihedral.θ - dihedral.mult * phi) * d32
-            f1 .= m .* (-dVdphi_x_d32 / dot(m, m))
-            f4 .= n .* ( dVdphi_x_d32 / dot(n, n))
-            f3 .= f4 .* (dot(v34, v32)/d32Sq - 1.0) .- f1 .* (dot(v12, v32)/d32Sq)
-            
-            # @. f3 = -f4
-            # @. f3 -= f1 * (dot(v12, v32)/d32Sq)
-            # @. f3 += f4 * (dot(v34, v32)/d32Sq)
-            
-            @. state.forces[dihedral.a1, :] -= f1
-            @. state.forces[dihedral.a2, :] -= (-f1 - f3 - f4)
-            @. state.forces[dihedral.a3, :] -= f3
-            @. state.forces[dihedral.a4, :] -= f4
+            f1mm = -dVdphi_x_d32 / dot(m, m)
+            f4nn = dVdphi_x_d32 / dot(n, n)
+            f3_1 = (d3432/d32Sq - 1.0)
+            f3_2 = (d1232/d32Sq)
+            @inbounds for i=1:3
+                f1 = m[i] * f1mm
+                f4 = n[i] * f4nn
+                f3 = f4 * f3_1 - f1 * f3_2
+
+                forces[dihedral.a1, i] -= f1
+                forces[dihedral.a2, i] -= (-f1 - f3 - f4)
+                forces[dihedral.a3, i] -= f3
+                forces[dihedral.a4, i] -= f4
+            end
         end
     end
+
     state.energy.comp["eDihedral"] = energy
     state.energy.eTotal = energy
     return energy
@@ -137,22 +182,24 @@ julia> Forcefield.Amber.evaluate!(bonds, state)
 See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
-function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0, eCoulomb_λ::Float64 = 1.0)::Float64
+function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0,
+    eCoulomb_λ::Float64 = 1.0)::Float64
 
-    eLJ = 0.0
-    eLJ14 = 0.0
-    eCoulomb = 0.0
-    eCoulomb14 = 0.0
-
-    n_atoms = length(atoms)
-    vij = zeros(Float64, 3)
-    cut_offSq = cut_off*cut_off
-    exclude_idx::Int64 = 1
-    exclude::Int64 = 1
+    eLJ         = .0
+    eLJ14       = .0
+    eCoulomb    = .0
+    eCoulomb14  = .0
+    n_atoms     = length(atoms)
+    vij         = [.0, .0, .0]
+    cut_offSq   = cut_off*cut_off
+    exclude_idx = 1
+    exclude     = 1
+    coords      = state.xyz
+    forces      = state.forces
     
     #Calculate nonbonded interactions
     for i in 1:(n_atoms - 1)
-        atomi::Atom = atoms[i]
+        atomi = atoms[i]
         
         # set the exclution index to the correct location and extract the exclude atom index
         if length(atomi.excls) > 0
@@ -164,18 +211,22 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         end
 
         for j in (i+1):(n_atoms)
-            
+        
             if j == exclude
                 exclude_idx += 1
                 exclude = atomi.excls[exclude_idx]
                 continue
             end
-            atomj::Atom = atoms[j]
+            atomj = atoms[j]
             
-            @views @. vij = state.xyz[j, :] - state.xyz[i, :]
+            dijSq = .0
+            @inbounds for k=1:3
+                deltaij = coords[j, k] - coords[i, k]
+                vij[k]  = deltaij
+                dijSq  += deltaij * deltaij
+            end
 
             #Check if the distance between the two atoms is below cut-off
-            dijSq = dot(vij, vij)
             if dijSq > cut_offSq
                 continue
             end
@@ -187,17 +238,15 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             eLJ += eij * (lj6 * lj6 - lj6)
             ecoul = atomi.q * atomj.q / sqrt(dijSq)
             eCoulomb += eCoulomb_λ * ecoul
-            # printstyled(i, " - ", atomi, "\n", j, " - ", atomj, color=:blue)
-            # println(": $(sqrt(dijSq))")
-            # printstyled("Energy: ", color=:blue)
-            # println(ecoul, "\n")
 
             #Calculate forces, if requested
             if do_forces
                 fc = (24.0 * eij * (lj6 - 2.0 * lj6 * lj6) - ecoul) / dijSq
-                @. vij *= fc
-                @. state.forces[i, :] += vij
-                @. state.forces[j, :] -= vij
+                @inbounds for k=1:3
+                    t = vij[k] * fc
+                    forces[i, k] += t
+                    forces[j, k] -= t
+                end
             end
         end
     end
@@ -215,23 +264,29 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         for j in atomi.pairs
             
             atomj = atoms[j]
-            @views @. vij = state.xyz[j, :] - state.xyz[i, :]
-            dijSq = dot(vij, vij)
+            dijSq = .0
+            @inbounds for k=1:3
+                deltaij = coords[j, k] - coords[i, k]
+                vij[k]  = deltaij
+                dijSq  += deltaij * deltaij
+            end
             
             sij = atomi.σ + atomj.σ
-            eij = evdw_scale * atomi.ϵ * atomj.ϵ
+            eij = evdw_scale * atomi.ϵ * atomj.ϵ 
             qij = ecoul_scale * atomi.q * atomj.q
             lj6 = (sij * sij/dijSq) ^ 3
-            eLJ14 += eij * (lj6 * lj6 - lj6)
+            eLJ14 += eij * ((lj6 ^ 2) - lj6)
             ecoul = qij / sqrt(dijSq)
             eCoulomb14 += eCoulomb_λ * ecoul
 
             # Calculate forces, if requested
             if do_forces
                 fc = (24.0 * eij * (lj6 - 2.0 * lj6 * lj6) - ecoul) / dijSq
-                @. vij *= fc
-                @. state.forces[i, :] += vij
-                @. state.forces[j, :] -= vij
+                @inbounds for k=1:3
+                    t = vij[k] * fc
+                    forces[i, k] += t
+                    forces[j, k] -= t
+                end
             end
         end
     end
@@ -240,8 +295,9 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
     state.energy.comp["eLJ14"] = eLJ14
     state.energy.comp["eCoulomb14"] = eCoulomb14
 
-    state.energy.eTotal = (eLJ + eLJ14 + eCoulomb + eCoulomb14)
-    return eLJ + eLJ14 + eCoulomb + eCoulomb14
+    energy = eLJ + eLJ14 + eCoulomb + eCoulomb14
+    state.energy.eTotal = energy
+    return energy
 end
 
 @doc raw"""

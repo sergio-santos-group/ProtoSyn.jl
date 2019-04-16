@@ -1,9 +1,3 @@
-"""
-    tpr2json.py mol.txt > amber_top.json
-
-Read a mol.txt file containing the dumped (using gmx dump) TPR information and parse into a amber topology JSON file.
-"""
-
 import re
 
 class bondtypes:
