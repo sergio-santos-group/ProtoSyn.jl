@@ -26,28 +26,30 @@ julia> Forcefield.CoarseGrain.evaluate!(solv_pairs, state)
 ```
 """
 function evaluate!(solv_pairs::Vector{SolvPair}, st::Common.State; do_forces::Bool = false)::Float64
-    n_res                       = length(solv_pairs)
-    l::Vector{Float64}          = zeros(Float64, 3)
-    e_sol::Float64              = 0.0
-    sum_f::Float64              = 0.0
-    t::Float64                  = 21.0
-    distance_threshold::Float64 = 1.2
+    n_res              = length(solv_pairs)
+    l                  = [.0, .0, .0]
+    e_sol              = .0
+    sum_f              = .0
+    t                  = 21.0
+    distance_threshold = 1.2
 
     for i in 1:n_res
-        Ai = @view st.xyz[solv_pairs[i].i, :]
-        sum_f = 0.0
+        ci = solv_pairs[i].coef
+        sum_f = .0
         for j in 1:n_res
             if i == j
                 continue
             end
-            Aj = @view st.xyz[solv_pairs[j].i, :]
-            @. l[:] = Aj - Ai
-            dIJ = norm(l)
-            f = 1.0 / (1.0 + exp(-(distance_threshold - dIJ) / 0.4))
-            sum_f += f
+            dIJ = .0
+            @inbounds for k=1:3
+                delta = st.xyz[solv_pairs[i].i, k] - st.xyz[solv_pairs[j].i, k]
+                dIJ  += delta ^ 2
+            end
+            dIJ = sqrt(dIJ)
+            sum_f += 1.0 / (1.0 + exp(-(distance_threshold - dIJ) / 0.4))
         end
-        if ((sum_f < t) && (solv_pairs[i].coef > 0.0)) || ((sum_f > t) && (solv_pairs[i].coef < 0.0))
-            e_sol += solv_pairs[i].coef * (t - sum_f)
+        if ((sum_f < t) && (ci > .0)) || ((sum_f > t) && (ci < .0))
+            e_sol += ci * (t - sum_f)
         end
     end
 
@@ -80,32 +82,35 @@ julia> Forcefield.CoarseGrain.evaluate!(hb_network, state)
 """
 function evaluate!(hb_network::HbNetwork, st::Common.State; do_forces::Bool = false)::Float64
 
-    # n_res::Int64         = length(hb_groups)
-    vHN::Vector{Float64} = zeros(Float64, 3)
-    vOC::Vector{Float64} = zeros(Float64, 3)
-    vHO::Vector{Float64} = zeros(Float64, 3)
-    c1::Float64          = 0.0
-    c2::Float64          = 0.0
-    e_H::Float64         = 0.0 
+    vHN    = [.0, .0, .0]
+    vOC    = [.0, .0, .0]
+    vHO    = [.0, .0, .0]
+    c1     = .0
+    c2     = .0
+    e_H    = .0 
+    coords = st.xyz
 
     for donor in hb_network.donors
-        N = @view st.xyz[donor.base,    :]
-        H = @view st.xyz[donor.charged, :]
-        @. vHN[:] = N - H
-
         for acceptor in hb_network.acceptors
             if acceptor.base == donor.base
                 continue
             end
-            C = @view st.xyz[acceptor.base,    :]
-            O = @view st.xyz[acceptor.charged, :]
-            @. vOC[:] = C - O
-            @. vHO[:] = O - H
-            dHO = norm(vHO)
 
-            c1 = dot(vHN, vHO) / dHO
-            c2 = dot(vOC, vHO) / dHO
-            e_H -= - ((c1 * c2)^2) * (5.0 * ((0.2 / dHO)^12) - 6.0 * ((0.2 / dHO)^10))
+            dhn_ho = .0
+            doc_ho = .0
+            dho    = .0
+            @inbounds for i=1:3
+                delta_hn = coords[donor.base, i]       - coords[donor.charged, i]
+                delta_ho = coords[acceptor.charged, i] - coords[donor.charged, i]
+                delta_oc = coords[acceptor.base, i]    - coords[acceptor.charged, i]
+                dhn_ho  += delta_hn*delta_ho
+                doc_ho  += delta_oc*delta_ho
+                dho     += delta_ho ^ 2
+            end
+            dho = sqrt(dho)
+            c1 = dhn_ho / dho
+            c2 = doc_ho / dho
+            e_H -= - ((c1 * c2)^2) * (5.0 * ((0.2 / dho)^12) - 6.0 * ((0.2 / dho)^10))
         end
     end
 

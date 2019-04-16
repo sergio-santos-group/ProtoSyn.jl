@@ -1,34 +1,35 @@
 @doc raw"""
     evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
-function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false, DataFloat::DataType = Float64)::Float64
+function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
     energy = .0
     delta  = .0
     d12    = .0
-    r12    = [.0, .0, .0]
+    v12    = [.0, .0, .0]
     forces = state.forces
     coords = state.xyz
 
     @inbounds for bond in bonds
-        d12 = zero(DataFloat)
+        d12 = .0
         @inbounds for i=1:3
-            delta = coords[bond.a2,i] - coords[bond.a1,i]
-            r12[i] = delta
-            d12 += delta*delta
+            delta = coords[bond.a2, i] - coords[bond.a1, i]
+            v12[i] = delta
+            d12 += delta ^ 2
         end
+        d12 = sqrt(d12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
         delta = bond.k * dr / d12
         if do_forces
             @inbounds for i=1:3
-                forces[bond.a1, i] += delta * r12[i]
-                forces[bond.a2, i] -= delta * r12[i]
+                forces[bond.a1, i] += delta * v12[i]
+                forces[bond.a2, i] -= delta * v12[i]
             end
         end
     end
 
-    energy *= 0.5
+    energy *= .5
     state.energy.comp["eBond"] = energy
     state.energy.eTotal = energy
     return energy
@@ -37,7 +38,7 @@ end
 @doc raw"""
     evaluate!(angles::Vector{Forcefield.Amber.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false, DataFloat::DataType = Float64)::Float64
+function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
     energy     = .0
     delta      = .0
@@ -48,9 +49,9 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
     coords     = state.xyz
 
     @inbounds for angle in angles
-        ctheta = zero(DataFloat)
-        d12Sq  = zero(DataFloat)
-        d32Sq  = zero(DataFloat)
+        ctheta = .0
+        d12Sq  = .0
+        d32Sq  = .0
 
         @inbounds for i=1:3
             a1 = coords[angle.a1, i]
@@ -96,7 +97,7 @@ end
 @doc raw"""
     evaluate!(dihedralsCos::Vector{Forcefield.Amber.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
 """
-function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false, DataFloat::DataType = Float64)::Float64
+function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
     energy     = .0
     delta12    = .0
@@ -122,11 +123,11 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
             delta12 = a2 - a1
             v12[i]  = delta12
 
-            delta2  = a2 - a3
+            delta32 = a2 - a3
             v32[i]  = delta32
-            d32Sq  += delta2*delta2
+            d32Sq  += delta32*delta32
 
-            delta3  = a4 - a3
+            delta34 = a4 - a3
             v34[i]  = delta34
 
             d3432  += delta34 * delta32
@@ -182,22 +183,19 @@ See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.Ha
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
 function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0,
-    eCoulomb_λ::Float64 = 1.0, DataFloat::DataType = Float64)::Float64
+    eCoulomb_λ::Float64 = 1.0)::Float64
 
-    eLJ = .0
-    eLJ14 = .0
-    eCoulomb = .0
-    eCoulomb14 = .0
-
-    n_atoms = length(atoms)
-    vij = zeros(Float64, 3)
-    cut_offSq = cut_off*cut_off
-    exclude_idx::Int64 = 1
-    exclude::Int64 = 1
-
-    v12    = [.0, .0, .0]
-    coords = state.xyz
-    forces = state.forces
+    eLJ         = .0
+    eLJ14       = .0
+    eCoulomb    = .0
+    eCoulomb14  = .0
+    n_atoms     = length(atoms)
+    vij         = [.0, .0, .0]
+    cut_offSq   = cut_off*cut_off
+    exclude_idx = 1
+    exclude     = 1
+    coords      = state.xyz
+    forces      = state.forces
     
     #Calculate nonbonded interactions
     for i in 1:(n_atoms - 1)
@@ -213,7 +211,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         end
 
         for j in (i+1):(n_atoms)
-            
+        
             if j == exclude
                 exclude_idx += 1
                 exclude = atomi.excls[exclude_idx]
@@ -274,8 +272,8 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             end
             
             sij = atomi.σ + atomj.σ
-            eij = evdw_scale * (atomi.ϵ ^ 2)
-            qij = ecoul_scale * (atomi.q ^ 2)
+            eij = evdw_scale * atomi.ϵ * atomj.ϵ 
+            qij = ecoul_scale * atomi.q * atomj.q
             lj6 = (sij * sij/dijSq) ^ 3
             eLJ14 += eij * ((lj6 ^ 2) - lj6)
             ecoul = qij / sqrt(dijSq)
@@ -320,10 +318,10 @@ See also: [`Amber.evaluate!`](@ref)
 """
 function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 2.0, do_forces = false)::Float64
     
-    @time energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
-    @time energy += evaluate!(topology.angles, state, do_forces = do_forces)
-    @time energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
-    @time energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
+    energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
+    energy += evaluate!(topology.angles, state, do_forces = do_forces)
+    energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
+    energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
     state.energy.comp["amber"] = energy
     state.energy.eTotal = energy
     return energy
