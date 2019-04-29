@@ -37,23 +37,36 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-mutable struct Driver <: Drivers.AbstractDriver
+# mutable struct Driver <: Drivers.AbstractDriver
 
-    run!::Function
-    sampler!::Function
-    evaluator!::Function
-    temperature::Float64
-    n_steps::Int64
-    evaluate_slope_every::Int64
-    evaluate_slope_threshold::Float64
-    verbose::Bool
-    callbacks::Tuple
+#     run!::Function
+#     sampler!::Function
+#     evaluator!::Function
+#     temperature::Float64
+#     n_steps::Int64
+#     evaluate_slope_every::Int64
+#     evaluate_slope_threshold::Float64
+#     verbose::Bool
+#     callbacks::Tuple
 
+# end
+# function Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, evaluate_slope_every::Int64, evaluate_slope_threshold::Float64, verbose::Bool, callbacks::Common.CallbackObject...) 
+#     return Driver(run!, sampler!, evaluator!, temperature, n_steps, evaluate_slope_every, evaluate_slope_threshold, verbose, callbacks)
+# end
+
+mutable struct Driver{F<:Function}
+    sampler!::F
+    evaluator!::F
+    n_steps::Int
+    anneal_fcn::F
 end
-function Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, evaluate_slope_every::Int64, evaluate_slope_threshold::Float64, verbose::Bool, callbacks::Common.CallbackObject...) 
-    return Driver(run!, sampler!, evaluator!, temperature, n_steps, evaluate_slope_every, evaluate_slope_threshold, verbose, callbacks)
+
+function Driver(sampler!::Function, evaluator!::Function, n_steps::Int, temperature::Float64)
+    Driver(sampler!, evaluator!, n_steps, (n::Int)->temperature)
 end
-Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps), evaluate_slope_every=$(b.evaluate_slope_every), evaluate_slope_threshold=$(b.evaluate_slope_threshold), verbose=$(b.verbose))")
+
+
+Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(b.anneal_fcn)")
 
 
 @doc raw"""
@@ -78,50 +91,41 @@ julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_cal
 """
 function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
     
-    step = 1
+    step::Int = 1
     driver.evaluator!(state, false)
     backup = deepcopy(state)
     acceptance_count = 0
     history_x = Vector{Int64}()
     history_y = Vector{Float64}()
 
+    
+    sampler! = driver.sampler!
+    evaluator! = driver.evaluator!
+    anneal_fcn = driver.anneal_fcn
+    
+    temperature::Float64 = anneal_fcn(step)
+
     @Common.cbcall driver.callbacks..., callbacks... 0 state driver (acceptance_count/step)
     while step <= driver.n_steps
-        driver.sampler!(state)
-        driver.evaluator!(state, false)
+        sampler!(state)
+        evaluator!(state, false)
+        
+        temperature = anneal_fcn(step)
+
+        #@metropolis state.energy.eTotal backup.energy.eTotal temperature
         
         if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature)) # Metropolis
             backup = deepcopy(state)
             push!(history_x, step)
             push!(history_y, state.energy.eTotal)
             acceptance_count += 1
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (ACCEPTED ✔)\n", "MC", step, state.energy.eTotal), color = :green)
-            end
         else
             state = deepcopy(backup)
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (REJECTED ❌)\n", "MC", step, state.energy.eTotal), color = 9)
-            end
         end
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
         
-        # Evaluate slope
-        if driver.evaluate_slope_every > 1 && length(history_x) > 0 && length(history_x) % driver.evaluate_slope_every == 0
-            b::Float64 = Aux.linreg(history_x, history_y)
-            if b >= driver.evaluate_slope_threshold
-                if driver.verbose
-                    printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Exiting inner search ✖\n", "MC", step, b), color = :red)
-                end
-                break
-            end
-            history_x = Vector{Int64}()
-            history_y = Vector{Float64}()
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Continuing inner search ✔\n", "MC", step, b), color = :green)
-            end
-        end
+        
         step += 1
     end
 end
