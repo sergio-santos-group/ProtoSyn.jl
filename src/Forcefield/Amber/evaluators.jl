@@ -1,7 +1,9 @@
+using ProtoSyn
+
 @doc raw"""
     evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
 """
-function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
+function evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
     energy = .0
     delta  = .0
@@ -10,17 +12,19 @@ function evaluate!(bonds::Vector{HarmonicBond}, state::Common.State; do_forces::
     forces = state.forces
     coords = state.xyz
 
-    @inbounds for bond in bonds
+    for bond in bonds
         d12 = .0
         @inbounds for i=1:3
             delta = coords[bond.a2, i] - coords[bond.a1, i]
             v12[i] = delta
             d12 += delta ^ 2
         end
+        
         d12 = sqrt(d12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
         delta = bond.k * dr / d12
+
         if do_forces
             @inbounds for i=1:3
                 forces[bond.a1, i] += delta * v12[i]
@@ -99,43 +103,50 @@ end
 """
 function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
-    energy     = .0
-    delta12    = .0
-    delta32    = .0
-    delta34    = .0
-    v12        = [.0, .0, .0]
-    v32        = [.0, .0, .0]
-    v34        = [.0, .0, .0]
-    forces     = state.forces
-    coords     = state.xyz
+    energy  = 0.0
+    delta12 = 0.0
+    delta32 = 0.0
+    delta34 = 0.0
+    v12 = [.0, .0, .0]
+    v32 = [.0, .0, .0]
+    v34 = [.0, .0, .0]
+    m   = [.0, .0, .0]
+    n   = [.0, .0, .0]
+    forces = state.forces
+    coords = state.xyz
 
-    @inbounds for dihedral in dihedralsCos
-        d32Sq  = .0
-        d3432  = .0
-        d1232  = .0
+    for dihedral in dihedralsCos
+        d32Sq  = 0.0
+        d3432  = 0.0
+        d1232  = 0.0
 
         @inbounds for i=1:3
-            a1 = coords[dihedral.a1, i]
-            a2 = coords[dihedral.a2, i]
-            a3 = coords[dihedral.a3, i]
-            a4 = coords[dihedral.a4, i]
-
-            delta12 = a2 - a1
+            delta12 = coords[dihedral.a2, i] - coords[dihedral.a1, i]
+            delta32 = coords[dihedral.a2, i] - coords[dihedral.a3, i]
+            delta34 = coords[dihedral.a4, i] - coords[dihedral.a3, i]
             v12[i]  = delta12
 
-            delta32 = a2 - a3
             v32[i]  = delta32
             d32Sq  += delta32*delta32
 
-            delta34 = a4 - a3
             v34[i]  = delta34
 
             d3432  += delta34 * delta32
             d1232  += delta12 * delta32
         end
+        
+        # m = v12 × v32    
+        m[1] = v12[2]*v32[3] - v12[3]*v32[2]
+        m[2] = v12[3]*v32[1] - v12[1]*v32[3]
+        m[3] = v12[1]*v32[2] - v12[2]*v32[1]
+        
+        # n = v32 × v34    
+        n[1] = v32[2]*v34[3] - v32[3]*v34[2]
+        n[2] = v32[3]*v34[1] - v32[1]*v34[3]
+        n[3] = v32[1]*v34[2] - v32[2]*v34[1]
+        # m = cross(v12, v32)
+        # n = cross(v32, v34)
 
-        m       = cross(v12, v32)
-        n       = cross(v32, v34)
         d32     = sqrt(d32Sq)
         phi     = atan(d32 * dot(v12, n), dot(m, n))
         energy += dihedral.k * (1.0 + cos(dihedral.mult * phi - dihedral.θ))
@@ -198,32 +209,38 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
     forces      = state.forces
     
     #Calculate nonbonded interactions
-    for i in 1:(n_atoms - 1)
+    
+    @inbounds for i in 1:(n_atoms - 1)
         atomi = atoms[i]
         
-        # set the exclution index to the correct location and extract the exclude atom index
-        if length(atomi.excls) > 0
-            exclude_idx = 1
-            while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
-                exclude_idx += 1
-            end
-            exclude = atomi.excls[exclude_idx]
-        end
-
-        for j in (i+1):(n_atoms)
+        # # set the exclution index to the correct location and extract the exclude atom index
+        # if length(atomi.excls) > 0
+        #     exclude_idx = 1
+        #     @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
+        #         exclude_idx += 1
+        #     end
+        #     @inbounds exclude = atomi.excls[exclude_idx]
+        # end
         
-            if j == exclude
-                exclude_idx += 1
-                exclude = atomi.excls[exclude_idx]
-                continue
-            end
-            atomj = atoms[j]
+        # for j in (i+1):(n_atoms)
+        #     if j == exclude
+        #         exclude_idx += 1
+        #         @inbounds exclude = atomi.excls[exclude_idx]
+        #         continue
+        #     end
+        
+        ptr = state.nbptr[i]
+        while state.nblist[ptr] > 0
+            @inbounds j = state.nblist[ptr]
+            ptr += 1
+        
+            @inbounds atomj = atoms[j]
             
             dijSq = .0
             @inbounds for k=1:3
                 deltaij = coords[j, k] - coords[i, k]
-                vij[k]  = deltaij
                 dijSq  += deltaij * deltaij
+                vij[k]  = deltaij
             end
 
             #Check if the distance between the two atoms is below cut-off
@@ -290,7 +307,7 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             end
         end
     end
-
+    
     eLJ14 *= 4.0
     state.energy.comp["eLJ14"] = eLJ14
     state.energy.comp["eCoulomb14"] = eCoulomb14
