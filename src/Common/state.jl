@@ -1,6 +1,21 @@
 # ----------------------------------------------------------------------------------------------------------
 #                                                 STATE
 
+mutable struct NonBondedList
+
+    list::Vector{Int64}
+    pointer::Vector{Int64}
+end
+NonBondedList(n::Int64) = NonBondedList(zeros(Int64, convert(Int64, n*(n+1)/2)), zeros(n))
+Base.show(io::IO, b::NonBondedList) = print(io, "NonBondedList(list=$(b.list), pointer=$(b.pointer))")
+
+Base.copy!(dst::NonBondedList, src::NonBondedList)::NonBondedList = begin
+    copy!(dst.list, src.list)
+    copy!(dst.pointer, src.pointer)
+    return dst
+end
+
+
 @doc raw"""
     State(size::Int64, energy::AbstractEnergy, xyz::Array{Float64, 2}, forces::Array{Float64, 2}, metadata::Vector{Metadata})
 
@@ -30,12 +45,11 @@ mutable struct State
     energy::AbstractEnergy
     xyz::Array{Float64, 2}
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
-    nblist::Vector{Int}
-    nbptr::Vector{Int}
+    nb::Union{NonBondedList, Nothing}
 end
-State(n::Int64,e,x,f) = State(n, e, x, f, zeros(Int, convert(Int,n*(n+1)/2)), zeros(n))
-State(n::Int64) = State(n, Energy(), zeros(n, 3), zeros(n, 3), zeros(Int, n*(n+1)/2), zeros(n))
-Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces))")
+State(n::Int64, e::AbstractEnergy, x::Array{Float64, 2}, f::Array{Float64, 2}) = State(n, e, x, f, NonBondedList(n))
+State(n::Int64) = State(n, Energy(), zeros(n, 3), zeros(n, 3), NonBondedList(n))
+Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), nb=$(b.nb)")
 
 function Base.iterate(st::State, idx = 1)
 
@@ -43,5 +57,67 @@ function Base.iterate(st::State, idx = 1)
         return nothing
     else
         return (st.xyz[idx, :], idx+1)
+    end
+end
+
+function Base.copy!(dst::State, src::State)::State
+    copy!(dst.xyz, src.xyz)
+    copy!(dst.forces, src.forces)
+    copy!(dst.energy, src.energy)
+    copy!(dst.nb, src.nb)
+    return dst
+end
+
+function update_nb_list!(state::Common.State, top::Any, cutoff::Float64)
+    #! `top` type is defined as Any, but it should be Forcefield.Amber.Topology.
+    # The issue is that so far, ProtoSyn does not know that Forcefield is!
+
+    ptr         = 1
+    exclude_idx = 1
+    exclude     = 1
+    dijSq       = 0.0
+    delta       = 0.0
+    cutSq       = cutoff ^ 2
+    coords      = state.xyz
+    n_atoms     = state.size
+
+    for i=1:n_atoms
+        
+        # set the exclution index to the correct location and extract the exclude atom index
+        @inbounds atomi = top.atoms[i]
+        len_exclusions = length(atomi.excls)
+        if len_exclusions > 0
+            exclude_idx = 1
+            @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < len_exclusions
+                exclude_idx += 1
+            end
+            @inbounds exclude = atomi.excls[exclude_idx]
+        end
+
+        state.nb.pointer[i] = ptr
+
+        for j = (i+1):n_atoms
+
+            # Remove excluded atom
+            if j == exclude
+                exclude_idx += 1
+                @inbounds exclude = atomi.excls[exclude_idx]
+                continue
+            end
+
+            dijSq = 0.0
+            for k=1:3
+                delta = coords[i,k] - coords[j,k]
+                dijSq += delta*delta
+            end
+
+            if dijSq < cutSq
+                state.nb.list[ptr] = j
+                ptr += 1
+            end
+        end
+        
+        state.nb.list[ptr] = -1
+        ptr += 1
     end
 end

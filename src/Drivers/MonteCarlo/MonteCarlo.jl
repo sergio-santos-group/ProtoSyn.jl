@@ -37,37 +37,29 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-# mutable struct Driver <: Drivers.AbstractDriver
-
-#     run!::Function
-#     sampler!::Function
-#     evaluator!::Function
-#     temperature::Float64
-#     n_steps::Int64
-#     evaluate_slope_every::Int64
-#     evaluate_slope_threshold::Float64
-#     verbose::Bool
-#     callbacks::Tuple
-
-# end
-# function Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, evaluate_slope_every::Int64, evaluate_slope_threshold::Float64, verbose::Bool, callbacks::Common.CallbackObject...) 
-#     return Driver(run!, sampler!, evaluator!, temperature, n_steps, evaluate_slope_every, evaluate_slope_threshold, verbose, callbacks)
-# end
-
-mutable struct Driver{F<:Function}
+mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
     sampler!::F
-    evaluator!::F
+    evaluator!::G
     n_steps::Int
-    anneal_fcn::F
+    anneal_fcn::H
 end
 
-function Driver(sampler!::Function, evaluator!::Function, n_steps::Int, temperature::Float64)
-    Driver(sampler!, evaluator!, n_steps, (n::Int)->temperature)
+function DriverConfig(sampler!::F, evaluator!::G, n_steps::Int, temperature::Float64) where {F <: Function, G <: Function}
+    DriverConfig(sampler!, evaluator!, n_steps, ()->temperature)
 end
+Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(string(b.anneal_fcn))")
 
+# TO DO: Documentation
+mutable struct DriverState
+    step::Int64
+    ac_ratio::Float64
+    temperature::Float64
+end
+DriverState() = DriverState(0, 0.0, 0.0)
+Base.show(io::IO, b::DriverState) = print(io, "MonteCarlo.DriverState(step=$(b.step), ac_ratio=$(b.ac_ratio), temperature=$(b.temperature))")
 
-Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(b.anneal_fcn)")
-
+# ----------------------------------------------------------------------------------------------------------
+#                                                   RUN
 
 @doc raw"""
     run!(state::Common.State, driver::Driver[, callbacks::Tuple{Common.CallbackObject}...])
@@ -89,44 +81,33 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
 ```
 """
-function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
     
-    step::Int = 1
-    driver.evaluator!(state, false)
-    backup = deepcopy(state)
-    acceptance_count = 0
-    history_x = Vector{Int64}()
-    history_y = Vector{Float64}()
+    driver_config.evaluator!(state, false)
+    
+    ac_count = 0
+    driver_state = DriverState(1, 0.0, driver_config.anneal_fcn(1))
+    backup_state = Common.State(state.size)
+    copy!(backup_state, state)
 
-    
-    sampler! = driver.sampler!
-    evaluator! = driver.evaluator!
-    anneal_fcn = driver.anneal_fcn
-    
-    temperature::Float64 = anneal_fcn(step)
+    @Common.cbcall callbacks state driver_config driver_state
+    while driver_state.step <= driver_config.n_steps
+        driver_config.sampler!(state)
+        driver_config.evaluator!(state, false)
 
-    @Common.cbcall driver.callbacks..., callbacks... 0 state driver (acceptance_count/step)
-    while step <= driver.n_steps
-        sampler!(state)
-        evaluator!(state, false)
-        
-        temperature = anneal_fcn(step)
+        driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
 
         #@metropolis state.energy.eTotal backup.energy.eTotal temperature
-        
-        if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature)) # Metropolis
-            backup = deepcopy(state)
-            push!(history_x, step)
-            push!(history_y, state.energy.eTotal)
-            acceptance_count += 1
+        if (state.energy.eTotal < backup_state.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup_state.energy.eTotal) / driver_state.temperature)) # Metropolis
+            copy!(backup_state, state)
+            ac_count += 1
         else
-            state = deepcopy(backup)
+            copy!(state, backup_state)
         end
         
-        @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
-        
-        
-        step += 1
+        driver_state.ac_ratio = ac_count / driver_state.step
+        @Common.cbcall callbacks state driver_config driver_state
+        driver_state.step += 1
     end
 end
 

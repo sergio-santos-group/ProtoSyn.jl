@@ -12,12 +12,12 @@ Vararg holds all the arguments necessary to run the callback function itself.
 julia> @Common.cbcall (callback_object1, callback_object2) 1
 ```
 """
-macro cbcall(cbs, step, args...)
+macro cbcall(cbs, state, driver_config, driver_state)
 
     ex = quote
         for cb in $cbs
-            if (getproperty(cb, :freq)>0) && ($step%getproperty(cb, :freq)==0)
-                getproperty(cb, :callback)($step, $(args...))
+            if (getproperty(cb, :freq)>0) && (getproperty($driver_state, :step)%getproperty(cb, :freq)==0)
+                getproperty(cb, :callback)($state, $driver_config, $driver_state)
             end
         end
     end

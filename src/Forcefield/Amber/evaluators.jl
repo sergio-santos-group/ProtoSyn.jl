@@ -5,30 +5,30 @@ using ProtoSyn
 """
 function evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State; do_forces::Bool = false)::Float64
 
-    energy = .0
-    delta  = .0
-    d12    = .0
-    v12    = [.0, .0, .0]
+    energy = 0.0
+    Δ      = 0.0
+    d12    = 0.0
+    v12    = [0.0, 0.0, 0.0]
     forces = state.forces
     coords = state.xyz
 
     for bond in bonds
-        d12 = .0
+        d12 = 0.0
         @inbounds for i=1:3
-            delta = coords[bond.a2, i] - coords[bond.a1, i]
-            v12[i] = delta
-            d12 += delta ^ 2
+            Δ = coords[bond.a2, i] - coords[bond.a1, i]
+            v12[i] = Δ
+            d12 += Δ ^ 2
         end
         
         d12 = sqrt(d12)
         dr = d12 - bond.b0
         energy += bond.k * dr * dr
-        delta = bond.k * dr / d12
 
         if do_forces
+            Δ = bond.k * dr / d12
             @inbounds for i=1:3
-                forces[bond.a1, i] += delta * v12[i]
-                forces[bond.a2, i] -= delta * v12[i]
+                forces[bond.a1, i] += Δ * v12[i]
+                forces[bond.a2, i] -= Δ * v12[i]
             end
         end
     end
@@ -44,18 +44,18 @@ end
 """
 function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces::Bool = false)::Float64
 
-    energy     = .0
-    delta      = .0
-    d12        = .0
-    v12        = [.0, .0, .0]
-    v32        = [.0, .0, .0]
+    energy     = 0.0
+    delta      = 0.0
+    d12        = 0.0
+    v12        = [0.0, 0.0, 0.0]
+    v32        = [0.0, 0.0, 0.0]
     forces     = state.forces
     coords     = state.xyz
 
     @inbounds for angle in angles
-        ctheta = .0
-        d12Sq  = .0
-        d32Sq  = .0
+        ctheta = 0.0
+        d12Sq  = 0.0
+        d32Sq  = 0.0
 
         @inbounds for i=1:3
             a1 = coords[angle.a1, i]
@@ -104,14 +104,14 @@ end
 function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_forces = false)::Float64
 
     energy  = 0.0
-    delta12 = 0.0
-    delta32 = 0.0
-    delta34 = 0.0
-    v12 = [.0, .0, .0]
-    v32 = [.0, .0, .0]
-    v34 = [.0, .0, .0]
-    m   = [.0, .0, .0]
-    n   = [.0, .0, .0]
+    d12 = 0.0
+    d32 = 0.0
+    d34 = 0.0
+    v12 = [0.0, 0.0, 0.0]
+    v32 = [0.0, 0.0, 0.0]
+    v34 = [0.0, 0.0, 0.0]
+    m   = [0.0, 0.0, 0.0]
+    n   = [0.0, 0.0, 0.0]
     forces = state.forces
     coords = state.xyz
 
@@ -121,31 +121,29 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
         d1232  = 0.0
 
         @inbounds for i=1:3
-            delta12 = coords[dihedral.a2, i] - coords[dihedral.a1, i]
-            delta32 = coords[dihedral.a2, i] - coords[dihedral.a3, i]
-            delta34 = coords[dihedral.a4, i] - coords[dihedral.a3, i]
-            v12[i]  = delta12
+            d12 = coords[dihedral.a2, i] - coords[dihedral.a1, i]
+            d32 = coords[dihedral.a2, i] - coords[dihedral.a3, i]
+            d34 = coords[dihedral.a4, i] - coords[dihedral.a3, i]
+            v12[i]  = d12
 
-            v32[i]  = delta32
-            d32Sq  += delta32*delta32
+            v32[i]  = d32
+            d32Sq  += d32 ^ 2
 
-            v34[i]  = delta34
+            v34[i]  = d34
 
-            d3432  += delta34 * delta32
-            d1232  += delta12 * delta32
+            d3432  += d34 * d32
+            d1232  += d12 * d32
         end
         
-        # m = v12 × v32    
+        # m = v12 × v32 = cross(v12, v32)
         m[1] = v12[2]*v32[3] - v12[3]*v32[2]
         m[2] = v12[3]*v32[1] - v12[1]*v32[3]
         m[3] = v12[1]*v32[2] - v12[2]*v32[1]
         
-        # n = v32 × v34    
+        # n = v32 × v34 = cross(v32, v34)  
         n[1] = v32[2]*v34[3] - v32[3]*v34[2]
         n[2] = v32[3]*v34[1] - v32[1]*v34[3]
         n[3] = v32[1]*v34[2] - v32[2]*v34[1]
-        # m = cross(v12, v32)
-        # n = cross(v32, v34)
 
         d32     = sqrt(d32Sq)
         phi     = atan(d32 * dot(v12, n), dot(m, n))
@@ -153,14 +151,15 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
         
         if do_forces
             dVdphi_x_d32 = dihedral.k * dihedral.mult * sin(dihedral.θ - dihedral.mult * phi) * d32
-            f1mm = -dVdphi_x_d32 / dot(m, m)
-            f4nn = dVdphi_x_d32 / dot(n, n)
-            f3_1 = (d3432/d32Sq - 1.0)
-            f3_2 = (d1232/d32Sq)
+            # Constants:
+            c1   = -dVdphi_x_d32 / dot(m, m)
+            c4   = dVdphi_x_d32 / dot(n, n)
+            c3_1 = (d3432/d32Sq - 1.0)
+            c3_2 = (d1232/d32Sq)
             @inbounds for i=1:3
-                f1 = m[i] * f1mm
-                f4 = n[i] * f4nn
-                f3 = f4 * f3_1 - f1 * f3_2
+                f1 = m[i] * c1
+                f4 = n[i] * c4
+                f3 = f4 * c3_1 - f1 * c3_2
 
                 forces[dihedral.a1, i] -= f1
                 forces[dihedral.a2, i] -= (-f1 - f3 - f4)
@@ -193,20 +192,19 @@ julia> Forcefield.Amber.evaluate!(bonds, state)
 See also: [`evaluate!`](@ref) [`Amber.HarmonicBond`](@ref Forcefield) [`Amber.HarmonicAngle`](@ref Forcefield)
 [`Amber.DihedralCos`](@ref Forcefield) [`Amber.Atom`](@ref Forcefield)
 """
-function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0,
-    eCoulomb_λ::Float64 = 1.0)::Float64
+function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0)::Float64
 
-    eLJ         = .0
-    eLJ14       = .0
-    eCoulomb    = .0
-    eCoulomb14  = .0
-    n_atoms     = length(atoms)
-    vij         = [.0, .0, .0]
-    cut_offSq   = cut_off*cut_off
+    eLJ         = 0.0
+    eLJ14       = 0.0
+    eCoulomb    = 0.0
+    eCoulomb14  = 0.0
+    vij         = [0.0, 0.0, 0.0]
     exclude_idx = 1
     exclude     = 1
+    cut_offSq   = cut_off ^ 2
     coords      = state.xyz
     forces      = state.forces
+    n_atoms     = length(atoms)
     
     #Calculate nonbonded interactions
     
@@ -229,18 +227,164 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         #         continue
         #     end
         
-        ptr = state.nbptr[i]
-        while state.nblist[ptr] > 0
-            @inbounds j = state.nblist[ptr]
+        ptr = state.nb.pointer[i]
+        while state.nb.list[ptr] > 0
+            @inbounds j = state.nb.list[ptr]
             ptr += 1
         
             @inbounds atomj = atoms[j]
             
-            dijSq = .0
+            dijSq = 0.0
             @inbounds for k=1:3
                 deltaij = coords[j, k] - coords[i, k]
                 dijSq  += deltaij * deltaij
                 vij[k]  = deltaij
+            end
+
+            #Check if the distance between the two atoms is below cut-off
+            if dijSq > cut_offSq
+                continue
+            end
+
+            #Calculate energy (σ and ϵ already have the necessary constants multiplied)
+            sij = atomi.σ + atomj.σ
+            eij = atomi.ϵ * atomj.ϵ
+            lj6 = (sij * sij/dijSq) ^ 3
+            eLJ += eij * (lj6 * lj6 - lj6)
+            # eCoulomb = eCoulomb_λ * atomi.q * atomj.q / sqrt(dijSq)
+            eCoulomb = atomi.q * atomj.q / sqrt(dijSq)
+
+            #Calculate forces, if requested
+            if do_forces
+                fc = (24.0 * eij * (lj6 - 2.0 * lj6 * lj6) - eCoulomb) / dijSq
+                @inbounds for k=1:3
+                    t = vij[k] * fc
+                    forces[i, k] += t
+                    forces[j, k] -= t
+                end
+            end
+        end
+    end
+
+    eLJ *= 4.0
+    state.energy.comp["eLJ"] = eLJ
+    state.energy.comp["eCoulomb"] = eCoulomb
+
+    #Calculate 1-4 interactions
+    evdw_scale = 0.5
+    ecoul_scale = 0.833333
+
+    for i in 1:(n_atoms)
+        atomi = atoms[i]
+        for j in atomi.pairs
+            
+            atomj = atoms[j]
+            dijSq = 0.0
+            @inbounds for k=1:3
+                deltaij = coords[j, k] - coords[i, k]
+                vij[k]  = deltaij
+                dijSq  += deltaij * deltaij
+            end
+            
+            sij = atomi.σ + atomj.σ
+            eij = evdw_scale * atomi.ϵ * atomj.ϵ 
+            qij = ecoul_scale * atomi.q * atomj.q
+            lj6 = (sij * sij/dijSq) ^ 3
+            eLJ14 += eij * ((lj6 ^ 2) - lj6)
+            # eCoulomb14 = eCoulomb_λ * qij / sqrt(dijSq)
+            eCoulomb14 = qij / sqrt(dijSq)
+
+            # Calculate forces, if requested
+            if do_forces
+                fc = (24.0 * eij * (lj6 - 2.0 * lj6 * lj6) - eCoulomb14) / dijSq
+                @inbounds for k=1:3
+                    t = vij[k] * fc
+                    forces[i, k] += t
+                    forces[j, k] -= t
+                end
+            end
+        end
+    end
+    
+    eLJ14 *= 4.0
+    state.energy.comp["eLJ14"] = eLJ14
+    state.energy.comp["eCoulomb14"] = eCoulomb14
+
+    energy = eLJ + eLJ14 + eCoulomb + eCoulomb14
+    state.energy.eTotal = energy
+    return energy
+end
+
+@doc raw"""
+    evaluate!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
+
+Evaluate the current [`Common.State`](@ref) energy according to the defined [`Amber.Topology`](@ref Forcefield).
+If `do_forces` bool is set to `true`, calculate and update `state.forces`.
+Non-bonded interactions are only assessed if the distance between atoms is below the defined `cut_off` value.
+Return `state.energy.eTotal` value (kJ mol⁻¹).
+
+# Examples
+```julia-repl
+julia> Forcefield.Amber.evaluate!(topology, state, cut_off = Inf)
+0.500
+```
+
+See also: [`Amber.evaluate!`](@ref)
+"""
+function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 1.2, do_forces::Bool = false)::Float64
+    
+    energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
+    energy += evaluate!(topology.angles, state, do_forces = do_forces)
+    energy += evaluate_OLD!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
+    energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
+    state.energy.comp["Amber"] = energy
+    state.energy.eTotal = energy
+    return energy
+end
+
+#! DEPRECATED
+function evaluate_OLD!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = false, cut_off::Float64 = 2.0,
+    eCoulomb_λ::Float64 = 1.0)::Float64
+
+    eLJ         = .0
+    eLJ14       = .0
+    eCoulomb    = .0
+    eCoulomb14  = .0
+    n_atoms     = length(atoms)
+    vij         = [.0, .0, .0]
+    cut_offSq   = cut_off*cut_off
+    exclude_idx = 1
+    exclude     = 1
+    coords      = state.xyz
+    forces      = state.forces
+    
+    #Calculate nonbonded interactions
+    for i in 1:(n_atoms - 1)
+        atomi = atoms[i]
+        
+        # set the exclution index to the correct location and extract the exclude atom index
+        if length(atomi.excls) > 0
+            exclude_idx = 1
+            while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
+                exclude_idx += 1
+            end
+            exclude = atomi.excls[exclude_idx]
+        end
+
+        for j in (i+1):(n_atoms)
+        
+            if j == exclude
+                exclude_idx += 1
+                exclude = atomi.excls[exclude_idx]
+                continue
+            end
+            atomj = atoms[j]
+            
+            dijSq = .0
+            @inbounds for k=1:3
+                deltaij = coords[j, k] - coords[i, k]
+                vij[k]  = deltaij
+                dijSq  += deltaij * deltaij
             end
 
             #Check if the distance between the two atoms is below cut-off
@@ -307,39 +451,12 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
             end
         end
     end
-    
+
     eLJ14 *= 4.0
     state.energy.comp["eLJ14"] = eLJ14
     state.energy.comp["eCoulomb14"] = eCoulomb14
 
     energy = eLJ + eLJ14 + eCoulomb + eCoulomb14
-    state.energy.eTotal = energy
-    return energy
-end
-
-@doc raw"""
-    evaluate!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
-
-Evaluate the current [`Common.State`](@ref) energy according to the defined [`Amber.Topology`](@ref Forcefield).
-If `do_forces` bool is set to `true`, calculate and update `state.forces`.
-Non-bonded interactions are only assessed if the distance between atoms is below the defined `cut_off` value.
-Return `state.energy.eTotal` value (kJ mol⁻¹).
-
-# Examples
-```julia-repl
-julia> Forcefield.Amber.evaluate!(topology, state, cut_off = Inf)
-0.500
-```
-
-See also: [`Amber.evaluate!`](@ref)
-"""
-function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 2.0, do_forces = false)::Float64
-    
-    energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
-    energy += evaluate!(topology.angles, state, do_forces = do_forces)
-    energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
-    energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
-    state.energy.comp["amber"] = energy
     state.energy.eTotal = energy
     return energy
 end

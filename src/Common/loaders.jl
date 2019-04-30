@@ -96,7 +96,7 @@ function load_from_pdb(i_file::String, compile_metadata = true)::Tuple{State, Me
         metadata = Metadata()
     end
 
-    return State(n, Energy(), vcat(xyz...), zeros(n, 3)), metadata
+    return State(n, Energy(), vcat(xyz...), zeros(n, 3), NonBondedList(n)), metadata
 end
 
 
