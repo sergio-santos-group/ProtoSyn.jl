@@ -20,8 +20,6 @@ evaluator!(state::Common.State, do_forces::Bool)
 - `n_steps::Int64`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
 - `f_tol::Float64`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
 - `max_step::Float64`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
-- `verbose::Bool`: (Optional) Print convergence indicators if `true`.
-- `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
 
 # Examples
 ```julia-repl
@@ -36,19 +34,26 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-mutable struct Driver <: Drivers.AbstractDriver
+mutable struct DriverConfig{F <: Function}
     
-    run!::Function
-    evaluator!::Function
+    evaluator!::F
     n_steps::Int64
     f_tol::Float64        # (Default: 1e-3)
-    max_step::Float64     # (Default: 0.1)
-    verbose::Bool         # (Default: False)
-    callbacks::Tuple
-
+    max_step::Float64     # (Default: 0.1) nm
 end
-Driver(evaluator!::Function, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1, v::Bool = false, callbacks::Common.CallbackObject...) = Driver(run!, evaluator!, n_steps, f_tol, max_step, v, callbacks)
-Base.show(io::IO, b::Driver) = print(io, "SteepestDescent.Driver(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
+DriverConfig(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = DriverConfig(evaluator!, n_steps, f_tol, max_step)
+Base.show(io::IO, b::DriverConfig) = print(io, "SteepestDescent.DriverConfig(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
+
+#TO DO: Documentation
+mutable struct DriverState
+    
+    step::Int64
+    step_size::Float64
+    max_force::Float64
+    gamma::Float64
+end
+DriverState() = DriverState(0, 0.0, 0.0, 0.0)
+Base.show(io::IO, b::DriverState) = print(io, "SteepestDescent.DriverState(step=$(b.step), step_size=$(b.step_size), max_force=$(b.max_force), gamma=$(b.gamma))")
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
@@ -75,65 +80,60 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
 
-    @inline function get_max_force(f::Array{Float64, 2})
-        return sqrt(maximum(sum(f.*f, dims = 2)))
-    end
-
-    @inline function system_converged()::Bool
-        if max_force < driver.f_tol
-            if driver.verbose
-                println("⤷ Achieved convergence (f_tol < $(driver.f_tol)) in $step steps.")
+    @inline function get_max_force(n_atoms::Int64, forces::Array{Float64, 2})::Float64
+        max_force = 0.0
+        for i=1:n_atoms
+            forceSq = forces[i, 1] ^ 2 + forces[i, 2] ^ 2 + forces[i, 3] ^ 2
+            if forceSq > max_force
+                max_force = forceSq
             end
-            return true
         end
-        if gamma < eps()
-            if driver.verbose
-                println("⤷ Gamma below machine precision! Exiting after $step steps...")
-            end
-            return true
-        end
-        return false
+        return sqrt(max_force)
     end
 
     # Evaluate initial energy and forces
-    step::Int64 = 0
-    gamma::Float64 = driver.max_step
-    energy::Float64 = driver.evaluator!(state, true)
-    max_force::Float64  = get_max_force(state.forces)
-    if system_converged()
+    energy::Float64 = driver_config.evaluator!(state, true)
+    driver_state = DriverState(0, 0.0, get_max_force(state.size, state.forces), driver_config.max_step)
+
+    # Verify convergence
+    if driver_state.max_force < driver_config.f_tol || driver_state.gamma < eps()
+        println("⤷ Achieved convergence in $(driver_state.step) steps...")
         return
     end
         
     # Initial callback
-    @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
+    @Common.cbcall callbacks state driver_config driver_state
     
-    while step < driver.n_steps
-        backup_state = deepcopy(state)
-        gamma = min(gamma, driver.max_step)
-        step_size = gamma / get_max_force(state.forces)
-        @. state.xyz += step_size * state.forces
+    backup_state = Common.State(state.size)
+    while driver_state.step < driver_config.n_steps
+        copy!(backup_state, state)
+        driver_state.gamma = min(driver_state.gamma, driver_config.max_step)
+        driver_state.step_size = driver_state.gamma / get_max_force(state.size, state.forces)
+        @. state.xyz += driver_state.step_size * state.forces
 
         # Calculate new energy and forces
         fill!(state.forces, 0.0)
-        energy = driver.evaluator!(state, true)
-        max_force = get_max_force(state.forces)
+        energy = driver_config.evaluator!(state, true)
+        driver_state.max_force = get_max_force(state.size, state.forces)
 
-        if system_converged()
-            break
+        # Verify convergence
+        if driver_state.max_force < driver_config.f_tol || driver_state.gamma < eps()
+            println("⤷ Achieved convergence in $(driver_state.step) steps...")
+            return
         end
         
         # Update gamma
         if energy >= backup_state.energy.eTotal
-            gamma *= 0.50
-            state = deepcopy(backup_state)
+            driver_state.gamma *= 0.50
+            copy!(state, backup_state)
         else
-            gamma *= 1.05
+            driver_state.gamma *= 1.05
         end
 
-        step += 1
-        @Common.cbcall driver.callbacks..., callbacks... step state driver max_force gamma
+        driver_state.step += 1
+        @Common.cbcall callbacks state driver_config driver_state
     end
 end
 

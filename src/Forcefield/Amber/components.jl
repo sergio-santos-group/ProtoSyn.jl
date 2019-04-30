@@ -205,3 +205,16 @@ mutable struct Topology
 end
 Topology() = Topology(Vector{Atom}(), Vector{HarmonicBond}(), Vector{HarmonicAngle}(), Vector{DihedralCos}())
 Base.show(io::IO, b::Topology) = print(io, "Forcefield.Amber.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")
+
+
+# mutable struct Config
+
+#     eBonds_λ::Float64
+#     eAngles_λ::Float64
+#     eDihedralCos_λ::Float64
+#     eCoulomb_λ::Float64
+#     eLJ_λ::Float64
+#     nb_cut_off::Float64 # nm
+# end
+# Config() = Config(1.0, 1.0, 1.0, 1.0, 1.0, 1.2)
+# Base.show(io::IO, b::Config) = print(io, "Forcefield.Amber.Config()")

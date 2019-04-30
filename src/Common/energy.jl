@@ -38,3 +38,9 @@ mutable struct Energy <: AbstractEnergy
 end
 Energy() = Energy(Dict{String, Float64}("other" => 0.0, "amber" => 0.0), 0.0)
 Base.show(io::IO, b::Energy) = print(io, "Energy(eTotal=$(b.eTotal), components=$(b.comp))")
+
+function Base.copy!(dst::Energy, src::Energy)::Energy
+    copy!(dst.comp, src.comp)
+    dst.eTotal = src.eTotal
+    return dst
+end
