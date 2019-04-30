@@ -55,7 +55,7 @@ function(state::Common.State, driver::DriverOptions)
 
     evaluator! = driver.evaluator!
     
-    energy = evaluator!(state, true)
+    energy = evaluator!(state, true)    
     Ti = 0.0
     sum_sq = 0.0
     λ = 0.0
