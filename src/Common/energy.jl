@@ -1,8 +1,7 @@
 # ----------------------------------------------------------------------------------------------------------
 #                                                 ENERGY
 
-# abstract type AbstractEnergy end
-abstract type AbstractEnergy{T<:AbstractFloat} end
+abstract type AbstractEnergy end
 
 @doc raw"""
     NullEnergy()

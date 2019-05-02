@@ -1,9 +1,8 @@
 module Drivers
 
-# using ..Aux
-# using ..Common
-# using Printf
-
+using ..Aux
+using ..Common
+using Printf
 
 abstract type AbstractDriverConfig end
 abstract type AbstractDriverState  end

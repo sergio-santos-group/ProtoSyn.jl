@@ -36,7 +36,7 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriver
+Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriverConfig
     sampler!::F
     evaluator!::G
     anneal_fcn::H
@@ -46,13 +46,7 @@ end
 function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64, n_steps::Int64) where {F <: Function, G <: Function}
     DriverConfig(sampler!, evaluator!, (n::Int64)->temperature, n_steps)
 end
-# Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(string(b.anneal_fcn))")
-function Base.show(io::IO, b::DriverConfig)
-    print(io, "MonteCarlo.DriverConfig")
-    for p in fieldnames(DriverState)
-        print(io, "\n   $(String(p)) = $(getproperty(b,p))")
-    end
-end
+
 
 # TO DO: Documentation
 Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
@@ -62,12 +56,6 @@ Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
     completed::Bool      = false
 end
 
-function Base.show(io::IO, b::DriverState)
-    print(io, "MonteCarlo.DriverState")
-    for p in fieldnames(DriverState)
-        print(io, "\n   $(String(p)) = $(getproperty(b,p))")
-    end
-end
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
@@ -101,7 +89,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     if state.nblist != nothing
         state.nblist.cutoff = -1.0
     end
-    update_nblist(state,top)
+    Common.update_nblist(state)
     energy = driver_config.evaluator!(state, false)
     
     # instantiate a new DriverState object.
@@ -139,13 +127,11 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
             # the accepted counter
             copy!(prev_state.xyz, state.xyz)
             copy!(prev_state.energy, state.energy)
-            # copy!(prev_state, state)
             driver_state.ac_count += 1
         else
             # otherwise, revert to the previous state
             copy!(state.xyz, prev_state.xyz)
             copy!(state.energy, prev_state.energy)
-            # copy!(state, prev_state)
         end
         
         # update driver state and call calback functions (if any)

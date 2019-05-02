@@ -36,9 +36,9 @@ mutable struct BlockrotMutator
     step_size::Float64
     translation_step_size::Float64
     n_tries::Int64
-    loop_closer::Drivers.AbstractDriver
+    loop_closer::Drivers.AbstractDriverConfig
 
-    function BlockrotMutator(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Drivers.AbstractDriver)
+    function BlockrotMutator(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Drivers.AbstractDriverConfig)
         new(blocks, angle_sampler, p_mut, step_size, translation_step_size, n_tries, loop_closer)
     end
 end
