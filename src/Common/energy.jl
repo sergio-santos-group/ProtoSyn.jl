@@ -1,7 +1,8 @@
 # ----------------------------------------------------------------------------------------------------------
 #                                                 ENERGY
 
-abstract type AbstractEnergy end
+# abstract type AbstractEnergy end
+abstract type AbstractEnergy{T<:AbstractFloat} end
 
 @doc raw"""
     NullEnergy()
@@ -44,3 +45,11 @@ function Base.copy!(dst::Energy, src::Energy)::Energy
     dst.eTotal = src.eTotal
     return dst
 end
+
+
+
+function set_energy_component(container::AbstractEnergy, comp::Symbol, value::Float64)
+    setproperty!(container, comp, value)
+    container.total = value
+end
+
