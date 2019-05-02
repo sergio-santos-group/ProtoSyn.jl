@@ -3,7 +3,6 @@ module MonteCarlo
 using ..Aux
 using ..Common
 using ..Drivers
-using Printf
 
 @doc raw"""
     Driver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0, callbacks::Tuple{Common.CallbackObject}...])
@@ -47,15 +46,28 @@ end
 function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64, n_steps::Int64) where {F <: Function, G <: Function}
     DriverConfig(sampler!, evaluator!, (n::Int64)->temperature, n_steps)
 end
-Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), anneal_fcn=$(string(b.anneal_fcn)), n_steps=$(b.n_steps)")
+# Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(string(b.anneal_fcn))")
+function Base.show(io::IO, b::DriverConfig)
+    print(io, "MonteCarlo.DriverConfig")
+    for p in fieldnames(DriverState)
+        print(io, "\n   $(String(p)) = $(getproperty(b,p))")
+    end
+end
 
 # TO DO: Documentation
-Base.@kwdef mutable struct DriverState
+Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
     step::Int64          = 0
-    ac_ratio::Float64    = 0.0
-    temperature::Float64 = 0.0
+    ac_count::Int        = -1.0
+    temperature::Float64 = -1.0
+    completed::Bool      = false
 end
-Base.show(io::IO, b::DriverState) = print(io, "MonteCarlo.DriverState(step=$(b.step), ac_ratio=$(b.ac_ratio), temperature=$(b.temperature))")
+
+function Base.show(io::IO, b::DriverState)
+    print(io, "MonteCarlo.DriverState")
+    for p in fieldnames(DriverState)
+        print(io, "\n   $(String(p)) = $(getproperty(b,p))")
+    end
+end
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
@@ -82,32 +94,71 @@ julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_cal
 """
 function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
     
-    driver_config.evaluator!(state, false)
+    # Evaluate initial energy and forces
+    #   start by calculating nonbonded lists:
+    #   a negative cutoff implies all pairwise
+    #   interactions are requested.
+    if state.nblist != nothing
+        state.nblist.cutoff = -1.0
+    end
+    update_nblist(state,top)
+    energy = driver_config.evaluator!(state, false)
     
-    ac_count = 0
-    driver_state = DriverState(1, 0.0, driver_config.anneal_fcn(1))
-    backup_state = Common.State(state.size)
-    copy!(backup_state, state)
+    # instantiate a new DriverState object.
+    # By default, no optimization step has yet been taken
+    # apart from calculating the energy and forces for the
+    # input state
+    driver_state = DriverState()
+    
+    # create a copy of the input state
+    prev_state = Common.State(state.size)
+    
+    # initialize auxilliary variables
+    driver_state.ac_count = 0    # accepted counter
+    
+    # call "callback" functions
+    @Common.cbcall callbacks state driver_state driver_config
 
-    @Common.cbcall callbacks state driver_config driver_state
-    while driver_state.step <= driver_config.n_steps
+    #region MAINLOOP
+    while driver_state.step < driver_config.n_steps
+        driver_state.step += 1
+        
+        # sample new configuration
         driver_config.sampler!(state)
-        driver_config.evaluator!(state, false)
 
+        # evaluate energy of new configuration
+        energy = driver_config.evaluator!(state, false)
+
+        # calculate temperature for current step
         driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
 
-        #@metropolis state.energy.eTotal backup.energy.eTotal temperature
-        if (state.energy.eTotal < backup_state.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup_state.energy.eTotal) / driver_state.temperature)) # Metropolis
-            copy!(backup_state, state)
-            ac_count += 1
+        ΔE = energy - prev_state.energy.total
+        if (ΔE < 0.0) || (rand() < exp(-ΔE/driver_state.temperature) )
+            # since the new configuration was accepted,
+            # copy it to the prev_state and increment
+            # the accepted counter
+            copy!(prev_state.xyz, state.xyz)
+            copy!(prev_state.energy, state.energy)
+            # copy!(prev_state, state)
+            driver_state.ac_count += 1
         else
-            copy!(state, backup_state)
+            # otherwise, revert to the previous state
+            copy!(state.xyz, prev_state.xyz)
+            copy!(state.energy, prev_state.energy)
+            # copy!(state, prev_state)
         end
         
-        driver_state.ac_ratio = ac_count / driver_state.step
-        @Common.cbcall callbacks state driver_config driver_state
-        driver_state.step += 1
+        # update driver state and call calback functions (if any)
+        @Common.cbcall callbacks state driver_state driver_config
+
     end
+    #endregion
+
+    # update driver state and return
+    driver_state.completed = true
+
+    return  driver_state
+    
 end
 
 end

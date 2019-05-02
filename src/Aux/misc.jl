@@ -109,3 +109,15 @@ function linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float6
 
     return r * (sy/sx)
 end
+
+
+@inline function get_max_force(n_atoms::Int64, mat::Array{T, 2}) where {T<:AbstractFloat}
+    max_force = zero(eltype(mat))
+    for i=1:n_atoms
+        forceSq = mat[i, 1] ^ 2 + mat[i, 2] ^ 2 + mat[i, 3] ^ 2
+        if forceSq > max_force
+            max_force = forceSq
+        end
+    end
+    return sqrt(max_force)
+end

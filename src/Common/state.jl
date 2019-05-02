@@ -2,10 +2,12 @@
 #                                                 STATE
 
 mutable struct NonBondedList
-
+    cutoff::Float64
+    buffer::Float64
     list::Vector{Int64}
     pointer::Vector{Int64}
 end
+
 NonBondedList(n::Int64) = NonBondedList(zeros(Int64, convert(Int64, n*(n+1)/2)), zeros(n))
 Base.show(io::IO, b::NonBondedList) = print(io, "NonBondedList(list=$(b.list), pointer=$(b.pointer))")
 
@@ -45,10 +47,14 @@ mutable struct State
     energy::AbstractEnergy
     xyz::Array{Float64, 2}
     forces::Array{Float64, 2} # kJ mol⁻¹ nm⁻¹
-    nb::Union{NonBondedList, Nothing}
+    nblist::Union{NonBondedList, Nothing}
 end
 State(n::Int64, e::AbstractEnergy, x::Array{Float64, 2}, f::Array{Float64, 2}) = State(n, e, x, f, NonBondedList(n))
 State(n::Int64) = State(n, Energy(), zeros(n, 3), zeros(n, 3), NonBondedList(n))
+State(state::State) = begin
+    st = State(state.size)
+    copy!(st, state)
+end
 Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), nb=$(b.nb)")
 
 function Base.iterate(st::State, idx = 1)
@@ -64,60 +70,97 @@ function Base.copy!(dst::State, src::State)::State
     copy!(dst.xyz, src.xyz)
     copy!(dst.forces, src.forces)
     copy!(dst.energy, src.energy)
-    copy!(dst.nb, src.nb)
+    copy!(dst.nblist, src.nblist)
     return dst
 end
 
-function update_nb_list!(state::Common.State, top::Any, cutoff::Float64)
+function update_nblist!(state::Common.State)
     #! `top` type is defined as Any, but it should be Forcefield.Amber.Topology.
     # The issue is that so far, ProtoSyn does not know that Forcefield is!
 
-    ptr         = 1
-    exclude_idx = 1
-    exclude     = 1
-    dijSq       = 0.0
-    delta       = 0.0
-    cutSq       = cutoff ^ 2
+    if state.nblist == nothing
+        return state
+    end
+
+
+    # ptr         = 1
+    # exclude_idx = 1
+    # exclude     = 1
+    # dijSq       = 0.0
+    # delta       = 0.0
+    # cutSq       = state.nblist.cutoff ^ 2
     coords      = state.xyz
     n_atoms     = state.size
 
-    for i=1:n_atoms
-        
-        # set the exclution index to the correct location and extract the exclude atom index
-        @inbounds atomi = top.atoms[i]
-        len_exclusions = length(atomi.excls)
-        if len_exclusions > 0
-            exclude_idx = 1
-            @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < len_exclusions
-                exclude_idx += 1
-            end
-            @inbounds exclude = atomi.excls[exclude_idx]
+    nblist = state.nblist
+    if nblist.cutoff < 0.0
+        for i=1:n_atoms
+            nblist.pointer[i] = i
+            nblist.list[i] = i+1
         end
-
-        state.nb.pointer[i] = ptr
-
-        for j = (i+1):n_atoms
-
-            # Remove excluded atom
-            if j == exclude
-                exclude_idx += 1
-                @inbounds exclude = atomi.excls[exclude_idx]
-                continue
+        nblist.list[n_atoms] = -1
+    else
+        ptr = 1
+        δx = 0.0
+        Δx = 0.0
+        cutSq = (nblist.cutoff + nblist.buffer)^2
+        for i=1:n_atoms
+            nblist.pointer[i] = ptr
+            for j = (i+1):n_atoms
+                Δx = 0.0
+                for k=1:3
+                    δx = coords[i,k] - coords[j,k]
+                    Δx += δx^2
+                end
+                if Δx < cutSq
+                    nblist.list[ptr] = j
+                    ptr += 1
+                end
             end
-
-            dijSq = 0.0
-            for k=1:3
-                delta = coords[i,k] - coords[j,k]
-                dijSq += delta*delta
-            end
-
-            if dijSq < cutSq
-                state.nb.list[ptr] = j
-                ptr += 1
-            end
+            nblist.list[ptr] = -1
+            ptr += 1
         end
-        
-        state.nb.list[ptr] = -1
-        ptr += 1
     end
+
+    # for i=1:n_atoms
+        
+    #     # # set the exclution index to the correct location and extract the exclude atom index
+    #     # @inbounds atomi = top.atoms[i]
+    #     # len_exclusions = length(atomi.excls)
+    #     # if len_exclusions > 0
+    #     #     exclude_idx = 1
+    #     #     @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < len_exclusions
+    #     #         exclude_idx += 1
+    #     #     end
+    #     #     @inbounds exclude = atomi.excls[exclude_idx]
+    #     # end
+
+    #     state.nb.pointer[i] = ptr
+
+    #     for j = (i+1):n_atoms
+
+    #         # # Remove excluded atom
+    #         # if j == exclude
+    #         #     exclude_idx += 1
+    #         #     @inbounds exclude = atomi.excls[exclude_idx]
+    #         #     continue
+    #         # end
+
+    #         dijSq = 0.0
+    #         for k=1:3
+    #             delta = coords[i,k] - coords[j,k]
+    #             dijSq += delta*delta
+    #         end
+
+    #         if dijSq < cutSq
+    #             state.nb.list[ptr] = j
+    #             ptr += 1
+    #         end
+    #     end
+        
+    #     state.nb.list[ptr] = -1
+    #     ptr += 1
+    # end
+
+    return state
 end

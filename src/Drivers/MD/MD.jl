@@ -31,52 +31,99 @@ macro md(args...)
     
     options = get_options(args)
 
-    ex = quote
-        function(state::Common.State, driver::DriverOptions)
-            
-            n_atoms = state.size
-            step::Int = 0       # current step
-            Ti = 0.0            # instant temperature
+ex = quote
+function(state::Common.State, driver::DriverOptions)
+    
+    n_atoms = state.size
+    step::Int = 0       # current step
+    Ti = 0.0            # instant temperature
 
-            mass = 6.0 * ones(n_atoms)
+    mass = 6.0 * ones(n_atoms)
 
-            Δt = driver.timestep
-            half_Δt = 0.5*Δt
+    Δt = driver.timestep
+    half_Δt = 0.5*Δt
 
-            coords = state.xyz
-            forces = state.forces
-            #println(stderr, pointer_from_objref(coords))
-            #println(stderr, pointer_from_objref(state.xyz))
+    coords = state.xyz
+    forces = state.forces
+    #println(stderr, pointer_from_objref(coords))
+    #println(stderr, pointer_from_objref(state.xyz))
 
-            #velocs = zeros(n_atoms, 3)
+    #velocs = zeros(n_atoms, 3)
 
-            forces_t = copy(forces) # forces at time t
+    forces_t = copy(forces) # forces at time t
 
-            evaluator! = driver.evaluator!
-            
-            energy = evaluator!(state, true)
-            Ti = 0.0
-            sum_sq = 0.0
-            λ = 0.0
-            Ndf::Int = 3*n_atoms - 6
-            boltzmann = 0.0083145112119   # (kJ/(mol K))
-            total_mass = sum(mass)
+    evaluator! = driver.evaluator!
+    
+    energy = evaluator!(state, true)    
+    Ti = 0.0
+    sum_sq = 0.0
+    λ = 0.0
+    Ndf::Int = 3*n_atoms - 6
+    boltzmann = 0.0083145112119   # (kJ/(mol K))
+    total_mass = sum(mass)
 
-            # TEMPERATURE ASSIGNMENT
-            #  1. initial temperatures
-            λ = driver.temperature*boltzmann
-            velocs = (*).(repeat(λ*mass,1,3), randn(n_atoms, 3))
-            
-            #  2. remove COM motion
-            velocs .-= sum((*).(velocs, repeat(mass,1,3)), dims=1)
-            
-            #  3. scale to desired temperature
-            Ti = 0.0
-            @inbounds for i = 1:n_atoms
-                sum_sq  = velocs[i,1]*velocs[i,1]
-                sum_sq += velocs[i,2]*velocs[i,2]
-                sum_sq += velocs[i,3]*velocs[i,3]
-                Ti += sum_sq*mass[i]
+    # TEMPERATURE ASSIGNMENT
+    #  1. initial temperatures
+    λ = driver.temperature*boltzmann
+    velocs = (*).(repeat(λ*mass,1,3), randn(n_atoms, 3))
+    
+    #  2. remove COM motion
+    velocs .-= sum((*).(velocs, repeat(mass,1,3)), dims=1)
+    
+    #  3. scale to desired temperature
+    Ti = 0.0
+    @inbounds for i = 1:n_atoms
+        sum_sq  = velocs[i,1]*velocs[i,1]
+        sum_sq += velocs[i,2]*velocs[i,2]
+        sum_sq += velocs[i,3]*velocs[i,3]
+        Ti += sum_sq*mass[i]
+    end
+    Ti /= (Ndf*boltzmann)
+    velocs .*= sqrt(driver.temperature/Ti)
+    
+
+
+    while step <= driver.n_steps
+        
+        # calculate instant temperature
+        Ti = 0.0
+        @inbounds for i = 1:n_atoms
+            sum_sq  = velocs[i,1]*velocs[i,1]
+            sum_sq += velocs[i,2]*velocs[i,2]
+            sum_sq += velocs[i,3]*velocs[i,3]
+            Ti += sum_sq*mass[i]
+        end
+        Ti /= (Ndf*boltzmann)
+        
+        # =============== START CONFIGURABLE SECTION ================
+        #                 THERMOSTATS
+        $(
+        if get(options, :thermostat, :none) == :berendsen
+            :(λ = sqrt(1.0 + Δt*(driver.temperature/Ti- 1.0)/driver.tcoupling))
+        
+        elseif get(options, :thermostat, :none) == :vrescale
+            :(λ = sqrt(driver.temperature/Ti))
+        end
+        )
+        
+        $(if haskey(options, :thermostat)
+            # :(velocs .*= max(0.85, min(1.25, λ)))
+            :(velocs .*= λ)
+        end)
+        # ================ END CONFIGURABLE SECTION =================
+        
+        # println(stderr, step, " λ=", λ, " Ti=", Ti)
+        
+        # if step%50 == 0
+        #     print(Print.as_xyz(state, metadata))
+        # end
+
+        # integrate equation of motion (Verlet velocity)
+        @inbounds for i = 1:n_atoms
+            f = half_Δt/mass[i]
+            for k=1:3
+                coords[i, k] += Δt * (f*forces[i,k] + velocs[i,k])
+                forces_t[i,k] = forces[i,k]
             end
             Ti /= (Ndf*boltzmann)
             velocs .*= sqrt(driver.temperature/Ti)

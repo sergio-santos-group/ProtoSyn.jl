@@ -34,8 +34,7 @@ function evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.S
     end
 
     energy *= .5
-    state.energy.comp["eBond"] = energy
-    state.energy.eTotal = energy
+    Common.set_energy_component(state.energy, :bond, energy)
     return energy
 end
 
@@ -208,17 +207,18 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
     
     #Calculate nonbonded interactions
     
-    @inbounds for i in 1:(n_atoms - 1)
-        atomi = atoms[i]
+    for i in 1:(n_atoms - 1)
+        @inbounds atomi = atoms[i]
         
-        # # set the exclution index to the correct location and extract the exclude atom index
-        # if length(atomi.excls) > 0
-        #     exclude_idx = 1
-        #     @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < length(atomi.excls)
-        #         exclude_idx += 1
-        #     end
-        #     @inbounds exclude = atomi.excls[exclude_idx]
-        # end
+        # set the exclution index to the correct location and extract the exclude atom index
+        len_exclusions = length(atomi.excls)
+        if length(atomi.excls) > 0
+            exclude_idx = 1
+            @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < len_exclusions
+                exclude_idx += 1
+            end
+            @inbounds exclude = atomi.excls[exclude_idx]
+        end
         
         # for j in (i+1):(n_atoms)
         #     if j == exclude
@@ -231,7 +231,14 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         while state.nb.list[ptr] > 0
             @inbounds j = state.nb.list[ptr]
             ptr += 1
-        
+            
+            if j == exclude
+                exclude_idx += 1
+                @inbounds exclude = atomi.excls[exclude_idx]
+                continue
+            end
+
+
             @inbounds atomj = atoms[j]
             
             dijSq = 0.0
