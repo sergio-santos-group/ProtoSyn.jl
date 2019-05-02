@@ -37,25 +37,24 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
+Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriver
     sampler!::F
     evaluator!::G
-    n_steps::Int
     anneal_fcn::H
+    n_steps::Int = 0
 end
 
-function DriverConfig(sampler!::F, evaluator!::G, n_steps::Int, temperature::Float64) where {F <: Function, G <: Function}
-    DriverConfig(sampler!, evaluator!, n_steps, ()->temperature)
+function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64, n_steps::Int64) where {F <: Function, G <: Function}
+    DriverConfig(sampler!, evaluator!, (n::Int64)->temperature, n_steps)
 end
-Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), anneal_fcn=$(string(b.anneal_fcn))")
+Base.show(io::IO, b::DriverConfig) = print(io, "MonteCarlo.DriverConfig(sampler=$(string(b.sampler!)), evaluator=$(string(b.evaluator!)), anneal_fcn=$(string(b.anneal_fcn)), n_steps=$(b.n_steps)")
 
 # TO DO: Documentation
-mutable struct DriverState
-    step::Int64
-    ac_ratio::Float64
-    temperature::Float64
+Base.@kwdef mutable struct DriverState
+    step::Int64          = 0
+    ac_ratio::Float64    = 0.0
+    temperature::Float64 = 0.0
 end
-DriverState() = DriverState(0, 0.0, 0.0)
 Base.show(io::IO, b::DriverState) = print(io, "MonteCarlo.DriverState(step=$(b.step), ac_ratio=$(b.ac_ratio), temperature=$(b.temperature))")
 
 # ----------------------------------------------------------------------------------------------------------

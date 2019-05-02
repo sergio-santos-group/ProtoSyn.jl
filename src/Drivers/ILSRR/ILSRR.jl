@@ -36,22 +36,20 @@ ILSRR.Driver(evaluator=my_evaluator!, temperature=300.0, n_steps=10)
 
 See also: [`run!`](@ref)
 """
-mutable struct Driver <: Drivers.AbstractDriver
+Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
 
-    run!::Function
     inner_cycle_driver::Drivers.AbstractDriver
-    evaluator!::Function
-    perturbator!::Function
-    temperature::Float64
-    n_steps::Int64
-    continue_after_n_attemps::Int64
-    callbacks::Tuple
+    evaluator!::F
+    perturbator!::G
+    anneal_fcn::H
+    n_steps::Int64 = 0
+    continue_after_n_attemps::Int64 = 0
 
 end
-function Driver(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::Function, perturbator!::Function, temperature::Float64 = 0.0, n_steps::Int64 = 0, continue_after_n_attemps::Int64 = 0, callbacks::Common.CallbackObject...)
-    return Driver(run!, inner_cycle_driver, evaluator!, perturbator!, temperature, n_steps, continue_after_n_attemps, callbacks)
+function DriverConfig(inner_cycle_driver::Drivers.AbstractDriver, evaluator!::F, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
+    return DriverConfig(inner_cycle_driver = inner_cycle_driver, evaluator! = evaluator!, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
 end
-Base.show(io::IO, b::Driver) = print(io, "ILSRR.Driver(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step), continue_after_n_attemps=$(b.continue_after_n_attemps))")
+Base.show(io::IO, b::DriverConfig) = print(io, "ILSRR.DriverConfig(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), perturbator=$(string(b.perturbator!)), anneal_fcn=$(string(b.anneal_fcn)), n_steps=$(b.n_steps), continue_after_n_attemps=$(b.continue_after_n_attemps))")
 
 
 @doc raw"""
@@ -72,7 +70,7 @@ Run the main body of the Driver.
 julia> Drivers.ILSRR.run(state, ilsrr_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver::DriverConfig, callbacks::Common.CallbackObject...)
 
     save_inner_best = @Common.callback 1 function cb_save(step::Int64, st::Common.State, dr::Drivers.AbstractDriver, args...)
         if st.energy.eTotal < inner_best.energy.eTotal

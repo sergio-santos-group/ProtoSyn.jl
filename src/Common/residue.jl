@@ -28,13 +28,12 @@ julia> Common.Residue([1, 2, 3, 4], Common.Residue([5, 6, 7, 8], nothing, "V", C
 Common.Residue(atoms=[1, 2, 3, 4], next=V, name=E)
 ```
 """
-mutable struct Residue
+Base.@kwdef mutable struct Residue
     atoms::Vector{Int64}
     next::Union{Residue, Int64, Nothing}
     name::String
-    ss::SS.TYPE
+    ss::SS.TYPE = SS.COIL
 end
-Residue(atoms::Vector{Int64}, next::Union{Residue, Int64, Nothing}, name::String) = Residue(atoms, next, name, SS.COIL)
 function Base.show(io::IO, b::Residue)
     if b.next == nothing
         print(io, "Common.Residue(atoms=$(b.atoms), next=nothing, name=$(b.name), ss=$(b.ss))")

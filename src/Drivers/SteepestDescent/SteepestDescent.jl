@@ -34,25 +34,24 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_step=0
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-mutable struct DriverConfig{F <: Function}
+Base.@kwdef mutable struct DriverConfig{F <: Function}
     
     evaluator!::F
-    n_steps::Int64
-    f_tol::Float64        # (Default: 1e-3)
-    max_step::Float64     # (Default: 0.1) nm
+    n_steps::Int64    = 0
+    f_tol::Float64    = 1e-3
+    max_step::Float64 = 0.1
 end
 DriverConfig(evaluator!::Function; n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_step::Float64 = 0.1) = DriverConfig(evaluator!, n_steps, f_tol, max_step)
 Base.show(io::IO, b::DriverConfig) = print(io, "SteepestDescent.DriverConfig(evaluator=$(string(b.evaluator!)), n_steps=$(b.n_steps), f_tol=$(b.f_tol), max_step=$(b.max_step))")
 
 #TO DO: Documentation
-mutable struct DriverState
+Base.@kwdef mutable struct DriverState
     
-    step::Int64
-    step_size::Float64
-    max_force::Float64
-    gamma::Float64
+    step::Int64        = 0
+    step_size::Float64 = 0.0
+    max_force::Float64 = 0.0
+    gamma::Float64     = 0.0
 end
-DriverState() = DriverState(0, 0.0, 0.0, 0.0)
 Base.show(io::IO, b::DriverState) = print(io, "SteepestDescent.DriverState(step=$(b.step), step_size=$(b.step_size), max_force=$(b.max_force), gamma=$(b.gamma))")
 
 # ----------------------------------------------------------------------------------------------------------

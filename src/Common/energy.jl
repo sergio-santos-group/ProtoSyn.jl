@@ -32,11 +32,10 @@ julia> Common.Energy()
 Energy(eTotal=0.0)
 ```
 """
-mutable struct Energy <: AbstractEnergy
-    comp::Dict{String, Float64}
-    eTotal::Float64
+Base.@kwdef mutable struct Energy <: AbstractEnergy
+    comp::Dict{String, Float64} = Dict{String, Float64}()
+    eTotal::Float64             = 0.0
 end
-Energy() = Energy(Dict{String, Float64}("other" => 0.0, "amber" => 0.0), 0.0)
 Base.show(io::IO, b::Energy) = print(io, "Energy(eTotal=$(b.eTotal), components=$(b.comp))")
 
 function Base.copy!(dst::Energy, src::Energy)::Energy

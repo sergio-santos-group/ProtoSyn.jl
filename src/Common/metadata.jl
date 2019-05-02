@@ -25,18 +25,19 @@ julia> AtomMetadata("H1")
 AtomMetadata(name=H1, elem=H1, res_num=1, res_name=UNK, chain_id=nothing, connects=nothing)
 ```
 """
-mutable struct AtomMetadata
+Base.@kwdef mutable struct AtomMetadata
 
-    index::Int64
-    name::String
-    elem::String
-    res_num::Int64
-    res_name::String
-    residue::Union{Residue, Nothing}
-    chain_id::Union{String, Nothing}
-    connects::Union{Vector{Int64}, Nothing}
+    # Parameter                             Default
+    index::Int64                            = 0
+    name::String                            = "X"
+    elem::String                            = "X"
+    res_num::Int64                          = 1
+    res_name::String                        = "UNK"
+    residue::Union{Residue, Nothing}        = nothing
+    chain_id::Union{String, Nothing}        = nothing
+    connects::Union{Vector{Int64}, Nothing} = nothing
 
-    AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
+    # AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
 end
 function Base.show(io::IO, b::AtomMetadata) #SHOULD BE IMPROVED
     if b.chain_id != nothing && b.connects != nothing
@@ -146,19 +147,14 @@ julia> Metadata()
 Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[], blocks=[], sidechains=[])
 ```
 """
-mutable struct Metadata
+Base.@kwdef mutable struct Metadata
 
-    atoms::Vector{AtomMetadata}
-    ss::Vector{SecondaryStructureMetadata}
-    residues::Vector{Residue}
-    dihedrals::Vector{Dihedral}
-    blocks::Vector{BlockMetadata}
+    atoms::Vector{AtomMetadata}            = Vector{AtomMetadata}()
+    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}()
+    residues::Vector{Residue}              = Vector{Residue}()
+    dihedrals::Vector{Dihedral}            = Vector{Dihedral}()
+    blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}()
 end
-Metadata(;atoms::Vector{AtomMetadata}      = Vector{AtomMetadata}(),
-    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}(),
-    residues::Vector{Residue}              = Vector{Residue}(),
-    dihedrals::Vector{Dihedral}            = Vector{Dihedral}(),
-    blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}()) = Metadata(atoms, ss, residues, dihedrals, blocks)
 Base.show(io::IO, b::Metadata) = print(io, "Metadata(atoms=$(b.atoms), ss=$(b.ss), residues=$(b.residues), dihedrals=$(b.dihedrals))")
 
 
