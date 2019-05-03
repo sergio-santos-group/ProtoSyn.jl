@@ -36,48 +36,30 @@ ILSRR.Driver(evaluator=my_evaluator!, temperature=300.0, n_steps=10)
 
 See also: [`run!`](@ref)
 """
-mutable struct DriverConfig{F <: Function, G <: Function}
+Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
     #TO DO: Documentation
-    n_steps::Int
-    temperature::Float64
-    perturbator!::G
     inner_driver!::F
-    inner_driver_config::Union{Drivers.AbstractDriverConfig,Nothing}
+    inner_driver_config::Union{Drivers.AbstractDriverConfig, Nothing}
+    perturbator!::H
+    anneal_fcn::G
+    n_steps::Int = 0
 end
-
-# Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriverConfig
-
-#     inner_driver::Drivers.AbstractDriverConfig
-#     evaluator!::F
-#     perturbator!::G
-#     anneal_fcn::H
-#     n_steps::Int64 = 0
-#     continue_after_n_attemps::Int64 = 0
-
-# end
-# function DriverConfig(inner_driver::Drivers.AbstractDriverConfig, evaluator!::F, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
-#     return DriverConfig(inner_driver = inner_driver, evaluator! = evaluator!, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
-# end
-# Base.show(io::IO, b::DriverConfig) = print(io, "ILSRR.DriverConfig(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), perturbator=$(string(b.perturbator!)), anneal_fcn=$(string(b.anneal_fcn)), n_steps=$(b.n_steps), continue_after_n_attemps=$(b.continue_after_n_attemps))")
+function DriverConfig(inner_driver!::F, inner_driver_config::Drivers.AbstractDriverConfig, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
+    return DriverConfig(inner_driver! = inner_driver!, inner_driver_config = inner_driver_config, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
+end
 
 
 #TO DO: Documentation
 Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
-    step::Int64        = 0
-    n_stalls::Int      = 0
-    completed::Bool    = false
-    stalled::Bool      = false
-    best_state::Common.State
-    home_state::Common.State
+    best_state::Union{Common.State, Nothing} = nothing
+    home_state::Union{Common.State, Nothing} = nothing
+    step::Int                                = 0
+    n_stalls::Int                            = 0
+    temperature::Float64                     = -1.0
+    completed::Bool                          = false
+    stalled::Bool                            = false
 end
 
-# TODO: Documentation
-Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
-    step::Int            = 0
-    fj_count::Int        = 0 # Failed jumps count
-    temperature::Float64 = -1.0
-    completed::Bool      = false
-end
 
 @doc raw"""
     run!(state::Common.State, driver::SteepestDescentDriver[, callback::Union{Common.CallbackObject, Nothing} = nothing])
@@ -99,76 +81,8 @@ julia> Drivers.ILSRR.run(state, ilsrr_driver, callback1, callback2, callback3)
 """
 function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
 
-    # save_inner_best = @Common.callback 1 function cb_save(step::Int64, st::Common.State, dr::Drivers.AbstractDriverConfig, args...)
-    #     if st.energy.eTotal < inner_best.energy.eTotal
-    #         inner_best = deepcopy(st)
-    #     end
-    # end
-
-    # save_inner_best = Drivers.@callback 1 function(st)
-    #     if st.energy.total < inner_best.energy.total
-    #         # just copy coordinates and energy:
-    #         #   inner_best.energy = st.energy
-    #         #   inner_best.xyz = st.xyz
-    #         Common.@copy inner_best st energy xyz
-    #     end
-    # end
-
-    # function set_homebase()
-    #     printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :green)
-    #     Common.@copy homebase state energy xyz
-    #     # copy!(homebase, state)
-    #     failed_jumps_count = 0
-    # end
-
-    # step::Int64 = 1
-    # failed_jumps_count::Int64 = 0
-    # driver.evaluator!(state, false)
-    # inner_best    = deepcopy(state)
-    # homebase      = deepcopy(state)
-    # initial_state = deepcopy(state)
-    # best_energy   = Inf 
-
-    # for step in 1:driver.n_steps
-    #     println(@sprintf("\n(%5s) %12s \n%s", "ILSRR", @sprintf("Step: %4d", step), "-"^150))
-
-    #     inner_best = deepcopy(initial_state)
-    #     driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best)
-    #     state = deepcopy(inner_best)
-        
-    #     @Common.cbcall driver.callbacks..., callbacks... step state driver
-        
-    #     if state.energy.total < best_energy
-    #         best_energy = state.energy.total
-    #         set_homebase()
-    #     else
-    #         ΔE = state.energy.total - homebase.energy.total
-    #         if (ΔE < 0.0) || (rand() < exp(-ΔE/driver.temperature)) # Metropolis Criteria
-    #             set_homebase()
-    #         else
-    #             failed_jumps_count += 1
-    #             if driver.continue_after_n_attemps > 0 && failed_jumps_count >= driver.continue_after_n_attemps
-    #                 printstyled(@sprintf("(ILSRR) Reseting because %2d consecutive jumps failed to produce a new homebase\n", failed_jumps_count), color = :red)
-    #                 state    = deepcopy(initial_state)
-    #                 homebase = deepcopy(initial_state)
-    #                 failed_jumps_count = 0
-    #                 continue
-    #             end
-    #             printstyled(@sprintf("(ILSRR) Recovering to previous homebase (x%2d): ⚡E: %10.3e (actual) ▶️ %10.3e (new)\n", failed_jumps_count, state.energy.eTotal, homebase.energy.eTotal), color = 9)
-    #             state = deepcopy(homebase)
-    #         end
-    #         if step != driver.n_steps
-    #             driver.perturbator!(state)
-    #             driver.evaluator!(state, false)
-    #         end
-    #     end
-    # end
-
-    #--------------------------------------------------------------------------
-    n_stalls = 0
     driver_state = DriverState()
     
-
     inner_driver! = driver_config.inner_driver
     inner_driver_config = driver_config.inner_driver_config
     
@@ -177,13 +91,14 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         inner_driver!(state, inner_driver_config)
         inner_driver_config.n_steps = n_steps
     end
-
+    
     driver_state.best_state = Common.State(state)
     driver_state.home_state = Common.State(state)
     driver_state.completed = driver_state.step == driver_config.n_steps
 
     @Common.cbcall callbacks state driver_state driver_config
     
+    R = 0.0083144598 # kJ mol-1 K-1
 
     #region MAINLOOP
     while !(driver_state.completed || driver_state.stalled)
@@ -193,29 +108,30 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         inner_driver!(state, inner_driver_config, callbacks)
         
         driver_state.step += 1
-        @Common.cbcall callbacks state driver_state driver_config
-
-        if state.energy.total < best.energy.total
+        driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
+        
+        if state.energy.total < driver_state.best_state.energy.total
             # save this state as the best and make
             # it the new homebase
-            Common.@copy best state energy xyz
-            Common.@copy homebase state energy xyz
+            Common.@copy driver_state.best_state state energy xyz
+            Common.@copy driver_state.home_state state energy xyz
             n_stalls = 0
         else
             # otherwise, a new homebase may be created according
             # to the Metropolis criterium
-            ΔE = state.energy.total - homebase.energy.total
-            if (ΔE <= 0.0) || (rand() < exp(-ΔE/driver.temperature))
-                Common.@copy homebase state energy xyz
+            β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
+            ΔE = state.energy.total - driver_state.home_state.energy.total
+            if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
+                Common.@copy driver_state.home_state state energy xyz
                 n_stalls = 0
             else
                 # if the criterium was not accepted, revert
                 # to the homebase
-                Common.@copy state homebase energy xyz
+                Common.@copy state driver_state.home_state energy xyz
                 n_stalls += 1
             end
         end
-
+        
         driver_state.stalled = n_stalls == driver_config.stall_limit
         driver_state.completed = driver_state.step == driver_config.n_steps
         
@@ -224,17 +140,16 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
             driver_config.perturbator!(state)
         end
 
+        @Common.cbcall callbacks state driver_state driver_config
     end
     #endregion
 
     # before returning, save the best state
-    if best.energy.total < state.energy.total
-        Common.@copy state best energy xyz
+    if driver_state.best_state.energy.total < state.energy.total
+        Common.@copy state driver_state.best_state energy xyz
     end
 
     return driver_state
-
 end # end function
-
 
 end # end module

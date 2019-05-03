@@ -8,9 +8,7 @@ abstract type AbstractDriverConfig end
 abstract type AbstractDriverState  end
 
 macro callback(freq::Int, ex::Expr)
-    #dump(ex)
 
-    # fname(a,b,c)
     new_fcn_decl = :($(gensym())(
         a::Common.State,
         b::Driver.AbstractDriverState,
