@@ -47,7 +47,7 @@ julia> Mutators.Dihedral.run!(state, mutator)
 ```
 See also: [`Common.rotate_dihedral!`](@ref Common)
 """
-@inline function run!(state::Common.State, mutator::DihedralMutator)
+@inline function apply!(state::Common.State, mutator::DihedralMutator)
     
     count::Int64 = 0
     for dihedral in mutator.dihedrals

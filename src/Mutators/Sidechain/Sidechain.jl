@@ -47,7 +47,7 @@ julia> Mutators.Sidechain.run!(state, mutator)
 ```
 See also: [`rotate_dihedral_to!`](@ref Common.rotate_dihedral_to!)
 """
-@inline function run!(state::Common.State, mutator::SidechainMutator)
+@inline function apply!(state::Common.State, mutator::SidechainMutator)
     
     count::Int64 = 0
     for sidechain in mutator.sidechains

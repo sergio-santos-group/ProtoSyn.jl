@@ -57,7 +57,7 @@ julia> Mutators.Crankshaft.run!(state, mutator)
 ```
 See also: [`rotate_crankshaft!`](@ref)
 """
-@inline function run!(state::Common.State, mutator::CrankshaftMutator)
+@inline function apply!(state::Common.State, mutator::CrankshaftMutator)
 
     l = length(mutator.dihedrals)
     count::Int64 = 0

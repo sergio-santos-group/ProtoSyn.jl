@@ -60,7 +60,7 @@ Returns the number of rotations performed.
 julia> Mutators.BlockrotMutator.run!(state, mutator)
 ```
 """
-@inline function run!(state::Common.State, mutator::BlockrotMutator)
+@inline function apply!(state::Common.State, mutator::BlockrotMutator)
     
     count::Int64 = 0
     for (block_index, block) in enumerate(mutator.blocks)
