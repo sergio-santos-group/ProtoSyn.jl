@@ -107,6 +107,9 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     # call "callback" functions
     @Common.cbcall callbacks state driver_state driver_config
 
+    R = 0.0083144598 # kJ mol-1 K-1
+
+
     #region MAINLOOP
     while driver_state.step < driver_config.n_steps
         driver_state.step += 1
@@ -116,12 +119,17 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
 
         # evaluate energy of new configuration
         energy = driver_config.evaluator!(state, false)
-
+        
         # calculate temperature for current step
+        # if T ∈ ]0, +∞[ : exp(-ΔE/(R*T)) ∈ ]0, 1]
+        # if T ∈ ]-∞, 0[ : exp(-ΔE/(R*T)) ∈ [1, +∞[
+        # if T == 0 : exp(-ΔE/(R*T)) = 0 because one takes 1/0 as Inf
+        #   despite not being possible division by zero. 
         driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
+        β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
 
         ΔE = energy - prev_state.energy.total
-        if (ΔE < 0.0) || (rand() < exp(-ΔE/driver_state.temperature) )
+        if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
             # since the new configuration was accepted,
             # copy it to the prev_state and increment
             # the accepted counter
