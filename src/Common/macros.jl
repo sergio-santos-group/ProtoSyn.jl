@@ -44,6 +44,19 @@ macro callback(args...)
     esc(ex)
 end
 
+
+
+
+macro copy(dst::Symbol, src::Symbol, components::Symbol...)
+    dst = esc(dst)
+    src = esc(src)
+    ex = quote; end
+    for comp in components
+        push!(ex.args, :(copy!($(dst).$(comp), $(src).$(comp))))
+    end
+    ex
+end
+
 # # ----------------------------------------------------------------------------------------------------------
 # #                                                Energy
 # @doc raw"""
