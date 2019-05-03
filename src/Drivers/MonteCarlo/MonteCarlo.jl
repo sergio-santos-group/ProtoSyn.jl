@@ -43,12 +43,12 @@ Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Funct
     n_steps::Int = 0
 end
 
-function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64, n_steps::Int64) where {F <: Function, G <: Function}
-    DriverConfig(sampler!, evaluator!, (n::Int64)->temperature, n_steps)
+function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64) where {F <: Function, G <: Function}
+    DriverConfig(sampler! = sampler!, evaluator! = evaluator!, anneal_fcn = (n::Int64)->temperature)
 end
 
 
-# TO DO: Documentation
+# TODO: Documentation
 Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
     step::Int64          = 0
     ac_count::Int        = -1.0

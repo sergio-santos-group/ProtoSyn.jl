@@ -49,8 +49,14 @@ end
 function DriverConfig(inner_driver::Drivers.AbstractDriverConfig, evaluator!::F, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
     return DriverConfig(inner_driver = inner_driver, evaluator! = evaluator!, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
 end
-Base.show(io::IO, b::DriverConfig) = print(io, "ILSRR.DriverConfig(inner_cycle_driver=$(b.inner_cycle_driver), evaluator=$(string(b.evaluator!)), perturbator=$(string(b.perturbator!)), anneal_fcn=$(string(b.anneal_fcn)), n_steps=$(b.n_steps), continue_after_n_attemps=$(b.continue_after_n_attemps))")
 
+# TODO: Documentation
+Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
+    step::Int            = 0
+    fj_count::Int        = 0 # Failed jumps count
+    temperature::Float64 = -1.0
+    completed::Bool      = false
+end
 
 @doc raw"""
     run!(state::Common.State, driver::SteepestDescentDriver[, callback::Union{Common.CallbackObject, Nothing} = nothing])
@@ -70,33 +76,45 @@ Run the main body of the Driver.
 julia> Drivers.ILSRR.run(state, ilsrr_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver::DriverConfig, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
 
-    save_inner_best = @Common.callback 1 function cb_save(step::Int64, st::Common.State, dr::Drivers.AbstractDriverConfig, args...)
+    save_inner_best = @Common.callback 1 function _save_inner_best(st::Common.State, dr_state::Drivers.AbstractDriverState, dr_config::Drivers.AbstractDriverConfig)
         if st.energy.eTotal < inner_best.energy.eTotal
-            inner_best = deepcopy(st)
+            copy!(inner_best.xyz, st.xyz)
+            copy!(inner_best.energy, st.energy)
         end
     end
 
     function set_homebase()
-        printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :green)
-        homebase = deepcopy(state)
-        failed_jumps_count = 0
+        # printstyled(@sprintf("(ILSRR) New homebase defined: ⚡E: %10.3e (old) ▶️ %10.3e (new)\n", homebase.energy.eTotal, state.energy.eTotal), color = :green)
+        copy!(homebase.xyz, state.xyz)
+        copy!(homebase.energy, state.energy)
+        driver_state.fj_count = 0
     end
 
-    step::Int64 = 1
-    failed_jumps_count::Int64 = 0
-    driver.evaluator!(state, false)
-    inner_best    = deepcopy(state)
-    homebase      = deepcopy(state)
-    initial_state = deepcopy(state)
+    driver_state = DriverState()
+    driver_config.evaluator!(state, false)
+
+    inner_best   = Common.State(state.size)
+    copy!(inner_best.xyz, state.xyz)
+    copy!(inner_best.energy, state.energy)
+
+    homebase     = Common.State(state.size)
+    copy!(homebase.xyz, state.xyz)
+    copy!(homebase.energy, state.energy)
+
+    initial_state = Common.State(state.size)
+    copy!(initial_state.xyz, state.xyz)
+    copy!(initial_state.energy, state.energy)
+    
     best_energy   = Inf 
 
-    for step in 1:driver.n_steps
-        println(@sprintf("\n(%5s) %12s \n%s", "ILSRR", @sprintf("Step: %4d", step), "-"^150))
+    while driver_state.step < driver_config.n_steps
+        # println(@sprintf("\n(%5s) %12s \n%s", "ILSRR", @sprintf("Step: %4d", step), "-"^150))
 
-        inner_best = deepcopy(initial_state)
-        driver.inner_cycle_driver.run!(state, driver.inner_cycle_driver, save_inner_best)
+        copy!(inner_best.xyz, st.xyz)
+        copy!(inner_best.energy, st.energy)
+        driver_config.inner_cycle_driver.run!(state, driver_config.inner_driver, save_inner_best) #!!!!!!
         state = deepcopy(inner_best)
         
         @Common.cbcall driver.callbacks..., callbacks... step state driver
