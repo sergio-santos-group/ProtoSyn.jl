@@ -11,8 +11,8 @@ macro callback(freq::Int, ex::Expr)
 
     new_fcn_decl = :($(gensym())(
         a::Common.State,
-        b::Driver.AbstractDriverState,
-        c::Driver.AbstractDriverConfig)
+        b::Drivers.AbstractDriverState,
+        c::Drivers.AbstractDriverConfig)
     )
 
     fcn_decl = ex.args[1]
