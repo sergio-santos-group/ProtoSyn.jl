@@ -21,13 +21,14 @@ DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct DihedralMutator
+@Base.kwdef mutable struct DihedralMutator
     dihedrals::Vector{Common.Dihedral}
     angle_sampler::Function
-    p_mut::Float64
-    step_size::Float64
+    p_mut::Float64 = 0.0
+    step_size::Float64 = 0.0
+    # ac_ratio::Float64 = 0.0
 end
-DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = DihedralMutator(dihedrals, angle_sampler, p_mut, step_size)
+# DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = DihedralMutator(dihedrals, angle_sampler, p_mut, step_size)
 Base.show(io::IO, b::DihedralMutator) = print(io, "DihedralMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
 
@@ -56,7 +57,22 @@ See also: [`Common.rotate_dihedral!`](@ref Common)
             count += 1
         end
     end
+    # Adjust step_size: 0.2 is the desired acceptance ratio, 0.001 is the minimum step_size <- Are these modifiable ?
+    # δ = mutator.ac_ratio > 0.2 ? 1.05 : 0.5
+    # mutator.step_size = max(0.001, min(mutator.step_size * δ, π))
     return count
 end
 
 end
+
+# adjust_step_size_rfnm = @Common.callback 1 function _adjust_step_size_refnm(step::Int64, st::Common.State, dr::Drivers.MonteCarlo.Driver, ac::Float64, args...)
+#     d::Float64 = 1.0
+#     if ac > acceptance_ratio + ar_buffer_zone
+#         d = 1.05
+#     elseif ac < acceptance_ratio - ar_buffer_zone
+#         d = 0.95
+#     end
+#     # soft_dh_mutator.step_size = max(min_step_s, min(soft_dh_mutator.step_size * d, π))
+#     # soft_cs_mutator.step_size = max(min_step_s, min(soft_cs_mutator.step_size * d, π))
+#     soft_br_mutator.step_size = max(min_step_s, min(soft_br_mutator.step_size * d, π))
+# end
