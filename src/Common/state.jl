@@ -65,7 +65,7 @@ function State(state::State)
     copy!(st, state)
 end
 
-Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), nb=$(b.nb)")
+Base.show(io::IO, b::State) = print(io, "State(size=$(b.size), energy=$(b.energy), xyz=$(b.xyz), forces=$(b.forces), nblist=$(b.nblist)")
 
 function Base.iterate(st::State, idx = 1)
 
