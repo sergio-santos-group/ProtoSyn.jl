@@ -92,8 +92,7 @@ function evaluate!(angles::Vector{HarmonicAngle}, state::Common.State; do_forces
     end
 
     energy *= 0.5
-    state.energy.comp["eAngle"] = energy
-    state.energy.eTotal = energy
+    Common.set_energy_component(state.energy, :angle, energy)
     return energy
 end
 
@@ -168,8 +167,7 @@ function evaluate!(dihedralsCos::Vector{DihedralCos}, state::Common.State; do_fo
         end
     end
 
-    state.energy.comp["eDihedral"] = energy
-    state.energy.eTotal = energy
+    Common.set_energy_component(state.energy, :dihedralCos, energy)
     return energy
 end
 
@@ -227,9 +225,9 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
         #         continue
         #     end
         
-        ptr = state.nb.pointer[i]
-        while state.nb.list[ptr] > 0
-            @inbounds j = state.nb.list[ptr]
+        ptr = state.nblist.pointer[i]
+        while state.nblist.list[ptr] > 0
+            @inbounds j = state.nblist.list[ptr]
             ptr += 1
             
             if j == exclude
@@ -274,8 +272,8 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
     end
 
     eLJ *= 4.0
-    state.energy.comp["eLJ"] = eLJ
-    state.energy.comp["eCoulomb"] = eCoulomb
+    state.energy.components[:LJ] = eLJ
+    state.energy.components[:coulomb] = eCoulomb
 
     #Calculate 1-4 interactions
     evdw_scale = 0.5
@@ -314,11 +312,11 @@ function evaluate!(atoms::Vector{Atom}, state::Common.State; do_forces::Bool = f
     end
     
     eLJ14 *= 4.0
-    state.energy.comp["eLJ14"] = eLJ14
-    state.energy.comp["eCoulomb14"] = eCoulomb14
+    state.energy.components[:LJ14] = eLJ14
+    state.energy.components[:coulomb14] = eCoulomb14
 
     energy = eLJ + eLJ14 + eCoulomb + eCoulomb14
-    state.energy.eTotal = energy
+    state.energy.total = energy
     return energy
 end
 
@@ -342,10 +340,9 @@ function evaluate!(topology::Topology, state::Common.State; cut_off::Float64 = 1
     
     energy =  evaluate!(topology.bonds, state, do_forces = do_forces)
     energy += evaluate!(topology.angles, state, do_forces = do_forces)
-    energy += evaluate_OLD!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
+    energy += evaluate!(topology.atoms, state, do_forces = do_forces, cut_off = cut_off)
     energy += evaluate!(topology.dihedralsCos, state, do_forces = do_forces)
-    state.energy.comp["Amber"] = energy
-    state.energy.eTotal = energy
+    Common.set_energy_component(state.energy, :amber, energy)
     return energy
 end
 
