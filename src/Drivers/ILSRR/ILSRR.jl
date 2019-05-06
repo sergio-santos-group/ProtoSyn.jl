@@ -113,8 +113,8 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         if state.energy.total < driver_state.best_state.energy.total
             # save this state as the best and make
             # it the new homebase
-            Common.@copy driver_state.best_state state energy xyz
-            Common.@copy driver_state.home_state state energy xyz
+            @Common.copy driver_state.best_state state energy xyz
+            @Common.copy driver_state.home_state state energy xyz
             n_stalls = 0
         else
             # otherwise, a new homebase may be created according
@@ -122,12 +122,12 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
             β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
             ΔE = state.energy.total - driver_state.home_state.energy.total
             if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
-                Common.@copy driver_state.home_state state energy xyz
+                @Common.copy driver_state.home_state state energy xyz
                 n_stalls = 0
             else
                 # if the criterium was not accepted, revert
                 # to the homebase
-                Common.@copy state driver_state.home_state energy xyz
+                @Common.copy state driver_state.home_state energy xyz
                 n_stalls += 1
             end
         end
@@ -146,7 +146,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
 
     # before returning, save the best state
     if driver_state.best_state.energy.total < state.energy.total
-        Common.@copy state driver_state.best_state energy xyz
+        @Common.copy state driver_state.best_state energy xyz
     end
 
     return driver_state

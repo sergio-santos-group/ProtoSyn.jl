@@ -36,22 +36,34 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriverConfig
-    sampler!::F
-    evaluator!::G
-    anneal_fcn::H
-    n_steps::Int = 0
+mutable struct DriverConfig{F <: Function, G <: Function, H <: Function} <: Drivers.AbstractDriverConfig
+    sampler!::F   # Required
+    evaluator!::G # Required
+    anneal_fcn::H # Default: 0.0
+    n_steps::Int  # Default: 0
+
+    DriverConfig(; sampler!, evaluator!, temperature = 0.0, n_steps = 0) = begin
+        if typeof(temperature) == Float64
+            new{Function, Function, Function}(sampler!,  evaluator!, (n::Int64)->temperature, n_steps)
+        else
+            new{Function, Function, Function}(sampler!, evaluator!, temperature, n_steps)
+        end
+    end
 end
 
-function DriverConfig(sampler!::F, evaluator!::G, temperature::Float64) where {F <: Function, G <: Function}
-    DriverConfig(sampler! = sampler!, evaluator! = evaluator!, anneal_fcn = (n::Int64)->temperature)
-end
+# DriverConfig(; sampler!::Function, evaluator!::Function, t::Float64, n_steps::Int = 0) = begin
+#     DriverConfig(sampler!,  evaluator!, (n::Int64)->t, n_steps)
+# end
+
+# DriverConfig(; sampler!::Function, evaluator!::Function, a::Function, n_steps::Int = 0) = begin
+#     DriverConfig(sampler!, evaluator!, a, n_steps)
+# end
 
 
 # TODO: Documentation
 Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
     step::Int64          = 0
-    ac_count::Int        = -1.0
+    ac_count::Int        = -1
     temperature::Float64 = -1.0
     completed::Bool      = false
 end
@@ -89,7 +101,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     if state.nblist != nothing
         state.nblist.cutoff = -1.0
     end
-    Common.update_nblist(state)
+    Common.update_nblist!(state)
     energy = driver_config.evaluator!(state, false)
     
     # instantiate a new DriverState object.
@@ -121,9 +133,9 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         energy = driver_config.evaluator!(state, false)
         
         # calculate temperature for current step
-        # if T ∈ ]0, +∞[ : exp(-ΔE/(R*T)) ∈ ]0, 1]
-        # if T ∈ ]-∞, 0[ : exp(-ΔE/(R*T)) ∈ [1, +∞[
-        # if T == 0 : exp(-ΔE/(R*T)) = 0 because one takes 1/0 as Inf
+        # if T ∈ ]0, +∞[ : exp(-ΔE/(R*T)) ∈ ]0, 1]                     -> Metropolis MAY be accepted
+        # if T ∈ ]-∞, 0[ : exp(-ΔE/(R*T)) ∈ [1, +∞[                    -> Metropolis is ALWAYS accepted
+        # if T == 0 : exp(-ΔE/(R*T)) = 0 because one takes 1/0 as Inf  -> Metropolis is NEVER accepted
         #   despite not being possible division by zero. 
         driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
         β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
