@@ -2,6 +2,7 @@ module Dihedral
 
 using ..Common
 using ..Aux
+using ..Mutators
 
 @doc raw"""
     DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
@@ -21,7 +22,7 @@ DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)
 """
-@Base.kwdef mutable struct DihedralMutator
+@Base.kwdef mutable struct DihedralMutator <: Mutators.AbstractMutator
     dihedrals::Vector{Common.Dihedral}
     angle_sampler::Function
     p_mut::Float64 = 0.0
@@ -48,7 +49,7 @@ julia> Mutators.Dihedral.run!(state, mutator)
 ```
 See also: [`Common.rotate_dihedral!`](@ref Common)
 """
-@inline function apply!(state::Common.State, mutator::DihedralMutator)
+function apply!(state::Common.State, mutator::DihedralMutator)
     
     count::Int64 = 0
     for dihedral in mutator.dihedrals

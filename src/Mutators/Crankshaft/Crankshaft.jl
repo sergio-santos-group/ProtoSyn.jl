@@ -2,6 +2,7 @@ module Crankshaft
 
 using ..Common
 using ..Aux
+using ..Mutators
 
 @doc raw"""
     CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
@@ -24,7 +25,7 @@ CrankshaftMutator(dihedrals=68, angle_sampler=randn, p_pmut=0.0, step_size=0.0)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct CrankshaftMutator
+mutable struct CrankshaftMutator <: Mutators.AbstractMutator
     dihedrals::Vector{Common.Dihedral}
     angle_sampler::Function
     p_mut::Float64
