@@ -19,22 +19,22 @@ evaluate!(s::Common.State, t::Vector{Restraints.DistanceFBR}, f::Bool = false) =
 evaluate!(s::Common.State, t::Vector{Restraints.DihedralFBR}, f::Bool = false) = Restraints.evaluate!(s, t, f)
 
 evaluate!(s::Common.State, t::Vector{CoarseGrain.SolvPair},   f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
-evaluate!(s::Common.State, t::Vector{CoarseGrain.HbNetwork},  f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
+evaluate!(s::Common.State, t::CoarseGrain.HbNetwork,  f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
 
 
 # TODO: Documentation
-mutable struct Evaluator{F <: Function, T <: Abstract.ForcefieldComponent} <: Abstract.Evaluator
+mutable struct Evaluator{F <: Function} <: Abstract.Evaluator
 
     # Parameters:            Signatures:
     evaluate!::F             # evaluator.evaluate!(state::Common.State, evaluator.components::Vector{Abstract.ForcefieldComponent}, do_forces::Bool = false)
-    components::Vector{T}
+    components::Vector{Any}
 end # mutable struct
 
 
 # TODO: Documentation
-function Evaluator(; components::Vector{T} = Vector{T}(), evaluate!::Union{F, Nothing} = nothing) where {F <: Function, T <: Abstract.ForcefieldComponent}
+function Evaluator(; components::Any = Vector{Any}(), evaluate!::Union{F, Nothing} = nothing) where {F <: Function}
     if evaluate! == nothing
-        evaluate! = function default_sum!(state::Common.State, components::Vector{T}, do_forces::Bool = false)::Float64 where {T <: Abstract.ForcefieldComponent}
+        evaluate! = function default_sum!(state::Common.State, components::Vector{Any}, do_forces::Bool = false)::Float64
             total = 0.0
             for component in components
                 total += Forcefield.evaluate!(state, component, do_forces)
@@ -43,7 +43,7 @@ function Evaluator(; components::Vector{T} = Vector{T}(), evaluate!::Union{F, No
             return total
         end
     end
-    Evaluator{Function, Abstract.ForcefieldComponent}(evaluate!, components)
+    Evaluator{Function}(evaluate!, components)
 end
 
 end

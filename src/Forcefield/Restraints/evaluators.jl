@@ -12,7 +12,7 @@ julia> Forcefield.Restraints.evaluate!(distances, state)
 0.500
 ```
 """
-function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::Bool = false)
+function evaluate!(st::Common.State, topology::Vector{DistanceFBR}, do_forces::Bool = false)
     # All distances are in nm
 
     eDistanceFBR = .0
@@ -59,8 +59,7 @@ function evaluate!(topology::Vector{DistanceFBR}, st::Common.State; do_forces::B
         end
     end
 
-    st.energy.comp["eDistanceFBR"] = eDistanceFBR
-    st.energy.eTotal = eDistanceFBR
+    Common.set_energy_component(st.energy, :contacts, eDistanceFBR)
     return eDistanceFBR
 end
 
@@ -79,7 +78,7 @@ julia> Forcefield.Restraints.evaluate!(dihedrals, state)
 0.500
 ```
 """
-function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::Bool = false)
+function evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::Bool = false)
     # All distances are in nm and angles in rad
 
     eDihedralFBR = .0
@@ -170,7 +169,6 @@ function evaluate!(topology::Vector{DihedralFBR}, st::Common.State; do_forces::B
         end
     end
 
-    st.energy.comp["eDihedralFBR"] = eDihedralFBR
-    st.energy.eTotal = eDihedralFBR
+    Common.set_energy_component(st.energy, :dihedralFBR, eDihedralFBR)
     return eDihedralFBR
 end

@@ -21,8 +21,8 @@ include("Sidechain/Sidechain.jl")
 
 apply!(st::Common.State, mut::Dihedral.MutatorConfig)   = Dihedral.apply!(st, mut)
 apply!(st::Common.State, mut::Crankshaft.MutatorConfig) = Crankshaft.apply!(st, mut)
-apply!(st::Common.State, mut::Blockrot.MutatorConfig)   = Crankshaft.apply!(st, mut)
-apply!(st::Common.State, mut::Sidechain.MutatorConfig)  = Crankshaft.apply!(st, mut)
+apply!(st::Common.State, mut::Blockrot.MutatorConfig)   = Blockrot.apply!(st, mut)
+apply!(st::Common.State, mut::Sidechain.MutatorConfig)  = Sidechain.apply!(st, mut)
 
 # TODO: Documentation
 mutable struct Sampler{F <: Function, G <: Function, T <: Abstract.MutatorConfig} <: Abstract.Sampler

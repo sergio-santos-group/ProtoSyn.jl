@@ -20,6 +20,7 @@ Base.@kwdef mutable struct Energy
 end
 Base.show(io::IO, b::Energy) = print(io, "Energy(total=$(b.total), components=$(b.components))")
 
+# TODO: Documentation
 function Base.copy!(dst::Energy, src::Energy)::Energy
     copy!(dst.components, src.components)
     dst.total = src.total
@@ -27,8 +28,7 @@ function Base.copy!(dst::Energy, src::Energy)::Energy
 end
 
 
-
-
+# TODO: Documentation
 function set_energy_component(container::Energy, comp::Symbol, value::Float64)
     container.components[comp] = value
     container.total = value

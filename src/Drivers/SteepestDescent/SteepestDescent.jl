@@ -33,19 +33,19 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_displa
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-Base.@kwdef mutable struct DriverConfig{F <: Function} <: Abstract.DriverConfig
+Base.@kwdef mutable struct DriverConfig <: Abstract.DriverConfig
     
-    evaluator!::F
+    evaluator::Abstract.Evaluator
     n_steps::Int64    = 0
     f_tol::Float64    = 1e-3
     max_step::Float64 = 0.1
 end
 
-DriverConfig(evaluator!::F) where {F <: Function} = DriverConfig(evaluator! = evaluator!)
+DriverConfig(evaluator::Abstract.Evaluator) = DriverConfig(evaluator! = evaluator!)
 
 function Base.show(io::IO, b::DriverConfig)
     print(io, "SteepestDescent.DriverConfig")
-    for p in fieldnames(DriverState)
+    for p in fieldnames(DriverConfig)
         print(io, "\n   $(String(p)) = $(getproperty(b,p))")
     end
 end
@@ -110,15 +110,15 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         state.nblist.buffer *= driver_config.nblist_freq
     end
     
-    Common.update_nblist(state)
-    energy = driver_config.evaluator!(state, true)
+    Common.update_nblist!(state)
+    energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, true)
 
     # instantiate a new DriverState object.
     # By default, no optimization step has yet been taken
     # apart from calculating the energy and forces for the
     # input state
     driver_state = DriverState()
-    driver_state.max_force = get_max_force(state.size, state.forces)
+    driver_state.max_force = Aux.get_max_force(state.size, state.forces)
     
     # if max force is already below the requested force tolerance,
     # simply return the current driver state
@@ -153,14 +153,14 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         if (driver_config.nblist_freq > 0) &&
             (driver_state.step > 0) &&
             (driver_state.step % driver_config.nblist_freq == 0)
-            Common.update_nblist(state)
+            Common.update_nblist!(state)
         end
 
         # Calculate new energy and forces
         # (make sure to reset forces)
         fill!(state.forces, 0.0)
-        energy = driver_config.evaluator!(state, true)
-        driver_state.max_force = get_max_force(state.size, state.forces)
+        energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, true)
+        driver_state.max_force = Aux.get_max_force(state.size, state.forces)
 
         # Verify convergence
         driver_state.converged = driver_state.max_force < driver_config.f_tol
@@ -174,7 +174,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         if energy >= backup_state.energy.total
             γ *= 0.50
             copy!(state, backup_state)
-            driver_state.max_force = get_max_force(state.size, state.forces)
+            driver_state.max_force = Aux.get_max_force(state.size, state.forces)
         else
             γ *= 1.05
         end

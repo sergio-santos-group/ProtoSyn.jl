@@ -9,7 +9,7 @@ julia> Forcefield.CoarseGrain.load_solv_pairs_from_file(c_αs, 0.01, "rsa_map.tx
 [Forcefield.CoarseGrain.SolvPair(i=1, coef=-3.5), Forcefield.CoarseGrain.SolvPair(i=2, coef=2.0), ...]
 ```
 """
-function load_solv_pairs_from_file(c_αs::Vector{Int64}, λ_eSol::Float64, input_file::String)::Vector{SolvPair}
+function load_solv_pairs_from_file(c_αs::Vector{Int64}, input_file::String; λ::Float64 = 1.0)::Vector{SolvPair}
 
     coefs::Vector{Int64} = Int64[]
     confidences::Vector{Int64} = Int64[]
@@ -28,7 +28,7 @@ function load_solv_pairs_from_file(c_αs::Vector{Int64}, λ_eSol::Float64, input
     end
 
     for (index, c_α) in enumerate(c_αs)
-        push!(solv_pairs, SolvPair(c_α, coefs[index] * confidences[index] * λ_eSol))
+        push!(solv_pairs, SolvPair(c_α, coefs[index] * confidences[index] * λ))
     end
     printstyled("(SETUP) ▲ Loaded $(length(solv_pairs)) solvation pairs\n", color = 9)
     return solv_pairs
@@ -46,12 +46,11 @@ julia> Forcefield.CoarseGrain.compile_solv_pairs(phi_dihedrals, 0.01)
 [Forcefield.CoarseGrain.SolvPair(i=1, coef=-3.5), Forcefield.CoarseGrain.SolvPair(i=2, coef=2.0), ...]
 ```
 """
-function compile_solv_pairs(phi_dihedrals::Vector{Common.Dihedral}, λ_eSol::Float64)::Vector{SolvPair}
-    solv_pairs = map(x -> SolvPair(x.a3, default_aa_coef[string(x.residue.name[1])] * λ_eSol), phi_dihedrals)
+function compile_solv_pairs(phi_dihedrals::Vector{Common.Dihedral}; λ::Float64 = 1.0)::Vector{SolvPair}
+    solv_pairs = map(x -> SolvPair(x.a3, default_aa_coef[string(x.residue.name[1])] * λ), phi_dihedrals)
     printstyled("(SETUP) ▲ Compiled $(length(solv_pairs)) solvation pairs\n", color = 9)
     return solv_pairs
 end
-
 
 @doc raw"""
     compile_hb_network(atoms::Vector{Common.AtomMetadata}, λ_eSol::Float64)::HbNetwork
@@ -64,7 +63,7 @@ julia> Forcefield.CoarseGrain.compile_hb_network(metadata.atoms, 1.0)
 Forcefield.CoarseGrain.HbNetwork(donors=10, acceptors=10, coef=1.0)
 ```
 """
-function compile_hb_network(atoms::Vector{Common.AtomMetadata}, λ_eH::Float64, sc_hb_lib::Dict{String, Any} = Dict{String, Any}())::HbNetwork
+function compile_hb_network(atoms::Vector{Common.AtomMetadata}, sc_hb_lib::Dict{String, Any} = Dict{String, Any}(); λ::Float64 = 1.0)::HbNetwork
 
     function retrieve_pairs!(target::Vector{HbPair}, source::Vector{Any}, residue::Vector{Common.AtomMetadata})
         if length(source) > 0
@@ -80,7 +79,7 @@ function compile_hb_network(atoms::Vector{Common.AtomMetadata}, λ_eH::Float64, 
         end
     end
 
-    hbNetwork = HbNetwork(coef = λ_eH)
+    hbNetwork = HbNetwork(coef = λ)
     for residue in Common.iterate_by_residue(atoms)
         aa = Aux.conv321(residue[1].res_name)
         if Aux.conv123(aa) == "PRO"

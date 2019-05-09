@@ -15,7 +15,7 @@ julia> Forcefield.Restraints.load_distance_restraints_from_file(contact_map, met
  (...)]
 ```
 """
-function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; k::Float64 = 1.0, threshold::Float64 = 0.0, min_distance::Float64 = 0.8)::Vector{DistanceFBR}
+function load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata; λ::Float64 = 1.0, threshold::Float64 = 0.0, min_distance::Float64 = 0.8)::Vector{DistanceFBR}
     #All distances are in nm.
 
     #Gather residue information
@@ -40,9 +40,9 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
                     r1_ca = resnum2ca[r1_index]
                     r2_ca = resnum2ca[r2_index]
                     if r1.ss == r2.ss && r1.ss == Common.SS.SHEET
-                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * k))
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * λ))
                     else
-                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * k))
+                        push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * λ))
                     end
                 end
             end
@@ -68,7 +68,7 @@ julia> Forcefield.Restraints.lock_block_bb(metadata, 1e4)
  (...)]
 ```
 """
-function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64 = 2.5)::Vector{DihedralFBR}
+function lock_block_bb(metadata::Common.Metadata; λ::Float64 = 1.0, fbw::Float64 = 2.5)::Vector{DihedralFBR}
 
     fbw = deg2rad(fbw)/2
     restraints::Vector{DihedralFBR} = Vector{DihedralFBR}()
@@ -78,7 +78,7 @@ function lock_block_bb(metadata::Common.Metadata; k::Float64 = 1.0, fbw::Float64
         end
         r0 = Common.ss2bbd[dihd.residue.ss][dihd.dtype]
         # println(" + DihedralFBR $(dihd.dtype)-$(dihd.residue.name)($(dihd.a1)|$(dihd.a2)|$(dihd.a3)|$(dihd.a4))")
-        push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, r0-(fbw*2), r0-fbw, r0+fbw, r0+(fbw*2), k))
+        push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, r0-(fbw*2), r0-fbw, r0+fbw, r0+(fbw*2), λ))
     end
     return restraints
 end

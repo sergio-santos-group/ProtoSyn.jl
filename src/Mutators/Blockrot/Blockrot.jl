@@ -102,7 +102,8 @@ julia> Mutators.BlockrotMutator.run!(state, mutator)
                 break
             end
 
-            mutator.loop_closer.run!(state, mutator.loop_closer)
+            typeof(mutator.loop_closer).name.module.run!(state, mutator.loop_closer)
+            # mutator.loop_closer.run!(state, mutator.loop_closer)
             count += 1
         end
     end

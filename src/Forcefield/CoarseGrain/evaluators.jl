@@ -53,8 +53,7 @@ function evaluate!(st::Common.State, solv_pairs::Vector{SolvPair}, do_forces::Bo
         end
     end
 
-    st.energy.comp["eSol"] = e_sol
-    st.energy.eTotal = e_sol
+    Common.set_energy_component(st.energy, :sol, e_sol)
     return e_sol
 end
 
@@ -115,7 +114,6 @@ function evaluate!(st::Common.State, hb_network::HbNetwork, do_forces::Bool = fa
     end
 
     e_H *= hb_network.coef
-    st.energy.comp["eH"] = e_H
-    st.energy.eTotal = e_H
+    Common.set_energy_component(st.energy, :hb, e_H)
     return e_H
 end
