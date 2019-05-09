@@ -23,9 +23,8 @@ CallbackObject(freq=1, callback=Print.as_xyz)
 ```
 See also: [`Print.as_xyz`](@ref Print) [`@cbcall`](@ref)
 """
-mutable struct CallbackObject
-    freq::Int64
-    callback::Function
+Base.@kwdef mutable struct CallbackObject{F<:Function}
+    freq::Int = 1
+    callback::F
 end
-CallbackObject(callback::Function) = CallbackObject(1, callback)
 Base.show(io::IO, b::CallbackObject) = print(io, "CallbackObject(freq=$(b.freq), callback=$(string(b.callback)))")

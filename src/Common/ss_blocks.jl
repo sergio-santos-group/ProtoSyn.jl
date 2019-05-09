@@ -109,6 +109,9 @@ function compile_ss(residues::Vector{Residue}, ss::String)::Vector{SecondaryStru
         residues[index].ss = conv_type[curr_ss] # If commented, will not apply ss to residue.ss
         last_ss = curr_ss
     end
+    if last_ss in ['H', 'E']
+        push!(sec_str, SecondaryStructureMetadata(conv_type[last_ss], conv_name[last_ss], residues[i_idx].name, i_idx, residues[length(ss) - 1].name, length(ss) - 1, 1))
+    end
     printstyled("(SETUP) ▲ Compiled metadata information of $(length(sec_str)) secondary structures\n", color = 9)
     return sec_str
 end
@@ -163,6 +166,9 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
             end
             curr = l
         end
+        if string[end] in ['H', 'E']
+            count += 1
+        end
         return count
     end
 
@@ -198,6 +204,14 @@ function compile_blocks(residues::Vector{Residue}, ss::String)::Vector{BlockMeta
         end
         last_ss = curr_ss
         atoms = vcat(atoms, residues[index].atoms)
+    end
+    if last_ss in ['H', 'E']
+        connector_right = residues[length(ss) - 1].atoms[length(residues[length(ss) - 1].atoms)]
+        pivot = atoms[floor(Int64, length(atoms)/2)]
+        if length(blocks) == n_blocks - 1
+            atoms = vcat(atoms, residues[length(ss)].atoms)
+        end
+        push!(blocks, BlockMetadata(atoms, pivot, range_left, connector_left, connector_right))
     end
     printstyled("(SETUP) ▲ Compiled metadata information of $(length(blocks)) blocks\n", color = 9)
     return blocks

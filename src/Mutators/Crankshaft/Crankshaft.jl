@@ -2,6 +2,7 @@ module Crankshaft
 
 using ..Common
 using ..Aux
+using ..Mutators
 
 @doc raw"""
     CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
@@ -57,7 +58,7 @@ julia> Mutators.Crankshaft.run!(state, mutator)
 ```
 See also: [`rotate_crankshaft!`](@ref)
 """
-@inline function run!(state::Common.State, mutator::CrankshaftMutator)
+@inline function apply!(state::Common.State, mutator::CrankshaftMutator)
 
     l = length(mutator.dihedrals)
     count::Int64 = 0

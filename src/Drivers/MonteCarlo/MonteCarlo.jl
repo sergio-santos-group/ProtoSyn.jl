@@ -2,8 +2,8 @@ module MonteCarlo
 
 using ..Aux
 using ..Common
+using ..Abstract
 using ..Drivers
-using Printf
 
 @doc raw"""
     Driver(sampler!::Function, evaluator!::Function, [, temperature::Float64 = 1.0, n_steps::Int64 = 0, callbacks::Tuple{Common.CallbackObject}...])
@@ -37,24 +37,41 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-mutable struct Driver <: Drivers.AbstractDriver
+mutable struct DriverConfig{F <: Function} <: Drivers.AbstractDriverConfig
+    sampler::Abstract.Sampler     # Required
+    evaluator::Abstract.Evaluator # Required
+    anneal_fcn::F # Default: 0.0
+    n_steps::Int  # Default: 0
 
-    run!::Function
-    sampler!::Function
-    evaluator!::Function
-    temperature::Float64
-    n_steps::Int64
-    evaluate_slope_every::Int64
-    evaluate_slope_threshold::Float64
-    verbose::Bool
-    callbacks::Tuple
-
+    DriverConfig(; sampler!, evaluator!, temperature = 0.0, n_steps = 0) = begin
+        if typeof(temperature) == Float64
+            new{Function}(sampler!,  evaluator!, function constant_temperature(n::Int64) -> temperature end, n_steps)
+        else
+            new{Function}(sampler!, evaluator!, temperature, n_steps)
+        end
+    end
 end
-function Driver(sampler!::Function, evaluator!::Function, temperature::Float64, n_steps::Int64, evaluate_slope_every::Int64, evaluate_slope_threshold::Float64, verbose::Bool, callbacks::Common.CallbackObject...) 
-    return Driver(run!, sampler!, evaluator!, temperature, n_steps, evaluate_slope_every, evaluate_slope_threshold, verbose, callbacks)
-end
-Base.show(io::IO, b::Driver) = print(io, "MonteCarlo.Driver(sampler=$(string(b.sampler!)) evaluator=$(string(b.evaluator!)), temperature=$(b.temperature), n_steps=$(b.n_steps), evaluate_slope_every=$(b.evaluate_slope_every), evaluate_slope_threshold=$(b.evaluate_slope_threshold), verbose=$(b.verbose))")
 
+# DriverConfig(; sampler!::Function, evaluator!::Function, t::Float64, n_steps::Int = 0) = begin
+#     DriverConfig(sampler!,  evaluator!, (n::Int64)->t, n_steps)
+# end
+
+# DriverConfig(; sampler!::Function, evaluator!::Function, a::Function, n_steps::Int = 0) = begin
+#     DriverConfig(sampler!, evaluator!, a, n_steps)
+# end
+
+
+# TODO: Documentation
+Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
+    step::Int64          = 0
+    ac_count::Int        = -1
+    temperature::Float64 = -1.0
+    completed::Bool      = false
+end
+
+
+# ----------------------------------------------------------------------------------------------------------
+#                                                   RUN
 
 @doc raw"""
     run!(state::Common.State, driver::Driver[, callbacks::Tuple{Common.CallbackObject}...])
@@ -76,54 +93,79 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
 ```
 """
-function run!(state::Common.State, driver::Driver, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
     
-    step = 1
-    driver.evaluator!(state, false)
-    backup = deepcopy(state)
-    acceptance_count = 0
-    history_x = Vector{Int64}()
-    history_y = Vector{Float64}()
-
-    @Common.cbcall driver.callbacks..., callbacks... 0 state driver (acceptance_count/step)
-    while step <= driver.n_steps
-        driver.sampler!(state)
-        driver.evaluator!(state, false)
-        
-        if (state.energy.eTotal < backup.energy.eTotal) || (rand() < exp(-(state.energy.eTotal - backup.energy.eTotal) / driver.temperature)) # Metropolis
-            backup = deepcopy(state)
-            push!(history_x, step)
-            push!(history_y, state.energy.eTotal)
-            acceptance_count += 1
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (ACCEPTED ✔)\n", "MC", step, state.energy.eTotal), color = :green)
-            end
-        else
-            state = deepcopy(backup)
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | ⚡E: %10.3e (REJECTED ❌)\n", "MC", step, state.energy.eTotal), color = 9)
-            end
-        end
-        
-        @Common.cbcall driver.callbacks..., callbacks... step state driver (acceptance_count/step)
-        
-        # Evaluate slope
-        if driver.evaluate_slope_every > 1 && length(history_x) > 0 && length(history_x) % driver.evaluate_slope_every == 0
-            b::Float64 = Aux.linreg(history_x, history_y)
-            if b >= driver.evaluate_slope_threshold
-                if driver.verbose
-                    printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Exiting inner search ✖\n", "MC", step, b), color = :red)
-                end
-                break
-            end
-            history_x = Vector{Int64}()
-            history_y = Vector{Float64}()
-            if driver.verbose
-                printstyled(@sprintf("(%5s) %12d | Slope analysis: %6.3f ▶️ Continuing inner search ✔\n", "MC", step, b), color = :green)
-            end
-        end
-        step += 1
+    # Evaluate initial energy and forces
+    #   start by calculating nonbonded lists:
+    #   a negative cutoff implies all pairwise
+    #   interactions are requested.
+    if state.nblist != nothing
+        state.nblist.cutoff = -1.0
     end
+    Common.update_nblist!(state)
+    energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, false)
+    
+    # instantiate a new DriverState object.
+    # By default, no optimization step has yet been taken
+    # apart from calculating the energy and forces for the
+    # input state
+    driver_state = DriverState()
+    
+    # create a copy of the input state
+    prev_state = Common.State(state.size)
+    
+    # initialize auxilliary variables
+    driver_state.ac_count = 0    # accepted counter
+    
+    # call "callback" functions
+    @Common.cbcall callbacks state driver_state driver_config
+
+    R = 0.0083144598 # kJ mol-1 K-1
+
+
+    #region MAINLOOP
+    while driver_state.step < driver_config.n_steps
+        driver_state.step += 1
+        
+        # sample new configuration
+        driver_config.sampler.apply!(state, driver_config.sampler.mutators)
+
+        # evaluate energy of new configuration
+        energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, false)
+        
+        # calculate temperature for current step
+        # if T ∈ ]0, +∞[ : exp(-ΔE/(R*T)) ∈ ]0, 1]                     -> Metropolis MAY be accepted
+        # if T ∈ ]-∞, 0[ : exp(-ΔE/(R*T)) ∈ [1, +∞[                    -> Metropolis is ALWAYS accepted
+        # if T == 0 : exp(-ΔE/(R*T)) = 0 because one takes 1/0 as Inf  -> Metropolis is NEVER accepted
+        #   despite not being possible division by zero. 
+        driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
+        β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
+
+        ΔE = energy - prev_state.energy.total
+        if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
+            # since the new configuration was accepted,
+            # copy it to the prev_state and increment
+            # the accepted counter
+            copy!(prev_state.xyz, state.xyz)
+            copy!(prev_state.energy, state.energy)
+            driver_state.ac_count += 1
+        else
+            # otherwise, revert to the previous state
+            copy!(state.xyz, prev_state.xyz)
+            copy!(state.energy, prev_state.energy)
+        end
+        
+        # update driver state and call calback functions (if any)
+        @Common.cbcall callbacks state driver_state driver_config
+
+    end
+    #endregion
+
+    # update driver state and return
+    driver_state.completed = true
+
+    return  driver_state
+    
 end
 
 end

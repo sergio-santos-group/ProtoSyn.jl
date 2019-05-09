@@ -2,6 +2,8 @@ module Dihedral
 
 using ..Common
 using ..Aux
+using ..Mutators
+using ..Abstract
 
 @doc raw"""
     DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
@@ -21,14 +23,13 @@ DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct DihedralMutator
+@Base.kwdef mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
     dihedrals::Vector{Common.Dihedral}
-    angle_sampler::Function
-    p_mut::Float64
-    step_size::Float64
-end
-DihedralMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = DihedralMutator(dihedrals, angle_sampler, p_mut, step_size)
-Base.show(io::IO, b::DihedralMutator) = print(io, "DihedralMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
+    angle_sampler::F
+    p_mut::Float64 = 0.0
+    step_size::Float64 = 0.0
+end # struct
+Base.show(io::IO, b::MutatorConfig) = print(io, "MutatorConfig(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
 
 @doc raw"""
@@ -47,7 +48,7 @@ julia> Mutators.Dihedral.run!(state, mutator)
 ```
 See also: [`Common.rotate_dihedral!`](@ref Common)
 """
-@inline function run!(state::Common.State, mutator::DihedralMutator)
+function apply!(state::Common.State, mutator::MutatorConfig)
     
     count::Int64 = 0
     for dihedral in mutator.dihedrals
@@ -59,4 +60,4 @@ See also: [`Common.rotate_dihedral!`](@ref Common)
     return count
 end
 
-end
+end # module

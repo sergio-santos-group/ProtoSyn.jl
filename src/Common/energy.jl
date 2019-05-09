@@ -1,23 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------
 #                                                 ENERGY
-
-abstract type AbstractEnergy end
-
-@doc raw"""
-    NullEnergy()
-
-Empty placeholder energy container.
-
-# Examples
-```julia-repl
-julia> Common.NullEnergy()
-Null
-```
-"""
-struct NullEnergy <: AbstractEnergy end
-Base.show(io::IO, b::NullEnergy) = print(io, "Null")
-
-
 @doc raw"""
     Energy(eTotal::Float64)
 
@@ -32,9 +14,22 @@ julia> Common.Energy()
 Energy(eTotal=0.0)
 ```
 """
-mutable struct Energy <: AbstractEnergy
-    comp::Dict{String, Float64}
-    eTotal::Float64
+Base.@kwdef mutable struct Energy
+    components::Dict{Symbol, Float64} = Dict{Symbol, Float64}()
+    total::Float64             = 0.0
 end
-Energy() = Energy(Dict{String, Float64}("other" => 0.0, "amber" => 0.0), 0.0)
-Base.show(io::IO, b::Energy) = print(io, "Energy(eTotal=$(b.eTotal), components=$(b.comp))")
+Base.show(io::IO, b::Energy) = print(io, "Energy(total=$(b.total), components=$(b.components))")
+
+function Base.copy!(dst::Energy, src::Energy)::Energy
+    copy!(dst.components, src.components)
+    dst.total = src.total
+    return dst
+end
+
+
+
+
+function set_energy_component(container::Energy, comp::Symbol, value::Float64)
+    container.components[comp] = value
+    container.total = value
+end

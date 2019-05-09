@@ -2,8 +2,10 @@ module ProtoSyn
 
 using LinearAlgebra, JSON, Printf, StatsBase
 
-export Common, Aux, Forcefield, Print, Mutators, Drivers
+export Abstract, Common, Aux, Forcefield, Print, Mutators, Drivers
 
+# Code includes
+include("Abstract.jl")
 include("Aux/Aux.jl")
 include("Common/Common.jl")
 include("Forcefield/Forcefield.jl")

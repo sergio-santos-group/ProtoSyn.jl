@@ -25,18 +25,19 @@ julia> AtomMetadata("H1")
 AtomMetadata(name=H1, elem=H1, res_num=1, res_name=UNK, chain_id=nothing, connects=nothing)
 ```
 """
-mutable struct AtomMetadata
+Base.@kwdef mutable struct AtomMetadata
 
-    index::Int64
-    name::String
-    elem::String
-    res_num::Int64
-    res_name::String
-    residue::Union{Residue, Nothing}
-    chain_id::Union{String, Nothing}
-    connects::Union{Vector{Int64}, Nothing}
+    # Parameter                             Default
+    index::Int64                            = 0
+    name::String                            = "X"
+    elem::String                            = "X"
+    res_num::Int64                          = 1
+    res_name::String                        = "UNK"
+    residue::Union{Residue, Nothing}        = nothing
+    chain_id::Union{String, Nothing}        = nothing
+    connects::Union{Vector{Int64}, Nothing} = nothing
 
-    AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
+    # AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
 end
 function Base.show(io::IO, b::AtomMetadata) #SHOULD BE IMPROVED
     if b.chain_id != nothing && b.connects != nothing
@@ -133,56 +134,6 @@ Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1
 
 
 @doc raw"""
-    Rotamer(center::Float64, range::Float64)
-
-Define a rotamer.
-
-# Arguments
-- `chis::Vector{Float64}`: Center values for each CHI angle in the rotamer (in rad).
-- `ranges::Vector{Float64}`: Half width at half height (HWHH) of the normal distribution of angles around the center chi value, for each chi in the rotamer.
-
-# Examples
-```julia-repl
-julia> Common.Rotamer([1.05, 2.09], [0.17, 0.17])
-Rotamer(chis=[1.05, 2.09], ranges=[0.17, 0.17])
-```
-
-See [`SidechainMetadata`](@ref)
-"""
-mutable struct Rotamer
-
-    chis::Vector{Float64}
-    ranges::Vector{Float64}
-end
-Base.show(io::IO, b::Rotamer) = print(io, "Rotamer(chis=$(b.chis), ranges=$(b.ranges)")
-
-
-@doc raw"""
-    SidechainMetadata(dihedrals::Vector{Dihedral}, rotamers::Vector{Rotamer}, weights::Vector{Float64})
-
-Define a sidechain, containing all the necessary information for [`SidechainMutator`] (@ref Sidechain) movements.
-
-# Arguments
-- `dihedrals::Vector{Dihedral}`: List of Chi [`Dihedral`](@ref)s in this sidechain.
-- `rotamers::Vector{Rotamer}`: List of possible [`Rotamer`](@ref)s for this sidechain.
-- `weights::Vector{Float64}`: List of normalized weights for the probability of each of the defined [`Rotamer`](@ref)s.
-
-# Examples
-```julia-repl
-julia> Common.SidechainMetadata(dihedrals, rotamers, [0.4, 0.1, 0.5])
-SidechainMetadata(dihedrals=2, rotamers=3, weights=[0.4, 0.1, 0.5])
-```
-"""
-mutable struct SidechainMetadata
-
-    dihedrals::Vector{Dihedral}
-    rotamers::Vector{Rotamer}
-    weights::Vector{Float64}
-end
-Base.show(io::IO, b::SidechainMetadata) = print(io, "SidechainMetadata(dihedrals=$(length(b.dihedrals)), rotamers=$(length(b.rotamers)), weights=$(b.weights)")
-
-
-@doc raw"""
     Metadata([, atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [], sidechains::Vector{SidechainMetadata} = []])
 
 Define the state metadata, containing extra information regarding the atoms and secondary structure of the system.
@@ -196,22 +147,15 @@ julia> Metadata()
 Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[], blocks=[], sidechains=[])
 ```
 """
-mutable struct Metadata
+Base.@kwdef mutable struct Metadata
 
-    atoms::Vector{AtomMetadata}
-    ss::Vector{SecondaryStructureMetadata}
-    residues::Vector{Residue}
-    dihedrals::Vector{Dihedral}
-    blocks::Vector{BlockMetadata}
-    sidechains::Vector{SidechainMetadata}
+    atoms::Vector{AtomMetadata}            = Vector{AtomMetadata}()
+    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}()
+    residues::Vector{Residue}              = Vector{Residue}()
+    dihedrals::Vector{Dihedral}            = Vector{Dihedral}()
+    blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}()
 end
-Metadata(;atoms::Vector{AtomMetadata}      = Vector{AtomMetadata}(),
-    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}(),
-    residues::Vector{Residue}              = Vector{Residue}(),
-    dihedrals::Vector{Dihedral}            = Vector{Dihedral}(),
-    blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}(),
-    sidechains::Vector{SidechainMetadata}   = Vector{SidechainMetadata}()) = Metadata(atoms, ss, residues, dihedrals, blocks, sidechains)
-Base.show(io::IO, b::Metadata) = print(io, "Metadata(atoms=$(b.atoms), ss=$(b.ss), residues=$(b.residues), dihedrals=$(b.dihedrals), sidechains=$(b.sidechains))")
+Base.show(io::IO, b::Metadata) = print(io, "Metadata(atoms=$(b.atoms), ss=$(b.ss), residues=$(b.residues), dihedrals=$(b.dihedrals))")
 
 
 @doc raw"""
