@@ -57,7 +57,7 @@ const max_step                 = 1e-2   # Maximum step allowed in Steepest Desce
 const f_tol                    = 0.1    # Minimum force tolerated. The minimization is considered converged when forces are below the defined value;
 
 # Forcefield and energy function parameters:
-const nonbonded_cut_off        = 1.2    # Cutoff (in nm) for nonbonded interactions calculation;
+const nonbonded_cut_off        = 1.2    # cut_off (in nm) for nonbonded interactions calculation;
 const λ_eSol                   = 400.0  # Scalar constant for solvation energy;
 const λ_eH                     = 1.0    # Scalar constant for hydrogen bonding energy;
 

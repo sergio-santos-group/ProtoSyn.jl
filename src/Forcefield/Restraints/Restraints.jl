@@ -2,6 +2,7 @@ module Restraints
 
 using ..Aux
 using ..Common
+using ..Abstract
 using JSON
 using LinearAlgebra
 

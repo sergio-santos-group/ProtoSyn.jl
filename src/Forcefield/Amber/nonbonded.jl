@@ -14,22 +14,22 @@ function(atoms::Vector{Atom}, state::Common.State, do_forces=true)
 
     $(if get(options, :mode, :none) == :force_switch && get(options, :include_lj, true)
         quote
-            fsw = cutoff - switch_r1   # force switch width
+            fsw = cut_off - switch_r1   # force switch width
             fsA6  = @force_switch_coefA 6
             fsB6  = @force_switch_coefB 6
             fsA12 = @force_switch_coefA 12
             fsB12 = @force_switch_coefB 12
-            fsC6  = 1.0/(cutoff^12) - fsA6 *(fsw^3)/3.0 - fsB6 *(fsw^4)/4.0
-            fsC12 = 1.0/(cutoff^12) - fsA12*(fsw^3)/3.0 - fsB12*(fsw^4)/4.0
+            fsC6  = 1.0/(cut_off^12) - fsA6 *(fsw^3)/3.0 - fsB6 *(fsw^4)/4.0
+            fsC12 = 1.0/(cut_off^12) - fsA12*(fsw^3)/3.0 - fsB12*(fsw^4)/4.0
         end
     end)
 
     $(if get(options, :mode, :none) == :force_switch && get(options, :include_coulomb, true)
         quote
-            fsw = cutoff - switch_r1   # force switch width
+            fsw = cut_off - switch_r1   # force switch width
             fsA2 = @force_switch_coefA 2
             fsB2 = @force_switch_coefB 2
-            fsC2 = 1.0/(cutoff^12) - fsA2*(fsw^3)/3.0 - fsB2*(fsw^4)/4.0
+            fsC2 = 1.0/(cut_off^12) - fsA2*(fsw^3)/3.0 - fsB2*(fsw^4)/4.0
         end
     end)
 
@@ -48,7 +48,7 @@ function(atoms::Vector{Atom}, state::Common.State, do_forces=true)
                 vij[k]  = deltaij
             end
 
-            if dij_sq > cutoff_sq
+            if dij_sq > cut_off_sq
                 continue
             end
 

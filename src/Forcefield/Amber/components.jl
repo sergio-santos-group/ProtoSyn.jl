@@ -25,7 +25,7 @@ Forcefield.Amber.HarmonicBond(a1=1, a2=2, k=2500.0, b0=0.19)
 ```
 See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
-mutable struct HarmonicBond
+mutable struct HarmonicBond <: Abstract.ForcefieldComponent
     
     a1::Int64
     a2::Int64
@@ -58,7 +58,7 @@ Forcefield.Amber.HarmonicAngle(a1=1, a2=2, a3=3, k=670.0, θ=1.92)
 ```
 See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
-mutable struct HarmonicAngle
+mutable struct HarmonicAngle <: Abstract.ForcefieldComponent
     
     a1::Int64
     a2::Int64
@@ -93,7 +93,7 @@ Forcefield.Amber.DihedralCos(a1=1, a2=2, a3=3, a4=4, k=10.46, θ=180.0, mult=2.0
 ```
 See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
-mutable struct DihedralCos
+mutable struct DihedralCos <: Abstract.ForcefieldComponent
 
     a1::Int64
     a2::Int64
@@ -157,7 +157,7 @@ Forcefield.Amber.Atom(name="N", σ=0.325, ϵ=0.711, q=0.0017, excls=[0, 1, 2, 3,
 ```
 See algo: [`Amber.evaluate!`](@ref Forcefield)
 """
-mutable struct Atom
+mutable struct Atom <: Abstract.ForcefieldComponent
 
     name::String
     σ::Float64 #nm
@@ -195,7 +195,7 @@ Forcefield.Amber.Topology(
 ```
 See also: [`Amber.load_from_json`](@ref Forcefield)
 """
-mutable struct Topology
+mutable struct Topology <: Abstract.ForcefieldComponent
 
     atoms::Vector{Atom}
     bonds::Vector{HarmonicBond}
@@ -205,16 +205,3 @@ mutable struct Topology
 end
 Topology() = Topology(Vector{Atom}(), Vector{HarmonicBond}(), Vector{HarmonicAngle}(), Vector{DihedralCos}())
 Base.show(io::IO, b::Topology) = print(io, "Forcefield.Amber.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")
-
-
-# mutable struct Config
-
-#     eBonds_λ::Float64
-#     eAngles_λ::Float64
-#     eDihedralCos_λ::Float64
-#     eCoulomb_λ::Float64
-#     eLJ_λ::Float64
-#     nb_cut_off::Float64 # nm
-# end
-# Config() = Config(1.0, 1.0, 1.0, 1.0, 1.0, 1.2)
-# Base.show(io::IO, b::Config) = print(io, "Forcefield.Amber.Config()")

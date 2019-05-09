@@ -1,5 +1,5 @@
 mutable struct NonBondedList
-    cutoff::Float64
+    cut_off::Float64
     buffer::Float64
     list::Vector{Int64}
     pointer::Vector{Int64}
@@ -14,14 +14,14 @@ function Base.show(io::IO, b::NonBondedList)
     print(io, "NonBondedList(list=$(b.list), pointer=$(b.pointer))")
     print(io, "\n   pointer size = $(length(b.pointer)) items")
     print(io, "\n   list size = $(length(b.list)) items")
-    print(io, "\n   cutoff = $(b.cutoff) nm")
+    print(io, "\n   cut_off = $(b.cut_off) nm")
     print(io, "\n   buffer = $(b.buffer) nm")
 end
  
 function Base.copy!(dst::NonBondedList, src::NonBondedList)
     copy!(dst.pointer, src.pointer)
     copy!(dst.list, src.list)
-    dst.cutoff = src.cutoff
+    dst.cut_off = src.cut_off
     dst.buffer = src.buffer
     return dst
 end
@@ -98,9 +98,9 @@ function update_nblist!(state::Common.State)
     n_atoms = state.size
     coords  = state.xyz
 
-    if nblist.cutoff < 0.0
+    if nblist.cut_off < 0.0
         # if all pairwise interactions are requested
-        # (cutoff < 0), construction of the nblist does
+        # (cut_off < 0), construction of the nblist does
         # not require any distance computations
         for i=1:n_atoms
             nblist.pointer[i] = i
@@ -108,12 +108,12 @@ function update_nblist!(state::Common.State)
         end
         nblist.list[n_atoms] = -1
     else
-        # otherwise, the effective cutoff is the
+        # otherwise, the effective cut_off is the
         # sum of the cuttoff and the buffer.
         ptr = 1
         δx = 0.0
         Δx = 0.0
-        cutSq = (nblist.cutoff + nblist.buffer)^2
+        cutSq = (nblist.cut_off + nblist.buffer)^2
         for i=1:n_atoms
             nblist.pointer[i] = ptr
             for j = (i+1):n_atoms

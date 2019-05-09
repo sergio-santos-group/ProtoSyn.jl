@@ -1,6 +1,7 @@
 module Amber
 
 using ..Common
+using ..Abstract
 using JSON
 using LinearAlgebra
 

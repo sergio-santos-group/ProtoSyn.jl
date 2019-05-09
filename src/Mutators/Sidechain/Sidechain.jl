@@ -1,9 +1,10 @@
 module Sidechain
 
+using ..Aux
+using ..Common
+using ..Abstract
 using StatsBase
 using Random
-using ..Common
-using ..Aux
 
 @doc raw"""
     SidechainMutator(sidechains::Vector{Common.SidechainMetadata}, rot_lib::Dict{String, Any}, p_mut::Float64)
@@ -22,13 +23,13 @@ SidechainMutator(sidechains=68, (...), p_pmut=0.05)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct SidechainMutator
+mutable struct MutatorConfig <: Abstract.MutatorConfig
     sidechains::Vector{Vector{Common.Dihedral}}
     rot_lib::Dict{String, Any}
     p_mut::Float64
 end
-SidechainMutator(sidechains::Vector{Vector{Common.Dihedral}}, rot_lib::Dict{String, Any}, p_mut=0.0) = SidechainMutator(sidechains, rot_lib, p_mut)
-Base.show(io::IO, b::SidechainMutator) = print(io, "SidechainMutator(sidechains=$(length(b.sidechains)), rot_lib=$(b.rot_lib), p_mut=$(b.p_mut)")
+MutatorConfig(sidechains::Vector{Vector{Common.Dihedral}}, rot_lib::Dict{String, Any}, p_mut=0.0) = MutatorConfig(sidechains, rot_lib, p_mut)
+Base.show(io::IO, b::MutatorConfig) = print(io, "Sidechain.MutatorConfig(sidechains=$(length(b.sidechains)), rot_lib=$(b.rot_lib), p_mut=$(b.p_mut)")
 
 
 @doc raw"""
@@ -47,7 +48,7 @@ julia> Mutators.Sidechain.run!(state, mutator)
 ```
 See also: [`rotate_dihedral_to!`](@ref Common.rotate_dihedral_to!)
 """
-@inline function apply!(state::Common.State, mutator::SidechainMutator)
+@inline function apply!(state::Common.State, mutator::MutatorConfig)
     
     count::Int64 = 0
     for sidechain in mutator.sidechains

@@ -1,8 +1,9 @@
 module Crankshaft
 
-using ..Common
 using ..Aux
+using ..Common
 using ..Mutators
+using ..Abstract
 
 @doc raw"""
     CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
@@ -25,21 +26,21 @@ CrankshaftMutator(dihedrals=68, angle_sampler=randn, p_pmut=0.0, step_size=0.0)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct CrankshaftMutator
+mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
     dihedrals::Vector{Common.Dihedral}
-    angle_sampler::Function
+    angle_sampler::F
     p_mut::Float64
     step_size::Float64
 
-    function CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
+    function MutatorConfig(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
         for dihedral in dihedrals
             dihedral.dtype == Common.DIHEDRAL.phi ? nothing : error("Tried to add a non-PHI dihedral to CrankshaftMutator ($dihedral)")
         end
-        new(dihedrals, angle_sampler, p_mut, step_size)
+        new{Function}(dihedrals, angle_sampler, p_mut, step_size)
     end
 end
-CrankshaftMutator(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = CrankshaftMutator(dihedrals, angle_sampler, p_mut, step_size)
-Base.show(io::IO, b::CrankshaftMutator) = print(io, "CrankshaftMutator(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
+MutatorConfig(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function; p_mut = 0.0, step_size = 0.0) = MutatorConfig(dihedrals, angle_sampler, p_mut, step_size)
+Base.show(io::IO, b::MutatorConfig) = print(io, "Crankshaft.MutatorConfig(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
 
 @doc raw"""
@@ -58,7 +59,7 @@ julia> Mutators.Crankshaft.run!(state, mutator)
 ```
 See also: [`rotate_crankshaft!`](@ref)
 """
-@inline function apply!(state::Common.State, mutator::CrankshaftMutator)
+@inline function apply!(state::Common.State, mutator::MutatorConfig)
 
     l = length(mutator.dihedrals)
     count::Int64 = 0

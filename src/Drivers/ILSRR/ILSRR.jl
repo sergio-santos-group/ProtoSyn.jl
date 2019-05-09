@@ -3,6 +3,7 @@ module ILSRR
 using ..Aux
 using ..Common
 using ..Drivers
+using ..Abstract
 using Printf
 
 
@@ -39,18 +40,18 @@ See also: [`run!`](@ref)
 Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
     #TO DO: Documentation
     inner_driver!::F
-    inner_driver_config::Union{Drivers.AbstractDriverConfig, Nothing}
+    inner_driver_config::Union{Abstract.DriverConfig, Nothing}
     perturbator!::H
     anneal_fcn::G
     n_steps::Int = 0
 end
-function DriverConfig(inner_driver!::F, inner_driver_config::Drivers.AbstractDriverConfig, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
+function DriverConfig(inner_driver!::F, inner_driver_config::Abstract.DriverConfig, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
     return DriverConfig(inner_driver! = inner_driver!, inner_driver_config = inner_driver_config, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
 end
 
 
 #TO DO: Documentation
-Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
+Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     best_state::Union{Common.State, Nothing} = nothing
     home_state::Union{Common.State, Nothing} = nothing
     step::Int                                = 0

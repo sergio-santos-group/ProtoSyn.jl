@@ -3,6 +3,7 @@ module SteepestDescent
 using ..Aux
 using ..Common
 using ..Drivers
+using ..Abstract
 
 @doc raw"""
     Driver(evaluator!::Function[, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_displacement:Float64 = 0.1, callbacks::Tuple{Common.CallbackObject}...])
@@ -32,7 +33,7 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_displa
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-Base.@kwdef mutable struct DriverConfig{F <: Function}
+Base.@kwdef mutable struct DriverConfig{F <: Function} <: Abstract.DriverConfig
     
     evaluator!::F
     n_steps::Int64    = 0
@@ -51,7 +52,7 @@ end
 
 
 #TO DO: Documentation
-Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
+Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     
     step::Int64        = 0
     step_size::Float64 = -1.0
@@ -103,13 +104,13 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     #   displaced 2*max_displacement from each other.
     #   Therefore, the maximum total displacement during
     #   'nblist_freq' steps is 2*max_displacement*nblist_freq.
-    #   Hence, the nblist cutoff is (cutoff + 2*max_displacement*nblist_freq).
-    if state.nblist != nothing && state.nblist.cutoff > 0.0
+    #   Hence, the nblist cut_off is (cut_off + 2*max_displacement*nblist_freq).
+    if state.nblist != nothing && state.nblist.cut_off > 0.0
         state.nblist.buffer  = 2.0 * driver_config.max_displacement
         state.nblist.buffer *= driver_config.nblist_freq
     end
     
-    update_nblist(state)
+    Common.update_nblist(state)
     energy = driver_config.evaluator!(state, true)
 
     # instantiate a new DriverState object.
@@ -152,7 +153,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         if (driver_config.nblist_freq > 0) &&
             (driver_state.step > 0) &&
             (driver_state.step % driver_config.nblist_freq == 0)
-            update_nblist(state)
+            Common.update_nblist(state)
         end
 
         # Calculate new energy and forces

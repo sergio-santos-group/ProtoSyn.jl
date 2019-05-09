@@ -25,7 +25,7 @@ julia> Forcefield.CoarseGrain.evaluate!(solv_pairs, state)
 0.500
 ```
 """
-function evaluate!(solv_pairs::Vector{SolvPair}, st::Common.State; do_forces::Bool = false)::Float64
+function evaluate!(st::Common.State, solv_pairs::Vector{SolvPair}, do_forces::Bool = false)::Float64
     n_res              = length(solv_pairs)
     l                  = [.0, .0, .0]
     e_sol              = .0
@@ -80,7 +80,7 @@ julia> Forcefield.CoarseGrain.evaluate!(hb_network, state)
 -0.500
 ```
 """
-function evaluate!(hb_network::HbNetwork, st::Common.State; do_forces::Bool = false)::Float64
+function evaluate!(st::Common.State, hb_network::HbNetwork, do_forces::Bool = false)::Float64
 
     vHN    = [.0, .0, .0]
     vOC    = [.0, .0, .0]

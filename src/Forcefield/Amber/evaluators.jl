@@ -341,7 +341,7 @@ function evaluate!(state::Common.State, topology::Topology, do_forces::Bool = fa
     energy =  evaluate!(state, topology.bonds, do_forces)
     energy =  evaluate!(state, topology.angles, do_forces)
     energy =  evaluate!(state, topology.atoms, do_forces)
-    energy =  evaluate!(state, topology.dihedralCos, do_forces)
+    energy =  evaluate!(state, topology.dihedralsCos, do_forces)
     Common.set_energy_component(state.energy, :amber, energy)
     return energy
 end

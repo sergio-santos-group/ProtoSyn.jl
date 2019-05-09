@@ -7,8 +7,6 @@ using ..Aux
 using ..Print
 using ..Abstract
 
-# abstract type AbstractMutator end
-
 include("Dihedral/Dihedral.jl")
 include("Crankshaft/Crankshaft.jl")
 include("Blockrot/Blockrot.jl")
@@ -21,27 +19,31 @@ include("Sidechain/Sidechain.jl")
 #     end
 # end
 
-apply!(st::Common.State, mut::Dihedral.MutatorConfig) = Dihedral.apply!(st, mut)
-# apply!(st::Common.State, mut::Crankshaft.CrankshaftMutator) = Crankshaft.apply!(st, mut)
+apply!(st::Common.State, mut::Dihedral.MutatorConfig)   = Dihedral.apply!(st, mut)
+apply!(st::Common.State, mut::Crankshaft.MutatorConfig) = Crankshaft.apply!(st, mut)
+apply!(st::Common.State, mut::Blockrot.MutatorConfig)   = Crankshaft.apply!(st, mut)
+apply!(st::Common.State, mut::Sidechain.MutatorConfig)  = Crankshaft.apply!(st, mut)
 
-mutable struct Sampler{F <: Function, G <: Function}
+# TODO: Documentation
+mutable struct Sampler{F <: Function, G <: Function, T <: Abstract.MutatorConfig} <: Abstract.Sampler
 
     # Parameters:            Signatures:
     apply!::F                # sampler.apply!(state::Common.State, sampler.mutators::Vector{Abstract.MutatorConfig})
     tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::AbstractDriverState)
-    mutators::Vector{Abstract.MutatorConfig}
+    mutators::Vector{T}
 end # mutable struct
 
 
-function Sampler(; mutators::Vector{Abstract.MutatorConfig}, apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
+# TODO Documentation
+function Sampler(; mutators::Vector{T} = Vector{T}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function, T <: Abstract.MutatorConfig}
     if apply! == nothing
-        apply! = function default_aggregate!(state::Common.State, mutators::Vector{Abstract.MutatorConfig})
+        apply! = function default_aggregate!(state::Common.State, mutators::Vector{T}) where {T <: Abstract.MutatorConfig}
             for mutator in mutators
                 Mutators.apply!(state, mutator)
             end
         end
     end
-    Sampler{Function, Function}(apply! = apply!, tune! = tune!, mutators = mutators)
+    Sampler{Function, Function, Abstract.MutatorConfig}(apply!, tune!, mutators)
 end
 
 

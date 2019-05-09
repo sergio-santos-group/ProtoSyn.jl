@@ -2,17 +2,15 @@ module Drivers
 
 using ..Aux
 using ..Common
+using ..Abstract
 using Printf
-
-abstract type AbstractDriverConfig end
-abstract type AbstractDriverState  end
 
 macro callback(freq::Int, ex::Expr)
 
     new_fcn_decl = :($(gensym())(
         a::Common.State,
-        b::Drivers.AbstractDriverState,
-        c::Drivers.AbstractDriverConfig)
+        b::Abstract.AbstractDriverState,
+        c::Abstract.AbstractDriverConfig)
     )
 
     fcn_decl = ex.args[1]
@@ -44,7 +42,7 @@ include("MonteCarlo/MonteCarlo.jl")
 include("ILSRR/ILSRR.jl")
 include("MD/MD.jl")
 
-function Base.show(io::IO, b::Union{AbstractDriverConfig, AbstractDriverState})
+function Base.show(io::IO, b::Union{Abstract.DriverConfig, Abstract.DriverState})
     print(io, string(typeof(b)))
     for p in fieldnames(typeof(b))
         print(io, "\n   $(String(p)) = $(getproperty(b,p))")

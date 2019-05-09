@@ -1,6 +1,7 @@
 module Blockrot
 
 using ..Forcefield
+using ..Abstract
 using ..Drivers
 using ..Common
 using ..Aux
@@ -29,20 +30,20 @@ CrankshaftMutator(blocks=6, angle_sampler=randn, p_pmut=0.05, step_size=0.25, n_
 ```
 See also: [`run!`](@ref)
 """
-mutable struct BlockrotMutator
+mutable struct MutatorConfig{F <: Function}  <: Abstract.MutatorConfig
     blocks::Vector{Common.BlockMetadata}
-    angle_sampler::Function
+    angle_sampler::F
     p_mut::Float64
     step_size::Float64
     translation_step_size::Float64
     n_tries::Int64
-    loop_closer::Drivers.AbstractDriverConfig
+    loop_closer::Abstract.DriverConfig
 
-    function BlockrotMutator(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Drivers.AbstractDriverConfig)
-        new(blocks, angle_sampler, p_mut, step_size, translation_step_size, n_tries, loop_closer)
+    function MutatorConfig(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Abstract.DriverConfig)
+        new{Function}(blocks, angle_sampler, p_mut, step_size, translation_step_size, n_tries, loop_closer)
     end
 end
-Base.show(io::IO, b::BlockrotMutator) = print(io, "BlockrotMutator(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries))")
+Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries))")
 
 
 @doc raw"""
@@ -60,7 +61,7 @@ Returns the number of rotations performed.
 julia> Mutators.BlockrotMutator.run!(state, mutator)
 ```
 """
-@inline function apply!(state::Common.State, mutator::BlockrotMutator)
+@inline function apply!(state::Common.State, mutator::MutatorConfig)
     
     count::Int64 = 0
     for (block_index, block) in enumerate(mutator.blocks)
@@ -101,7 +102,6 @@ julia> Mutators.BlockrotMutator.run!(state, mutator)
                 break
             end
 
-            println("⤷(LOOP) Attempting to close loops on block $block_index ●")
             mutator.loop_closer.run!(state, mutator.loop_closer)
             count += 1
         end

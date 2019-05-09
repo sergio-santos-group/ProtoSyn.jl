@@ -37,32 +37,24 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-mutable struct DriverConfig{F <: Function} <: Drivers.AbstractDriverConfig
+mutable struct DriverConfig{F <: Function} <: Abstract.DriverConfig
     sampler::Abstract.Sampler     # Required
     evaluator::Abstract.Evaluator # Required
     anneal_fcn::F # Default: 0.0
     n_steps::Int  # Default: 0
 
-    DriverConfig(; sampler!, evaluator!, temperature = 0.0, n_steps = 0) = begin
+    DriverConfig(; sampler, evaluator, temperature = 0.0, n_steps = 0) = begin
         if typeof(temperature) == Float64
-            new{Function}(sampler!,  evaluator!, function constant_temperature(n::Int64) -> temperature end, n_steps)
+            new{Function}(sampler,  evaluator, function constant_temperature(n::Int64) temperature end, n_steps)
         else
-            new{Function}(sampler!, evaluator!, temperature, n_steps)
+            new{Function}(sampler, evaluator, temperature, n_steps)
         end
     end
 end
 
-# DriverConfig(; sampler!::Function, evaluator!::Function, t::Float64, n_steps::Int = 0) = begin
-#     DriverConfig(sampler!,  evaluator!, (n::Int64)->t, n_steps)
-# end
-
-# DriverConfig(; sampler!::Function, evaluator!::Function, a::Function, n_steps::Int = 0) = begin
-#     DriverConfig(sampler!, evaluator!, a, n_steps)
-# end
-
 
 # TODO: Documentation
-Base.@kwdef mutable struct DriverState <: Drivers.AbstractDriverState
+Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     step::Int64          = 0
     ac_count::Int        = -1
     temperature::Float64 = -1.0
@@ -97,10 +89,10 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     
     # Evaluate initial energy and forces
     #   start by calculating nonbonded lists:
-    #   a negative cutoff implies all pairwise
+    #   a negative cut_off implies all pairwise
     #   interactions are requested.
     if state.nblist != nothing
-        state.nblist.cutoff = -1.0
+        state.nblist.cut_off = -1.0
     end
     Common.update_nblist!(state)
     energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, false)

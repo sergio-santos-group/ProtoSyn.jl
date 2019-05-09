@@ -15,13 +15,13 @@ Forcefield.Restraints.DistanceFBR(a1=1, a2=2, r1=2.0, r2=4.0, r3=6.0, r4=8.0, c=
 ```
 See algo: [`Restraint.evaluate!`](@ref Forcefield)
 """
-struct DistanceFBR
+struct DistanceFBR <: Abstract.ForcefieldComponent
     a1::Int64   # global index
     a2::Int64   # global index
-    r1::Float64 # in nm
-    r2::Float64 # in nm
-    r3::Float64 # in nm
-    r4::Float64 # in nm
+    r1::Float64 # nm
+    r2::Float64 # nm
+    r3::Float64 # nm
+    r4::Float64 # nm
     c::Float64
 end
 Base.show(io::IO, b::DistanceFBR) = print(io, "Forcefield.Restraints.DistanceFBR(a1=$(b.a1), a2=$(b.a2), r1=$(b.r1), r2=$(b.r2), r3=$(b.r3), r4=$(b.r4), c=$(b.c))")
@@ -44,15 +44,15 @@ Forcefield.Restraints.DistanceFBR(a1=1, a2=2, a3=3, a4=4, r1=-180, r2=-90, r3=90
 ```
 See algo: [`Restraint.evaluate!`](@ref Forcefield)
 """
-struct DihedralFBR
+struct DihedralFBR <: Abstract.ForcefieldComponent
     a1::Int64   # global index
     a2::Int64   # global index
     a3::Int64   # global index
     a4::Int64   # global index
-    r1::Float64 # in rad
-    r2::Float64 # in rad
-    r3::Float64 # in rad
-    r4::Float64 # in rad
+    r1::Float64 # rad
+    r2::Float64 # rad
+    r3::Float64 # rad
+    r4::Float64 # rad
     c::Float64
 
     function DihedralFBR(a1::Int64, a2::Int64, a3::Int64, a4::Int64, r1::Float64, r2::Float64, r3::Float64, r4::Float64, c::Float64)

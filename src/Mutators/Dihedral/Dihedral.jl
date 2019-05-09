@@ -29,7 +29,7 @@ See also: [`run!`](@ref)
     p_mut::Float64 = 0.0
     step_size::Float64 = 0.0
 end # struct
-Base.show(io::IO, b::MutatorConfig) = print(io, "MutatorConfig(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
+Base.show(io::IO, b::MutatorConfig) = print(io, "Dihedral.MutatorConfig(dihedrals=$(length(b.dihedrals)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size))")
 
 
 @doc raw"""
