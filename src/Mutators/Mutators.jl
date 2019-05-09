@@ -36,6 +36,7 @@ end # mutable struct
 function Sampler(; mutators::Vector{Abstract.MutatorConfig}, apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
     if apply! == nothing
         apply! = function default_aggregate!(state::Common.State, mutators::Vector{Abstract.MutatorConfig})
+
             for mutator in mutators
                 Mutators.apply!(state, mutator)
             end
@@ -43,6 +44,7 @@ function Sampler(; mutators::Vector{Abstract.MutatorConfig}, apply!::Union{F, No
     end
     Sampler{Function, Function}(apply! = apply!, tune! = tune!, mutators = mutators)
 end
+
 
 
 function Base.show(io::IO, b::Sampler)
