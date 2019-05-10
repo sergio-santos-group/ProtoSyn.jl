@@ -23,12 +23,11 @@ SidechainMutator(sidechains=68, (...), p_pmut=0.05)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct MutatorConfig <: Abstract.MutatorConfig
-    sidechains::Vector{Vector{Common.Dihedral}}
-    rot_lib::Dict{String, Any}
-    p_mut::Float64
+@Base.kwdef mutable struct MutatorConfig <: Abstract.MutatorConfig
+    sidechains::Vector{Vector{Common.Dihedral}} = Vector{Vector{Common.Dihedral}}()
+    rot_lib::Dict{String, Any} = Dict{String, Any}()
+    p_mut::Float64 = 0.0
 end
-MutatorConfig(sidechains::Vector{Vector{Common.Dihedral}}, rot_lib::Dict{String, Any}, p_mut=0.0) = MutatorConfig(sidechains, rot_lib, p_mut)
 Base.show(io::IO, b::MutatorConfig) = print(io, "Sidechain.MutatorConfig(sidechains=$(length(b.sidechains)), rot_lib=$(b.rot_lib), p_mut=$(b.p_mut)")
 
 

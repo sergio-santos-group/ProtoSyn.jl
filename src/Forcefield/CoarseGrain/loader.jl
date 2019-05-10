@@ -63,7 +63,7 @@ julia> Forcefield.CoarseGrain.compile_hb_network(metadata.atoms, 1.0)
 Forcefield.CoarseGrain.HbNetwork(donors=10, acceptors=10, coef=1.0)
 ```
 """
-function compile_hb_network(atoms::Vector{Common.AtomMetadata}, sc_hb_lib::Dict{String, Any} = Dict{String, Any}(); λ::Float64 = 1.0)::HbNetwork
+function compile_hb_network(atoms::Vector{Common.AtomMetadata}; lib::Dict{String, Any} = Dict{String, Any}(), λ::Float64 = 1.0)::HbNetwork
 
     function retrieve_pairs!(target::Vector{HbPair}, source::Vector{Any}, residue::Vector{Common.AtomMetadata})
         if length(source) > 0
@@ -95,9 +95,9 @@ function compile_hb_network(atoms::Vector{Common.AtomMetadata}, sc_hb_lib::Dict{
             filter(atom -> atom.name == "C", residue)[1].index))
 
         # Sidechains hydrogen bonds
-        if length(sc_hb_lib) > 0 && aa in keys(sc_hb_lib)
-            retrieve_pairs!(hbNetwork.donors, sc_hb_lib[aa]["D"], residue)
-            retrieve_pairs!(hbNetwork.acceptors, sc_hb_lib[aa]["A"], residue)
+        if length(lib) > 0 && aa in keys(lib)
+            retrieve_pairs!(hbNetwork.donors, lib[aa]["D"], residue)
+            retrieve_pairs!(hbNetwork.acceptors, lib[aa]["A"], residue)
         end
 
     end

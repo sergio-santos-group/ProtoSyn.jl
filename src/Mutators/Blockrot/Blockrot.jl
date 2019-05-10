@@ -30,18 +30,14 @@ CrankshaftMutator(blocks=6, angle_sampler=randn, p_pmut=0.05, step_size=0.25, n_
 ```
 See also: [`run!`](@ref)
 """
-mutable struct MutatorConfig{F <: Function}  <: Abstract.MutatorConfig
-    blocks::Vector{Common.BlockMetadata}
-    angle_sampler::F
-    p_mut::Float64
-    step_size::Float64
-    translation_step_size::Float64
-    n_tries::Int64
-    loop_closer::Abstract.DriverConfig
-
-    function MutatorConfig(blocks::Vector{Common.BlockMetadata}, angle_sampler::Function, p_mut::Float64, step_size::Float64, translation_step_size::Float64, n_tries::Int64, loop_closer::Abstract.DriverConfig)
-        new{Function}(blocks, angle_sampler, p_mut, step_size, translation_step_size, n_tries, loop_closer)
-    end
+@Base.kwdef mutable struct MutatorConfig{F <: Function}  <: Abstract.MutatorConfig
+    blocks::Vector{Common.BlockMetadata} = Vector{Common.BlockMetadata}()
+    angle_sampler::F = rand
+    p_mut::Float64 = 0.0
+    step_size::Float64 = 0.0
+    translation_step_size::Float64 = 0.0
+    n_tries::Int64 = 0
+    loop_closer::Abstract.DriverConfig = Abstract.NullDriverConfig()
 end
 Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries))")
 

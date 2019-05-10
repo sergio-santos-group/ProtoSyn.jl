@@ -24,8 +24,8 @@ DihedralMutator(dihedrals=68, p_pmut=0.05, angle_sampler=randn, step_size=0.25)
 See also: [`run!`](@ref)
 """
 @Base.kwdef mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
-    dihedrals::Vector{Common.Dihedral}
-    angle_sampler::F
+    dihedrals::Vector{Common.Dihedral} = Vector{Common.Dihedral}()
+    angle_sampler::F = rand
     p_mut::Float64 = 0.0
     step_size::Float64 = 0.0
 end # struct

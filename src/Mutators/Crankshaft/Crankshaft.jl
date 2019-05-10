@@ -26,11 +26,11 @@ CrankshaftMutator(dihedrals=68, angle_sampler=randn, p_pmut=0.0, step_size=0.0)
 ```
 See also: [`run!`](@ref)
 """
-mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
-    dihedrals::Vector{Common.Dihedral}
-    angle_sampler::F
-    p_mut::Float64
-    step_size::Float64
+@Base.kwdef mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
+    dihedrals::Vector{Common.Dihedral} = Vector{Common.Dihedral}()
+    angle_sampler::F = rand
+    p_mut::Float64 = 0.0
+    step_size::Float64 = 0.0
 
     function MutatorConfig(dihedrals::Vector{Common.Dihedral}, angle_sampler::Function, p_mut::Float64, step_size::Float64)
         for dihedral in dihedrals

@@ -2,6 +2,7 @@ module Abstract
 
 # Abstract types definition
 abstract type DriverConfig end
+struct NullDriverConfig <: DriverConfig end
 abstract type DriverState  end
 abstract type MutatorConfig end
 abstract type Sampler end

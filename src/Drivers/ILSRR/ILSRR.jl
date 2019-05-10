@@ -39,7 +39,7 @@ See also: [`run!`](@ref)
 """
 Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
     #TO DO: Documentation
-    inner_driver!::F
+    # inner_driver!::F
     inner_driver_config::Union{Abstract.DriverConfig, Nothing}
     perturbator!::H
     anneal_fcn::G
@@ -84,12 +84,13 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
 
     driver_state = DriverState()
     
-    inner_driver! = driver_config.inner_driver
+    # inner_driver! = driver_config.inner_driver
     inner_driver_config = driver_config.inner_driver_config
     
     let n_steps=inner_driver_config.n_steps
         inner_driver_config.n_steps = 0
-        inner_driver!(state, inner_driver_config)
+        # inner_driver!(state, inner_driver_config)
+        typeof(inner_driver_config).name.module.run!(state, inner_driver_config, callbacks)
         inner_driver_config.n_steps = n_steps
     end
     
@@ -106,7 +107,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         
         # this driver should make multiple small tweaks
         # to the state
-        inner_driver!(state, inner_driver_config, callbacks)
+        typeof(inner_driver_config).name.module.run!(state, inner_driver_config, callbacks)
         
         driver_state.step += 1
         driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
