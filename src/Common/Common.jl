@@ -1,6 +1,7 @@
 module Common
 
 using ..Aux
+using ..Abstract
 using LinearAlgebra
 
 include("energy.jl")

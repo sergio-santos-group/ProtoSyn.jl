@@ -42,6 +42,11 @@ include("MonteCarlo/MonteCarlo.jl")
 include("ILSRR/ILSRR.jl")
 include("MD/MD.jl")
 
+run!(s::Common.State, d::MonteCarlo.DriverConfig)      = MonteCarlo.run!(s, d)
+run!(s::Common.State, d::SteepestDescent.DriverConfig) = SteepestDescent.run!(s, d)
+run!(s::Common.State, d::ILSRR.DriverConfig)           = ILSRR.run!(s, d)
+
+
 function Base.show(io::IO, b::Union{Abstract.DriverConfig, Abstract.DriverState})
     print(io, string(typeof(b)))
     for p in fieldnames(typeof(b))

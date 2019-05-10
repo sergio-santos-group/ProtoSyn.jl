@@ -1,4 +1,5 @@
 module ILSRR
+const id = :ILSRR
 
 using ..Aux
 using ..Common
@@ -35,23 +36,46 @@ ILSRR.Driver(evaluator=my_evaluator!, temperature=300.0, n_steps=10)
 !!! tip
     The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [Forcefield](@ref Forcefield). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
 
-See also: [`run!`](@ref)
-"""
-Base.@kwdef mutable struct DriverConfig{F <: Function, G <: Function, H <: Function}
-    #TO DO: Documentation
-    # inner_driver!::F
-    inner_driver_config::Union{Abstract.DriverConfig, Nothing}
-    perturbator!::H
-    anneal_fcn::G
-    n_steps::Int = 0
-end
-function DriverConfig(inner_driver!::F, inner_driver_config::Abstract.DriverConfig, perturbator!::G, temperature::Float64 = 0.0) where {F <: Function, G <: Function}
-    return DriverConfig(inner_driver! = inner_driver!, inner_driver_config = inner_driver_config, perturbator! = perturbator!, anneal_fcn = (n::Int64)->temperature)
-end
+    See also: [`run!`](@ref)
+    """
+mutable struct DriverConfig{F <: Function, T <: Abstract.CallbackObject} <: Abstract.DriverConfig
 
+    inner_driver_config::Abstract.DriverConfig # Required
+    perturbator::Abstract.Sampler              # Required
+    anneal_fcn::F                              # Default: constant temperature 0.0
+    n_steps::Int64                             # Default = 0
+    stall_limit::Int64                         # Default = 0
+    callbacks::Vector{T}
+
+    DriverConfig(; inner_driver_config::Abstract.DriverConfig,
+        perturbator::Abstract.Sampler,
+        temperature::Union{Float64, Function} = 0.0,
+        n_steps::Int64 = 0,
+        stall_limit::Int64 = 0,
+        callbacks::Vector{<:Abstract.CallbackObject} = Vector{Common.CallbackObject}()) = begin
+
+        if typeof(temperature) == Float64
+            new{Function, Abstract.CallbackObject}(inner_driver_config,
+                perturbator,
+                function constant_temperature(n::Int64) temperature end,
+                n_steps,
+                stall_limit,
+                callbacks)
+        else
+            new{Function, Abstract.CallbackObject}(inner_driver_config,
+                perturbator,
+                temperature,
+                n_steps,
+                stall_limit,
+                callbacks)
+        end
+    end
+end
 
 #TO DO: Documentation
 Base.@kwdef mutable struct DriverState <: Abstract.DriverState
+
+    # Parameter:                             # Default value:
     best_state::Union{Common.State, Nothing} = nothing
     home_state::Union{Common.State, Nothing} = nothing
     step::Int                                = 0
@@ -61,6 +85,8 @@ Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     stalled::Bool                            = false
 end
 
+# ----------------------------------------------------------------------------------------------------------
+#                                                   RUN
 
 @doc raw"""
     run!(state::Common.State, driver::SteepestDescentDriver[, callback::Union{Common.CallbackObject, Nothing} = nothing])
@@ -80,7 +106,7 @@ Run the main body of the Driver.
 julia> Drivers.ILSRR.run(state, ilsrr_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig)
 
     driver_state = DriverState()
     
@@ -90,7 +116,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     let n_steps=inner_driver_config.n_steps
         inner_driver_config.n_steps = 0
         # inner_driver!(state, inner_driver_config)
-        typeof(inner_driver_config).name.module.run!(state, inner_driver_config, callbacks)
+        Drivers.run!(state, inner_driver_config)
         inner_driver_config.n_steps = n_steps
     end
     
@@ -98,7 +124,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     driver_state.home_state = Common.State(state)
     driver_state.completed = driver_state.step == driver_config.n_steps
 
-    @Common.cbcall callbacks state driver_state driver_config
+    Common.@cbcall driver_config.callbacks state driver_state
     
     R = 0.0083144598 # kJ mol-1 K-1
 
@@ -107,7 +133,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         
         # this driver should make multiple small tweaks
         # to the state
-        typeof(inner_driver_config).name.module.run!(state, inner_driver_config, callbacks)
+        typeof(inner_driver_config).name.module.run!(state, inner_driver_config)
         
         driver_state.step += 1
         driver_state.temperature = driver_config.anneal_fcn(driver_state.step)
@@ -115,8 +141,8 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         if state.energy.total < driver_state.best_state.energy.total
             # save this state as the best and make
             # it the new homebase
-            @Common.copy driver_state.best_state state energy xyz
-            @Common.copy driver_state.home_state state energy xyz
+            Common.@copy driver_state.best_state state energy xyz
+            Common.@copy driver_state.home_state state energy xyz
             n_stalls = 0
         else
             # otherwise, a new homebase may be created according
@@ -124,12 +150,12 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
             β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
             ΔE = state.energy.total - driver_state.home_state.energy.total
             if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
-                @Common.copy driver_state.home_state state energy xyz
+                Common.@copy driver_state.home_state state energy xyz
                 n_stalls = 0
             else
                 # if the criterium was not accepted, revert
                 # to the homebase
-                @Common.copy state driver_state.home_state energy xyz
+                Common.@copy state driver_state.home_state energy xyz
                 n_stalls += 1
             end
         end
@@ -139,16 +165,16 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         
         # make a large perturbation to the state
         if !(driver_state.completed || driver_state.stalled)
-            driver_config.perturbator!(state)
+            driver_config.perturbator.apply!(state, driver_config.perturbator.mutators)
         end
 
-        @Common.cbcall callbacks state driver_state driver_config
+        Common.@cbcall driver_config.callbacks state driver_state
     end
     #endregion
 
     # before returning, save the best state
     if driver_state.best_state.energy.total < state.energy.total
-        @Common.copy state driver_state.best_state energy xyz
+        Common.@copy state driver_state.best_state energy xyz
     end
 
     return driver_state

@@ -33,15 +33,22 @@ SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_displa
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
-Base.@kwdef mutable struct DriverConfig <: Abstract.DriverConfig
+mutable struct DriverConfig <: Abstract.DriverConfig
     
-    evaluator::Abstract.Evaluator
-    n_steps::Int64    = 0
-    f_tol::Float64    = 1e-3
-    max_step::Float64 = 0.1
-end
+    evaluator::Abstract.Evaluator            # Required
+    n_steps::Int64                           # Default: 0
+    f_tol::Float64                           # Default: 1e-3
+    max_step::Float64                        # Default: 0.1
+    callbacks::Vector{Common.CallbackObject} # Default: empty
 
-DriverConfig(evaluator::Abstract.Evaluator) = DriverConfig(evaluator! = evaluator!)
+    DriverConfig(; evaluator::Abstract.Evaluator,
+        n_steps::Int64 = 0,
+        f_tol::Float64 = 1e-3,
+        max_step::Float64 = 0.1,
+        callbacks::Vector{Common.CallbackObject} = Vector{Common.CallbackObject}()) = begin
+            new(evaluator, n_steps, f_tol, max_step, callbacks)
+    end
+end
 
 function Base.show(io::IO, b::DriverConfig)
     print(io, "SteepestDescent.DriverConfig")
@@ -54,6 +61,7 @@ end
 #TO DO: Documentation
 Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     
+    # Parameter:       # Default:
     step::Int64        = 0
     step_size::Float64 = -1.0
     max_force::Float64 = -1.0
@@ -94,7 +102,7 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, callback2, callback3)
 ```
 """
-function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig)
 
     # Evaluate initial energy and forces
     #   start by calculating nonbonded lists:
@@ -129,7 +137,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     end
     
     # Initial callbacks
-    @Common.cbcall callbacks state driver_state driver_config
+    Common.@cbcall driver_config.callbacks state driver_state
     
     # Initialize γ and backup copy
     γ = 1.0
@@ -181,7 +189,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
 
         # update current step and call calback functions (if any)
         driver_state.step += 1
-        @Common.cbcall callbacks state driver_state driver_config
+        @Common.cbcall driver_config.callbacks state driver_state
 
     end
     #endregion

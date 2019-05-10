@@ -1,4 +1,5 @@
 module MonteCarlo
+const id = :MC
 
 using ..Aux
 using ..Common
@@ -37,17 +38,31 @@ MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=1.0,
 
 See also: [`run!`](@ref)
 """
-mutable struct DriverConfig{F <: Function} <: Abstract.DriverConfig
-    sampler::Abstract.Sampler     # Required
-    evaluator::Abstract.Evaluator # Required
-    anneal_fcn::F # Default: 0.0
-    n_steps::Int  # Default: 0
+mutable struct DriverConfig{F <: Function, T <: Abstract.CallbackObject} <: Abstract.DriverConfig
+    sampler::Abstract.Sampler                # Required
+    evaluator::Abstract.Evaluator            # Required
+    anneal_fcn::F                            # Default: constant temperature 0.0
+    n_steps::Int                             # Default: 0
+    callbacks::Vector{T} # Default: empty
 
-    DriverConfig(; sampler, evaluator, temperature = 0.0, n_steps = 0) = begin
+    DriverConfig(; sampler::Abstract.Sampler,
+        evaluator::Abstract.Evaluator,
+        temperature::Union{Float64, Function} = 0.0,
+        n_steps::Int64 = 0,
+        callbacks::Vector{<:Abstract.CallbackObject} = Vector{Common.CallbackObject}()) = begin
+
         if typeof(temperature) == Float64
-            new{Function}(sampler,  evaluator, function constant_temperature(n::Int64) temperature end, n_steps)
+            new{Function, Abstract.CallbackObject}(sampler,
+                evaluator,
+                function constant_temperature(n::Int64) temperature end,
+                n_steps,
+                callbacks)
         else
-            new{Function}(sampler, evaluator, temperature, n_steps)
+            new{Function, Abstract.CallbackObject}(sampler,
+                evaluator,
+                temperature,
+                n_steps,
+                callbacks)
         end
     end
 end
@@ -55,6 +70,8 @@ end
 
 # TODO: Documentation
 Base.@kwdef mutable struct DriverState <: Abstract.DriverState
+    
+    # Parameter:         # Default:
     step::Int64          = 0
     ac_count::Int        = -1
     temperature::Float64 = -1.0
@@ -85,7 +102,7 @@ The [`CallbackObject`](@ref Common) in this Driver returns the following extra V
 julia> Drivers.MonteCarlo.run!(state, driver, my_callback1, my_callback2, my_callback3)
 ```
 """
-function run!(state::Common.State, driver_config::DriverConfig, callbacks::Common.CallbackObject...)
+function run!(state::Common.State, driver_config::DriverConfig)
     
     # Evaluate initial energy and forces
     #   start by calculating nonbonded lists:
@@ -110,7 +127,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
     driver_state.ac_count = 0    # accepted counter
     
     # call "callback" functions
-    @Common.cbcall callbacks state driver_state driver_config
+    Common.@cbcall driver_config.callbacks state driver_state
 
     R = 0.0083144598 # kJ mol-1 K-1
 
@@ -148,7 +165,7 @@ function run!(state::Common.State, driver_config::DriverConfig, callbacks::Commo
         end
         
         # update driver state and call calback functions (if any)
-        @Common.cbcall callbacks state driver_state driver_config
+        Common.@cbcall driver_config.callbacks state driver_state
 
     end
     #endregion

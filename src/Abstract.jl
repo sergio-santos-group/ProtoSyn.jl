@@ -1,6 +1,7 @@
 module Abstract
 
 # Abstract types definition
+abstract type CallbackObject end
 abstract type DriverConfig end
 struct NullDriverConfig <: DriverConfig end
 abstract type DriverState  end
