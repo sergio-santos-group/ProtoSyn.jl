@@ -122,6 +122,8 @@ function run!(state::Common.State, driver_config::DriverConfig)
     
     # create a copy of the input state
     prev_state = Common.State(state.size)
+    copy!(prev_state.xyz, state.xyz)
+    copy!(prev_state.energy, state.energy)
     
     # initialize auxilliary variables
     driver_state.ac_count = 0    # accepted counter
@@ -138,7 +140,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
         
         # sample new configuration
         driver_config.sampler.apply!(state, driver_config.sampler.mutators)
-
+        
         # evaluate energy of new configuration
         energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, false)
         

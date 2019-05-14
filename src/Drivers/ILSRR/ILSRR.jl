@@ -5,7 +5,6 @@ using ..Aux
 using ..Common
 using ..Drivers
 using ..Abstract
-using Printf
 
 
 @doc raw"""
@@ -110,12 +109,10 @@ function run!(state::Common.State, driver_config::DriverConfig)
 
     driver_state = DriverState()
     
-    # inner_driver! = driver_config.inner_driver
     inner_driver_config = driver_config.inner_driver_config
     
     let n_steps=inner_driver_config.n_steps
         inner_driver_config.n_steps = 0
-        # inner_driver!(state, inner_driver_config)
         Drivers.run!(state, inner_driver_config)
         inner_driver_config.n_steps = n_steps
     end
@@ -151,16 +148,16 @@ function run!(state::Common.State, driver_config::DriverConfig)
             ΔE = state.energy.total - driver_state.home_state.energy.total
             if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
                 Common.@copy driver_state.home_state state energy xyz
-                n_stalls = 0
+                driver_state.n_stalls = 0
             else
                 # if the criterium was not accepted, revert
                 # to the homebase
                 Common.@copy state driver_state.home_state energy xyz
-                n_stalls += 1
+                driver_state.n_stalls += 1
             end
         end
         
-        driver_state.stalled = n_stalls == driver_config.stall_limit
+        driver_state.stalled = driver_state.n_stalls == driver_config.stall_limit
         driver_state.completed = driver_state.step == driver_config.n_steps
         
         # make a large perturbation to the state
