@@ -168,6 +168,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
         
         # update driver state and call calback functions (if any)
         Common.@cbcall driver_config.callbacks state driver_state
+        driver_config.sampler.tune!(driver_config.sampler.mutators, driver_state)
 
     end
     #endregion

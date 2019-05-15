@@ -37,16 +37,18 @@ mutable struct DriverConfig <: Abstract.DriverConfig
     
     evaluator::Abstract.Evaluator            # Required
     n_steps::Int64                           # Default: 0
+    nblist_freq::Int64                       # Default: 0
     f_tol::Float64                           # Default: 1e-3
     max_step::Float64                        # Default: 0.1
     callbacks::Vector{Common.CallbackObject} # Default: empty
 
     DriverConfig(; evaluator::Abstract.Evaluator,
         n_steps::Int64 = 0,
+        nblist_freq::Int64 = 0,
         f_tol::Float64 = 1e-3,
         max_step::Float64 = 0.1,
         callbacks::Vector{Common.CallbackObject} = Vector{Common.CallbackObject}()) = begin
-            new(evaluator, n_steps, f_tol, max_step, callbacks)
+            new(evaluator, n_steps, nblist_freq, f_tol, max_step, callbacks)
     end
 end
 
@@ -150,7 +152,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
         copy!(backup_state, state)
 
         # calculate current scaling factor and step size
-        γ = min(γ, driver_config.max_displacement)
+        γ = min(γ, driver_config.max_step)
         driver_state.step_size = γ / driver_state.max_force
 
         # update coordinates
@@ -190,7 +192,6 @@ function run!(state::Common.State, driver_config::DriverConfig)
         # update current step and call calback functions (if any)
         driver_state.step += 1
         @Common.cbcall driver_config.callbacks state driver_state
-
     end
     #endregion
 

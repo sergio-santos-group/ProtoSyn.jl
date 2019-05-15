@@ -29,7 +29,7 @@ mutable struct Sampler{F <: Function, G <: Function, T <: Abstract.MutatorConfig
 
     # Parameters:            Signatures:
     apply!::F                # sampler.apply!(state::Common.State, sampler.mutators::Vector{Abstract.MutatorConfig})
-    tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::AbstractDriverState)
+    tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::Abstract.DriverState)
     mutators::Vector{T}
 end # mutable struct
 

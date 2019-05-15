@@ -19,7 +19,7 @@ evaluate!(s::Common.State, t::Vector{Restraints.DistanceFBR}, f::Bool = false) =
 evaluate!(s::Common.State, t::Vector{Restraints.DihedralFBR}, f::Bool = false) = Restraints.evaluate!(s, t, f)
 
 evaluate!(s::Common.State, t::Vector{CoarseGrain.SolvPair},   f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
-evaluate!(s::Common.State, t::CoarseGrain.HbNetwork,  f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
+evaluate!(s::Common.State, t::CoarseGrain.HbNetwork,          f::Bool = false) = CoarseGrain.evaluate!(s, t, f)
 
 
 # TODO: Documentation

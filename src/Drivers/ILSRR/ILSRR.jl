@@ -6,6 +6,26 @@ using ..Common
 using ..Drivers
 using ..Abstract
 
+#= ----------------------------------------------------------------------------
+ILSRR Example
+(Iterated Local Search with Random Restarts)
+
+# Algorithm explanation:
+The ILSRR algorithm searchs the local conformational neighbourhood using
+an "inner driver", such as Monte Carlo or even Steepest Descent. The
+objective of the inner driver is to find local optimums. The encompassing
+outer cycle is responsible to perform "perturbations": big mutations in the
+structure or nature of the molecule being sampled in order to "kick" a solution
+out of the local optimum, essentially overcomming energy barriers.
+The starting point of the inner cycle is called the "home base", and is re-defined
+whenever a new optimum is found or the energy gap in comparison to the last
+home base is small enough to pass the Metropolis criterium.
+
+# Convergence criteria
+1. Number of `n_steps` performed
+2. Number of `n_stalls` cycles failed to produce a new Home Base
+---------------------------------------------------------------------------- =#
+
 
 @doc raw"""
     Driver(inner_cycle_driver!::Drivers.AbstractDriver, evaluator!::Function, pertubator!::Function[, temperature::Float64 = 0.0, n_steps::Int64 = 0, callbacks::Tuple{Common.CallbackObject}...])
