@@ -23,12 +23,8 @@ loaded from a PDB file.
 -------------------------------------------------=#
 
 # Configuration
-const input_pdb                = "data/1i2t_no_sc.pdb"
-const input_amber_top          = "data/1i2t_amber_no_sc_top.json"
-const hydrogen_bonding_library = "data/sc_hb_lib.json"
-const contacts_topology        = "data/contact_map_raptorx_1i2t.txt"
-const ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
-const output_file              = open("1_introduction.pdb", "w")
+input_pdb                = "data/1i2t_no_sc.pdb"
+ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
 
 # State & Metadata
 #=
@@ -76,8 +72,10 @@ and write structural files in useful formats (PDB, GRO, XYZ, etc)
 Print.as_pdb(output_file, state, metadata)
 
 if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
+    const output_file = open("1_introduction.pdb", "w")
+
     Mutators.apply!(state, dihedral_mutator)
     Print.as_pdb(output_file, state, metadata)
+    
+    close(output_file)
 end
-
-close(output_file)

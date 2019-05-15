@@ -15,10 +15,9 @@ in controled step sizes, essentially moving the system to a local minimum.
 -------------------------------------------------=#
 
 # Configuration
-const input_pdb                = "data/1i2t_no_sc_twist.pdb"
-const input_amber_top          = "data/1i2t_amber_no_sc_top.json"
-const ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
-const output_file              = open("5_steepest_descent.pdb", "w")
+input_pdb                = "data/1i2t_no_sc_twist.pdb"
+input_amber_top          = "data/1i2t_amber_no_sc_top.json"
+ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
 
 
 # System Set-up & Loading
@@ -49,12 +48,17 @@ sd_driver = Drivers.SteepestDescent.DriverConfig(
     n_steps     = 2_000,
     nblist_freq = 10,
     f_tol       = 0.2,
-    max_step    = 1e4,
-    callbacks   = [print_status, print_structure])
+    max_step    = 0.01,
+    callbacks   = [print_status])
 
 if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
+    const output_file = open("5_steepest_descent.pdb", "w")
+
     println("Steepest Descent example:")
     @printf("%15s %5s: %10s %10s\n", "", "Step", "Energy", "Step size")
+
     @time f_state = Drivers.run!(state, sd_driver)
     println(f_state)
+
+    close(output_file)
 end

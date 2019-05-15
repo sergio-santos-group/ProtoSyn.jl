@@ -24,26 +24,28 @@ apply!(st::Common.State, mut::Crankshaft.MutatorConfig) = Crankshaft.apply!(st, 
 apply!(st::Common.State, mut::Blockrot.MutatorConfig)   = Blockrot.apply!(st, mut)
 apply!(st::Common.State, mut::Sidechain.MutatorConfig)  = Sidechain.apply!(st, mut)
 
+apply!(st::Common.State, mut::Drivers.SteepestDescent.DriverConfig) = Drivers.SteepestDescent.run!(st, mut)
+
 # TODO: Documentation
-mutable struct Sampler{F <: Function, G <: Function, T <: Abstract.MutatorConfig} <: Abstract.Sampler
+mutable struct Sampler{F <: Function, G <: Function} <: Abstract.Sampler
 
     # Parameters:            Signatures:
     apply!::F                # sampler.apply!(state::Common.State, sampler.mutators::Vector{Abstract.MutatorConfig})
     tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::Abstract.DriverState)
-    mutators::Vector{T}
+    mutators::Vector{Any}
 end # mutable struct
 
 
 # TODO Documentation
-function Sampler(; mutators::Vector{T} = Vector{T}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function, T <: Abstract.MutatorConfig}
+function Sampler(; mutators::Vector{Any} = Vector{T}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
     if apply! == nothing
-        apply! = function default_aggregate!(state::Common.State, mutators::Vector{T}) where {T <: Abstract.MutatorConfig}
+        apply! = function default_aggregate!(state::Common.State, mutators::Vector{Any})
             for mutator in mutators
                 Mutators.apply!(state, mutator)
             end
         end
     end
-    Sampler{Function, Function, Abstract.MutatorConfig}(apply!, tune!, mutators)
+    Sampler{Function, Function}(apply!, tune!, mutators)
 end
 
 

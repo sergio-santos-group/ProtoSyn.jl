@@ -19,12 +19,11 @@ This energy can be a sum of different energy components.
 -------------------------------------------------=#
 
 # Configuration
-const input_pdb                = "data/1i2t_no_sc.pdb"
-const input_amber_top          = "data/1i2t_amber_no_sc_top.json"
-const hydrogen_bonding_library = "data/sc_hb_lib.json"
-const contacts_topology        = "data/contact_map_raptorx_1i2t.txt"
-const ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
-const output_file              = open("2_monte_carlo.pdb", "w")
+input_pdb                = "data/1i2t_no_sc.pdb"
+input_amber_top          = "data/1i2t_amber_no_sc_top.json"
+hydrogen_bonding_library = "data/sc_hb_lib.json"
+contacts_topology        = "data/contact_map_raptorx_1i2t.txt"
+ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
 
 # System Set-up & Loading
 state, metadata = Common.load_from_pdb(input_pdb)
@@ -163,8 +162,10 @@ mc_driver = Drivers.MonteCarlo.DriverConfig(
     callbacks = [print_status, print_structure])
 
 if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
+    const output_file = open("2_monte_carlo.pdb", "w")
+
     println("Monte Carlo example:")
     @time Drivers.run!(state, mc_driver)
+    
+    close(output_file)
 end
-
-close(output_file)

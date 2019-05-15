@@ -47,7 +47,7 @@ mutable struct DriverConfig <: Abstract.DriverConfig
         nblist_freq::Int64 = 0,
         f_tol::Float64 = 1e-3,
         max_step::Float64 = 0.1,
-        callbacks::Vector{Common.CallbackObject} = Vector{Common.CallbackObject}()) = begin
+        callbacks::Vector{<:Abstract.CallbackObject} = Vector{Common.CallbackObject}()) = begin
             new(evaluator, n_steps, nblist_freq, f_tol, max_step, callbacks)
     end
 end
