@@ -25,7 +25,7 @@ copying all content as if it was literally written here. Altough useful
 in reusing code,This means all variable names are mainteined and caution
 should be help not to overwrite or redefine essential pieces of code.
 =#
-include("3_main_sim_anneal.jl")
+include("3_sim_anneal.jl")
 
 # Perturbators
 dihedral_perturbator   = Mutators.Dihedral.MutatorConfig(
@@ -67,6 +67,8 @@ ilsrr_driver = Drivers.ILSRR.DriverConfig(
 )
 
 if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
+    const output_file = open("4_ilsrr.pdb", "w")
+
     println("ILSRR Driver Example:")
     @time Drivers.run!(state, ilsrr_driver)
 end

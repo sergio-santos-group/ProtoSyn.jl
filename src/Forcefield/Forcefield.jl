@@ -33,16 +33,16 @@ If no function is passed to the constructor, the default function is simply a su
 julia> Forcefield.Evaluator(components = [amber_top, restraints])
 ```
 """
-mutable struct Evaluator{F <: Function} <: Abstract.Evaluator
+mutable struct Evaluator{F <: Function, T <: Any} <: Abstract.Evaluator
 
     # Parameters:            Signatures:
     evaluate!::F             # evaluator.evaluate!(state::Common.State, evaluator.components::Vector{Abstract.ForcefieldComponent}, do_forces::Bool = false)
-    components::Vector{Any}
+    components::Vector{T}
 end # end struct
 
-function Evaluator(; components::Any = Vector{Any}(), evaluate!::Union{F, Nothing} = nothing) where {F <: Function}
+function Evaluator(; components::Vector{T} = Vector{T}(), evaluate!::Union{F, Nothing} = nothing) where {F <: Function, T <: Any}
     if evaluate! == nothing
-        evaluate! = function default_sum!(state::Common.State, components::Vector{Any}, do_forces::Bool = false)::Float64
+        evaluate! = function default_sum!(state::Common.State, components::Vector{T}, do_forces::Bool = false)::Float64 where {T <: Any}
             total = 0.0
             for component in components
                 total += Forcefield.evaluate!(state, component, do_forces)
@@ -51,7 +51,7 @@ function Evaluator(; components::Any = Vector{Any}(), evaluate!::Union{F, Nothin
             return total
         end # end function
     end # end if
-    Evaluator{Function}(evaluate!, components)
+    Evaluator{Function, Any}(evaluate!, components)
 end # end function
 
 end # end module

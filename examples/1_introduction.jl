@@ -69,10 +69,10 @@ dihedral_mutator   = Mutators.Dihedral.MutatorConfig(
 of ProtoSyn, several of which allow to combine the State and Metadata information
 and write structural files in useful formats (PDB, GRO, XYZ, etc)
 =#
-Print.as_pdb(output_file, state, metadata)
 
 if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
     const output_file = open("1_introduction.pdb", "w")
+    Print.as_pdb(output_file, state, metadata)
 
     Mutators.apply!(state, dihedral_mutator)
     Print.as_pdb(output_file, state, metadata)

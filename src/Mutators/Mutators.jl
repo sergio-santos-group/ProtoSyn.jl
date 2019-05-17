@@ -32,23 +32,23 @@ response to changes during the runtime of the Driver.
 julia> Forcefield.Sampler(mutators = [dihedral, crankshaft])
 ```
 """
-mutable struct Sampler{F <: Function, G <: Function} <: Abstract.Sampler
+mutable struct Sampler{F <: Function, G <: Function, T <: Any} <: Abstract.Sampler
 
     # Parameters:            Signatures:
     apply!::F                # sampler.apply!(state::Common.State, sampler.mutators::Vector{Abstract.MutatorConfig})
     tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::Abstract.DriverState)
-    mutators::Vector{Any}
+    mutators::Vector{T}
 end # end struct
 
-function Sampler(; mutators::Vector{Any} = Vector{Any}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
+function Sampler(; mutators::Vector{T} = Vector{T}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function, T <: Any}
     if apply! == nothing
-        apply! = function default_aggregate!(state::Common.State, mutators::Vector{Any})
+        apply! = function default_aggregate!(state::Common.State, mutators::Vector{T}) where {T <: Any}
             for mutator in mutators
                 Mutators.apply!(state, mutator)
             end # end for
         end # end function
     end # end if
-    Sampler{Function, Function}(apply!, tune!, mutators)
+    Sampler{Function, Function, Any}(apply!, tune!, mutators)
 end # end function
 
 function Base.show(io::IO, b::Sampler)
