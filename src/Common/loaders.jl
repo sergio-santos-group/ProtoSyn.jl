@@ -6,7 +6,7 @@
     load_from_gro(i_file::String)::Common.State
 
 Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .gro file.
-As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+As a default, `state.energy` is an empty [`Energy`](@ref) and `state.forces` are set to zero.
 If `compile_metadata` flag is set to true, the returned Metadata object is compiled from the existing  information in the GRO file.
 
 # Examples
@@ -49,7 +49,7 @@ end
     load_from_pdb(i_file::String[, compile_metadata::Bool = true])::Common.State
 
 Return a new [`Common.State`](@ref) by loading the atom positions and metadata from the input .pdb file.
-As a default, `state.energy` is [`NullEnergy`](@ref) and `state.forces` are set to zero.
+As a default, `state.energy` is an empty [`Energy`](@ref) and `state.forces` are set to zero.
 If `compile_metadata` flag is set to true, the returned Metadata object is compiled from the existing  information in the PDB file.
 
 # Examples

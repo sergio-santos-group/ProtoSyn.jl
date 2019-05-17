@@ -50,10 +50,10 @@ When a Float64 is passed, by default, ProtoSyn will construct an unnamed functio
 # Examples
 ```julia-repl
 julia> Drivers.MonteCarlo.DriverConfig(sampler = my_sampler!, evaluator = my_evaluator!, temperature = 10.0, n_steps = 1000)
-MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000, callbacks=[])
+MonteCarlo.DriverConfig(sampler=my_sampler!, evaluator=my_evaluator!, temperature=10.0, n_steps=1000, callbacks=[])
 
 julia> Drivers.MonteCarlo.DriverConfig(my_sampler!, my_evaluator!)
-MonteCarlo.Driver(sampler=my_sampler!, evaluator=my_evaluator!, temperature=0.0, n_steps=0, callbacks=[])
+MonteCarlo.DriverConfig(sampler=my_sampler!, evaluator=my_evaluator!, temperature=0.0, n_steps=0, callbacks=[])
 ```
 !!! tip
     Both `my_sampler!` and `my_evaluator!` functions often contain pre-defined function avaliable in [Mutators](@ref Mutators) and [Forcefield](@ref Forcefield) modules, respectively.

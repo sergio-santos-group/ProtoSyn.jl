@@ -13,7 +13,6 @@ This section provides a description of the Common components.
 Contains common and simple energy representations. More specific energy structures can be used from other modules such as [`Amber`](@ref Forcefield)
 
 ```@docs
-NullEnergy
 Energy
 ```
 
@@ -78,7 +77,6 @@ compile_ss_blocks_metadata!
 compile_ss
 compile_blocks
 compile_sidechains_metadata
-compile_sidechains_metadata!
 ```
 
 ## Conformation Generators
@@ -101,5 +99,4 @@ Auxiliary functions that help speed up the system's performance.
 ```@docs
 @cbcall
 @callback
-@faggregator
 ```

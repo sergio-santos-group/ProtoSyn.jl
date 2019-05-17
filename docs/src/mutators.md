@@ -50,7 +50,7 @@ apply!
 CurrentModule = Mutators.Sidechain
 ```
 
-A Sidechain movement is the mutation of a defined sidechain according to a set of [`MutatorConfig`](@ref Mutators.Sidechain) parameters.
+A Sidechain movement is the mutation of a defined sidechain according to a set of [`MutatorConfig`](@ref) parameters.
 The sidechain mutation implied the rotation of all `Chi` angles to a new set of probable angles sampled based on a random weighted distribution, both defined in a rotamer library.
 
 ```@docs

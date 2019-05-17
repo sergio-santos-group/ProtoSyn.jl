@@ -24,7 +24,7 @@ Crankshaft.MutatorConfig(dihedrals=68, angle_sampler=randn, p_pmut=0.05, step_si
 julia> Mutators.Crankshaft.MutatorConfig()
 Crankshaft.MutatorConfig(dihedrals=0, angle_sampler=rand, p_pmut=0.0, step_size=0.0)
 ```
-See also: [`run!`](@ref)
+See also: [`apply!`](@ref)
 """
 Base.@kwdef mutable struct MutatorConfig{F <: Function} <: Abstract.MutatorConfig
     
