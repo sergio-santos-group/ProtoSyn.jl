@@ -132,17 +132,17 @@ Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1
 
 
 @doc raw"""
-    Metadata(; atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [], sidechains::Vector{SidechainMetadata} = []])
+    Metadata(; atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [])
 
 Define the state metadata, containing extra information regarding the atoms and secondary structure of the system.
 
 # Examples
 ```julia-repl
-julia> Metadata(atoms, ss, residues, dihedrals, blocks, sidechains)
-Metadata(atoms=(...), ss=(...), residues=(...), dihedrals=(...), blocks=(...), sidechains=(...))
+julia> Metadata(atoms, ss, residues, dihedrals, blocks)
+Metadata(atoms=(...), ss=(...), residues=(...), dihedrals=(...), blocks=(...))
 
 julia> Metadata()
-Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[], blocks=[], sidechains=[])
+Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue[], dihedrals = Diehdral[], blocks=[])
 ```
 """
 Base.@kwdef mutable struct Metadata

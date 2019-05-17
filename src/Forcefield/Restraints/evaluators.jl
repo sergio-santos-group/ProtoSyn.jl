@@ -1,5 +1,5 @@
 @doc raw"""
-    evaluate!(topology::Vector{DistanceFBR}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(st::Common.State, topology::Vector{DistanceFBR}, do_forces::Bool = false)
 
 Evaluate an array of [Restraints.DistanceFBR](@ref Forcefield) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
@@ -25,7 +25,7 @@ function evaluate!(st::Common.State, topology::Vector{DistanceFBR}, do_forces::B
             delta  = st.xyz[pair.a2, i] - st.xyz[pair.a1, i]
             v12[i] = delta
             d12   += delta ^ 2
-        end
+        end # end for
         d12 = sqrt(d12)
         if d12 < pair.r1
             dr1           = pair.r1 - pair.r2
@@ -49,23 +49,23 @@ function evaluate!(st::Common.State, topology::Vector{DistanceFBR}, do_forces::B
             e2            = fconst * dr2
             dr            = d12 - pair.r4
             eDistanceFBR += fconst * dr + e2 * 0.5
-        end
+        end # end if
         if do_forces
             @inbounds for i=1:3
                 f = v12[i] * fconst / d12
                 forces[pair.a1, i] += f
                 forces[pair.a2, i] -= f
-            end
-        end
-    end
+            end # end for
+        end # end if
+    end # end for
 
     Common.set_energy_component!(st.energy, :contacts, eDistanceFBR)
     return eDistanceFBR
-end
+end # end function
 
 
 @doc raw"""
-    evaluate!(topology::Vector{DihedralFBR}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::Bool = false)
 
 Evaluate an array of [Restraints.DihedralFBR](@ref Forcefield) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each stage of the flat-bottomed restraint.
@@ -117,7 +117,7 @@ function evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::B
 
             d3432  += delta34 * delta32
             d1232  += delta12 * delta32
-        end
+        end # end for
 
         m       = cross(v12, v32)
         n       = cross(v32, v34)
@@ -150,7 +150,7 @@ function evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::B
             dr            = phi - dihedral.r4
             eDihedralFBR += cdr5 * dr + e2
             dVdphi_x_d32  = cdr5 * d32
-        end
+        end # end if
         if do_forces
             f1mm = -dVdphi_x_d32 / dot(m, m)
             f4nn = dVdphi_x_d32 / dot(n, n)
@@ -165,10 +165,10 @@ function evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::B
                 forces[dihedral.a2, i] += (-f1 - f3 - f4)
                 forces[dihedral.a3, i] += f3
                 forces[dihedral.a4, i] += f4
-            end
-        end
-    end
+            end # end for
+        end # end if
+    end # end for
 
     Common.set_energy_component!(st.energy, :dihedralFBR, eDihedralFBR)
     return eDihedralFBR
-end
+end # end function

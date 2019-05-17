@@ -44,8 +44,6 @@ Metadata
 AtomMetadata
 SecondaryStructureMetadata
 BlockMetadata
-Rotamer
-SidechainMetadata
 renumber_residues!
 ```
 

@@ -1,5 +1,5 @@
 @doc raw"""
-    HarmonicBond(a1::Int64, a2::Int64, k::Float64, b0::Float64)
+    HarmonicBond(a1::Int64, a2::Int64, k::Float64, b0::Float64) <: Abstract.ForcefieldComponent
 
 Harmonic Bond of the form
 
@@ -31,14 +31,13 @@ mutable struct HarmonicBond <: Abstract.ForcefieldComponent
     a2::Int64
     k::Float64  # kJ mol⁻¹ nm⁻²
     b0::Float64 # nm
-
-end
+end # end struct
 Base.show(io::IO, b::HarmonicBond) = print(io, "Forcefield.Amber.HarmonicBond(a1=$(b.a1), a2=$(b.a2), k=$(b.k), b0=$(b.b0))")
 
 # ---------------------------------------------------------------------------------------------------------
 
 @doc raw"""
-    HarmonicAngle(a1::Int64, a2::Int64, a3::Int64, k::Float64, θ::Float64)
+    HarmonicAngle(a1::Int64, a2::Int64, a3::Int64, k::Float64, θ::Float64) <: Abstract.ForcefieldComponent
 
 Harmonic Angle of the form
 
@@ -65,14 +64,13 @@ mutable struct HarmonicAngle <: Abstract.ForcefieldComponent
     a3::Int64
     k::Float64 # kJ mol⁻¹ rad⁻²
     θ::Float64 # rad
-    
-end
+end # end struct
 Base.show(io::IO, b::HarmonicAngle) = print(io, "Forcefield.Amber.HarmonicAngle(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), k=$(b.k), θ=$(b.θ))")
 
 # ---------------------------------------------------------------------------------------------------------
 
 @doc raw"""
-    DihedralCos(a1::Int64, a2::Int64, a3::Int64, a4::Int64, k::Float64, θ::Float64, mult::Float64)
+    DihedralCos(a1::Int64, a2::Int64, a3::Int64, a4::Int64, k::Float64, θ::Float64, mult::Float64) <: Abstract.ForcefieldComponent
 
 Periodic Dihedral of the form
 
@@ -102,14 +100,13 @@ mutable struct DihedralCos <: Abstract.ForcefieldComponent
     k::Float64    # kJ mol⁻¹
     θ::Float64    # rad
     mult::Float64 # multiplicity
-
-end
+end # end struct
 Base.show(io::IO, b::DihedralCos) = print(io, "Forcefield.Amber.DihedralCos(a1=$(b.a1), a2=$(b.a2), a3=$(b.a3), a4=$(b.a4), k=$(b.k), θ=$(b.θ), mult=$(b.mult)")
 
 # ----------------------------------------------------------------------------------------------------------
 
 @doc raw"""
-    Atom(name::String, σ::Float64, ϵ::Float64, q::Float64, excls::Array{Int64, 1}, pairs::Array{Int64, 1})
+    Atom(name::String, σ::Float64, ϵ::Float64, q::Float64, excls::Array{Int64, 1}, pairs::Array{Int64, 1}) <: Abstract.ForcefieldComponent
 
 Define an atom. 
 σ, ϵ and q describe the non-bonded interactions between atoms:
@@ -167,14 +164,14 @@ mutable struct Atom <: Abstract.ForcefieldComponent
     pairs::Vector{Int64}
     
     Atom(name::String, σ::Float64, ϵ::Float64, q::Float64, excls::Array{Int64, 1}, pairs::Array{Int64, 1}) = new(name, σ/2, sqrt(ϵ), 11.787089759563214*q, excls, pairs)
-end
+end # end struct
 
 Base.show(io::IO, b::Atom) = print(io, "Forcefield.Amber.Atom(name=$(b.name), σ=$(b.σ * 2), ϵ=$(b.ϵ^2), q=$(b.q), excls=$(b.excls), pairs=$(b.pairs))")
 
 # ----------------------------------------------------------------------------------------------------------
 
 @doc raw"""
-    Topology(atoms::Array{Atom}, bonds::Array{HarmonicBond}, angles::Array{HarmonicAngle}, dihedralsCos::Array{DihedralCos})
+    Topology(atoms::Array{Atom}, bonds::Array{HarmonicBond}, angles::Array{HarmonicAngle}, dihedralsCos::Array{DihedralCos}) <: Abstract.ForcefieldComponent
 
 Gather all topology components.
 
@@ -201,7 +198,6 @@ mutable struct Topology <: Abstract.ForcefieldComponent
     bonds::Vector{HarmonicBond}
     angles::Vector{HarmonicAngle}
     dihedralsCos::Vector{DihedralCos}
-
-end
+end # end struct
 Topology() = Topology(Vector{Atom}(), Vector{HarmonicBond}(), Vector{HarmonicAngle}(), Vector{DihedralCos}())
 Base.show(io::IO, b::Topology) = print(io, "Forcefield.Amber.Topology(\n atoms=$(b.atoms),\n bonds=$(b.bonds),\n angles=$(b.angles),\n dihedralsCos=$(b.dihedralsCos))")

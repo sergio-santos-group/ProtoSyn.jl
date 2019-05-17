@@ -1,5 +1,5 @@
 @doc raw"""
-    evaluate!(solv_pairs::Vector{SolvPair}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(st::Common.State, solv_pairs::Vector{SolvPair}, do_forces::Bool = false)::Float64
 
 Evaluate an array of [`SolvPair`](@ref)'s using the current [`Common.State`](@ref),
 calculate and update state.energy according to the coarse-grain model function defined.
@@ -59,7 +59,7 @@ end
 
 
 @doc raw"""
-    evaluate!(hb_networks::HbNetwork, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(st::Common.State, hb_network::HbNetwork, do_forces::Bool = false)::Float64
 
 Evaluate a [`HbNetwork`](@ref)'s using the current [`Common.State`](@ref),
 calculate and update state.energy according to the coarse-grain model function defined.

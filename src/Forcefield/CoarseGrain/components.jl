@@ -1,5 +1,5 @@
 @doc raw"""
-    SolvPair(i::Int64, coef::Float64)
+    SolvPair(i::Int64, coef::Float64)  <: Abstract.ForcefieldComponent
 
 Solvation pair.
 
@@ -45,7 +45,7 @@ Base.show(io::IO, b::HbPair) = print(io, "Forcefield.CoarseGrain.HbPair(charged=
 
 
 @doc raw"""
-    HbNetwork(donors::Vector{HbPair}, acceptors::Vector{HbPair}, coef::Float64)
+    HbNetwork(donors::Vector{HbPair}, acceptors::Vector{HbPair}, coef::Float64) <: Abstract.ForcefieldComponent
 
 Hydrogen Bonding network, defined by the combination os all `donors` and `acceptors` here defined. The energy contribution of this
 `HbNetwork` is multiplied by the defined `coef`.

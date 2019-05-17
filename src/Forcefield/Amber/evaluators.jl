@@ -1,7 +1,7 @@
 using ProtoSyn
 
 @doc raw"""
-    evaluate!(bonds::Vector{Forcefield.Amber.HarmonicBond}, state::Common.State[, do_forces::Bool = false])::Float64
+    evaluate!(state::Common.State, bonds::Vector{Forcefield.Amber.HarmonicBond}, do_forces::Bool = false)::Float64
 """
 function evaluate!(state::Common.State, bonds::Vector{Forcefield.Amber.HarmonicBond}, do_forces::Bool = false)::Float64
 
@@ -18,7 +18,7 @@ function evaluate!(state::Common.State, bonds::Vector{Forcefield.Amber.HarmonicB
             Δ = coords[bond.a2, i] - coords[bond.a1, i]
             v12[i] = Δ
             d12 += Δ ^ 2
-        end
+        end # end for
         
         d12 = sqrt(d12)
         dr = d12 - bond.b0
@@ -29,17 +29,17 @@ function evaluate!(state::Common.State, bonds::Vector{Forcefield.Amber.HarmonicB
             @inbounds for i=1:3
                 forces[bond.a1, i] += Δ * v12[i]
                 forces[bond.a2, i] -= Δ * v12[i]
-            end
-        end
-    end
+            end # end for
+        end # end if
+    end # end for
 
     energy *= .5
     Common.set_energy_component!(state.energy, :bond, energy)
     return energy
-end
+end # end function
 
 @doc raw"""
-    evaluate!(angles::Vector{Forcefield.Amber.HarmonicAngle}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(state::Common.State, angles::Vector{HarmonicAngle}, do_forces::Bool = false)::Float64
 """
 function evaluate!(state::Common.State, angles::Vector{HarmonicAngle}, do_forces::Bool = false)::Float64
 
@@ -70,7 +70,7 @@ function evaluate!(state::Common.State, angles::Vector{HarmonicAngle}, do_forces
             d32Sq += delta2*delta2
 
             ctheta += delta*delta2
-        end
+        end # end for
 
         d12xd32 = sqrt(d12Sq * d32Sq)
         ctheta /= d12xd32
@@ -87,17 +87,17 @@ function evaluate!(state::Common.State, angles::Vector{HarmonicAngle}, do_forces
                 forces[angle.a1, i] += f1 
                 forces[angle.a3, i] += f3
                 forces[angle.a2, i] -= (f3+f1)
-            end
-        end
-    end
+            end # end for
+        end # end if
+    end # end for
 
     energy *= 0.5
     Common.set_energy_component!(state.energy, :angle, energy)
     return energy
-end
+end # end function
 
 @doc raw"""
-    evaluate!(dihedralsCos::Vector{Forcefield.Amber.DihedralCos}, state::Common.State, do_forces::Bool = false)::Float64
+    evaluate!(state::Common.State, dihedralsCos::Vector{DihedralCos}, do_forces = false)::Float64
 """
 function evaluate!(state::Common.State, dihedralsCos::Vector{DihedralCos}, do_forces = false)::Float64
 
@@ -131,7 +131,7 @@ function evaluate!(state::Common.State, dihedralsCos::Vector{DihedralCos}, do_fo
 
             d3432  += d34 * d32
             d1232  += d12 * d32
-        end
+        end # end for
         
         # m = v12 × v32 = cross(v12, v32)
         m[1] = v12[2]*v32[3] - v12[3]*v32[2]
@@ -163,16 +163,16 @@ function evaluate!(state::Common.State, dihedralsCos::Vector{DihedralCos}, do_fo
                 forces[dihedral.a2, i] -= (-f1 - f3 - f4)
                 forces[dihedral.a3, i] -= f3
                 forces[dihedral.a4, i] -= f4
-            end
-        end
-    end
+            end # end for
+        end # end if
+    end # end for
 
     Common.set_energy_component!(state.energy, :dihedralCos, energy)
     return energy
-end
+end # end function
 
 @doc raw"""
-    evaluate!(atoms::Vector{Forcefield.Amber.Atom}, state::Common.State[, do_forces::Bool = false, cut_off::Float64 = 2.0])::Float64
+    evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = false)::Float64
 
 Evaluate an array of [Forcefield.Components](#Components-1) using the current [`Common.State`](@ref),
 calculate and update state.energy according to the equations defined in each component.
@@ -214,9 +214,9 @@ function evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = f
             exclude_idx = 1
             @inbounds while atomi.excls[exclude_idx] <= i && exclude_idx < len_exclusions
                 exclude_idx += 1
-            end
+            end # end while
             @inbounds exclude = atomi.excls[exclude_idx]
-        end
+        end # end if
         
         # for j in (i+1):(n_atoms)
         #     if j == exclude
@@ -249,7 +249,7 @@ function evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = f
             #Check if the distance between the two atoms is below cut-off
             if dijSq > cut_offSq
                 continue
-            end
+            end # end if
 
             #Calculate energy (σ and ϵ already have the necessary constants multiplied)
             sij = atomi.σ + atomj.σ
@@ -266,10 +266,10 @@ function evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = f
                     t = vij[k] * fc
                     forces[i, k] += t
                     forces[j, k] -= t
-                end
-            end
-        end
-    end
+                end # end for
+            end # end if
+        end # end while
+    end # end for
 
     eLJ *= 4.0
     state.energy.components[:LJ] = eLJ
@@ -306,10 +306,10 @@ function evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = f
                     t = vij[k] * fc
                     forces[i, k] += t
                     forces[j, k] -= t
-                end
-            end
-        end
-    end
+                end # end for
+            end # end if
+        end # end for
+    end # end for
     
     eLJ14 *= 4.0
     state.energy.components[:LJ14] = eLJ14
@@ -318,10 +318,10 @@ function evaluate!(state::Common.State, atoms::Vector{Atom}, do_forces::Bool = f
     energy = eLJ + eLJ14 + eCoulomb + eCoulomb14
     state.energy.total = energy
     return energy
-end
+end # end function
 
 @doc raw"""
-    evaluate!(topology::Forcefield.Topology, state::Common.State[, cut_off::Float64 = 2.0, do_forces::Bool = false])::Float64
+    evaluate!(state::Common.State, topology::Topology, do_forces::Bool = false)::Float64
 
 Evaluate the current [`Common.State`](@ref) energy according to the defined [`Amber.Topology`](@ref Forcefield).
 If `do_forces` bool is set to `true`, calculate and update `state.forces`.

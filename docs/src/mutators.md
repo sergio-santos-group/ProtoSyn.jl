@@ -10,11 +10,11 @@ CurrentModule = Mutators.Dihedral
 ```
 
 This section provides a description on the Dihedral mutator, responsible for performing a single dihedral
-movement according to a [`DihedralMutator`](@ref) set of parameters.
+movement according to a [`MutatorConfig`](@ref) set of parameters.
 
 ```@docs
-DihedralMutator
-run!
+MutatorConfig
+apply!
 ```
 
 ## Crankshaft
@@ -23,11 +23,11 @@ run!
 CurrentModule = Mutators.Crankshaft
 ```
 
-A Crankshaft movement is a rotation of all atoms between two randomly chosen alpha carbons according to a set of [`CrankshaftMutator`](@ref) parameters.
+A Crankshaft movement is a rotation of all atoms between two randomly chosen alpha carbons according to a set of [`MutatorConfig`](@ref) parameters.
 
 ```@docs
-CrankshaftMutator
-run!
+MutatorConfig
+apply!
 rotate_crankshaft!
 ```
 
@@ -37,11 +37,11 @@ rotate_crankshaft!
 CurrentModule = Mutators.Blockrot
 ```
 
-A Blockrot movement is the rotation/translation of a defined block according to a set of [`BlockrotMutator`](@ref) parameters.
+A Blockrot movement is the rotation/translation of a defined block according to a set of [`MutatorConfig`](@ref) parameters.
 
 ```@docs
-BlockrotMutator
-run!
+MutatorConfig
+apply!
 ```
 
 ## Sidechain
@@ -50,12 +50,10 @@ run!
 CurrentModule = Mutators.Sidechain
 ```
 
-A Sidechain movement is the mutation of a defined sidechain according to a set of [`SidechainMutator`](@ref) parameters.
-The sidechain mutation implied the rotation of all `Chi` angles to a new set of probable angles defined in
-[`SidechainMetadata`](@ref Common.SidechainMetadata).rotamers, who are sampled based on a random weighted distribution, defined in
-[`SidechainMetadata`](@ref Common.SidechainMetadata).weights.
+A Sidechain movement is the mutation of a defined sidechain according to a set of [`MutatorConfig`](@ref Mutators.Sidechain) parameters.
+The sidechain mutation implied the rotation of all `Chi` angles to a new set of probable angles sampled based on a random weighted distribution, both defined in a rotamer library.
 
 ```@docs
-SidechainMutator
-run!
+MutatorConfig
+apply!
 ```

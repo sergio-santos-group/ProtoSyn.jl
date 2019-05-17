@@ -12,13 +12,6 @@ include("Crankshaft/Crankshaft.jl")
 include("Blockrot/Blockrot.jl")
 include("Sidechain/Sidechain.jl")
 
-# function Base.show(io::IO, b::Union{AbstractDriverConfig, AbstractDriverState})
-#     print(io, string(typeof(b)))
-#     for p in fieldnames(typeof(b))
-#         print(io, "\n   $(String(p)) = $(getproperty(b,p))")
-#     end
-# end
-
 apply!(st::Common.State, mut::Dihedral.MutatorConfig)   = Dihedral.apply!(st, mut)
 apply!(st::Common.State, mut::Crankshaft.MutatorConfig) = Crankshaft.apply!(st, mut)
 apply!(st::Common.State, mut::Blockrot.MutatorConfig)   = Blockrot.apply!(st, mut)
@@ -26,32 +19,41 @@ apply!(st::Common.State, mut::Sidechain.MutatorConfig)  = Sidechain.apply!(st, m
 
 apply!(st::Common.State, mut::Drivers.SteepestDescent.DriverConfig) = Drivers.SteepestDescent.run!(st, mut)
 
-# TODO: Documentation
+@doc raw"""
+    Sampler(; mutators::Vector{Any} = [], apply! = Union{Function, Nothing} = nothing, tune! = Union{Function, Nothing} = nothing) <: Abstract.Sampler
+
+A Sampler is an aggregator of Abstract.Mutators and/or Abstract.DriverConfigs (`mutators`), who are applied according to an `apply!` function.
+If no function is passed to the constructor, the default function is simply a for loop running over all mutators, in order.
+A `tune!` may be passed, which is called in certain drivers and operates over the parameters of the `mutators` to tune them in
+response to changes during the runtime of the Driver. 
+
+# Examples
+```julia-repl
+julia> Forcefield.Sampler(mutators = [dihedral, crankshaft])
+```
+"""
 mutable struct Sampler{F <: Function, G <: Function} <: Abstract.Sampler
 
     # Parameters:            Signatures:
     apply!::F                # sampler.apply!(state::Common.State, sampler.mutators::Vector{Abstract.MutatorConfig})
     tune!::Union{G, Nothing} # sampler.tune!(sampler.mutators::Vector{Abstract.MutatorConfig}, driver_state::Abstract.DriverState)
     mutators::Vector{Any}
-end # mutable struct
+end # end struct
 
-
-# TODO Documentation
-function Sampler(; mutators::Vector{Any} = Vector{T}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
+function Sampler(; mutators::Vector{Any} = Vector{Any}(), apply!::Union{F, Nothing} = nothing, tune!::Union{G, Nothing} = nothing) where {F <: Function, G <: Function}
     if apply! == nothing
         apply! = function default_aggregate!(state::Common.State, mutators::Vector{Any})
             for mutator in mutators
                 Mutators.apply!(state, mutator)
-            end
-        end
-    end
+            end # end for
+        end # end function
+    end # end if
     Sampler{Function, Function}(apply!, tune!, mutators)
-end
-
+end # end function
 
 function Base.show(io::IO, b::Sampler)
     tuner = b.tune! == nothing ? "Nothing" : string(b.tune!)
     print(io, "Sampler(\n mutators=$(length(b.mutators)),\n tune!=$(tuner),\n apply!=$(string(b.apply!))\n)")
-end
+end # end function
 
 end # module

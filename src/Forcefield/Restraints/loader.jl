@@ -1,15 +1,15 @@
 @doc raw"""
-    load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata[, k::Float64 = 1.0, threshold::Float64 = 0.0])::Vector{DistanceFBR}
+    load_distance_restraints_from_file(input_file::String, metadata::Common.Metadata[, λ::Float64 = 1.0, threshold::Float64 = 0.0, min_distance::Float64 = 0.8])::Vector{DistanceFBR}
 
 Read a contact map file and load the distances and force constants between Cα's in the structure, if the force constant is above the defined `threshold`.
-All force constants are multiplied by a factor `k` (Default: 1.0).
+All force constants are multiplied by a factor `λ` (Default: 1.0).
 By default, the distances between β-sheets are lower than r3=4Å (r4=6Å), while distances between different type of secondary structures or α-helixes are lower than
 r3=5Å (r4=10Å).
 Return an array of DistanceFBR.
 
 # Examples
 ```julia-repl
-julia> Forcefield.Restraints.load_distance_restraints_from_file(contact_map, metadata, 1e4)
+julia> Forcefield.Restraints.load_distance_restraints_from_file(contact_map, metadata, λ = 1e4)
 [Forcefield.Restraints.DistanceFBR(a1=1, a2=2, r1=-Inf, r2=-Inf, r3=0.4, r4=0.6, c=1e4),
  Forcefield.Restraints.DistanceFBR(a1=2, a2=3, r1=-Inf, r2=-Inf, r3=0.5, r4=1.0, c=1e4)
  (...)]
@@ -23,7 +23,7 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
     for residue in metadata.residues
         ca_index = filter(atom -> metadata.atoms[atom].name == "CA", residue.atoms)[1]
         resnum2ca[metadata.atoms[ca_index].res_num] = ca_index
-    end
+    end # end for
 
     #Compile restraints
     restraints::Vector{DistanceFBR} = Vector{DistanceFBR}()
@@ -43,27 +43,27 @@ function load_distance_restraints_from_file(input_file::String, metadata::Common
                         push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * λ))
                     else
                         push!(restraints, DistanceFBR(r1_ca, r2_ca, -Inf, -Inf, min_distance, min_distance + 0.2, c * λ))
-                    end
-                end
-            end
-        end
-    end
+                    end # end if
+                end # end if
+            end # end if
+        end # end if
+    end # end for
     printstyled("(SETUP) ▲ Loaded $(length(restraints)) contacts\n", color = 9)
     return restraints
-end
+end # end function
 
 
 @doc raw"""
-    lock_block_bb(metadata::Common.Metadata[, k::Float64 = 1.0, fbw::Float64 = 2.5])::Vector{DihedralFBR}
+    lock_block_bb(metadata::Common.Metadata[, λ::Float64 = 1.0, fbw::Float64 = 2.5])::Vector{DihedralFBR}
 
 Add restraints to the PHI and PSI dihedrals of blocks in the structure (as defined in `metadata`).
-All force constants are multiplied by a factor `k` (Default: 1.0).
+All force constants are multiplied by a factor `λ` (Default: 1.0).
 The angles locked are defined in Common.jl and a flat-bottom width (`fbw`) is added on each side of the derised atom. (Default: 10.0 degrees)
 Return an array of DihedralFBR.
 
 # Examples
 ```julia-repl
-julia> Forcefield.Restraints.lock_block_bb(metadata, 1e4)
+julia> Forcefield.Restraints.lock_block_bb(metadata, λ = 1e4)
 [Forcefield.Restraints.DistanceFBR(a1=1, a2=2, a3=3, a4=4, r1=-180, r2=-175, r3=-165, r4=-160, c=1e4),
  (...)]
 ```
@@ -75,10 +75,10 @@ function lock_block_bb(metadata::Common.Metadata; λ::Float64 = 1.0, fbw::Float6
     for dihd in metadata.dihedrals
         if dihd.residue.ss == Common.SS.COIL || dihd.dtype >= Common.DIHEDRAL.omega
             continue
-        end
+        end # end if
         r0 = Common.ss2bbd[dihd.residue.ss][dihd.dtype]
         # println(" + DihedralFBR $(dihd.dtype)-$(dihd.residue.name)($(dihd.a1)|$(dihd.a2)|$(dihd.a3)|$(dihd.a4))")
         push!(restraints, DihedralFBR(dihd.a1, dihd.a2, dihd.a3, dihd.a4, r0-(fbw*2), r0-fbw, r0+fbw, r0+(fbw*2), λ))
-    end
+    end # end for
     return restraints
-end
+end # end function

@@ -20,7 +20,7 @@ function load_from_json(i_file::String)::Topology
     open(i_file, "r") do f
         json_txt = read(f, String)
         ffield = JSON.parse(json_txt)
-    end
+    end # end do
 
     #Create atoms
     atoms = Vector{Atom}()
@@ -36,13 +36,13 @@ function load_from_json(i_file::String)::Topology
         for pair in ffield["pairs"]
             if pair["a1"] == index
                 push!(pairs, (pair["a2"] + 1))
-            end
-        end
+            end # end if
+        end # end for
 
         #σ, ϵ and q are multiplied by the constants so that the geometric and arithmetic averages are
         #correct in the energy calculations (Inside the ATOM constructor)
         push!(atoms, Atom(name, σ, ε, q, excls, pairs))
-    end
+    end # end for
 
     # Fix bonds, angles and dihedrals numbering
     for component_type in ["bonds", "angles", "proper_dihedrals", "improper_dihedrals"]
@@ -50,10 +50,10 @@ function load_from_json(i_file::String)::Topology
             for atom in ["a1", "a2", "a3", "a4"]
                 if atom in keys(component)
                     component[atom] = component[atom] + 1
-                end
-            end
-        end
-    end
+                end # end if
+            end # end for
+        end # end for
+    end # end for
 
     #Create bonds
     bonds = Vector{HarmonicBond}()
@@ -62,7 +62,7 @@ function load_from_json(i_file::String)::Topology
         b0 = ffield["bondtypes"][string(bond["type"])]["b0"]
         new_bond = HarmonicBond(bond["a1"], bond["a2"], cb, b0)
         push!(bonds, new_bond)
-    end
+    end # end for
 
     #Create angles
     angles = Vector{HarmonicAngle}()
@@ -71,7 +71,7 @@ function load_from_json(i_file::String)::Topology
         ct = ffield["angletypes"][string(angle["type"])]["ct"]
         new_angle = HarmonicAngle(angle["a1"], angle["a2"], angle["a3"], ct, deg2rad(th))
         push!(angles, new_angle)
-    end
+    end # end for
 
     #Create dihedrals
     dihedralsCos = Vector{DihedralCos}()
@@ -81,15 +81,15 @@ function load_from_json(i_file::String)::Topology
         mult = ffield["dihedraltypes"][string(dihedral["type"])]["mult"]
         new_dihedralCos = DihedralCos(dihedral["a1"], dihedral["a2"], dihedral["a3"], dihedral["a4"], cp, deg2rad(phi), mult)
         push!(dihedralsCos, new_dihedralCos)
-    end
+    end # end for
     for dihedral in ffield["improper_dihedrals"]
         phi  = ffield["dihedraltypes"][string(dihedral["type"])]["phi"]
         cp   = ffield["dihedraltypes"][string(dihedral["type"])]["cp"]
         mult = ffield["dihedraltypes"][string(dihedral["type"])]["mult"]
         new_dihedralCos = DihedralCos(dihedral["a1"], dihedral["a2"], dihedral["a3"], dihedral["a4"], cp, deg2rad(phi), mult)
         push!(dihedralsCos, new_dihedralCos)
-    end
+    end # end for
 
     #Create topology
     return Topology(atoms, bonds, angles, dihedralsCos)
-end
+end # end function
