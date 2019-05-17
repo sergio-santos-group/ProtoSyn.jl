@@ -119,7 +119,7 @@ See also: [`apply_ss!`](@ref)
 function rotate_dihedral_to!(xyz::Array{Float64, 2}, dihedral::Dihedral, target_angle::Float64)
 
     #Calculate the current angle
-    current_angle = Aux.calc_dih_angle(xyz[dihedral.a1, :], xyz[dihedral.a2, :], xyz[dihedral.a3, :], xyz[dihedral.a4, :])
+    current_angle = Aux.calc_dihedral(xyz[dihedral.a1, :], xyz[dihedral.a2, :], xyz[dihedral.a3, :], xyz[dihedral.a4, :])
     # Calculate necessary displacement to target angles
     displacement = target_angle - current_angle
     # Apply displacement and rotate

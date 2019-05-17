@@ -1,5 +1,4 @@
 module ILSRR
-const id = :ILSRR
 
 using ..Aux
 using ..Common
@@ -7,8 +6,7 @@ using ..Drivers
 using ..Abstract
 
 #= ----------------------------------------------------------------------------
-ILSRR Example
-(Iterated Local Search with Random Restarts)
+ILSRR (Iterated Local Search with Random Restarts)
 
 # Algorithm explanation:
 The ILSRR algorithm searchs the local conformational neighbourhood using
@@ -22,41 +20,35 @@ whenever a new optimum is found or the energy gap in comparison to the last
 home base is small enough to pass the Metropolis criterium.
 
 # Convergence criteria
-1. Number of `n_steps` performed
-2. Number of `n_stalls` cycles failed to produce a new Home Base
+1. Number of `n_steps` performed;
+2. Number of `n_stalls` cycles failed to produce a new Home Base;
 ---------------------------------------------------------------------------- =#
 
 
 @doc raw"""
-    Driver(inner_cycle_driver!::Drivers.AbstractDriver, evaluator!::Function, pertubator!::Function[, temperature::Float64 = 0.0, n_steps::Int64 = 0, callbacks::Tuple{Common.CallbackObject}...])
+    DriverConfig(inner_cycle_config::Abstract.DriverConfig, pertubator::Abstract.Sampler[, temperature::Union{Function, Float64} = 0.0, n_steps::Int64 = 0, stall_limit::Int64 = 0, callbacks::Vector{Abstract.CallbackObject} = []])
 
 Define the runtime parameters for the ILSRR algorithm.
 
 # Arguments
-- `inner_cycle_driver!::Driver.AbstractDriver`: Responsible for driving the inner cycle of the ILSRR algorithm. Should be a Driver, such as [`MonteCarlo`](@ref Drivers)
-- `evaluator!::Function`: Responsible for evaluating the current `state.energy`. This function should have the following signature:
+- `inner_cycle_config::Abstract.DriverConfig`: Responsible for driving the inner cycle of the ILSRR algorithm. Should be a Driver, such as [`MonteCarlo`](@ref Drivers)
+- `pertubator::Abstract.Sampler`: Responsible for performing "big" conformational changes in the system.
+- `temperature::Union{Function, Float64}`: (Optional) Temperature for the Metropolis criteria.
+This parameter is always a function who should follow the following signature:
 ```
-evaluator!(state::Common.State, do_forces::Bool)
+function (n::Int64)::Float64
 ```
-- `pertubator!::Function`: Responsible for performing conformational changes in the system. It's usually an aggregation of [Mutators](@ref Mutators).
-- `temperature::Float64`: (Optional) Temperature for the Metropolis criteria when performing system perturbation (Default: 0.0).
+When a Float64 is passed, by default, ProtoSyn will construct an unnamed function who always returns that Float64 number every step (Default: 0.0)
 - `n_steps`: (Optional) Total amount of outer cycles to be performed (Default: 0).
-- `continue_after_n_attemps`: (Optional) If defined, will reset to initial structure after `continue_after_n_attemps` jumps who consecutively fail to produce a new optimum (Default: 0).
-- `callbacks`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
+- `stall_limit`: (Optional) If defined, will return after `stall_limit` jumps who consecutively fail to produce a new optimum (Default: 0).
+- `callbacks`: (Optional) Vector of [`CallbackObject`](@ref Common)s.
 
 # Examples
 ```julia-repl
-julia> Drivers.ILSRR.Driver(inner_cycle_driver, my_evaluator!, my_pertubator)
-ILSRR.Driver(evaluator=my_evaluator!, n_steps=100, f_tol=1e-3, max_step=0.1)
-
-julia> Drivers.ILSRR.Driver(inner_cycle_driver, my_evaluator!, my_pertubator, 300.0, 10)
-ILSRR.Driver(evaluator=my_evaluator!, temperature=300.0, n_steps=10)
+julia> Drivers.ILSRR.Driver(inner_cycle_driver, my_pertubator)
 ```
-!!! tip
-    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [Forcefield](@ref Forcefield). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
-
-    See also: [`run!`](@ref)
-    """
+See also: [`run!`](@ref)
+"""
 mutable struct DriverConfig{F <: Function, T <: Abstract.CallbackObject} <: Abstract.DriverConfig
 
     inner_driver_config::Abstract.DriverConfig # Required
@@ -91,7 +83,35 @@ mutable struct DriverConfig{F <: Function, T <: Abstract.CallbackObject} <: Abst
     end
 end
 
-#TO DO: Documentation
+
+@doc raw"""
+    DriverState(; best_state::Union{Common.State, Nothing} = nothing, home_state::Union{Common.State, Nothing} = nothing, step::Int64 = 0, n_stalls::Int64 = 0, temperature::Float64 = -1.0, completed::Bool = false, stalled::Bool = false)
+
+Define the runtime parameters given by the Monte Carlo simulation.
+
+# Arguments
+- `best_state::Union{Common.State, Nothing}`: Current best state of simulation.
+- `home_state::Union{Common.State, Nothing}`: Current home state of simulation.
+- `step::Int64`: Current step of the simulation.
+- `n_stalls::Int64`: Current number of consecutive perturbations who failed to produce a new optimum. 
+- `temperature::Float64`: Current temperature of the system.
+- `completed::Bool`: Current completness status of the system.
+- `stalled::Bool`: Current stalled status of the system.
+
+# Examples
+```julia-repl
+julia> Drivers.ILSRR.DriverState()
+ProtoSyn.Drivers.ILSRR.DriverState
+   best_state = nothing
+   home_state = nothing
+   step = 0
+   n_stalls = 0
+   temperature = -1.0
+   completed = false
+   stalled = false
+```
+See also: [`run!`](@ref)
+"""
 Base.@kwdef mutable struct DriverState <: Abstract.DriverState
 
     # Parameter:                             # Default value:
@@ -104,25 +124,22 @@ Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     stalled::Bool                            = false
 end
 
+
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
 
 @doc raw"""
-    run!(state::Common.State, driver::SteepestDescentDriver[, callback::Union{Common.CallbackObject, Nothing} = nothing])
+    run!(state::Common.State, driver_config::DriverConfig)
 
 Run the main body of the Driver.
 
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.
-- `driver::SteepestDescentDriver`: Defines the parameters for the ILSRR algorithm. See [`Driver`](@ref).
-- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
-
-!!! tip
-    The callback function often contains a [Print](@ref) function.
+- `driver_config::DriverConfig`: Defines the parameters for the ILSRR algorithm. See [`DriverConfig`](@ref).
 
 # Examples
 ```julia-repl
-julia> Drivers.ILSRR.run(state, ilsrr_driver, callback1, callback2, callback3)
+julia> Drivers.ILSRR.run!(state, ilsrr_driver)
 ```
 """
 function run!(state::Common.State, driver_config::DriverConfig)

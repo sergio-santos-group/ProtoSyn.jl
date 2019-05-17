@@ -24,18 +24,18 @@ end
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @doc raw"""
-    calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64})
+    calc_dihedral(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64})
 
 Calculates the dihedral angle produced between a1, a2, a3 and a4, in radians.
 
 # Examples
 ```julia-repl
-julia> Aux.calc_dih_angle([1.0, 1.0, 1.0], [2.1, 2.1, 2.1], [3.0, 2.0, 5.0], [5.0, 5.0, 5.0])
+julia> Aux.calc_dihedral([1.0, 1.0, 1.0], [2.1, 2.1, 2.1], [3.0, 2.0, 5.0], [5.0, 5.0, 5.0])
 3.141592653589793
 ```
 See also: [`apply_initial_conf!`](@ref Common)
 """
-function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64})::Float64
+function calc_dihedral(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64}, a4::Vector{Float64})::Float64
 
     b1 = a2 - a1
     b2 = a3 - a2
@@ -47,6 +47,19 @@ function calc_dih_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Flo
     return atan(x, y)
 end
 
+
+@doc raw"""
+    calc_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64})::Float64
+
+Calculates the angle produced between a1, a2 and a3, in radians.
+
+# Examples
+```julia-repl
+julia> Aux.calc_angle([1.0, 1.0, 1.0], [2.1, 2.1, 2.1], [3.0, 2.0, 5.0])
+2.3505966845570407
+```
+See also: [`apply_initial_conf!`](@ref Common)
+"""
 function calc_angle(a1::Vector{Float64}, a2::Vector{Float64}, a3::Vector{Float64})::Float64
 
     v21 = a1 - a2
@@ -111,7 +124,18 @@ function linreg(x::Union{Vector{Float64}, Vector{Int64}}, y::Union{Vector{Float6
 end
 
 
-@inline function get_max_force(n_atoms::Int64, mat::Array{T, 2}) where {T<:AbstractFloat}
+@doc raw"""
+    get_max_force(n_atoms::Int64, mat::Array{T, 2})::Float64 where {T<:AbstractFloat}
+
+Returns the maximum force magnitude from an array with size (N, 3), where N is the number of atoms.
+
+# Examples
+```julia-repl
+julia> Aux.get_max_force(50, matrix)
+765.2
+```
+"""
+@inline function get_max_force(n_atoms::Int64, mat::Array{T, 2})::Float64 where {T<:AbstractFloat}
     max_force = zero(eltype(mat))
     for i=1:n_atoms
         forceSq = mat[i, 1] ^ 2 + mat[i, 2] ^ 2 + mat[i, 3] ^ 2

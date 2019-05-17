@@ -72,8 +72,8 @@ function apply_backbone_dihedrals_from_file!(target_state::State, target_dihedra
     template_state, template_metadata = Common.load_from_pdb(template_file)
     template_dihedrals = filter(x -> x.dtype <= Common.DIHEDRAL.omega, template_metadata.dihedrals)
     for (cd, template_dihedral) in enumerate(template_dihedrals)
-        target_angle = Aux.calc_dih_angle(target_state.xyz[target_dihedrals[cd].a1, :], target_state.xyz[target_dihedrals[cd].a2, :], target_state.xyz[target_dihedrals[cd].a3, :], target_state.xyz[target_dihedrals[cd].a4, :])
-        template_angle = Aux.calc_dih_angle(template_state.xyz[template_dihedral.a1, :], template_state.xyz[template_dihedral.a2, :], template_state.xyz[template_dihedral.a3, :], template_state.xyz[template_dihedral.a4, :])
+        target_angle = Aux.calc_dihedral(target_state.xyz[target_dihedrals[cd].a1, :], target_state.xyz[target_dihedrals[cd].a2, :], target_state.xyz[target_dihedrals[cd].a3, :], target_state.xyz[target_dihedrals[cd].a4, :])
+        template_angle = Aux.calc_dihedral(template_state.xyz[template_dihedral.a1, :], template_state.xyz[template_dihedral.a2, :], template_state.xyz[template_dihedral.a3, :], template_state.xyz[template_dihedral.a4, :])
         displacement = template_angle - target_angle
         rotate_dihedral!(target_state.xyz, target_dihedrals[cd], displacement)
     end

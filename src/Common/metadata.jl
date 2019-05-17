@@ -2,14 +2,14 @@
 #                                                METADATA
 
 @doc raw"""
-    AtomMetadata(name::String[, elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing])
+    AtomMetadata(; index::Int64 = 0, name::String = "X", elem::String = "X", res_num::Int64 = 1, res_name::String = "UNK", chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing)
 
 Define an atom metadata, containing extra information pertaining the [`State`](@ref).
 
 # Arguments
-- `index::Int64`: *global* index of this atom.
-- `name::String`: Name of the atom.
-- `elem::String`: (Optional) Element of the atom (Default: `name`).
+- `index::Int64`: (Optional) *global* index of this atom (Default: 0).
+- `name::String`: (Optional) Name of the atom (Default: "X").
+- `elem::String`: (Optional) Element of the atom (Default: "X").
 - `res_num::Int64`: (Optional) Number of the residue this atom belongs to (Default: 1).
 - `res_name::Union{String, Nothing}`: (Optional) Name of the residue this atom belongs to (Default: "UNK").
 - `residue::Union{Residue, Nothing}`: (Optional) Reference to the residue this atom belong to (Deffault: nothing).
@@ -36,8 +36,6 @@ Base.@kwdef mutable struct AtomMetadata
     residue::Union{Residue, Nothing}        = nothing
     chain_id::Union{String, Nothing}        = nothing
     connects::Union{Vector{Int64}, Nothing} = nothing
-
-    # AtomMetadata(;index::Int64 = 0, name::String = "_", elem::String = name, res_num::Int64 = 1, res_name::String = "UNK", residue = nothing, chain_id::Union{String, Nothing} = nothing, connects::Union{Vector{Int64}, Nothing} = nothing) = new(index, name, elem, res_num, res_name, residue, chain_id, connects)
 end
 function Base.show(io::IO, b::AtomMetadata) #SHOULD BE IMPROVED
     if b.chain_id != nothing && b.connects != nothing
@@ -134,7 +132,7 @@ Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1
 
 
 @doc raw"""
-    Metadata([, atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [], sidechains::Vector{SidechainMetadata} = []])
+    Metadata(; atoms::Vector{AtomMetadata} = [], ss::Vector{SecondaryStructureMetadata} = [], residues::Vector{Residue} = [], dihedrals::Vector{Dihedral} = [], blocks::Vector{BlockMetadata} = [], sidechains::Vector{SidechainMetadata} = []])
 
 Define the state metadata, containing extra information regarding the atoms and secondary structure of the system.
 

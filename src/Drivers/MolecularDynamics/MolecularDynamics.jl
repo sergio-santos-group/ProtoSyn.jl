@@ -1,8 +1,6 @@
 module MD
 
-# using ProtoSyn
 using ..Common
-
 
 mutable struct DriverOptions{F<:Function}
     evaluator!::F

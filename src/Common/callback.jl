@@ -27,6 +27,7 @@ Base.@kwdef mutable struct CallbackObject{F<:Function} <: Abstract.CallbackObjec
     freq::Int = 1
     callback::F
 end
+
 Base.show(io::IO, b::CallbackObject) = begin
     print(io, "CallbackObject(freq=$(b.freq), callback=$(string(b.callback)))")
 end

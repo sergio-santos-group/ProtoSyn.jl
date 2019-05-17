@@ -34,7 +34,7 @@ function evaluate!(state::Common.State, bonds::Vector{Forcefield.Amber.HarmonicB
     end
 
     energy *= .5
-    Common.set_energy_component(state.energy, :bond, energy)
+    Common.set_energy_component!(state.energy, :bond, energy)
     return energy
 end
 
@@ -92,7 +92,7 @@ function evaluate!(state::Common.State, angles::Vector{HarmonicAngle}, do_forces
     end
 
     energy *= 0.5
-    Common.set_energy_component(state.energy, :angle, energy)
+    Common.set_energy_component!(state.energy, :angle, energy)
     return energy
 end
 
@@ -167,7 +167,7 @@ function evaluate!(state::Common.State, dihedralsCos::Vector{DihedralCos}, do_fo
         end
     end
 
-    Common.set_energy_component(state.energy, :dihedralCos, energy)
+    Common.set_energy_component!(state.energy, :dihedralCos, energy)
     return energy
 end
 
@@ -343,6 +343,6 @@ function evaluate!(state::Common.State, topology::Topology, do_forces::Bool = fa
     energy +=  evaluate!(state, topology.angles, do_forces)
     energy +=  evaluate!(state, topology.atoms, do_forces)
     energy +=  evaluate!(state, topology.dihedralsCos, do_forces)
-    Common.set_energy_component(state.energy, :amber, energy)
+    Common.set_energy_component!(state.energy, :amber, energy)
     return energy
 end

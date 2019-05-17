@@ -5,31 +5,49 @@ using ..Common
 using ..Drivers
 using ..Abstract
 
+#= ----------------------------------------------------------------------------
+Steepest Descent (or Gradient Descent)
+
+# Algorithm explanation:
+First-order iterative optimization algorithm, calculated the forces applying
+in the system as the first derivative of the energy function, and applies
+the calculated forces acting over each atom in a step wise fashion.
+The `step_size` is updated each cycle based on the `max_force` being felt by
+the system (smaller the bigger the force), up until a defined `max_step`.
+
+# Convergence criteria
+1. Number of `n_steps` performed;
+2. Max force is below the defined tolerance `f_tol`;
+3. Gamma (γ) is below the machine precision (stalled);
+---------------------------------------------------------------------------- =#
+
 @doc raw"""
-    Driver(evaluator!::Function[, n_steps::Int64 = 0, f_tol::Float64 = 1e-3, max_displacement:Float64 = 0.1, callbacks::Tuple{Common.CallbackObject}...])
+    DriverConfig(; evaluator::Abstract.Evaluator, n_steps::Int64 = 0, nblist_freq:::Int64 = 0, f_tol::Float64 = 1e-3, max_step:Float64 = 0.1, callbacks::Vector{Abstract.CallbackObject} = []])
 
 Define the runtime parameters for the Steepest Descent simulation.
 If `n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
-- `evaluator!::Function`: Responsible for evaluating the current `state.energy` and calculate the resulting forces. This function should have the following signature:
-```
-evaluator!(state::Common.State, do_forces::Bool)
-```
+- `evaluator!::Abstract.Evaluator`: Responsible for evaluating the current `state.energy` and calculate the resulting forces. See [`Evaluator`](@ref Forcefield)
+- `nblist_freq::Int64`: (Optional) Frequency to update neighbouring lists in the current [`State`](@ref Common) (Default: 0).
 - `n_steps::Int64`: (Optional) Total amount of steps to be performed (if convergence is not achieved before) (Default: 0).
 - `f_tol::Float64`: (Optional) Force tolerance. Defines a finalization criteria, as the steepest descent is considered converged if the maximum force calculated is below this value (Default = 1e-3).
-- `max_displacement::Float64`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
+- `max_step::Float64`: (Optional) Defines the maximum value ɣ that the system can jump when applying the forces (Default: 0.1).
+- `callbacks::Vector{Abstract.CallbackObject}` (Optional) List of [`CallbackObject`](@ref Common)s (Default: empty)
 
 # Examples
 ```julia-repl
-julia> Drivers.SteepestDescent.Driver(my_evaluator!)
-SteepestDescentDriver(evaluator=my_evaluator!, n_steps=100, f_tol=1e-3, max_displacement=0.1)
-
-julia> Drivers.SteepestDescent.Driver(my_evaluator!, 0, 1e-6, 0.1)
-SteepestDescentDriver(evaluator=my_evaluator!, n_steps=0, f_tol=1e-6, max_displacement=0.1)
+julia> Drivers.SteepestDescent.Driver(evaluator = my_evaluator!)
+SteepestDescent.DriverConfig
+   evaluator = (...)
+   n_steps = 0
+   nblist_freq = 0
+   f_tol = 0.001
+   max_step = 0.1
+   callbacks = ProtoSyn.Common.CallbackObject[]
 ```
 !!! tip
-    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [Forcefield](@ref Forcefield). It is possible to combine such functions using the [`@faggregator`](@ref Common) macro.
+    The `my_evaluator!` function often contains an aggregation of pre-defined functions avaliable in [Forcefield](@ref Forcefield).
 
 See also: [`Amber.evaluate!`](@ref Forcefield) [`run!`](@ref)
 """
@@ -60,7 +78,31 @@ function Base.show(io::IO, b::DriverConfig)
 end
 
 
-#TO DO: Documentation
+@doc raw"""
+    DriverState(;step::Int64 = 0, step_size::Float64 = -1.0, max_force::Float64 = -1.0, converged::Bool = false, stalled::Bool = false)
+
+Define the runtime parameters given by the Steepest Descent simulation.
+
+# Arguments
+- `step::Int64`: Current step of the simulation.
+- `step_size::Float64`: Current step_size of the simulation.
+- `max_force::Float64`: Current max_force of the system.
+- `converged::Bool`: A system is considered converged in the `max_force` value is below the defined `f_tol` value in [`DriverConfig`](@ref)
+- `stalled::Bool`: A system is considered stalled if the gamma (γ) value is below machine precision.
+
+# Examples
+```julia-repl
+julia> Drivers.SteepestDescent.DriverState()
+SteepestDescent.DriverState
+   step = 0
+   step_size = -1.0
+   max_force = -1.0
+   converged = false
+   stalled = false
+
+```
+See also: [`run!`](@ref)
+"""
 Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     
     # Parameter:       # Default:
@@ -71,37 +113,22 @@ Base.@kwdef mutable struct DriverState <: Abstract.DriverState
     stalled::Bool      = false
 end
 
-function Base.show(io::IO, b::DriverState)
-    print(io, "SteepestDescent.DriverState")
-    for p in fieldnames(DriverState)
-        print(io, "\n   $(String(p)) = $(getproperty(b,p))")
-    end
-end
-
 
 # ----------------------------------------------------------------------------------------------------------
 #                                                   RUN
 
 @doc raw"""
-    run!(state::Common.State, driver::SteepestDescentDriver[, callbacks::::Tuple{Common.CallbackObject}...])
+    run!(state::Common.State, driver_config::DriverConfig)
 
-Run the main body of the Driver. If `driver.n_steps` is zero, a `single point` energy calculation is performed.
+Run the main body of the Driver. If `driver_config.n_steps` is zero, a `single point` energy calculation is performed.
 
 # Arguments
 - `state::Common.State`: Current state of the system to be modified.
-- `driver::SteepestDescentDriver`: Defines the parameters for the SteepestDescent simulation. See [`Driver`](@ref).
-- `callbacks::Vararg{Common.CallbackObject, N}`: (Optional) Tuple of [`CallbackObject`](@ref Common)s.
-
-The [`CallbackObject`](@ref Common) in this Driver returns the following extra Varargs (in order):
-- `max_force::Float64`: The maximum force experienced by the system in the current step.
-- `gamma::Float64`: The simulation gamma (ɣ) value for the current step.
-
-!!! tip
-    The callback function often contains a [Print](@ref) function.
+- `driver_config::DriverConfig`: Defines the parameters for the SteepestDescent simulation. See [`DriverConfig`](@ref).
 
 # Examples
 ```julia-repl
-julia> Drivers.SteepestDescent.run(state, steepest_descent_driver, callback1, callback2, callback3)
+julia> Drivers.SteepestDescent.run!(state, steepest_descent_driver)
 ```
 """
 function run!(state::Common.State, driver_config::DriverConfig)
@@ -118,7 +145,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
     if state.nblist != nothing && state.nblist.cut_off > 0.0
         state.nblist.buffer  = 2.0 * driver_config.max_displacement
         state.nblist.buffer *= driver_config.nblist_freq
-    end
+    end # end if
     
     Common.update_nblist!(state)
     energy = driver_config.evaluator.evaluate!(state, driver_config.evaluator.components, true)
@@ -136,7 +163,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
 
     if driver_state.converged
         return driver_state
-    end
+    end # end if
     
     # Initial callbacks
     Common.@cbcall driver_config.callbacks state driver_state
@@ -164,7 +191,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
             (driver_state.step > 0) &&
             (driver_state.step % driver_config.nblist_freq == 0)
             Common.update_nblist!(state)
-        end
+        end # end if
 
         # Calculate new energy and forces
         # (make sure to reset forces)
@@ -178,7 +205,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
 
         if driver_state.converged || driver_state.stalled
             break
-        end
+        end # end if
         
         # Update gamma
         if energy >= backup_state.energy.total
@@ -187,15 +214,15 @@ function run!(state::Common.State, driver_config::DriverConfig)
             driver_state.max_force = Aux.get_max_force(state.size, state.forces)
         else
             γ *= 1.05
-        end
+        end # end if
 
         # update current step and call calback functions (if any)
         driver_state.step += 1
         @Common.cbcall driver_config.callbacks state driver_state
-    end
+    end # end while
     #endregion
 
     return driver_state
-end
+end # end function
 
-end
+end # end module

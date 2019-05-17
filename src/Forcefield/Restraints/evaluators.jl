@@ -59,7 +59,7 @@ function evaluate!(st::Common.State, topology::Vector{DistanceFBR}, do_forces::B
         end
     end
 
-    Common.set_energy_component(st.energy, :contacts, eDistanceFBR)
+    Common.set_energy_component!(st.energy, :contacts, eDistanceFBR)
     return eDistanceFBR
 end
 
@@ -169,6 +169,6 @@ function evaluate!(st::Common.State, topology::Vector{DihedralFBR}, do_forces::B
         end
     end
 
-    Common.set_energy_component(st.energy, :dihedralFBR, eDihedralFBR)
+    Common.set_energy_component!(st.energy, :dihedralFBR, eDihedralFBR)
     return eDihedralFBR
 end
