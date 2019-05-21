@@ -24,7 +24,7 @@ Holds all necessary parameters for the correct simulation of blockrot movements.
 - `rot_axis::Union{Symbol, Vector{Float64}}`: Rotation axis around which the rotation of the block will be performed. 
 - `trans_axis::Union{Symbol, Vector{Float64}}`: Translation axis by which the translation the block will be performed. 
 Both can accept a Vector{Float64} or a Symbol keyword. Available keywords:
-:random -> Chose a random vector from a normal distribution around a sphere;
+:random -> Chose a random vector from an uniform distribution around a sphere;
 :longitudinal -> Calulate the longitudinal axis along the block length;
 (Default: :random)
 - `loop_closer::Drivers.AbstractDriver`: Driver responsible for closing the loops (e.g. [`SteepestDescent`](@ref Drivers))
@@ -54,7 +54,7 @@ Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$
 
 function get_rotation_axis(state::Common.State, rot_axis::Union{Symbol, Vector{Float64}}, block::Common.BlockMetadata)::Vector{Float64}
     if isa(rot_axis, Vector{Float64})
-        return mutator.rot_axis
+        return rot_axis
     elseif rot_axis == :random
         return Aux.rand_vector_in_sphere()
     elseif rot_axis == :longitudinal

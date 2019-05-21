@@ -111,7 +111,7 @@ blockrot_mutator = Mutators.Blockrot.MutatorConfig(
     step_size = π/36,
     translation_step_size = 0.0,
     n_tries = 50,
-    rot_axis = :longitudinal,
+    rot_axis = [1.0, 1.0, 1.0],
     loop_closer = sd_minimizer)
     
 # Sampler
