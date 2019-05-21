@@ -27,28 +27,28 @@ julia> Forcefield.CoarseGrain.evaluate!(solv_pairs, state)
 """
 function evaluate!(st::Common.State, solv_pairs::Vector{SolvPair}, do_forces::Bool = false)::Float64
     n_res              = length(solv_pairs)
-    l                  = [.0, .0, .0]
-    e_sol              = .0
-    sum_f              = .0
+    l                  = [0.0, 0.0, 0.0]
+    e_sol              = 0.0
+    sum_f              = 0.0
     t                  = 21.0
     distance_threshold = 1.2
 
     for i in 1:n_res
         ci = solv_pairs[i].coef
-        sum_f = .0
+        sum_f = 0.0
         for j in 1:n_res
             if i == j
                 continue
             end
-            dIJ = .0
+            dIJ = 0.0
             @inbounds for k=1:3
-                delta = st.xyz[solv_pairs[i].i, k] - st.xyz[solv_pairs[j].i, k]
+                delta = st.xyz[solv_pairs[j].i, k] - st.xyz[solv_pairs[i].i, k]
                 dIJ  += delta ^ 2
             end
             dIJ = sqrt(dIJ)
-            sum_f += 1.0 / (1.0 + exp(-(distance_threshold - dIJ) / 0.4))
+            sum_f += 1.0 - (1.0 / (1.0 + exp(2.5*(distance_threshold - dIJ))))
         end
-        if ((sum_f < t) && (ci > .0)) || ((sum_f > t) && (ci < .0))
+        if ((sum_f < t) && (ci > 0.0)) || ((sum_f > t) && (ci < 0.0))
             e_sol += ci * (t - sum_f)
         end
     end
