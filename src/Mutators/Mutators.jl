@@ -22,7 +22,7 @@ apply!(st::Common.State, mut::Drivers.SteepestDescent.DriverConfig) = Drivers.St
 @doc raw"""
     Sampler(; mutators::Vector{Any} = [], apply! = Union{Function, Nothing} = nothing, tune! = Union{Function, Nothing} = nothing) <: Abstract.Sampler
 
-A Sampler is an aggregator of Abstract.Mutators and/or Abstract.DriverConfigs (`mutators`), who are applied according to an `apply!` function.
+A Sampler is an aggregator of Abstract.MutatorConfigs and/or Abstract.DriverConfigs (`mutators`), who are applied according to an `apply!` function.
 If no function is passed to the constructor, the default function is simply a for loop running over all mutators, in order.
 A `tune!` may be passed, which is called in certain drivers and operates over the parameters of the `mutators` to tune them in
 response to changes during the runtime of the Driver. 

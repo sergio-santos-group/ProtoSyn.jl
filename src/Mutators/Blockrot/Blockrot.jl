@@ -10,7 +10,7 @@ using Printf
 using LinearAlgebra
 
 @doc raw"""
-    MutatorConfig(; blocks::Vector{Common.BlockMetadata} = [], angle_sampler::Function = rand, p_mut::Float64 = 0.0, step_size::Float64 = 0.0, translation_step_size::Float64 = 0.0, n_tries::Int64 = 0, loop_closer::Drivers.AbstractDriver = Abstract.NullDriverConfig())
+    MutatorConfig(; blocks::Vector{Common.BlockMetadata} = [], angle_sampler::Function = rand, p_mut::Float64 = 0.0, rotation_step_size::Float64 = 0.0, translation_step_size::Float64 = 0.0, n_tries::Int64 = 0, rot_axis::Union{Symbol, Vector{Float64} = :random, trans_axis::Union{Symbol, Vector{Float64} = :random, loop_closer::Drivers.AbstractDriver = Abstract.NullDriverConfig())
 
 Holds all necessary parameters for the correct simulation of blockrot movements.
 
@@ -18,7 +18,7 @@ Holds all necessary parameters for the correct simulation of blockrot movements.
 - `blocks::Vector{Common.BlockMetadata}`: List of blocks avaliable to be rotated in crankshaft movements, containing all necessary metadata information (Default: empty).
 - `angle_sampler::Function`: Function responsible for defining the rotation angle. Should return a `Float64` (Default: rand).
 - `p_mut::Float64`: Probability of rotation of each pair of alpha carbons (Default: 0.0).
-- `step_size::Float64`: Scalar that defines the amount of rotation resulting for a blockrot movement (Default: 0.0).
+- `rotation_step_size::Float64`: Scalar that defines the amount of rotation resulting for a blockrot movement (Default: 0.0).
 - `translation_step_size::Float64`: Scalar that defines the amount of translation resulting for a blockrot movement (Default: 0.0).
 - `n_tries::Int64`: Number of attempts to rotate an accepted block. A rotation is deemed invalid when the block ends rotate to a position where the loop cannot close (Default: 0).
 - `rot_axis::Union{Symbol, Vector{Float64}}`: Rotation axis around which the rotation of the block will be performed. 
@@ -31,25 +31,25 @@ Both can accept a Vector{Float64} or a Symbol keyword. Available keywords:
 
 # Examples
 ```julia-repl
-julia> Mutators.Blockrot.MutatorConfig(blocks = metadata.blocks, angle_sampler = randn, p_mut = 0.05, step_size = 0.25, n_tries = 10, loop_closer)
-Blockrot.MutatorConfig(blocks=6, angle_sampler=randn, p_pmut=0.05, step_size=0.25, translation_step_size=0.0, n_tries=10)
+julia> Mutators.Blockrot.MutatorConfig(blocks = metadata.blocks, angle_sampler = randn, p_mut = 0.05, rotation_step_size = 0.25, n_tries = 10, loop_closer)
+Blockrot.MutatorConfig(blocks=6, angle_sampler=randn, p_pmut=0.05, rotation_step_size=0.25, translation_step_size=0.0, n_tries=10, rot_axis = :random, trans_axis = :random)
 ```
 See also: [`apply!`](@ref)
 """
 Base.@kwdef mutable struct MutatorConfig{F <: Function}  <: Abstract.MutatorConfig
     
-    # Parameters                               # Defaults
-    blocks::Vector{Common.BlockMetadata}       = Vector{Common.BlockMetadata}()
-    angle_sampler::F                           = rand
-    p_mut::Float64                             = 0.0
-    step_size::Float64                         = 0.0
-    translation_step_size::Float64             = 0.0
-    n_tries::Int64                             = 0
-    rot_axis::Union{Symbol, Vector{Float64}}   = :random
-    trans_axis::Union{Symbol, Vector{Float64}} = :random
-    loop_closer::Abstract.DriverConfig         = Abstract.NullDriverConfig()
+    # Parameters                                       # Defaults
+    blocks::Vector{Common.BlockMetadata}               = Vector{Common.BlockMetadata}()
+    angle_sampler::F                                   = rand
+    p_mut::Float64                                     = 0.0
+    rotation_step_size::Float64                        = 0.0
+    translation_step_size::Float64                     = 0.0
+    n_tries::Int64                                     = 0
+    rot_axis::Union{Symbol, Vector{Float64}}           = :random
+    trans_axis::Union{Symbol, Vector{Float64}}         = :random
+    loop_closer::Union{Nothing, Abstract.DriverConfig} = nothing
 end # end struct
-Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries), rot_axis=$(b.rot_axis))")
+Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), rotation_step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries), rot_axis=$(b.rot_axis), trans_axis=$(b.trans_axis))")
 
 
 function get_rotation_axis(state::Common.State, rot_axis::Union{Symbol, Vector{Float64}}, block::Common.BlockMetadata)::Vector{Float64}
@@ -63,7 +63,6 @@ function get_rotation_axis(state::Common.State, rot_axis::Union{Symbol, Vector{F
             rot_axis[i] += state.xyz[block.connector_right, i] - state.xyz[block.connector_left, i]
         end
         return rot_axis
-        # return state.xyz[block.connector_right, :] - state.xyz[block.connector_left, :]
     else
         error("Keyword $(rot_axis) not currently supported by ProtoSyn for Blockrot axis definition.")
     end
@@ -93,36 +92,42 @@ julia> Mutators.BlockrotMutator.apply!(state, mutator)
             backup = copy(state.xyz)
             pivot = state.xyz[block.pivot, :]'
             for n_try in 1:mutator.n_tries
-
-                rotation_axis = get_rotation_axis(state, mutator.rot_axis, block)
-
-                angle = mutator.angle_sampler()
-                rmat = Aux.rotation_matrix_from_axis_angle(rotation_axis, angle)
-                state.xyz[block.atoms, :] = (rmat * (state.xyz[block.atoms, :] .- pivot)')' .+ pivot # Rotation
-                translation_axis = get_rotation_axis(state, mutator.trans_axis, block)
-                state.xyz[block.atoms, :] .+= translation_axis' * mutator.translation_step_size       # Translation
-                
-                #Check if it's plausible to close
-                if block_index > 1
-                    d_left = zeros(Float64, 3)
-                    d_left = norm(@. state.xyz[mutator.blocks[block_index - 1].connector_right, :] - state.xyz[block.connector_left, :])
-                    if d_left > block.range_left
-                        state.xyz[:] = backup
-                        continue
-                    end # end if
+                if mutator.rotation_step_size != 0.0
+                    rotation_axis = get_rotation_axis(state, mutator.rot_axis, block)
+                    angle = mutator.angle_sampler()
+                    rmat = Aux.rotation_matrix_from_axis_angle(rotation_axis, angle)
+                    state.xyz[block.atoms, :] = (rmat * (state.xyz[block.atoms, :] .- pivot)')' .+ pivot # Rotation
                 end # end if
-                if block_index < length(mutator.blocks)
-                    d_right = zeros(Float64, 3)
-                    d_right = norm(@. state.xyz[mutator.blocks[block_index + 1].connector_left, :] - state.xyz[block.connector_right, :])
-                    if d_right > mutator.blocks[block_index + 1].range_left
-                        state.xyz[:] = backup
-                        continue
+                if mutator.translation_step_size != 0.0
+                    translation_axis = get_rotation_axis(state, mutator.trans_axis, block)
+                    state.xyz[block.atoms, :] .+= translation_axis' * mutator.translation_step_size       # Translation
+                end # end if
+                
+                # Checking for closure criteria is only necessary when 
+                if mutator.rot_axis != :longitudinal && mutator.translation_step_size != 0.0
+                    # Check if it's plausible to close
+                    if block_index > 1
+                        d_left = zeros(Float64, 3)
+                        d_left = norm(@. state.xyz[mutator.blocks[block_index - 1].connector_right, :] - state.xyz[block.connector_left, :])
+                        if d_left > block.range_left
+                            state.xyz[:] = backup
+                            continue
+                        end # end if
+                    end # end if
+                    if block_index < length(mutator.blocks)
+                        d_right = zeros(Float64, 3)
+                        d_right = norm(@. state.xyz[mutator.blocks[block_index + 1].connector_left, :] - state.xyz[block.connector_right, :])
+                        if d_right > mutator.blocks[block_index + 1].range_left
+                            state.xyz[:] = backup
+                            continue
+                        end # end if
                     end # end if
                 end # end if
                 break
             end # end for
-
-            Drivers.run!(state, mutator.loop_closer)
+            if mutator.rot_axis != :longitudinal && mutator.translation_step_size != 0.0
+                Drivers.run!(state, mutator.loop_closer)
+            end
             count += 1
         end # end if
     end # end for
