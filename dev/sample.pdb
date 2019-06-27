@@ -1,0 +1,22 @@
+TITLE  sample
+ATOM      1  N   HIP A   1      -0.004   0.299   0.000  1.00  0.00           N
+ATOM      2  H   HIP A   1       0.120   1.301   0.000  1.00  0.00           H
+ATOM      3  CA  HIP A   1       1.178  -0.540   0.000  1.00  0.00           C
+ATOM      4  C   HIP A   1       2.447   0.301   0.000  1.00  0.00           C
+ATOM      5  O   HIP A   1       2.382   1.528   0.000  1.00  0.00           O
+ATOM      6  N   ARG A   2       3.634  -0.299   0.000  1.00  0.00           N
+ATOM      7  H   ARG A   2       3.758  -1.301   0.000  1.00  0.00           H
+ATOM      8  CA  ARG A   2       4.816   0.540   0.000  1.00  0.00           C
+ATOM      9  C   ARG A   2       6.085  -0.301   0.000  1.00  0.00           C
+ATOM     10  O   ARG A   2       6.020  -1.528   0.000  1.00  0.00           O
+TER
+CONECT    1    2    3
+CONECT    2    1
+CONECT    3    4    1
+CONECT    4    5    3    6
+CONECT    5    4
+CONECT    6    8    7    4
+CONECT    7    6
+CONECT    8    6    9
+CONECT    9   10    8
+CONECT   10    9

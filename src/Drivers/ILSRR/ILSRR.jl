@@ -177,7 +177,7 @@ function run!(state::Common.State, driver_config::DriverConfig)
             # it the new homebase
             Common.@copy driver_state.best_state state energy xyz
             Common.@copy driver_state.home_state state energy xyz
-            n_stalls = 0
+            driver_state.n_stalls = 0
         else
             # otherwise, a new homebase may be created according
             # to the Metropolis criterium

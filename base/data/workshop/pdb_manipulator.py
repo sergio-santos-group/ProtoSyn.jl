@@ -90,7 +90,7 @@ class Protein:
         Usage:
             protein.load_from_pdb("input_file.pdb")
         """
-        pattern = re.compile('ATOM\s+([0-9]+)\s{2}(.{3})(?:\s+|A)([A-Z]{3})\s+([A-Z]{1})\s*([0-9]+)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s{6}\w?\s+(\w)', flags=re.S)
+        pattern = re.compile('ATOM\s+([0-9]+)\s{2}(.{3})(?:\s+|A)([A-Z]{3})\s+([A-Z]{0,1})\s*([0-9]+)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([-]?[0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s+([0-9]*\.?[0-9]*)\s{6}\w?\s+(\w)', flags=re.S)
         with open(file_name, 'r') as file_in:
             results = pattern.findall(file_in.read())
         self.atoms = [Atom(*atom_info) for atom_info in results]

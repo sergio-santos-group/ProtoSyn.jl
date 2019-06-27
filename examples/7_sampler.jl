@@ -7,7 +7,11 @@ function print_energy_components(driver::String, step::Int64, energy::Common.Ene
     components = [:amber, :contacts, :sol, :hb]
     s = @sprintf("%10s %6d %11.4e", driver, step, energy.total)
     for component in components
-        s = join([s, @sprintf("%11.4e", energy.components[component])], " ")
+        if component in keys(energy.components)
+            s = join([s, @sprintf("%11.4e", energy.components[component])], " ")
+        else
+            s = join([s, @sprintf("%11s", "NaN")], " ")
+        end
     end
     s = join([s, @sprintf("| %6.3f", temp)], " ")
     return s
@@ -61,7 +65,7 @@ contact_restraints = Forcefield.Restraints.load_distance_restraints_from_file(
 
 # Evaluators: An evaluator aggregates all defined components
 custom_evaluator = Forcefield.Evaluator(
-    components = [amber_top, solv_pairs, hb_network, contact_restraints])
+    components = [amber_top, hb_network, contact_restraints])
 
 # ---------------------------------------------------
 #       I N N E R    C Y C L E: Monte Carlo
@@ -80,23 +84,22 @@ crankshaft_mutator = Mutators.Crankshaft.MutatorConfig(
     p_mut = 0.027,
     step_size = π/8)
 
-function adjust_step_size(mutators, dr_state)
-    ac_ratio = dr_state.ac_count / dr_state.step
-    δ = ac_ratio > 0.2 ? 1.05 : 0.75
-    for mutator in mutators
-        mutator.step_size = max(0.001, min(mutator.step_size * δ, π))
-    end
-end
+blockrot_mutator = Mutators.Blockrot.MutatorConfig(
+    blocks = metadata.blocks,
+    angle_sampler = () -> (randn() * blockrot_mutator.rotation_step_size),
+    p_mut = 0.25,
+    rotation_step_size = π/36,
+    translation_step_size = 0.0,
+    n_tries = 50,
+    rot_axis = :longitudinal)
 
 # Sampler
 inner_cycle_sampler = Mutators.Sampler(
-    mutators = [dihedral_mutator, crankshaft_mutator],
-    tune! = adjust_step_size
-)
+    mutators = [dihedral_mutator, crankshaft_mutator, blockrot_mutator])
 
 # Inner cycle callbacks
 print_status_sa = Common.@callback 5000 function (state, dr_state)
-    println(print_energy_components("MonteCarlo", dr_state.step, state.energy, dr_state.temperature))
+    println(print_energy_components("Sim Anneal", dr_state.step, state.energy, dr_state.temperature))
 
 end
 
@@ -108,7 +111,7 @@ end
 #            ~> Inner cycle driver <~
 # `´``´``´``´``´``´``´``´``´``´``´``´``´``´``´``´``´``
 n_steps = 100_000
-i_temp = 70.0
+i_temp = 30.0
 function adjust_temperature(step::Int64)
     return -(i_temp/n_steps) * step + i_temp
 end

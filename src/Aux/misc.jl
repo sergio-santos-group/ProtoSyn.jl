@@ -145,3 +145,16 @@ julia> Aux.get_max_force(50, matrix)
     end
     return sqrt(max_force)
 end
+
+function print_credits()
+    printstyled("\n    P R O T O S Y N\n", color = :bold)
+    printstyled("\n    A Julia-based framework for protein modelling\n", color = :green)
+    printstyled("  > Created by Sérgio M. Santos & José M. Pereira\n", color = :blue)
+    printstyled("  > Universidade de Aveiro, Portugal, 2019\n", color = :blue)
+    printstyled("  > The ProtoSyn.jl package is licensed under the MIT 'Expat'\n", color = :blue)
+    printstyled("  > Copyright (c) 2018: sergio-santos-group\n", color = :blue)
+    printstyled("  > Version: 0.2\n", color = :blue)
+    # printstyled("  > If useful, please cite [ARTICLE]\n", color = :blue)
+    # printstyled("  > For more information contact [CONTACT]\n", color = :blue)
+    println("")
+end

@@ -1,0 +1,6 @@
+] -> add Plots
+] -> add ORCA
+] -> add PlotlyJS
+] -> add Blink
+using Blink
+Blink.AtomShell.install()

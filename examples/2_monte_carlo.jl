@@ -97,10 +97,12 @@ crankshaft_mutator = Mutators.Crankshaft.MutatorConfig(
     step_size = π/8)
     
 function adjust_step_size(mutators, dr_state)
-    ac_ratio = dr_state.ac_count / dr_state.step
-    δ = ac_ratio > 0.2 ? 1.05 : 0.75
-    for mutator in mutators
-        mutator.step_size = max(0.001, min(mutator.step_size * δ, π))
+    if dr_state.step % 100 == 0
+        ac_ratio = dr_state.ac_count / dr_state.step
+        δ = ac_ratio > 0.2 ? 1.05 : 0.75
+        for mutator in mutators
+            mutator.step_size = max(0.001, min(mutator.step_size * δ, π)) * mutator.p_mut
+        end
     end
 end
     

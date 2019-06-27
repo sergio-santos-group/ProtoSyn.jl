@@ -49,7 +49,7 @@ Base.@kwdef mutable struct MutatorConfig{F <: Function}  <: Abstract.MutatorConf
     trans_axis::Union{Symbol, Vector{Float64}}         = :random
     loop_closer::Union{Nothing, Abstract.DriverConfig} = nothing
 end # end struct
-Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), rotation_step_size=$(b.step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries), rot_axis=$(b.rot_axis), trans_axis=$(b.trans_axis))")
+Base.show(io::IO, b::MutatorConfig) = print(io, "Blockrot.MutatorConfig(blocks=$(length(b.blocks)), angle_sampler=$(string(b.angle_sampler)), p_mut=$(b.p_mut), rotation_step_size=$(b.rotation_step_size), translation_step_size=$(b.translation_step_size), n_tries=$(b.n_tries), rot_axis=$(b.rot_axis), trans_axis=$(b.trans_axis))")
 
 
 function get_rotation_axis(state::Common.State, rot_axis::Union{Symbol, Vector{Float64}}, block::Common.BlockMetadata)::Vector{Float64}
@@ -125,7 +125,7 @@ julia> Mutators.BlockrotMutator.apply!(state, mutator)
                 end # end if
                 break
             end # end for
-            if mutator.rot_axis != :longitudinal && mutator.translation_step_size != 0.0
+            if mutator.rot_axis != :longitudinal && mutator.rotation_step_size != 0.0 && mutator.translation_step_size != 0.0
                 Drivers.run!(state, mutator.loop_closer)
             end
             count += 1

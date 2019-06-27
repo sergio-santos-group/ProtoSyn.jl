@@ -1,5 +1,6 @@
 module ProtoSyn
 
+
 using LinearAlgebra, JSON, Printf, StatsBase
 
 export Abstract, Common, Aux, Forcefield, Print, Mutators, Drivers
@@ -14,6 +15,8 @@ include("Drivers/Drivers.jl")
 include("Mutators/Mutators.jl")
 
 include("nbdisplay.jl")
+
+Aux.print_credits()
 
 function __init__()
     if isdefined(Main, :IJulia) && Main.IJulia.inited
