@@ -36,11 +36,12 @@ function embed_javascript()
     """)
 end
 
-function Base.show(io::IO, ::MIME"text/html", state::Common.State)
+function Base.show(io::IO, ::MIME"text/html", state::Common.State, metadata::Common.Metadata)
     rndstr = randstring()
     divid = string("div_", rndstr)
     canvasid = string("canvas_", rndstr)
     cwcid = string("cwc_", rndstr)  # ChemDoodleWeb component ID
+    println("Called")
 
     # println(io, """
     # <div id="$divid">
@@ -55,7 +56,7 @@ function Base.show(io::IO, ::MIME"text/html", state::Common.State)
     #     </canvas>
     # </div>""")
     
-    mol = replace(Print.as_xyz(state), "\n" => "\\n")
+    mol = replace(Print.as_xyz(state, metadata), "\n" => "\\n")
     
     # var w = document.getElementById('$divid').offsetWidth
     # var $cwcid = new ChemDoodle.TransformCanvas3D('$canvasid', w, w/1.5);

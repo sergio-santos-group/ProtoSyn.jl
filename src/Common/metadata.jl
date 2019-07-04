@@ -89,16 +89,13 @@ SecondaryStructureMetadata(ss_type=HELIX, name=HA, V-4 <-> A-7, conf=1)
 """
 mutable struct SecondaryStructureMetadata
 
-    ss_type::SS.TYPE
-    name::String
+    type::SS.TYPE
     i_res_name::String
     i_res_num::Int64
     f_res_name::String
     f_res_num::Int64
-    conf::Int64
-
 end
-Base.show(io::IO, b::SecondaryStructureMetadata) = print(io, "SecondaryStructureMetadata(ss_type=$(b.ss_type), name=$(b.name), $(b.i_res_name)-$(b.i_res_num) <-> $(b.f_res_name)-$(b.f_res_num), conf=$(b.conf))")
+Base.show(io::IO, b::SecondaryStructureMetadata) = print(io, "SecondaryStructureMetadata(type=$(string(b.type)), $(b.i_res_name)-$(b.i_res_num) <-> $(b.f_res_name)-$(b.f_res_num))")
 
 
 @doc raw"""
@@ -122,13 +119,13 @@ See also:
 """
 mutable struct BlockMetadata
 
+    type::SS.TYPE
     atoms::Vector{Int64}
-    pivot::Int64
     range_left::Float64
     connector_left::Int64
     connector_right::Int64
 end
-Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1])<->$(b.atoms[length(b.atoms)]), pivot=$(b.pivot), range_left=$(b.range_left), connector_left=$(b.connector_left), connector_right=$(b.connector_right))")
+Base.show(io::IO, b::BlockMetadata) = print(io, "BlockMetadata(atoms=$(b.atoms[1])<->$(b.atoms[length(b.atoms)]), range_left=$(b.range_left), connector_left=$(b.connector_left), connector_right=$(b.connector_right), type=$(string(b.type)))")
 
 
 @doc raw"""
@@ -148,7 +145,7 @@ Metadata(atoms=AtomMetadata[], ss=SecondaryStructureMetadata[], residues=Residue
 Base.@kwdef mutable struct Metadata
 
     atoms::Vector{AtomMetadata}            = Vector{AtomMetadata}()
-    ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}()
+    # ss::Vector{SecondaryStructureMetadata} = Vector{SecondaryStructureMetadata}()
     residues::Vector{Residue}              = Vector{Residue}()
     dihedrals::Vector{Dihedral}            = Vector{Dihedral}()
     blocks::Vector{BlockMetadata}          = Vector{BlockMetadata}()

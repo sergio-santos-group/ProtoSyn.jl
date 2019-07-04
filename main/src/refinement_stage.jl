@@ -16,7 +16,7 @@ rfnm_sd_minimizer = Drivers.SteepestDescent.DriverConfig(
 
 # ------------------------------- Evaluator -----------------------------------
 rfnm_cycle_evaluator = Forcefield.Evaluator(
-    components = [amber_top, hb_network, contact_restraints, solv_pairs])
+    components = [amber_top, hb_network_R, contact_restraints_R, solv_pairs_R])
 
 
 # -------------------------------- Mutators -----------------------------------
@@ -24,20 +24,20 @@ rfnm_dihedral_mutator   = Mutators.Dihedral.MutatorConfig(
     dihedrals     = nb_dhs,
     angle_sampler = () -> (randn() * rfnm_dihedral_mutator.step_size),
     p_mut         = 0.025,
-    step_size     = π/16)
+    step_size     = π/32)
 
 rfnm_crankshaft_mutator = Mutators.Crankshaft.MutatorConfig(
     dihedrals     = nb_phi_dhs,
     angle_sampler = () -> (randn() * rfnm_crankshaft_mutator.step_size),
     p_mut         = 0.0135,
-    step_size     = π/16)
+    step_size     = π/32)
 
 rfnm_blockrot_mutator = Mutators.Blockrot.MutatorConfig(
     blocks                = metadata.blocks,
     angle_sampler         = () -> (randn() * rfnm_blockrot_mutator.rotation_step_size),
     p_mut                 = 0.25,
-    rotation_step_size    = π/8, # rad
-    translation_step_size = 0.01, # nm
+    rotation_step_size    = π/16, # rad
+    translation_step_size = 0.005, # nm
     rot_axis              = :random,
     trans_axis            = :random,
     n_tries               = 100,
@@ -50,14 +50,19 @@ rfnm_cycle_sampler = Mutators.Sampler(
 
 
 # ------------------------------- Callbacks -----------------------------------
-rfnm_print_status = Common.@callback 100 function (state, dr_state)
+rfnm_print_status = Common.@callback 1 function (state, dr_state)
     printstyled(print_energy_components("Refinement", dr_state.step, state.energy, dr_state.temperature)*"\n",
         color = :blue)
 end
 
+rfnm_log_energy = Common.@callback 10 function (state, dr_state)
+    write(log_energy, print_energy_components("      RFNM", dr_state.step, state.energy, dr_state.temperature)*"\n")
+    flush(log_energy)
+end
+
 # -------------------------------- Driver -------------------------------------
-rfnm_n_steps = 5000
-rfnm_i_temp  = 30.0
+rfnm_n_steps = 100
+rfnm_i_temp  = 200.0
 
 function rfnm_adjust_temperature(step::Int64)
     return -(rfnm_i_temp/rfnm_n_steps) * step + rfnm_i_temp
@@ -68,4 +73,4 @@ rfnm_sa_driver = Drivers.MonteCarlo.DriverConfig(
     evaluator = rfnm_cycle_evaluator,
     temperature = rfnm_adjust_temperature,
     n_steps = rfnm_n_steps,
-    callbacks = [rfnm_print_status])
+    callbacks = [rfnm_print_status, rfnm_log_energy])

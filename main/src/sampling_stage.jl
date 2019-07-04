@@ -40,7 +40,7 @@ outer_blockrot_mutator = Mutators.Blockrot.MutatorConfig(
 
 # --------------------------- Perturbator Sampler -----------------------------
 smpl_ilsrr_perturbator = Mutators.Sampler(
-    mutators = [outer_dihedral_perturbator, outer_crankshaft_perturbator, outer_blockrot_mutator])
+    mutators = [outer_dihedral_perturbator, outer_crankshaft_perturbator]) # ! Took blockrot out
 
 
 # ------------------------------- Callbacks -----------------------------------
@@ -56,11 +56,16 @@ print_smpl_best = Common.@callback 1 function (state, dr_state)
     flush(sampling_bests)
 end
 
+print_status_log = Common.@callback 1 function (state, dr_state)
+    write(log_energy, "ILSRR $(dr_state.home_state.energy.total) $(dr_state.best_state.energy.total) \n")
+    flush(log_energy)
+end
+
 # --------------------------------- Driver ------------------------------------
 smpl_ilsrr_driver = Drivers.ILSRR.DriverConfig(
     inner_driver_config = smpl_sa_driver,
     perturbator         = smpl_ilsrr_perturbator,
-    temperature         = 100.0,
-    n_steps             = 100,
-    stall_limit         = 20,
-    callbacks           = [print_status_ilsrr, print_smpl_best])
+    temperature         = 1_000.0,
+    n_steps             = 10,
+    stall_limit         = 5,
+    callbacks           = [print_status_ilsrr, print_smpl_best, print_status_log])

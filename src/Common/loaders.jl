@@ -319,21 +319,20 @@ function compile_dihedral_metadata!(metadata::Metadata)
 end
 
 @doc raw"""
-    compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})::Vector{Vector{Dihedral}}
+    compile_sidechains(metadata::Metadata)::Vector{Vector{Dihedral}}
 
 Return sidechains information, compiling the avaliable information from the [`Metadata`](@ref)
-(requires pre-existing information regarding the Rotamer Library, from an external JSON file, where rotamer angles are in degrees).
 
 # Examples
 ```julia-repl
-julia> Common.compile_sidechains_metadata!(metadata, Aux.read_JSON(rotamer_library))
+julia> Common.compile_sidechains(metadata)
 45-element Array{Array{Dihedral}, 1},1}:
  (...)
 ```
 """
-function compile_sidechains_metadata(metadata::Metadata, rl::Dict{String, Any})::Vector{Vector{Dihedral}}
+function compile_sidechains(metadata::Metadata)::Vector{Vector{Dihedral}}
     if length(metadata.dihedrals) != 0
-        return compile_sidechains_metadata(metadata.dihedrals, rl)
+        return compile_sidechains(metadata.dihedrals)
     else
         error("Tried to compile sidechain information from metadata.dihedrals (Length: $(length(metadata.dihedrals))), but no dihedral information was found.")
     end
@@ -341,13 +340,13 @@ end
 
 
 @doc raw"""
-    compile_sidechains_metadata(dihedrals::Vecotr{Dihedral}, rl::Dict{String, Any})
+    compile_sidechains(dihedrals::Vector{Dihedral}, rl::Dict{String, Any})
 
 Return sidecahin information, as a vector of [`Dihedral`](@ref) vectors, compiling the avaliable information from the provided [`Dihedral`](@ref)s list
 
 # Examples
 ```julia-repl
-julia> Common.compile_sidechains_metadata!(metadata.dihedrals)
+julia> Common.compile_sidechains(metadata.dihedrals)
 45-element Array{Array{ProtoSyn.Common.Dihedral,1}, 1}:
  [Dihedral(a1=2, a2=3, a3=5, a4=7, movable=[5, 6], residue=Common.Residue(atoms=[1, 2, 3, 4, 5, 6], next=V, name=A), type=phi),
  (...)]

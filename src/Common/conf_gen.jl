@@ -15,16 +15,16 @@ If `override` (Default: `false`) is set to `true`, any previous information save
 ```julia-repl
 julia> Common.apply_ss!(state, dihedrals, "CCCHHHHCCEEEECCC")
 ```
-See also: [`compile_ss`](@ref) [`compile_blocks`](@ref)
+See also: [`compile_ss!`](@ref) [`compile_blocks!`](@ref)
 """
 function apply_ss!(state::State, metadata::Metadata, ss::String, override::Bool = false)
 
     # Save secondary structure as metadata
-    if length(metadata.ss) == 0 || override
-        metadata.ss     = compile_ss(metadata.dihedrals, ss)
-    end
+    # if length(metadata.ss) == 0 || override
+    #     metadata.ss     = compile_ss!(metadata.dihedrals, ss)
+    # end
     if length(metadata.blocks) == 0 || override
-        metadata.blocks = compile_blocks(metadata.residues, ss)
+        metadata.blocks = compile_blocks!(metadata.residues, ss)
     end
 
     index::Int64 = 1

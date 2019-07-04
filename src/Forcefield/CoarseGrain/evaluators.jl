@@ -80,62 +80,107 @@ julia> Forcefield.CoarseGrain.evaluate!(hb_network, state)
 -0.500
 ```
 """
+# function evaluate!(st::Common.State, hb_network::HbNetwork, do_forces::Bool = false)::Float64
+
+#     # vHN    = [.0, .0, .0]
+#     vOC    = [.0, .0, .0]
+#     vHO    = [.0, .0, .0]
+#     # c1     = .0
+#     # c2     = .0
+#     e_H    = 0.0 
+#     coords = st.xyz
+
+#     for donor in hb_network.donors
+#         # if !(donor.charged in [176, 196])
+#         #     continue
+#         # end
+#         for acceptor in hb_network.acceptors
+#             if acceptor.base == donor.base
+#                 continue
+#             end
+#             # if !(acceptor.charged in [194, 174])
+#             #     continue
+#             # end
+#             # println("\nLooking HB between atoms $(donor.charged) and $(acceptor.charged)")
+
+#             dhn_ho = 0.0
+#             doc_oh = 0.0
+#             dho    = 0.0
+#             doc    = 0.0
+#             dhn    = 0.0
+#             @inbounds for i=1:3
+#                 delta_hn = coords[donor.base, i]       - coords[donor.charged, i]
+#                 delta_ho = coords[acceptor.charged, i] - coords[donor.charged, i]
+#                 # vHO[i]   = delta_ho # !
+#                 delta_oc = coords[acceptor.base, i]    - coords[acceptor.charged, i]
+#                 # vOC[i]   = delta_oc # !
+#                 dhn_ho  += delta_hn*delta_ho
+#                 doc_oh  += delta_oc*(-delta_ho) # !
+#                 dho     += delta_ho ^ 2
+#                 doc     += delta_oc ^ 2 # !
+#                 dhn     += delta_hn ^ 2 # !
+#             end
+#             dho = sqrt(dho)
+#             doc = sqrt(doc)
+#             dhn = sqrt(dhn)
+#             # println(" ΔHO : $dho")
+#             c1 = (dhn_ho / (dho * dhn))
+#             # println(" ∡NHO: ", rad2deg(acos(c1)))
+#             c2 = (doc_oh / (dho * doc))
+#             # println(" ∡COH: ", rad2deg(acos(c2)))
+
+#             comp2 = min((5.0 * ((0.2 / dho)^12) - 6.0 * ((0.2 / dho)^10)), 0.0)
+#             # comp2 = max((((0.2 / dho)^12) - 2*((0.2 / dho)^6)), 0.0)
+#             e_H -= - ((c1 * c2)) * comp2
+#         end
+#     end
+#     # close(log_file)
+#     # exit(1)
+
+#     e_H *= hb_network.coef
+#     Common.set_energy_component!(st.energy, :hb, e_H)
+#     return e_H
+# end
+
 function evaluate!(st::Common.State, hb_network::HbNetwork, do_forces::Bool = false)::Float64
 
-    # vHN    = [.0, .0, .0]
-    vOC    = [.0, .0, .0]
-    vHO    = [.0, .0, .0]
-    # c1     = .0
-    # c2     = .0
     e_H    = 0.0 
     coords = st.xyz
+    cos_30 = 0.8660254037844387
 
     for donor in hb_network.donors
-        # if !(donor.charged in [176, 196])
-        #     continue
-        # end
         for acceptor in hb_network.acceptors
             if acceptor.base == donor.base
                 continue
             end
-            # if !(acceptor.charged in [194, 174])
-            #     continue
-            # end
-            # println("\nLooking HB between atoms $(donor.charged) and $(acceptor.charged)")
 
-            dhn_ho = 0.0
-            doc_oh = 0.0
-            dho    = 0.0
-            doc    = 0.0
-            dhn    = 0.0
+            dnh_no = 0.0
+            dnh = 0.0
+            dno = 0.0
             @inbounds for i=1:3
-                delta_hn = coords[donor.base, i]       - coords[donor.charged, i]
-                delta_ho = coords[acceptor.charged, i] - coords[donor.charged, i]
-                # vHO[i]   = delta_ho # !
-                delta_oc = coords[acceptor.base, i]    - coords[acceptor.charged, i]
-                # vOC[i]   = delta_oc # !
-                dhn_ho  += delta_hn*delta_ho
-                doc_oh  += delta_oc*(-delta_ho) # !
-                dho     += delta_ho ^ 2
-                doc     += delta_oc ^ 2 # !
-                dhn     += delta_hn ^ 2 # !
+                delta_nh = coords[donor.charged, i] - coords[donor.base, i]
+                delta_no = coords[acceptor.charged, i] - coords[donor.base, i]
+                dnh_no  += delta_nh*delta_no
+                dnh     += delta_nh ^ 2
+                dno     += delta_no ^ 2
             end
-            dho = sqrt(dho)
-            doc = sqrt(doc)
-            dhn = sqrt(dhn)
-            # println(" ΔHO : $dho")
-            c1 = (dhn_ho / (dho * dhn))
-            # println(" ∡NHO: ", rad2deg(acos(c1)))
-            c2 = (doc_oh / (dho * doc))
-            # println(" ∡COH: ", rad2deg(acos(c2)))
+            dnh = sqrt(dnh)
+            dno = sqrt(dno)
 
-            comp2 = min((5.0 * ((0.2 / dho)^12) - 6.0 * ((0.2 / dho)^10)), 0.0)
-            # comp2 = max((((0.2 / dho)^12) - 2*((0.2 / dho)^6)), 0.0)
-            e_H -= - ((c1 * c2)) 
+            cos_α = (dnh_no / (dnh * dno))
+            α = acos(cos_α)
+            c1 = (α/(π/6) ^ 6)
+
+            c2 = (5.0 * ((0.2 / dno)^12) - 6.0 * ((0.2 / dno)^10))
+
+            e_H += c1 * min(c2, 0.0)
+
+            # if do_forces
+
+            
+            # end
         end
     end
-    # close(log_file)
-    # exit(1)
 
     e_H *= hb_network.coef
     Common.set_energy_component!(st.energy, :hb, e_H)

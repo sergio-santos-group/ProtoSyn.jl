@@ -23,15 +23,3 @@ function print_energy_keys(driver::String, step::Int64)::String
     s = join([s, "  | TEMPERATURE"])
     return s
 end
-
-function printcredits()
-    printstyled("\n    P R O T O S Y N   M A I N    A L G O R I T H M\n", color = :bold)
-    printstyled("  > Created by Sérgio M. Santos & José M. Pereira\n", color = :blue)
-    printstyled("  > Universidade de Aveiro, Portugal, 2019\n", color = :blue)
-    printstyled("  > The ProtoSyn.jl package is licensed under the MIT 'Expat'\n", color = :blue)
-    printstyled("  > Copyright (c) 2018: sergio-santos-group\n", color = :blue)
-    printstyled("  > Requires ProtoSyn library v0.2 or higher\n", color = :blue)
-    # printstyled("  > If useful, please cite [ARTICLE]\n", color = :blue)
-    # printstyled("  > For more information contact [CONTACT]\n", color = :blue)
-    println("")
-end

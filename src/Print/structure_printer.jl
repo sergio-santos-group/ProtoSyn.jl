@@ -57,19 +57,22 @@ function as_pdb(io::IO, state::Common.State, metadata::Common.Metadata; title::S
     #Verify input
     if length(metadata.atoms) < size(state.xyz, 1) error("No metadata found or it is not in accordance with the given XYZ coordinates.") end
 
+    conv = Dict(Common.SS.SHEET => "BA", Common.SS.HELIX => "HA")
+
     write(io, "TITLE $title\nMODEL $step\n")
-    if length(metadata.ss) > 0
-        n_sheets = length(filter(ss -> ss.ss_type == Common.SS.SHEET, metadata.ss))
-        for (index, ss) in enumerate(metadata.ss)
-            write(io, "$(@sprintf("%-6s", string(ss.ss_type)))")
+    ss_array = filter(x -> x.type != Common.SS.COIL, Common.retrieve_ss_from_residues(metadata.residues))
+    if length(ss_array) > 0
+        n_sheets = length(filter(x -> x.type == Common.SS.SHEET, ss_array))
+        for (index, ss) in enumerate(ss_array)
+            write(io, "$(@sprintf("%-6s", string(ss.type)))")
             write(io, "$(@sprintf("%4d", index))")
-            write(io, "$(@sprintf("%4s", ss.name))")
-            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%2d", n_sheets))") : nothing
+            write(io, "$(@sprintf("%4s", conv[ss.type]))")
+            ss.type == Common.SS.SHEET ? write(io, "$(@sprintf("%2d", n_sheets))") : nothing
             write(io, "$(@sprintf("%4s A", Aux.conv123(ss.i_res_name)))")
-            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.i_res_num))") : write(io, "$(@sprintf("%5d ", ss.i_res_num))")
+            ss.type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.i_res_num))") : write(io, "$(@sprintf("%5d ", ss.i_res_num))")
             write(io, "$(@sprintf("%4s A", Aux.conv123(ss.f_res_name)))")
-            ss.ss_type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.f_res_num))") : write(io, "$(@sprintf("%5d ", ss.f_res_num))")
-            write(io, "$(@sprintf("%2d", ss.conf))")
+            ss.type == Common.SS.SHEET ? write(io, "$(@sprintf("%4d ", ss.f_res_num))") : write(io, "$(@sprintf("%5d ", ss.f_res_num))")
+            write(io, "$(@sprintf("%2d", 1))")
             write(io, "$(@sprintf("%36d\n", ss.f_res_num - ss.i_res_num))")
         end
     end

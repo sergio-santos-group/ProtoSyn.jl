@@ -160,7 +160,8 @@ function run!(state::Common.State, driver_config::DriverConfig)
 
     Common.@cbcall driver_config.callbacks state driver_state
     
-    R = 0.0083144598 # kJ mol-1 K-1
+    # R = 0.0083144598 # kJ mol-1 K-1
+    R = 8.3144621 # J mol-1 K-1
 
     #region MAINLOOP
     while !(driver_state.completed || driver_state.stalled)
@@ -183,7 +184,11 @@ function run!(state::Common.State, driver_config::DriverConfig)
             # to the Metropolis criterium
             β = driver_state.temperature != 0.0 ? 1/(R * driver_state.temperature) : Inf
             ΔE = state.energy.total - driver_state.home_state.energy.total
-            if (ΔE <= 0.0) || (rand() < exp(-ΔE*β) )
+            r = rand()
+            println(ΔE, " <= 0 ? : ", (ΔE <= 0.0))
+            println(r, " < ", exp(-ΔE*β), " ? : ", (r < exp(-ΔE*β) ))
+            if (ΔE <= 0.0) || (r < exp(-ΔE*β) )
+                # println("NEW HOME STATE !")
                 Common.@copy driver_state.home_state state energy xyz
                 driver_state.n_stalls = 0
             else

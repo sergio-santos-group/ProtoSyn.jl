@@ -5,4 +5,7 @@ input_amber_top          = "data/1ctf_amber_no_sc_top.json"
 hydrogen_bonding_library = "data/sc_hb_lib.json"
 contacts_topology        = "data/contact_map_raptorx_1ctf.txt"
 # 1I2T ss                       = "CHHHHHHHHHHHHHHHCCCCHHHHHHHHHHCCHHHHHHHHHCHHHHHHHHHHHHHHHHHHC"
+#                           123456789
 ss                       = "CEEEEEEECCCCHHHHHHHHHHHHCCCHHHHHHHHHCCCEEEEEEECHHHHHHHHHHHHHHCCEEEEC"
+
+native_str               = "data/1ctf_native_no_sc.pdb"
