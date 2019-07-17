@@ -28,7 +28,7 @@ if ""!=PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
     write(log_energy, print_energy_keys("", 0)*"\n")
     check_native_str()
     
-    for repeat in 1:3
+    for repeat in 1:1000
         debug_file       = open("out/debug_file.pdb", "w")
         state, metadata = Common.load_from_pdb(input_pdb)
         Common.apply_ss!(state, metadata, ss)

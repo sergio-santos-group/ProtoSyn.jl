@@ -21,17 +21,17 @@ inner_crankshaft_mutator = Mutators.Crankshaft.MutatorConfig(
     step_size = π/4)
 
 # Define only Beta sheet blocks
-β_blocks = filter(x -> metadata.atoms[x.atoms[1]].residue.ss == Common.SS.HELIX, metadata.blocks)
+β_blocks = filter(x -> x.type == Common.SS.HELIX, metadata.blocks)
 
 inner_blockrot_mutator = Mutators.Blockrot.MutatorConfig(
-    blocks = β_blocks,
+    blocks = metadata.blocks, 
+    movable_blocks = β_blocks,
     angle_sampler = () -> (randn() * inner_blockrot_mutator.rotation_step_size),
     trans_sampler = () -> (randn() * inner_blockrot_mutator.translation_step_size),
     p_mut = 1.0,
     rotation_step_size = π/32,
-    translation_step_size = 0.001,
+    translation_step_size = 0.0,
     rot_axis = :longitudinal,
-    trans_axis = :longitudinal,
     n_tries = 100)
 
 

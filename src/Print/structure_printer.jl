@@ -19,6 +19,17 @@ function as_xyz(io::IO, state::Common.State, metadata::Common.Metadata, title::S
     end
 end
 
+function as_xyz(io::IO, state::Common.State, title::String="mol")
+
+    write(io, "$(state.size)\n$title\n")
+    for index in 1:state.size
+        write(io, @sprintf("%-4s %9.4f %9.4f %9.4f\n", "X",
+            state.xyz[index, 1]*10,
+            state.xyz[index, 2]*10,
+            state.xyz[index, 3]*10))
+    end
+end
+
 
 @doc raw"""
     as_xyz(state::Common.State, metadata::Common.Metadata[, title::String = "mol"])::String
