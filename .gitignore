@@ -1,0 +1,13 @@
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+*.DS_STORE
+*.zip
+
+build/
+docs/build/
+docs/site/
+.vscode/
+.ipynb_checkpoints/
+private/
+
