@@ -1,0 +1,25 @@
+REMARK 400   NAME: LYS
+ATOM      1  N   LYS     1       3.326   1.548   0.000
+ATOM      2  H   LYS     1       3.909   0.724   0.000
+ATOM      3  CA  LYS     1       3.970   2.846   0.000
+ATOM      4  HA  LYS     1       3.672   3.400  -0.890
+ATOM      5  CB  LYS     1       3.577   3.654   1.232
+ATOM      6  HB1 LYS     1       2.497   3.801   1.241
+ATOM      7  HB2 LYS     1       3.877   3.116   2.131
+ATOM      8  CG  LYS     1       4.274   5.010   1.195
+ATOM      9  HG1 LYS     1       5.354   4.863   1.186
+ATOM     10  HG2 LYS     1       3.974   5.548   0.296
+ATOM     11  CD  LYS     1       3.881   5.818   2.427
+ATOM     12  HD1 LYS     1       2.801   5.965   2.436
+ATOM     13  HD2 LYS     1       4.182   5.280   3.326
+ATOM     14  CE  LYS     1       4.578   7.173   2.389
+ATOM     15  HE1 LYS     1       5.658   7.027   2.380
+ATOM     16  HE2 LYS     1       4.278   7.712   1.491
+ATOM     17  NZ  LYS     1       4.199   7.952   3.577
+ATOM     18  HZ1 LYS     1       4.478   7.453   4.410
+ATOM     19  HZ2 LYS     1       4.661   8.850   3.552
+ATOM     20  HZ3 LYS     1       3.199   8.088   3.585
+ATOM     21  C   LYS     1       5.486   2.705   0.000
+ATOM     22  O   LYS     1       6.009   1.593   0.000
+REMARK 400
+REMARK 400  GROUP: 14

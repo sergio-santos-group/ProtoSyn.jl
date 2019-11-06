@@ -1,0 +1,17 @@
+REMARK 400   NAME: THR
+ATOM      1  N   THR     1       3.326   1.548   0.000
+ATOM      2  H   THR     1       3.909   0.724   0.000
+ATOM      3  CA  THR     1       3.970   2.846   0.000
+ATOM      4  HA  THR     1       3.672   3.400  -0.890
+ATOM      5  CB  THR     1       3.577   3.654   1.232
+ATOM      6  HB  THR     1       4.075   4.623   1.206
+ATOM      7  CG2 THR     1       2.066   3.859   1.244
+ATOM      8 HG21 THR     1       1.567   2.891   1.271
+ATOM      9 HG22 THR     1       1.784   4.437   2.125
+ATOM     10 HG23 THR     1       1.765   4.398   0.346
+ATOM     11  OG1 THR     1       3.972   2.947   2.411
+ATOM     12  HG1 THR     1       3.724   3.456   3.187
+ATOM     13  C   THR     1       5.486   2.705   0.000
+ATOM     14  O   THR     1       6.009   1.593   0.000
+REMARK 400
+REMARK 400  GROUP: 19

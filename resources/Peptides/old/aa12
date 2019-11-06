@@ -1,0 +1,22 @@
+REMARK 400   NAME: LEU
+ATOM      1  N   LEU     1       3.326   1.548   0.000
+ATOM      2  H   LEU     1       3.909   0.724   0.000
+ATOM      3  CA  LEU     1       3.970   2.846   0.000
+ATOM      4  HA  LEU     1       3.672   3.400  -0.890
+ATOM      5  CB  LEU     1       3.577   3.654   1.232
+ATOM      6  HB1 LEU     1       2.497   3.801   1.241
+ATOM      7  HB2 LEU     1       3.877   3.116   2.131
+ATOM      8  CG  LEU     1       4.274   5.010   1.195
+ATOM      9  HG  LEU     1       5.354   4.863   1.186
+ATOM     10  CD1 LEU     1       3.853   5.763  -0.063
+ATOM     11 HD11 LEU     1       2.773   5.910  -0.055
+ATOM     12 HD12 LEU     1       4.352   6.732  -0.090
+ATOM     13 HD13 LEU     1       4.134   5.186  -0.944
+ATOM     14  CD2 LEU     1       3.881   5.818   2.427
+ATOM     15 HD21 LEU     1       4.182   5.280   3.326
+ATOM     16 HD22 LEU     1       4.379   6.787   2.400
+ATOM     17 HD23 LEU     1       2.801   5.965   2.436
+ATOM     18  C   LEU     1       5.486   2.705   0.000
+ATOM     19  O   LEU     1       6.009   1.593   0.000
+REMARK 400
+REMARK 400  GROUP: 13

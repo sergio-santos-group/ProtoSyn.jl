@@ -1,0 +1,24 @@
+REMARK 400   NAME: ALA
+REMARK 400   DESCRIPTION: ALANINE
+ATOM      1  N   ALA     1       3.326   1.548   0.000                       N 
+ATOM      2  H   ALA     1       3.909   0.724   0.000                       H 
+ATOM      3  CA  ALA     1       3.970   2.846   0.000                       C 
+ATOM      4  HA  ALA     1       3.672   3.400  -0.890                       H 
+ATOM      5  CB  ALA     1       3.577   3.654   1.232                       C 
+ATOM      6  HB1 ALA     1       3.877   3.116   2.131                       H 
+ATOM      7  HB2 ALA     1       4.075   4.623   1.206                       H 
+ATOM      8  HB3 ALA     1       2.497   3.801   1.241                       H 
+ATOM      9  C   ALA     1       5.486   2.705   0.000                       C 
+ATOM     10  O   ALA     1       6.009   1.593   0.000                       O 
+CONECT    1    2    3
+CONECT    2    1
+CONECT    3    1    4    5    9
+CONECT    4    3
+CONECT    5    3    6    7    8
+CONECT    6    5
+CONECT    7    5
+CONECT    8    5
+CONECT    9    3   10
+CONECT   10    9
+REMARK 400
+REMARK 400  GROUP: 3

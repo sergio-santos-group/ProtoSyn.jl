@@ -3,6 +3,7 @@
 *.jl.mem
 *.DS_STORE
 *.zip
+*.txt
 
 build/
 docs/build/

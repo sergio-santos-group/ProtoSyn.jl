@@ -1,0 +1,24 @@
+REMARK 400   NAME: TYR
+ATOM      1  N   TYR     1       3.326   1.548   0.000
+ATOM      2  H   TYR     1       3.909   0.724   0.000
+ATOM      3  CA  TYR     1       3.970   2.846   0.000
+ATOM      4  HA  TYR     1       3.672   3.400  -0.890
+ATOM      5  CB  TYR     1       3.577   3.654   1.232
+ATOM      6  HB1 TYR     1       2.497   3.801   1.241
+ATOM      7  HB2 TYR     1       3.877   3.116   2.131
+ATOM      8  CG  TYR     1       4.267   4.996   1.195
+ATOM      9  CD1 TYR     1       4.060   5.919   2.227
+ATOM     10  HD1 TYR     1       3.400   5.668   3.058
+ATOM     11  CE1 TYR     1       4.700   7.164   2.193
+ATOM     12  HE1 TYR     1       4.539   7.882   2.997
+ATOM     13  CZ  TYR     1       5.547   7.486   1.126
+ATOM     14  OH  TYR     1       6.169   8.695   1.092
+ATOM     15  HH  TYR     1       5.956   9.247   1.848
+ATOM     16  CE2 TYR     1       5.755   6.563   0.094
+ATOM     17  HE2 TYR     1       6.415   6.814  -0.737
+ATOM     18  CD2 TYR     1       5.115   5.318   0.128
+ATOM     19  HD2 TYR     1       5.276   4.600  -0.676
+ATOM     20  C   TYR     1       5.486   2.705   0.000
+ATOM     21  O   TYR     1       6.009   1.593   0.000
+REMARK 400
+REMARK 400  GROUP: 21
