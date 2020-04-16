@@ -2,3 +2,6 @@ name = "ProtoSyn"
 uuid = "c9758760-7c0d-11e9-0ffc-fb9355b7d293"
 authors = ["Sergio M. Santos <smf.dos.santos@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

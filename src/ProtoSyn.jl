@@ -1,25 +1,43 @@
 module ProtoSyn
 
-using LinearAlgebra
-#Statistics
+# using LinearAlgebra
+# #Statistics
 
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
-#region CORE ------------------------------------
+# #region CORE ------------------------------------
 include("XMLRPC/XMLRPC.jl")
 
-include("core/constants.jl")
+# include("core/constants.jl")
+# include("core/macros.jl")
+# include("core/types.jl")
+# include("core/base.jl")
+# include("core/io.jl")
+# include("core/math.jl")
+
+# #endregion
+
+
+# #function eval! end
+# function run! end
+
+
 include("core/macros.jl")
 include("core/types.jl")
 include("core/base.jl")
+include("core/state.jl")
 include("core/io.jl")
-include("core/math.jl")
+include("core/iterators.jl")
+include("core/methods.jl")
 
-#endregion
+export ResidueDB
+const ResidueDB = Dict{String, Tuple{Residue, State}}
 
 
-#function eval! end
-function run! end
+#include("core/state2.jl")
+#include("core/base2.jl")
+#include("core/io2.jl")
+#include("core/math2.jl")
 
 #region SUBMODULES ------------------------------
 
@@ -32,13 +50,16 @@ include("Peptides/Peptides.jl")
 
 
 
-include("nbdisplay.jl")
-function __init__()
-    if isdefined(Main, :IJulia) && Main.IJulia.inited
-        println("Embedding javascript")
-        embed_javascript()
-    end
-end
+# include("nbdisplay.jl")
+# function __init__()
+#     if isdefined(Main, :IJulia) && Main.IJulia.inited
+#         println("Embedding javascript")
+#         embed_javascript()
+#     end
+# end
+
+
+
 
 
 end # module

@@ -18,12 +18,18 @@ abstract type IDriverState end
 #   - pairlist_freq::Int
 abstract type IDriver end
 
+#abstract type AbstractSampler end
 
 # steepest descent
-include("sd.jl")
+#include("sd.jl")
 
 # molecular dynamics
-include("thermostats.jl")
-include("md.jl")
+#include("thermostats.jl")
+#include("md.jl")
+
+include("mc2.jl")
+
+#(driver::IDriver)(s::State)  = driver(nothing, s)
+
 
 end

@@ -1,318 +1,154 @@
-using Printf: @sprintf
+#region show -------------------------------------------------------------------
 
-function repr_opt(item::AbstractArray)
-    "$(size(item,1))-element array"
+name(io::IO, item::AbstractContainer) = begin
+    if isdefined(item, :container) && item.container !== nothing
+        name(io, item.container)
+    end
+    print(io, "/$(item.name):$(item.id)")
+end
+
+Base.show(io::IO, item::T) where {T<:AbstractContainer}= begin
+    print(io, "$(nameof(T)){")
+    name(io, item)
+    print(io, "}")
+end
+
+Base.show(io::IO, node::GraphNode{T}) where T = begin
+    parent = node.parent===nothing ? "nothing" : node.parent.item
+    println("GraphNode{$(node.item), $parent} with $(length(node.children)) children")
+end
+
+#endregion show
+
+@inline Base.in(item::T, container::AbstractContainer{T}) where {T<:AbstractContainer} = begin
+    item.container===container
+end
+
+#region push! ------------------------------------------------------------------
+
+_push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
+    if item ∉ container
+        push!(container.items, item)
+        item.container = container
+        container.size += 1
+    end
+    container
+end
+
+Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
+    _push!(container, item)
+end
+
+Base.push!(res::Residue, atm::Atom) = begin
+    !in(atm,res) && (res.itemsbyname[atm.name] = atm)
+    _push!(res, atm)
 end
 
 
-function repr_opt(item::AbstractDict)
-    "$(length(item))-element dict"
+Base.push!(parent::GraphNode{T}, node::GraphNode{T}) where T = begin
+    push!(parent.children, node)
+    node.parent = parent
+    parent
 end
 
+#endregion push!
 
-function repr_opt(item::Nothing)
-    "n.d."
+#region get --------------------------------------------------------------------
+Base.getindex(r::Residue, n::AbstractString) = get(r,n)
+Base.get(res::Residue, name::String, default=nothing) = 
+    get(res.itemsbyname, name, default)
+#Base.get(res::Residue, name::String) = get(res, name, nothing)
+
+#endregion get
+
+
+export  isorphan
+@inline isorphan(node::GraphNode) = begin
+    node.parent===nothing && isempty(node.children)
 end
 
+@inline isorphan(c::AbstractContainer) = c.container===nothing
 
-#region Base.get
-# -----------------------------------------------
+# @inline isorphan(r::Atom) = r.residue===nothing
+# @inline isorphan(r::Residue) = r.segment===nothing
+# @inline isorphan(s::Segment) = s.topology===nothing
 
-Base.get(lr::LinkedResidue, k::AbstractString, default) = begin
-    get(lr.source.atomsbyname, k, default)
-end
-Base.get(lr::LinkedResidue, k::AbstractString) = get(lr, k, nothing)
+export hasparent
+@inline hasparent(c::AbstractContainer) = c.container !== nothing
+@inline hasparent(n::GraphNode) = n.parent !== nothing
+# @inline hasparent(::Nothing) = false
 
+@inline origin(t::Topology) = get(t.root, "O")
+@inline origin(c::AbstractContainer) = 
+    hasparent(c) ? origin(c.container) : nothing
 
+@inline genid() = Int(rand(UInt16))
 
-Base.get(r::Residue, k::AbstractString, default) = begin
-    get(r.atomsbyname, k, default)
-end
-Base.get(r::Residue, k::AbstractString, default) = get(r, k, nothing)
-
-#endregion Base.get
-
-
-#region Base.length
-# -----------------------------------------------
-
-Base.length(r::Residue) = length(r.atoms)
-
-Base.length(lr::LinkedResidue) = length(lr.source)
-
-#endregion Base.length
-
-
-
-#region Base.show
-# -----------------------------------------------
-
-Base.show(io::IO, item::Atom) = begin
-    print(io, "Atom:")
-    print(io, "\n     id = $(item.id)")
-    print(io, "\n   name = $(item.name)")
-    print(io, "\n symbol = $(item.symbol)")
-    print(io, "\n parent = $(item.parent === nothing ? "n.d." : item.parent.name)")
+export reindex
+@inline reindex(c::T) where {T<:AbstractContainer}= begin
+    index = 0
+    for atom in eachatom(c)
+        atom.index = (index += 1)
+    end
+    c
 end
 
-
-Base.show(io::IO, item::Residue) = begin
-    print(io, "$(length(item))-atom Residue:")
-    print(io, "\n   name = $(item.name)")
-    print(io, "\n  atoms = $(repr_opt(item.atoms))")
-    print(io, "\n  bonds = $(repr_opt(item.bonds))")
+Base.size(r::Residue) = begin
+    (r.size,)
+end
+Base.size(s::Segment) = begin
+    (s.size, mapreduce(r->r.size, +, s.items; init=0))
+end
+Base.size(t::Topology) = begin
+    nseg = nres = 0
+    for seg in t.items
+        ns,nr = size(seg)
+        nseg += ns
+        nres += nr
+    end
+    (t.size, nseg, nres)
 end
 
+Base.isempty(c::AbstractContainer) = c.size==0
+Base.length(c::AbstractContainer) = c.size
 
-Base.show(io::IO, lr::LinkedResidue) = begin
-    print(io, "$(length(lr))-atom LinkedResidue:")
-    print(io, "\n      id = $(lr.id)")
-    print(io, "\n  source = $(lr.source.name)")
-    print(io, "\n  offset = $(lr.offset)")
-    print(io, "\n   links = $(repr_opt(lr.links))")
+
+Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
+
+Base.getindex(t::Topology, s::Int, r::Int) = t.items[s].items[r]
+Base.getindex(t::Topology, s::Int, r::Int, a::Int) = t.items[s].items[r].items[a]
+# Base.getindex(s::Topology, s::Int, r::Int) = t.items[s].items[r]
+
+Base.lastindex(c::AbstractContainer) = c.size
+Base.firstindex(c::AbstractContainer) = 1
+
+Base.copy(a::Atom) = begin
+    Atom(a.name, a.id, a.index, a.symbol)
 end
 
-
-Base.show(io::IO, link::Link) = begin
-    print(io, "$(length(link.bonds))-bond Link:")
-    print(io, "\n  residue1 = $(link.residue1.source.name).$(link.residue1.id)")
-    print(io, "\n  residue2 = $(link.residue2.source.name).$(link.residue2.id)")
-    if !isa(link.bonds, Nothing)
-        print(io, "\n  bonds:")
-        for pair in pairs(link.bonds)
-            print(io, "\n   $(pair.first) => $(join(map(string, pair.second), ", "))")
+Base.copy(r::Residue) = begin
+    byatom = eachatom(r)
+    
+    # create residue and copy atoms
+    r1 = Residue(r.name, r.id)
+    for at in byatom
+        push!(r1, copy(at))
+    end
+    
+    for at in byatom
+        # add intra-residue bonds
+        at1 = get(r1, at.name)
+        for other in at.bonds
+            in(other,r) && push!(at1.bonds, get(r1, other.name))
+        end
+        
+        # build atom graph
+        if (pnode = parent(at)) !== nothing
+            in(pnode.item, r) && push!(get(r1, pnode.item.name).node, at1.node)
         end
     end
-end
-
-
-Base.show(io::IO, mol::Molecule) = begin
-    for (rid,lr) in enumerate(mol.residues)
-        offset = mol.offset + lr.offset
-        for at in lr.source.atoms
-            atid = at.id + offset
-            s = @sprintf("ATOM %6d %4s %-4s %3d %2s",
-                atid, at.name,
-                lr.source.name, rid, at.symbol)
-            s2 = map(x->@sprintf("%5d", x+mol.offset), mol.bonds[atid])
-            println(io, s, " -> ", mol.bonds[atid] .+ mol.offset)
-        end
-    end
-end
-
-#endregion Base.show
-
-
-
-#region Base.push!
-# -----------------------------------------------
-
-Base.push!(residue::Residue, atom::Atom) = begin
-    
-    #if residue.atoms === nothing
-    #    residue.atoms = Atom[]
-    #    residue.atomsbyname = Dict{String, Atom}()
-    #end
-
-    if haskey(residue.atomsbyname, atom.name)
-        error("Atom names within residues must be unique!")
-    end
-    
-    if atom.parent !== nothing
-        error("Atom already has a parent!")
-    end
-
-    atom.parent = residue
-    atom.id = length(residue) + 1
-    
-    push!(residue.atoms, atom)
-    residue.atomsbyname[atom.name] = atom
-
-    residue
-end
-
-
-Base.push!(mol::Molecule, lr::LinkedResidue) = begin
-    lr.offset = mapreduce(r->length(r), +, mol.residues; init=0)
-    lr.id = size(mol.residues, 1) + 1
-    push!(mol.residues, lr)
-    invalidate!(mol)
-    mol
-end
-
-
-Base.push!(mol::Molecule, link::Link) = begin
-    push!(mol.links, link)
-    invalidate!(mol)
-    mol
-end
-
-
-Base.push!(lresidue::LinkedResidue, link::Link) = begin
-    push!(lresidue.links, link)
-    lresidue
-end
-#endregion
-
-
-function invalidate!(mol::Molecule)
-    mol.coherent = false
-    mol
+    r1
 end
 
 
 
-Base.isvalid(mol::Molecule) = mol.coherent
-
-# function Base.delete!(mol::Molecule, fragment::LinkedResidue)
-#     # find location of the given fragment in the molecule
-#     idx = findfirst(f->f===fragment, mol.fragments)
-    
-#     # if the given linked fragment is not found in this
-#     # molecule, then do nothing
-#     if idx === nothing
-#         return mol
-#     end
-
-#     # remove the fragment
-#     deleteat!(mol.fragments, idx)
-    
-#     # remove all links this fragment might have from
-#     # from the molecule's link list
-#     for link in fragment.links
-#         idx = findfirst(l->l===link, mol.links)
-#         if idx !== nothing
-#             deleteat!(mol.links, idx)
-#         end
-#         # remove this link from both fragments
-#         if link.residue1 !== fragment
-#             delete!(link.residue1, link)
-#         else
-#             delete!(link.residue2, link)
-#         end
-#     end
-#     # mark this molecule as no longer being coherent 
-#     mol.coherent = false
-#     mol
-# end
-
-
-# function Base.delete!(frag::LinkedResidue, link::Link)
-#     idx = findfirst(l->l===link, frag.links)
-#     if idx !== nothing
-#         deleteat!(frag.links, idx)
-#     end
-#     frag
-# end
-
-
-@doc """
-
-
-finds atom indices corresponding to the requested atom names, based on
-the given residue. Names starting with '-'/'+' are assumed to belong to the
-previous/next residue. If multiple residues are connected to the central (given)
-residue, all tuple are generated.
-"""
-function cproduct(f::Function, residue::LinkedResidue, names::Tuple{Vararg{String}})
-    _cproduct(f, residue, names, 0, zeros(Int, length(names)), residue)
-end
-
-function cproduct(f::Function,
-    residue::LinkedResidue, names::Tuple{Vararg{String}}, n::Int, state::Vector{Int})
-    _cproduct(f, residue,names,n,state,residue)
-end
-
-function _cproduct(f::Function,
-    residue::LinkedResidue, names::Tuple{Vararg{String}}, n::Int, state::Vector{Int}, pres::LinkedResidue)
-    
-    # apply function if the current state is complete
-    if n==length(names)
-        f(state)
-    else
-        name = names[n+1]
-        if startswith(name, '+')
-            for link in residue.links
-                # is link.residue1 the source (central) residue? if so, the
-                # next ('+') residue is residue2.
-                # It is assumed that every link is directed from
-                # residue1 (source) -> residue2 (target)
-                if link.residue1 === residue
-                    (n>0) && startswith(names[n],'+') && (link.residue2 !== pres) && continue
-                    atom = get(link.residue2, SubString(name,2), nothing)
-                    (atom===nothing) && continue
-                    state[n+1] = atom.id + link.residue2.offset
-                    _cproduct(f, residue, names, n+1, state, link.residue2)
-                end
-            end
-        elseif startswith(name, '-')
-            for link in residue.links
-                # is link.residue2 the target residue? if so, the
-                # previous ('-') residue is residue1
-                if link.residue2 === residue
-                    (n>0) && startswith(names[n],'-') && (link.residue1 !== pres) && continue
-                    atom = get(link.residue1, SubString(name,2), nothing)
-                    (atom===nothing) && continue
-                    state[n+1] = atom.id + link.residue1.offset
-                    _cproduct(f, residue, names, n+1, state, link.residue1)
-                end
-            end
-        else
-            atom = get(residue, name, nothing)
-            if atom!==nothing
-                state[n+1] = atom.id + residue.offset
-                _cproduct(f, residue, names, n+1, state, residue)
-            end
-        end
-    end
-
-end
-
-
-
-
-
-
-
-export set!
-
-function set!(state::State, mol::Molecule, rng::UnitRange{Int}, atnames::NTuple{4, String}, θ::Float64)
-    
-    xyz = state.coords
-
-    # Allocate-once variables
-    rmat = zeros(3,3)           # rotation matrix
-    mask = falses(mol.size)     # mask for graph traversal
-    indices = zeros(Int, 4)     # container
-
-    for i in rng
-        cproduct(mol.residues[i], atnames, 0, indices) do idxs
-            dihd = Dihedral(idxs...)
-            rotate!(xyz, mol.bonds, dihd, θ-measure(dihd, xyz), mask, rmat)
-        end
-    end
-    state
-end
-
-function set!(state::State, mol::Molecule, dihedral::Dihedral, θ::Float64)
-    rotate!(state, mol, dihedral, θ-measure(dihedral, state.coords))
-end
-
-# function set!(state::State, mol::Molecule, rng::UnitRange{Int}, atnames::NTuple{3, String}, θ::Float64)
-    
-#     xyz = state.coords
-
-#     # Allocate-once variables
-#     rmat = zeros(3,3)           # rotation matrix
-#     mask = falses(mol.size)     # mask for graph traversal
-#     indices = zeros(Int, 3)     # container
-    
-#     foreach(mol.residues) do residue
-#         cproduct(residue, atnames, 0, indices) do idxs
-#             dihd = Angle(idxs...)
-#             rotate!(xyz, mol.bonds, dihd, θ-measure(dihd, xyz), mask, rmat)
-#         end
-#     end
-
-
-# end

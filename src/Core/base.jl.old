@@ -1,0 +1,100 @@
+#region show -------------------------------------------------------------------
+
+show(io::IO, item::AbstractIdentifiable, attr=nothing) = begin
+    #if item !== nothing
+    #    attr!==nothing && name(io, getproperty(item, attr))
+    #    print(io, "/$(item.name):$(item.id)")
+    #end
+    if attr!==nothing
+        prop = getproperty(item, attr)
+        prop !== nothing && name(io, prop)
+    end
+    print(io, "/$(item.name):$(item.id)")
+
+    # if attr!==nothing && isdefined(item, attr)
+    #     name(io, getproperty(item, attr))
+    # end
+    # print(io, "/$(item.name):$(item.id)")
+end
+
+name(io::IO, x::Atom) = show(io, x, :residue)
+name(io::IO, x::Residue) = show(io, x, :segment)
+name(io::IO, x::Segment) = show(io, x, :topology)
+name(io::IO, x::Topology) = show(io, x)
+
+Base.show(io::IO, item::T) where {T<:AbstractIdentifiable}= begin
+    print(io, "$(nameof(T)){")
+    name(io, item)
+    print(io, "}")
+end
+
+Base.show(io::IO, node::GraphNode{T}) where T = begin
+    parent = node.parent===nothing ? "nothing" : node.parent.item
+    println("GraphNode{$(node.item), $parent} with $(length(node.children)) children")
+end
+
+#endregion show
+
+#region push! ------------------------------------------------------------------
+
+Base.push!(top::Topology, seg::Segment) = begin
+    push!(top.segments, seg)
+    seg.topology = top
+    top.size += 1
+    top
+end
+
+Base.push!(seg::Segment, res::Residue) = begin
+    push!(seg.residues, res)
+    res.segment = seg
+    seg.size += 1
+    seg
+end
+
+Base.push!(res::Residue, atom::Atom) = begin
+    res.atomsbyname[atom.name] = atom
+    push!(res.atoms, atom)
+    atom.residue = res
+    res.size += 1
+    res
+end
+
+Base.push!(parent::GraphNode{T}, node::GraphNode{T}) where T = begin
+    push!(parent.children, node)
+    node.parent = parent
+    parent
+end
+
+#endregion push!
+
+#region get --------------------------------------------------------------------
+
+Base.get(res::Residue, name::String, default) = get(res.atomsbyname, name, default)
+Base.get(res::Residue, name::String) = get(res, name, nothing)
+
+#endregion get
+
+
+export  isorphan
+@inline isorphan(node::GraphNode{T}) where T = begin
+    node.parent===nothing && isempty(node.children)
+end
+
+@inline isorphan(r::Atom) = r.residue===nothing
+@inline isorphan(r::Residue) = r.segment===nothing
+@inline isorphan(s::Segment) = s.topology===nothing
+
+export hasparent
+@inline hasparent(n::GraphNode) = n.parent !== nothing
+@inline hasparent(::Nothing) = false
+
+@inline origin(t::Topology) = get(t.root, "O")
+
+@inline genid() = Int(rand(UInt16))
+
+@inline reindex(ai::T) where {T<:AbstractIdentifiable}= begin
+    for (index,atom) in eachatom(ai)
+        atom.index = index
+    end
+    ai
+end

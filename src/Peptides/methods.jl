@@ -179,8 +179,10 @@ end
 
 function setss!(state::State, mol::Molecule, rng::UnitRange{Int}, conf::Symbol)
     
-    if conf == :sheet
-        ϕ, ψ = deg2rad(-135.0), deg2rad(135.0)
+    if conf == :antiparallel_sheet
+        ϕ, ψ = deg2rad(-139.0), deg2rad(135.0)
+    elseif conf == :parallel_sheet
+        ϕ, ψ = deg2rad(-119.0), deg2rad(113.0)
     elseif conf == :helix
         ϕ, ψ = deg2rad(-60.0), deg2rad(-45.0)
     else
