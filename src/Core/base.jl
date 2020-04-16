@@ -7,27 +7,33 @@ name(io::IO, item::AbstractContainer) = begin
     print(io, "/$(item.name):$(item.id)")
 end
 
-Base.show(io::IO, item::T) where {T<:AbstractContainer}= begin
-    print(io, "$(nameof(T)){")
+Base.show(io::IO, item::AbstractContainer) = begin
+    print(io, "$(nameof(typeof(item))){")
     name(io, item)
     print(io, "}")
 end
 
-Base.show(io::IO, node::GraphNode{T}) where T = begin
-    parent = node.parent===nothing ? "nothing" : node.parent.item
-    println("GraphNode{$(node.item), $parent} with $(length(node.children)) children")
-end
+# Base.show(io::IO, item::T) where {T<:AbstractContainer}= begin
+#     print(io, "$(nameof(T)){")
+#     name(io, item)
+#     print(io, "}")
+# end
+
+# Base.show(io::IO, node::GraphNode{T}) where T = begin
+#     parent = node.parent===nothing ? "nothing" : node.parent.item
+#     println("GraphNode{$(node.item), $parent} with $(length(node.children)) children")
+# end
 
 #endregion show
 
-@inline Base.in(item::T, container::AbstractContainer{T}) where {T<:AbstractContainer} = begin
-    item.container===container
+@inline Base.in(item::T, c::AbstractContainer{T}) where {T<:AbstractContainer} = begin
+    item.container===c
 end
 
 #region push! ------------------------------------------------------------------
 
 _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
-    if item ∉ container
+    if !in(item, container)
         push!(container.items, item)
         item.container = container
         container.size += 1
@@ -35,57 +41,81 @@ _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = 
     container
 end
 
-Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
-    _push!(container, item)
-end
+# Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
+Base.push!(container::AbstractContainer{T}, item::T) where T = _push!(container, item)
 
 Base.push!(res::Residue, atm::Atom) = begin
-    !in(atm,res) && (res.itemsbyname[atm.name] = atm)
-    _push!(res, atm)
+    if !in(atm,res)
+        res.itemsbyname[atm.name] = atm
+        _push!(res, atm)
+    end
+    res
 end
 
 
-Base.push!(parent::GraphNode{T}, node::GraphNode{T}) where T = begin
-    push!(parent.children, node)
-    node.parent = parent
-    parent
-end
+# Base.push!(parent::GraphNode{T}, node::GraphNode{T}) where T = begin
+#     push!(parent.children, node)
+#     node.parent = parent
+#     parent
+# end
+
+
 
 #endregion push!
+
+
+
+
+
+
 
 #region get --------------------------------------------------------------------
 Base.getindex(r::Residue, n::AbstractString) = get(r,n)
 Base.get(res::Residue, name::String, default=nothing) = 
     get(res.itemsbyname, name, default)
+
+Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
+Base.getindex(c::AbstractContainer, i::Int...) = getindex(c.items[i[1]],i[2:end]...)
+
 #Base.get(res::Residue, name::String) = get(res, name, nothing)
 
 #endregion get
 
 
-export  isorphan
-@inline isorphan(node::GraphNode) = begin
-    node.parent===nothing && isempty(node.children)
+# export  isorphan
+# @inline isorphan(node::GraphNode) = begin
+#     node.parent===nothing && isempty(node.children)
+# end
+
+# @inline isorphan(c::AbstractContainer) = c.container===nothing
+
+
+@inline Base.in(item::T, container::AbstractContainer{T}) where T = begin
+    item.container===container
 end
 
-@inline isorphan(c::AbstractContainer) = c.container===nothing
 
-# @inline isorphan(r::Atom) = r.residue===nothing
-# @inline isorphan(r::Residue) = r.segment===nothing
-# @inline isorphan(s::Segment) = s.topology===nothing
+# export isorphan
+# @inline isorphan(c::AbstractContainer) = c.container === nothing
 
-export hasparent
-@inline hasparent(c::AbstractContainer) = c.container !== nothing
-@inline hasparent(n::GraphNode) = n.parent !== nothing
-# @inline hasparent(::Nothing) = false
+export hascontainer
+@inline hascontainer(c::AbstractContainer) = c.container !== nothing
 
-@inline origin(t::Topology) = get(t.root, "O")
+
+
+
+# @inline hasparent(c::AbstractContainer) = c.container !== nothing
+# @inline hasparent(n::GraphNode) = n.parent !== nothing
+# # @inline hasparent(::Nothing) = false
+
+@inline origin(t::Topology) = get(t.root, "OO")
 @inline origin(c::AbstractContainer) = 
-    hasparent(c) ? origin(c.container) : nothing
+    hascontainer(c) ? origin(c.container) : nothing
 
 @inline genid() = Int(rand(UInt16))
 
 export reindex
-@inline reindex(c::T) where {T<:AbstractContainer}= begin
+@inline reindex(c::AbstractContainer) = begin
     index = 0
     for atom in eachatom(c)
         atom.index = (index += 1)
@@ -113,14 +143,16 @@ Base.isempty(c::AbstractContainer) = c.size==0
 Base.length(c::AbstractContainer) = c.size
 
 
-Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
+# Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
 
-Base.getindex(t::Topology, s::Int, r::Int) = t.items[s].items[r]
-Base.getindex(t::Topology, s::Int, r::Int, a::Int) = t.items[s].items[r].items[a]
-# Base.getindex(s::Topology, s::Int, r::Int) = t.items[s].items[r]
+# Base.getindex(t::Topology, s::Int, r::Int) = t.items[s].items[r]
+# Base.getindex(t::Topology, s::Int, r::Int, a::Int) = t.items[s].items[r].items[a]
+# # Base.getindex(s::Topology, s::Int, r::Int) = t.items[s].items[r]
 
 Base.lastindex(c::AbstractContainer) = c.size
 Base.firstindex(c::AbstractContainer) = 1
+
+
 
 Base.copy(a::Atom) = begin
     Atom(a.name, a.id, a.index, a.symbol)
@@ -143,8 +175,12 @@ Base.copy(r::Residue) = begin
         end
         
         # build atom graph
-        if (pnode = parent(at)) !== nothing
-            in(pnode.item, r) && push!(get(r1, pnode.item.name).node, at1.node)
+        # if (pnode = parent(at)) !== nothing
+        #     in(pnode.item, r) && push!(get(r1, pnode.item.name).node, at1.node)
+        # end
+        if hasparent(at)
+            # in(at, r) && setparent!(get(r1, at.parent.name), at1)
+            in(at, r) && setparent!(r1[at.parent.name], at1)
         end
     end
     r1

@@ -117,12 +117,12 @@ Base.copy(s::State{T}) where T = begin
     deepcopy(s)
 end
 
-export set!
-set!(s::NodeState{T}, b::T, θ::T, ϕ::T) where T = begin
-    s.b = b
-    s.θ = θ
-    s.ϕ = ϕ
-    s
-end
+# export set!
+# set!(s::NodeState{T}, b::T, θ::T, ϕ::T) where T = begin
+#     s.b = b
+#     s.θ = θ
+#     s.ϕ = ϕ
+#     s
+# end
 
 #endregion State

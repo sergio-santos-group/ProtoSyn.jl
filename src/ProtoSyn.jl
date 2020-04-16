@@ -24,6 +24,7 @@ include("XMLRPC/XMLRPC.jl")
 
 include("core/macros.jl")
 include("core/types.jl")
+include("core/graph.jl")
 include("core/base.jl")
 include("core/state.jl")
 include("core/io.jl")

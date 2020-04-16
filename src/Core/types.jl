@@ -1,6 +1,6 @@
 export Opt
 export Atom, Residue, Segment, Topology
-export AtomGraphNode, ResidueGraphNode
+# export AtomGraphNode, ResidueGraphNode
 
 const Opt = Union{Nothing, T} where T
 
@@ -18,16 +18,16 @@ abstract type AbstractTopology <: AbstractContainer{AbstractSegment} end
 
 #-------------------------------------------------------------------------------
 #region GraphNode
-mutable struct GraphNode{T}
-    item::T
-    parent::Opt{GraphNode{T}}
-    children::Vector{GraphNode{T}}
-    visited::Bool
-    ascendents::Opt{NTuple{4,Int}}
-end
+# mutable struct GraphNode{T}
+#     item::T
+#     parent::Opt{GraphNode{T}}
+#     children::Vector{GraphNode{T}}
+#     visited::Bool
+#     ascendents::Opt{NTuple{4,Int}}
+# end
 
-GraphNode{T}(item::T) where T = 
-    GraphNode(item, nothing, GraphNode{T}[], false, nothing)
+# GraphNode{T}(item::T) where T = 
+#     GraphNode(item, nothing, GraphNode{T}[], false, nothing)
 
 #endregion GraphNode
 
@@ -48,7 +48,7 @@ mutable struct Atom <: AbstractAtom
     symbol::String                  # element symbol
     bonds::Vector{Atom}             # list of connected atoms
     container::Opt{AbstractResidue}   # parent residue
-    node::GraphNode{Atom}           #
+    # node::GraphNode{Atom}           #
     #------
     parent::Opt{Atom}
     children::Vector{Atom}
@@ -57,7 +57,7 @@ mutable struct Atom <: AbstractAtom
     #------
     Atom(name::String, id::Int, index::Int, symbol::String) = begin
         at = new(name, id, index, symbol, Atom[], nothing)
-        at.node = GraphNode{Atom}(at)
+        # at.node = GraphNode{Atom}(at)
         initgraph!(at)
         at
     end
@@ -70,16 +70,16 @@ mutable struct Residue <: AbstractResidue
     itemsbyname::Dict{String, Atom} # child atoms indexed by name
     container::Opt{AbstractSegment} # parent segment
     size::Int
-    node::GraphNode{Residue}        #
+    # node::GraphNode{Residue}        #
     #------
-    parent::Opt{Atom}
-    children::Vector{Atom}
+    parent::Opt{Residue}
+    children::Vector{Residue}
     visited::Bool
     ascendents::Opt{NTuple{4,Int}}
     #------
     Residue(name::String, id::Int) = begin
         r = new(name, id, Atom[], Dict{String,Atom}(), nothing, 0)
-        r.node = GraphNode{Residue}(r)
+        # r.node = GraphNode{Residue}(r)
         initgraph!(r)
         r
     end
@@ -109,17 +109,18 @@ end
 
 function Root()
     root = Residue("ROOT", -1)
-    y = Atom("Y", -2, -2, "?")
-    x = Atom("X", -1, -1, "?")
-    o = Atom("O",  0,  0, "?")
-    push!(y.node, x.node)
-    push!(x.node, o.node)
+    y = Atom("OY", -2, -2, "?")
+    x = Atom("OX", -1, -1, "?")
+    o = Atom("OO",  0,  0, "?")
+    setparent!(y, x)
+    setparent!(x, o)
+
     push!(root, y, x, o)
     root
 end
 
 #endregion Identifiable
 
-const AtomGraphNode = GraphNode{Atom}
-const ResidueGraphNode = GraphNode{Residue}
+# const AtomGraphNode = GraphNode{Atom}
+# const ResidueGraphNode = GraphNode{Residue}
 

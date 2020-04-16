@@ -103,7 +103,8 @@ Base.write(io::IO, top::Topology, state::State) = begin
 
     for atom in eachatom(top)
        print(io, @sprintf("CONECT%5d", atom.index))
-       foreach(n->print(io, @sprintf("%5d",n.item.index)), atom.node.children)
+    #    foreach(n->print(io, @sprintf("%5d",n.item.index)), atom.node.children)
+       foreach(n->print(io, @sprintf("%5d",n.index)), atom.children)
        println(io,"")
     end
     println(io, "ENDMDL")

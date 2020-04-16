@@ -3,75 +3,73 @@ using LinearAlgebra: dot
 export build_tree!
 
 function build_tree!(top::Topology)
+
     queue = Atom[]
     byatom = eachatom(top)
     
     # reset graph flags
-    foreach(r->r.node.visited=false, eachresidue(top))
-    foreach(at->at.node.visited=false, byatom)
+    foreach(r->r.visited=false, eachresidue(top))
+    foreach(at->at.visited=false, byatom)
 
     for atom in byatom
-        atom.node.visited && continue
-        atom.node.visited = true
+        atom.visited && continue
+        atom.visited = true
         push!(queue, atom)
         while !isempty(queue)
             parent = popfirst!(queue)
             for at in parent.bonds
-                at.node.visited && continue
-                push!(parent.node, at.node)
-                at.node.visited = true
+                at.visited && continue
+                # push!(parent.node, at.node)
+                setparent!(parent, at)
+                at.visited = true
                 push!(queue, at)
             end
         end
     end
 
-    root = origin(top).node
+    root = origin(top)
     for atom in byatom
-        node = atom.node
-
+        
         # if this atom is orphan, then make it a child
         # of the root (origin)
-        if !hasparent(node)
-            push!(root, node)
+        # if !hasparent(node)
+        #     push!(root, node)
+        #     continue
+        # end
+        if !hasparent(atom)
+            setparent!(root, atom)
             continue
         end
 
         # build residue graph
-        child_res = node.item.container
-        parent_res = node.parent.item.container
-        if child_res===parent_res || (child_res.node.visited && parent_res.node.visited)
+        child_res = atom.container
+        parent_res = atom.parent.container
+        if child_res===parent_res || (child_res.visited && parent_res.visited)
             continue
         end
-        push!(parent_res.node, child_res.node)
-        parent_res.node.visited = true
-        child_res.node.visited = true
+        setparent!(parent_res, child_res)
+        parent_res.visited = true
+        child_res.visited = true
     end
 
     for atom in byatom
-        atom.node.ascendents = ascendents(atom.node, 4)
-        # node = atom.node
-        # node.ascendents = (
-        #     node.item.index,
-        #     node.parent.item.index,
-        #     node.parent.parent.item.index,
-        #     node.parent.parent.parent.item.index
-        # )
+        atom.ascendents = ascendents(atom, 4)
     end
     top
 end
 
 export ascendents
-ascendents(n::GraphNode, level::Int) = begin
+ascendents(c::AbstractContainer, level::Int) = begin
     if level == 1
-        return (n.item.index,)
+        return (c.index,)
     end
-    (n.item.index, ascendents(n.parent, level-1)...)
+    (c.index, ascendents(c.parent, level-1)...)
 end
 
 export sync!
 sync!(state::State, top::Topology, force=false) = begin
     if state.c2i && state.i2c
-        throw(Exception)
+        error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
         c2i!(state, top)
     elseif state.i2c
@@ -89,7 +87,7 @@ c2i!(state::State{T}, top::Topology) where T = begin
     m   = MVector{3,T}(T(0), T(0), T(0))
     o   = MVector{3,T}(T(0), T(0), T(0))
     for atom in eachatom(top)
-        (i,j,k,l) = atom.node.ascendents
+        (i,j,k,l) = atom.ascendents
         istate = state[i]
         
         # bond
@@ -124,24 +122,24 @@ i2c!(state::State, top::Topology, force=false) = begin
     vji = MVector{3,Float64}(0.0, 0.0, 0.0)
     n   = MVector{3,Float64}(0.0, 0.0, 0.0)
     
-    queue = AtomGraphNode[]
+    queue = Atom[]
 
     xyz = zeros(3, state.size)
-    root = origin(top).node
+    root = origin(top)
     # append!(queue, root.children)
     for child in root.children
-        state[child.item.index].changed |= force
+        state[child].changed |= force
         push!(queue, child)
     end
     
     while !isempty(queue)
-        node = popfirst!(queue)
-        (i,j,k) = node.ascendents
-        # i = node.item.index
+        atom = popfirst!(queue)
+        (i,j,k) = atom.ascendents
+        
         istate = state[i]
-        println(node)
-        for child in node.children
-            state[child.item.index].changed |= istate.changed
+        println(atom)
+        for child in atom.children
+            state[child].changed |= istate.changed
             push!(queue, child)
         end
         !(istate.changed) && continue
@@ -190,101 +188,69 @@ i2c!(state::State, top::Topology, force=false) = begin
     xyz
 end
 
-
-
-#----------------------
-# PEPTIDES PEPTIDES PEPTIDES PEPTIDES PEPTIDES PEPTIDES
-#rootprovider(r::Residue) = get(r, "N")
-
-#const ResidueDB = Dict{String, Tuple{Residue, State}}
-
-# function load(dir::AbstractString)
-    
-#     lib = ResidueDB()
-
-#     files = filter(f->endswith(f, ".pdb"), readdir(dir))
-#     foreach(files) do fname
-#         top,state = read(joinpath(dir,fname), PDB)
-#         foreach(eachresidue(top)) do residue
-#             lib[residue.name] = pop!(top, state, residue)
-#         end
-#     end
-#     lib
+# Base.findfirst(item::T, container::AbstractContainer{T}) where T = begin
+#     in(item,container) ? findfirst(x->x===item, container.items) : nothing
 # end
 
-# # Base.pop!(seg::Segment, res::Residue) = begin
-# #     i = findfirst(segres.segment
-# # end
-# Base.findfirst(ar::Vector{T}, item::T) where T = begin
-# Base.findfirst(item::T, ar::Vector{T}) where T = begin
-#     return findfirst(it->it===item, ar)
-# end
+# Base.findfirst(item::T, container::Vector{T}) where T = 
+#     findfirst(x->x===item, container)
 
-@inline Base.in(item::T, container::AbstractContainer{T}) where T = begin
-    item.container===container
-end
 
-Base.findfirst(item::T, container::AbstractContainer{T}) where T = begin
-    in(item,container) ? findfirst(x->x===item, container.items) : nothing
-end
-Base.findfirst(item::GraphNode{T}, container::GraphNode{T}) where T = 
-    findfirst(x->x===item, container.children)
-
-# @inline Base.in(a::Atom, r::Residue) = a.container===r
-# @inline Base.in(r::Residue, s::Segment) = r.container===s
-
-# Base.findfirst(a::Atom, r::Residue) = begin
-#     in(a,r) ? findfirst(atm->atm===a, r.items) : nothing
-# end
-
-# Base.findfirst(r::Residue, s::Segment) = begin
-#     in(r,s) ? findfirst(res->res===r, s.residues) : nothing
-# end
 
 Base.delete!(container::AbstractContainer{T}, item::T) where T = begin
-    if (i = findfirst(item, container)) !== nothing
-        deleteat!(container.items, i)
-        item.container = nothing
-        container.size -= 1
+    if in(item, container)
+        i = findfirst(x->x===item, container.items)
+        if i !== nothing
+            deleteat!(container.items, i)
+            item.container = nothing
+            container.size -= 1
+        end
     end
     container
 end
 
-Base.delete!(parent::GraphNode{T}, child::GraphNode{T}) where T = begin
-    if (i = findfirst(child, parent))!== nothing
-        deleteat!(parent.children, i)
-        child.parent = nothing
+
+
+# Base.detach(node::GraphNode{T}) where T = begin
+#     hasparent(node) && delete!(node.parent, node)
+#     while !isempty(node.children)
+#         pop!(node.children).parent=nothing
+#     end
+#     node
+# end
+
+function _detach(c::AbstractContainer)
+    # detach from container
+    if hascontainer(c)
+        delete!(c.container, c)
     end
-    parent
+    
+    # detach from graph
+    #  1. remove parent
+    if hasparent(c)
+        delete!(c.parent, c)
+    end
+    #  2. remove children
+    while !isempty(c.children)
+        delete!(c, pop!(c.children))
+    end
+    c
 end
 
-Base.detach(node::GraphNode{T}) where T = begin
-    hasparent(node) && delete!(node.parent, node)
-    while !isempty(node.children)
-        pop!(node.children).parent=nothing
-    end
-    node
-end
-
-# intop(c::AbstractContainer) = hasparent(c) && hasparent(c.container)
-# intop(t::Topology) = true
 
 Base.detach(r::Residue) = begin
+    # identify the origin of this residue 
+    # before detachment, otherwise it will
+    #  no longer be possible!
     orig = origin(r)
 
-    # detach from segment
-    if hasparent(r)
-        delete!(r.container, r)
-    end
-    
-    # detach from residue graph
-    detach(r.node)
-    
+    _detach(r)
+
     # remove all inter-residue atom bonds
     for atom in eachatom(r)
-        node = atom.node
-        for i=length(atom.bonds):-1:1
+        for i=length(atom.bonds):-1:1   # note the reverse loop
             other = atom.bonds[i]
+
             # do nothing if the other atom is in this residue
             in(other,r) && continue
 
@@ -293,27 +259,30 @@ Base.detach(r::Residue) = begin
             if (j = findfirst(at->at===atom, other.bonds)) !== nothing
                 deleteat!(other.bonds, j)
             end
+
             # detach from atom graph
-            if node === other.node.parent
-                delete!(node, other.node)
-            elseif other.node === atom.node.parent
-                delete!(other.node, node)
+            if atom === other.parent
+                delete!(atom, other)
+            elseif other === atom.parent
+                delete!(other, atom)
             end
         end
-        if orig!==nothing && atom.node.parent===orig.node
-            delete!(orig.node, atom.node)
+
+        # remove connection to the root node
+        if orig!==nothing && atom.parent===orig
+            delete!(orig, atom)
         end
     end
     r
 end
 
-Base.parent(c::AbstractContainer{T}) where T = c.node.parent
+# Base.parent(c::AbstractContainer{T}) where T = c.node.parent
 
 Base.pop!(top::Topology, state::State, res::Residue) = begin
     if state.id != top.id
         error("mismatch between state and topology IDs")
-    elseif isorphan(res)
-        error("unable to pop orphan residues from topology+state")
+    #elseif isorphan(res)
+    #    error("unable to pop orphan residues from topology+state")
     elseif res.container.container !== top
         error("given residue does not belong to the provided topology")
     end
@@ -323,8 +292,7 @@ Base.pop!(top::Topology, state::State, res::Residue) = begin
 
     # remove node states from parent state and create
     # a new state for this residue
-    atoms = res.items
-    st = splice!(state, atoms[1].index:atoms[end].index)
+    st = splice!(state, res[1].index:res[end].index)
     
     # new common ID
     res.id = st.id = genid()

@@ -136,6 +136,8 @@ end
 
 loadresidue(fname::AbstractString) = loadresidue(Float64, fname)
 
+
+
 function loaddb(::Type{T}, dir::AbstractString=resource_dir) where {T<:AbstractFloat}
     lib = ResidueDB()
     filenames = filter(f->endswith(f, ".pdb"), readdir(dir))
@@ -189,15 +191,17 @@ function build(::Type{T}, seq::Vector{String}, db::ResidueDB) where {T<:Abstract
             atN = get(seg[i], "N")
             push!(atC.bonds, atN)
             push!(atN.bonds, atC)
-            push!(atC.node, atN.node)           # atom graph
-            push!(seg[i-1].node, seg[i].node)   # residue graph
+            # push!(atC.node, atN.node)           # atom graph
+            # push!(seg[i-1].node, seg[i].node)   # residue graph
+            setparent!(atC, atN)           # atom graph
+            setparent!(seg[i-1], seg[i])   # residue graph
         end
     end
     if nres > 0
-        push!(ProtoSyn.origin(top).node, get(seg[1], "N").node)
+        setparent!(ProtoSyn.origin(top), get(seg[1], "N"))
     end
     for atom in eachatom(top)
-        atom.node.ascendents = ascendents(atom.node, 4)
+        atom.ascendents = ascendents(atom, 4)
     end
 
     #build_tree!(top)
@@ -219,10 +223,10 @@ end
 setoffset!(state::State{T}, at::Atom, default) where T = begin
     # rotates all sibling dihedrals to "at" so that the
     # dihedral angle identified by "at" is equal to "default" 
-    if hasparent(at.node)
+    if hasparent(at)
         ϕ = state[at].ϕ-default
-        for child in parent(at).children
-            state[child.item].ϕ -= ϕ
+        for child in at.parent.children
+            state[child].ϕ -= ϕ
         end
     end
     state.i2c = true
@@ -274,8 +278,8 @@ function Base.append!(residue::Residue, state::State, seq::Vector{String}, db::R
         atN = get(res,  "N")
         push!(atC.bonds, atN)
         push!(atN.bonds, atC)
-        push!(atC.node, atN.node)       # atom graph
-        push!(prev.node, res.node)      # residue graph
+        setparent!(atC, atN)       # atom graph
+        setparent!(prev, res)      # residue graph
         #--------------------
 
         prev = res
