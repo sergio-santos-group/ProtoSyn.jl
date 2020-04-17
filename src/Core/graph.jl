@@ -1,15 +1,21 @@
 export setparent!
+export hasparent,haschildren
+
+
+@inline hasparent(c::AbstractContainer) = c.parent !== nothing
+@inline haschildren(c::AbstractContainer) = !isempty(c.children)
+
+
+@doc """
+set parent of child
+"""
 function setparent!(parent::T, child::T) where {T<:AbstractContainer}
-    if parent.name=="O"
-        println("aqui", parent, child)
-    end
+    hasparent(child) && error("unable to setparent! of non-orphan item (perhaps it if a child of root?)")
+
     push!(parent.children, child)
     child.parent = parent
     parent
 end
-
-export hasparent
-@inline hasparent(c::AbstractContainer) = c.parent !== nothing
 
 
 
@@ -24,6 +30,8 @@ Base.delete!(parent::T, child::T) where {T<:AbstractContainer} = begin
     end
     parent
 end
+
+
 
 function adjacency(c::AbstractContainer)
     p = c
@@ -46,3 +54,11 @@ function adjacency(c::AbstractContainer)
     end
     adjlist
 end
+
+
+function node(io::IO, c::AbstractContainer)
+    ctype = nameof(typeof(c))
+    parent = hasparent(c) ? c.parent : "nothing"
+    print(io, "$ctype{$node <- $parent} with $(length(c.children)) children")
+end
+node(c::AbstractContainer) = node(stdout, c)

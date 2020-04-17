@@ -17,7 +17,7 @@ end
 
 lib = ProtoSyn.Peptides.loaddb()
 println("done loading DB")
-top, state = Peptides.build("A"^3, lib)
+top, state = Peptides.build("AA", lib)
 # top, state = Peptides.build("GSPAA", lib)
 println("done building")
 render(top, state, "init")
@@ -66,22 +66,22 @@ if true
     # #render(t, s, "covid2")
 
 
-    append!(top[1][end], state, ["ALA","GLY","SER"], Tst.lib)
-    # append!(top[1][end], state, ["ALA"], Tst.lib)
+    # append!(top[1][end], state, ["SER","GLY","SER"], Tst.lib)
+    # insert!(nothing, top[1,1],  state, ["SER","GLY","SER"], Tst.lib)
+    # insert!(top[1,2], nothing,  state, ["SER","GLY","SER"], Tst.lib)
+    # insert!(top[1,1], top[1,2], state, ["SER","GLY","SER"], Tst.lib)
+    
+    # Peptides.split(top[1,1], top[1,2])
+    # insert!(top[1], state, 1, 2, ["SER","GLY","SER"], lib)
+
+    #append!(top[1][end], state, ["SER","GLY","SER"], lib)
+    
+    append!(top[1], state, ["SER","GLY","SER"], lib, PeptideRxToolbelt)
+
     reindex(top)
     for atom in eachatom(top)
         atom.ascendents = ascendents(atom, 4)
     end
-    #     #println(at)
-    #     node = at.node
-    #     node.ascendents = (
-    #         node.item.index,
-    #         node.parent.item.index,
-    #         node.parent.parent.item.index,
-    #         node.parent.parent.parent.item.index
-    #     )
-    # end
-    # # build_tree!(top)
 
     Peptides.setss!(state, top, Peptides.SecondaryStructure[:linear])
     ProtoSyn.i2c!(state, top, true)
@@ -96,3 +96,15 @@ end
 
 
 end
+
+
+# create a new chain in segment (by default is a child of root)
+#  - insert!(segment, sequence)
+#    <=> append!(segment, sequence)
+#
+# append a sequence and make it a child o parentID
+#  - insert!(segment, parentID, sequence)
+#    <=> append!(parentRES, sequence)
+
+# insert a sequence between fromID and toID
+#  - insert!(segment, fromID, toID, sequence)

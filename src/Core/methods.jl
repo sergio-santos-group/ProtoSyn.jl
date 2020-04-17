@@ -19,7 +19,6 @@ function build_tree!(top::Topology)
             parent = popfirst!(queue)
             for at in parent.bonds
                 at.visited && continue
-                # push!(parent.node, at.node)
                 setparent!(parent, at)
                 at.visited = true
                 push!(queue, at)
@@ -32,10 +31,6 @@ function build_tree!(top::Topology)
         
         # if this atom is orphan, then make it a child
         # of the root (origin)
-        # if !hasparent(node)
-        #     push!(root, node)
-        #     continue
-        # end
         if !hasparent(atom)
             setparent!(root, atom)
             continue
@@ -60,10 +55,7 @@ end
 
 export ascendents
 ascendents(c::AbstractContainer, level::Int) = begin
-    if level == 1
-        return (c.index,)
-    end
-    (c.index, ascendents(c.parent, level-1)...)
+    level == 1 ? (c.index,) : (c.index, ascendents(c.parent, level-1)...)
 end
 
 export sync!
@@ -124,10 +116,10 @@ i2c!(state::State, top::Topology, force=false) = begin
     
     queue = Atom[]
 
-    xyz = zeros(3, state.size)
     root = origin(top)
-    # append!(queue, root.children)
+    xyz = zeros(3, state.size)
     for child in root.children
+        # force all child states to be updated
         state[child].changed |= force
         push!(queue, child)
     end
@@ -137,17 +129,13 @@ i2c!(state::State, top::Topology, force=false) = begin
         (i,j,k) = atom.ascendents
         
         istate = state[i]
-        println(atom)
         for child in atom.children
             state[child].changed |= istate.changed
             push!(queue, child)
         end
         !(istate.changed) && continue
         istate.changed = false
-        #println("updating node $i")
-
-        # j = node.parent.item.index
-        # k = node.parent.parent.item.index
+        
         jstate = state[j]        
         kstate = state[k]        
         Ri = istate.r
@@ -188,36 +176,6 @@ i2c!(state::State, top::Topology, force=false) = begin
     xyz
 end
 
-# Base.findfirst(item::T, container::AbstractContainer{T}) where T = begin
-#     in(item,container) ? findfirst(x->x===item, container.items) : nothing
-# end
-
-# Base.findfirst(item::T, container::Vector{T}) where T = 
-#     findfirst(x->x===item, container)
-
-
-
-Base.delete!(container::AbstractContainer{T}, item::T) where T = begin
-    if in(item, container)
-        i = findfirst(x->x===item, container.items)
-        if i !== nothing
-            deleteat!(container.items, i)
-            item.container = nothing
-            container.size -= 1
-        end
-    end
-    container
-end
-
-
-
-# Base.detach(node::GraphNode{T}) where T = begin
-#     hasparent(node) && delete!(node.parent, node)
-#     while !isempty(node.children)
-#         pop!(node.children).parent=nothing
-#     end
-#     node
-# end
 
 function _detach(c::AbstractContainer)
     # detach from container
@@ -239,9 +197,8 @@ end
 
 
 Base.detach(r::Residue) = begin
-    # identify the origin of this residue 
-    # before detachment, otherwise it will
-    #  no longer be possible!
+    # identify the origin of this residue before detachment,
+    # otherwise it will no longer be possible!
     orig = origin(r)
 
     _detach(r)
@@ -276,7 +233,6 @@ Base.detach(r::Residue) = begin
     r
 end
 
-# Base.parent(c::AbstractContainer{T}) where T = c.node.parent
 
 Base.pop!(top::Topology, state::State, res::Residue) = begin
     if state.id != top.id
@@ -293,24 +249,86 @@ Base.pop!(top::Topology, state::State, res::Residue) = begin
     # remove node states from parent state and create
     # a new state for this residue
     st = splice!(state, res[1].index:res[end].index)
+    reindex(top)
     
     # new common ID
     res.id = st.id = genid()
-
-    # renumber
-    reindex(top)
 
     return (res,st)
     
 end
 
 
-# # Base.Colon(a::Atom, b::Atom) = UnitRange(a.index,b.index)
-# # import Base.-
 
-# # :(a::AbstractContainer{T}, b::AbstractContainer{T}) where T = a.index:b.index
-# Base.:-(a::AbstractContainer{T}, b::AbstractContainer{T}) where T = a.index-b.index
-# # Base.:-(a::Atom, b::Atom) = a.index-b.index
-# Base.Colon(a::Atom, b::Atom) = UnitRange{Int}(a.index,b.index)
 
-Base.copy(rs::Tuple{Residue, State}) = (copy(rs[1]), copy(rs[2]))
+
+#---------------------------
+# export append!
+Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+    residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
+
+    root = ProtoSyn.origin(segment)
+    # setparent!(root, get(residues[1], "N"))
+    setparent!(root, rxtb.root(residues[1]))
+
+    segment
+end
+
+Base.append!(parent::Residue, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+    segment = parent.container
+    
+    # residue insertion point
+    ripoint = findfirst(r->r===parent, segment.items)
+    
+    # state insertion point
+    sipoint = mapreduce(a->a.index, max, parent.items)
+    
+    # perform insertion
+    residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
+    
+    # link new sequence to parent
+    rxtb.join(parent, residues[1])
+    segment
+end
+
+
+_insert!(segment::Segment, ripoint::Int, state::State, sipoint::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+    prev = nothing
+    residues = Residue[]
+    for s in seq
+        res, st = from(db, s)
+        
+        # insert sub-state into state
+        insert!(state, sipoint, st)
+        sipoint += length(res)
+        
+        # insert residue into segment
+        insert!(segment, ripoint, res)
+        res.id = ripoint
+        ripoint += 1
+
+        prev !== nothing && rxtb.join(prev, res)
+        push!(residues, res)
+        prev = res
+    end
+    residues
+end
+
+Base.insert!(segment::Segment, state::State, i::Int, j::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+    if i < 0
+        throw(BoundsError(segment, i))
+    elseif i > length(segment)
+        throw(BoundsError(segment, j))
+    end
+
+    r1 = segment[i]
+    r2 = segment[j]
+    
+    sipoint = mapreduce(a->a.index, max, r1.items; init=0)
+    ripoint = findfirst(r->r===r1, segment.items)
+    residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
+    rxtb.join(r1, residues[1])
+    rxtb.join(residues[end], r2)
+    
+    segment
+end

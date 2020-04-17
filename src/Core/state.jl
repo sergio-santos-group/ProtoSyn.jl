@@ -1,10 +1,10 @@
 using LinearAlgebra: I
 using StaticArrays
 
-#region NodeState --------------------------------------------------------------
+#region AtomState --------------------------------------------------------------
 
-export NodeState
-mutable struct NodeState{T<:AbstractFloat}
+export AtomState
+mutable struct AtomState{T<:AbstractFloat}
     t::MVector{3,T}         # translation vector
     r::MMatrix{3,3,T,9}     # local to global rotation matrix
     
@@ -17,8 +17,8 @@ mutable struct NodeState{T<:AbstractFloat}
     changed::Bool           # flag
 end
 
-NodeState{T}() where {T} = begin
-    NodeState{T}(
+AtomState{T}() where {T} = begin
+    AtomState{T}(
         MVector{3,T}(zeros(T, 3)),
         MMatrix{3,3,T,9}(Matrix{T}(I,3,3)),
         zero(T),
@@ -29,43 +29,50 @@ NodeState{T}() where {T} = begin
     )
 end
 
-Base.setproperty!(ns::NodeState{T}, key::Symbol, val) where T = begin
+Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
     if key == :Δϕ
         setfield!(ns, :changed, true)
     end
     setfield!(ns, key, val)
 end
 
-#endregion NodeState
+
+#endregion AtomState
+
 
 #region State ------------------------------------------------------------------
 
+
 export State
 mutable struct State{T<:AbstractFloat}
-    items::Vector{NodeState{T}}
-    size::Int
-    id::Int
-    i2c::Bool
-    c2i::Bool
+    items::Vector{AtomState{T}} 
+    size::Int           # number of items
+    id::Int             # id to be matched to the corresponding container
+    i2c::Bool           # flag to request internal to cartesian conversion
+    c2i::Bool           # flag to request cartesian to internal conversion
+    index_offset::Int   # ...
+
     # x::Array{T,2}
     # f::Array{T,2}
     # v::Array{T,2}
-    index_offset::Int
 end
+
 State{T}(n::Int) where T = begin
-    items = Vector{NodeState{T}}(undef, n+3)
+    items = Vector{AtomState{T}}(undef, n+3)
     for i=1:n+3
-        items[i] = NodeState{T}()
+        items[i] = AtomState{T}()
     end
     items[1].t[1] = -1.0
     items[1].t[2] =  1.0
     items[2].t[1] = -1.0
     State{T}(items, n, -1, false, false, 3)
-    # State{T}(items, n, -1, false, false, zeros(T,3,n))
 end
-State(::Type{T}, n::Int) where T = State{T}(n)
+
 State(n::Int) = State{Float64}(n)
-State(items::Vector{NodeState{T}}) where T = begin
+
+State(::Type{T}, n::Int) where T = State{T}(n)
+
+State(items::Vector{AtomState{T}}) where T = begin
     s = State{T}(items, length(items), -1, false, false, 0)
 end
 State{T}() where T = State{T}(0)
@@ -97,32 +104,18 @@ Base.append!(s1::State{T}, s2::State{T}) where T = begin
     s1.size += s2.size
     s1
 end
+
 Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
     index += s1.index_offset
-    for i = 1:s2.size
-        # push!(s1.items, s2[i])
-        insert!(s1.items, index+i, s2[i])
-        #println("s2 :", s2[i])
-        #println(" s1:", s1[index+i])
-        #println("  i:", index+i)
+    for i = 0:s2.size-1
+        insert!(s1.items, index+i, s2[i+1])
     end
     s1.size += s2.size
     s1
 end
 
 
+Base.copy(s::State{T}) where T = deepcopy(s)
 
-
-Base.copy(s::State{T}) where T = begin
-    deepcopy(s)
-end
-
-# export set!
-# set!(s::NodeState{T}, b::T, θ::T, ϕ::T) where T = begin
-#     s.b = b
-#     s.θ = θ
-#     s.ϕ = ϕ
-#     s
-# end
 
 #endregion State

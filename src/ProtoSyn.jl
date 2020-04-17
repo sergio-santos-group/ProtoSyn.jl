@@ -27,13 +27,20 @@ include("core/types.jl")
 include("core/graph.jl")
 include("core/base.jl")
 include("core/state.jl")
-include("core/io.jl")
-include("core/iterators.jl")
-include("core/methods.jl")
 
 export ResidueDB
 const ResidueDB = Dict{String, Tuple{Residue, State}}
 
+include("core/io.jl")           # <-- ATTENTION
+include("core/iterators.jl")    # <-- ATTENTION
+include("core/methods.jl")
+
+
+export from
+from(db::ResidueDB, key::String) = begin
+    r,s=db[key]
+    copy(r), copy(s)
+end
 
 #include("core/state2.jl")
 #include("core/base2.jl")

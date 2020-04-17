@@ -84,7 +84,6 @@ Base.read(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 end
 
 
-# Base.write(io::IO, top::Topology, state::State, ::Type{Zmat.PDB}) = begin
 Base.write(io::IO, top::Topology, state::State) = begin
     
     println(io, "MODEL")
@@ -95,7 +94,6 @@ Base.write(io::IO, top::Topology, state::State) = begin
             atom.index, atom.name,
             atom.container.name, atom.container.container.name,
             atom.container.id,
-            # atom.container.name, "?", atom.container.id,
             sti.t[1], sti.t[2], sti.t[3],
             atom.symbol)
         println(io, s)
@@ -103,7 +101,6 @@ Base.write(io::IO, top::Topology, state::State) = begin
 
     for atom in eachatom(top)
        print(io, @sprintf("CONECT%5d", atom.index))
-    #    foreach(n->print(io, @sprintf("%5d",n.item.index)), atom.node.children)
        foreach(n->print(io, @sprintf("%5d",n.index)), atom.children)
        println(io,"")
     end
