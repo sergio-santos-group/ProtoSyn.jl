@@ -12,7 +12,9 @@ end
 include("constants.jl")
 
 
+
 @inline isproline(r::Residue) = uppercase(r.name) == "PRO"
+
 
 
 function loadresidue(::Type{T}, fname::AbstractString) where {T<:AbstractFloat}
@@ -149,9 +151,9 @@ function peptidejoin(r1::Residue, r2::Residue)
         push!(atC.bonds, atN)
         push!(atN.bonds, atC)
         # atom graph
-        setparent!(atC, atN)
+        link!(atC, atN)
         # residue graph
-        setparent!(r1, r2)
+        link!(r1, r2)
     end
 end
 
@@ -160,7 +162,7 @@ function peptidesplit(r1::Residue, r2::Residue)
         error("unable to spli")
     else
         # split residue graph
-        delete!(r1, r2)
+        unlink!(r1, r2)
         # remove peptide bond
         atC = get(r1, "C")
         atN = get(r2, "N")
@@ -168,7 +170,7 @@ function peptidesplit(r1::Residue, r2::Residue)
         j = findfirst(a->a===atC, atN.bonds)
         deleteat!(atC.bonds, i)
         deleteat!(atN.bonds, j)
-        delete!(atC, atN)
+        unlink!(atC, atN)
     end
 end
 

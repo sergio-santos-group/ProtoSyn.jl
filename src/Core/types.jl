@@ -7,7 +7,7 @@ const Opt = Union{Nothing, T} where T
 # Subtypes of AbstractContainer shoud implement the following fields:
 #  - name
 #  - id
-#  - items[],
+#  - items[]
 #  - container
 #  - size
 # and the graph related fields
@@ -107,8 +107,8 @@ function Root()::Residue
     x = Atom("OX", -1, -1, "?")
     o = Atom("OO",  0,  0, "?")
     push!(root, y, x, o)
-    setparent!(y, x)
-    setparent!(x, o)
+    link!(y, x)
+    link!(x, o)
     root
 end
 

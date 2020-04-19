@@ -1,5 +1,5 @@
-export setparent!
-export hasparent,haschildren
+export link!, unlink!
+export hasparent, haschildren
 
 
 @inline hasparent(c::AbstractContainer) = c.parent !== nothing
@@ -9,8 +9,9 @@ export hasparent,haschildren
 @doc """
 set parent of child
 """
-function setparent!(parent::T, child::T) where {T<:AbstractContainer}
-    hasparent(child) && error("unable to setparent! of non-orphan item (perhaps it if a child of root?)")
+function link!(parent::T, child::T) where {T<:AbstractContainer}
+# function setparent!(parent::T, child::T) where {T<:AbstractContainer}
+    hasparent(child) && error("unable to link! of non-orphan item (perhaps it if a child of root?)")
 
     push!(parent.children, child)
     child.parent = parent
@@ -18,9 +19,8 @@ function setparent!(parent::T, child::T) where {T<:AbstractContainer}
 end
 
 
-
-
-Base.delete!(parent::T, child::T) where {T<:AbstractContainer} = begin
+#Base.delete!(parent::T, child::T) where {T<:AbstractContainer} = begin
+function unlink!(parent::T, child::T) where {T<:AbstractContainer}
     if child.parent === parent
         i = findfirst(x->x===child, parent.children)
         if i !== nothing
@@ -57,8 +57,6 @@ end
 
 
 function node(io::IO, c::AbstractContainer)
-    ctype = nameof(typeof(c))
-    parent = hasparent(c) ? c.parent : "nothing"
-    print(io, "$ctype{$node <- $parent} with $(length(c.children)) children")
+    print(io, "$c(<- $(repr(c.parent))) with $(length(c.children)) children")
 end
 node(c::AbstractContainer) = node(stdout, c)

@@ -19,7 +19,7 @@ function build_tree!(top::Topology)
             parent = popfirst!(queue)
             for at in parent.bonds
                 at.visited && continue
-                setparent!(parent, at)
+                link!(parent, at)
                 at.visited = true
                 push!(queue, at)
             end
@@ -32,7 +32,7 @@ function build_tree!(top::Topology)
         # if this atom is orphan, then make it a child
         # of the root (origin)
         if !hasparent(atom)
-            setparent!(root, atom)
+            link!(root, atom)
             continue
         end
 
@@ -42,7 +42,7 @@ function build_tree!(top::Topology)
         if child_res===parent_res || (child_res.visited && parent_res.visited)
             continue
         end
-        setparent!(parent_res, child_res)
+        link!(parent_res, child_res)
         parent_res.visited = true
         child_res.visited = true
     end
@@ -186,11 +186,11 @@ function _detach(c::AbstractContainer)
     # detach from graph
     #  1. remove parent
     if hasparent(c)
-        delete!(c.parent, c)
+        unlink!(c.parent, c)
     end
     #  2. remove children
     while !isempty(c.children)
-        delete!(c, pop!(c.children))
+        unlink!(c, pop!(c.children))
     end
     c
 end
@@ -219,15 +219,15 @@ Base.detach(r::Residue) = begin
 
             # detach from atom graph
             if atom === other.parent
-                delete!(atom, other)
+                unlink!(atom, other)
             elseif other === atom.parent
-                delete!(other, atom)
+                unlink!(other, atom)
             end
         end
 
         # remove connection to the root node
         if orig!==nothing && atom.parent===orig
-            delete!(orig, atom)
+            unlink!(orig, atom)
         end
     end
     r
@@ -268,8 +268,7 @@ Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB,
     residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
 
     root = ProtoSyn.origin(segment)
-    # setparent!(root, get(residues[1], "N"))
-    setparent!(root, rxtb.root(residues[1]))
+    link!(root, rxtb.root(residues[1]))
 
     segment
 end
