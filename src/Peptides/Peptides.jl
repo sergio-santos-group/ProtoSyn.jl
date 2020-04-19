@@ -153,30 +153,24 @@ function peptidejoin(r1::Residue, r2::Residue)
     else
         atC = get(r1, "C")
         atN = get(r2, "N")
-        push!(atC.bonds, atN)
-        push!(atN.bonds, atC)
-        # atom graph
+        bond(atC, atN)
+        # set graphs
         setparent!(atN, atC)
-        # residue graph
         setparent!(r2, r1)
     end
 end
 
 function peptidesplit(r1::Residue, r2::Residue)
     if !hasparent(r2) || r2.parent !== r1
-        error("unable to spli")
+        error("unable to split")
     else
-        # split residue graph
-        popparent!(r2)
-        # remove peptide bond
         atC = get(r1, "C")
         atN = get(r2, "N")
         unbond(atC, atN)
-        # i = findfirst(a->a===atN, atC.bonds)
-        # j = findfirst(a->a===atC, atN.bonds)
-        # deleteat!(atC.bonds, i)
-        # deleteat!(atN.bonds, j)
+        
+        # split graphs
         popparent!(atN)
+        popparent!(r2)
     end
 end
 
