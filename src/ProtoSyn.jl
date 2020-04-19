@@ -22,9 +22,9 @@ include("XMLRPC/XMLRPC.jl")
 # function run! end
 
 
+include("core/graph.jl")
 include("core/macros.jl")
 include("core/types.jl")
-include("core/graph.jl")
 include("core/base.jl")
 include("core/state.jl")
 

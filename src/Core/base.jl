@@ -116,7 +116,7 @@ end
         
         # build atom graph
         if hasparent(at)
-            in(at, r) && link!(r1[at.parent.name], at1)
+            in(at, r) && setparent!(at1, r1[at.parent.name])
         end
     end
     r1

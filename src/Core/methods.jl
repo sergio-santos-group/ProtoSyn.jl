@@ -19,7 +19,7 @@ function build_tree!(top::Topology)
             parent = popfirst!(queue)
             for at in parent.bonds
                 at.visited && continue
-                link!(parent, at)
+                setparent!(at, parent)
                 at.visited = true
                 push!(queue, at)
             end
@@ -32,7 +32,7 @@ function build_tree!(top::Topology)
         # if this atom is orphan, then make it a child
         # of the root (origin)
         if !hasparent(atom)
-            link!(root, atom)
+            setparent!(atom, root)
             continue
         end
 
@@ -42,7 +42,7 @@ function build_tree!(top::Topology)
         if child_res===parent_res || (child_res.visited && parent_res.visited)
             continue
         end
-        link!(parent_res, child_res)
+        setparent!(child_res, parent_res)
         parent_res.visited = true
         child_res.visited = true
     end
@@ -178,19 +178,16 @@ end
 
 
 function _detach(c::AbstractContainer)
-    # detach from container
-    if hascontainer(c)
-        delete!(c.container, c)
-    end
+    # 1. detach from container
+    hascontainer(c) && delete!(c.container, c)
     
-    # detach from graph
-    #  1. remove parent
-    if hasparent(c)
-        unlink!(c.parent, c)
-    end
-    #  2. remove children
-    while !isempty(c.children)
-        unlink!(c, pop!(c.children))
+    # 2. detach from graph
+    #  2.1. remove parent
+    hasparent(c) && popparent!(c)
+    
+    #  2.2 remove children
+    while haschildren(c)
+        popchild!(c)
     end
     c
 end
@@ -219,15 +216,15 @@ Base.detach(r::Residue) = begin
 
             # detach from atom graph
             if atom === other.parent
-                unlink!(atom, other)
+                popparent!(other)
             elseif other === atom.parent
-                unlink!(other, atom)
+                popparent!(atom)
             end
         end
 
         # remove connection to the root node
         if orig!==nothing && atom.parent===orig
-            unlink!(orig, atom)
+            popparent!(atom)
         end
     end
     r
@@ -268,7 +265,7 @@ Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB,
     residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
 
     root = ProtoSyn.origin(segment)
-    link!(root, rxtb.root(residues[1]))
+    setparent!(rxtb.root(residues[1]), root)
 
     segment
 end
@@ -285,7 +282,7 @@ Base.append!(parent::Residue, state::State, seq::Vector{String}, db::ResidueDB, 
     # perform insertion
     residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
     
-    # link new sequence to parent
+    # join new sequence to parent
     rxtb.join(parent, residues[1])
     segment
 end

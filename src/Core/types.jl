@@ -10,26 +10,11 @@ const Opt = Union{Nothing, T} where T
 #  - items[]
 #  - container
 #  - size
-# and the graph related fields
-#  - parent
-#  - children
-#  - visited
-#  - ascendents
-abstract type AbstractContainer{T}  end
+abstract type AbstractContainer{T} <: AbstractDigraph  end
 abstract type AbstractAtom     <: AbstractContainer{Nothing}         end
 abstract type AbstractResidue  <: AbstractContainer{AbstractAtom}    end
 abstract type AbstractSegment  <: AbstractContainer{AbstractResidue} end
 abstract type AbstractTopology <: AbstractContainer{AbstractSegment} end
-
-
-function initgraph!(c::AbstractContainer)
-    c.visited = false
-    c.parent = nothing
-    c.children = Atom[]
-    c.ascendents = nothing
-    c
-end
-
 
 mutable struct Atom <: AbstractAtom
     name::String                    # atom name
@@ -100,6 +85,12 @@ mutable struct Topology <: AbstractTopology
     end
 end
 
+export ReactionToolbelt
+struct ReactionToolbelt{F<:Function, G<:Function, H<:Function}
+    join::F
+    split::G
+    root::H
+end
 
 function Root()::Residue
     root = Residue("ROOT", -1)
@@ -107,14 +98,8 @@ function Root()::Residue
     x = Atom("OX", -1, -1, "?")
     o = Atom("OO",  0,  0, "?")
     push!(root, y, x, o)
-    link!(y, x)
-    link!(x, o)
+    setparent!(x, y)
+    setparent!(o, x)
     root
 end
 
-export ReactionToolbelt
-struct ReactionToolbelt{F<:Function, G<:Function, H<:Function}
-    join::F
-    split::G
-    root::H
-end
