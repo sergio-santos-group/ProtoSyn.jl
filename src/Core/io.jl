@@ -66,9 +66,10 @@ Base.read(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             idxs = map(s->parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
-                other = id2atom[i]
-                other ∉ pivot.bonds && push!(pivot.bonds, other)
-                pivot ∉ other.bonds && push!(other.bonds, pivot)
+                bond(pivot, id2atom[i])
+                # other = id2atom[i]
+                # other ∉ pivot.bonds && push!(pivot.bonds, other)
+                # pivot ∉ other.bonds && push!(other.bonds, pivot)
             end
         end
     end

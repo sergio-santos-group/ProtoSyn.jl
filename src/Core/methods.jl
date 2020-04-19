@@ -2,6 +2,20 @@ using LinearAlgebra: dot
 
 export build_tree!
 
+export bond, unbond
+
+@inline function unbond(at1::Atom, at2::Atom)
+    i = findfirst(a->a===at1, at2.bonds)
+    i !== nothing && deleteat!(at2.bonds, i)
+    j = findfirst(a->a===at2, at1.bonds)
+    j !== nothing && deleteat!(at1.bonds, j)
+end
+
+@inline function bond(at1::Atom, at2::Atom)
+    !in(at2, at1.bonds) && push!(at1.bonds, at2)
+    !in(at1, at2.bonds) && push!(at2.bonds, at1)
+end
+
 function build_tree!(top::Topology)
 
     queue = Atom[]
@@ -209,10 +223,11 @@ Base.detach(r::Residue) = begin
             in(other,r) && continue
 
             # remove inter-residue bonds
-            deleteat!(atom.bonds, i)
-            if (j = findfirst(at->at===atom, other.bonds)) !== nothing
-                deleteat!(other.bonds, j)
-            end
+            unbond(atom, other)
+            #deleteat!(atom.bonds, i)
+            #if (j = findfirst(at->at===atom, other.bonds)) !== nothing
+            #    deleteat!(other.bonds, j)
+            #end
 
             # detach from atom graph
             if atom === other.parent
@@ -327,4 +342,33 @@ Base.insert!(segment::Segment, state::State, i::Int, j::Int, seq::Vector{String}
     rxtb.join(residues[end], r2)
     
     segment
+end
+
+
+
+
+export setdihedral!
+
+@inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
+    at = r[atname]
+    at !== nothing && setdihedral!(s, at, value)
+    s
+end
+
+@inline setdihedral!(s::State{T}, at::Atom, val::T) where T = (s[at].Δϕ = val; s)
+
+
+export setoffset!
+
+setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
+    # rotates all sibling dihedrals to "at" so that the
+    # dihedral angle identified by "at" is equal to "default" 
+    if hasparent(at)
+        ϕ = state[at].ϕ - T(default)
+        for child in at.parent.children
+            state[child].ϕ -= ϕ
+        end
+    end
+    state.i2c = true
+    state
 end
