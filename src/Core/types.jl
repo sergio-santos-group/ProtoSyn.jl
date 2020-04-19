@@ -11,10 +11,11 @@ const Opt = Union{Nothing, T} where T
 #  - container
 #  - size
 abstract type AbstractContainer{T} <: AbstractDigraph  end
-abstract type AbstractAtom     <: AbstractContainer{Nothing}         end
-abstract type AbstractResidue  <: AbstractContainer{AbstractAtom}    end
-abstract type AbstractSegment  <: AbstractContainer{AbstractResidue} end
-abstract type AbstractTopology <: AbstractContainer{AbstractSegment} end
+abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
+abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
+abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
+abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
+
 
 mutable struct Atom <: AbstractAtom
     name::String                    # atom name
@@ -64,7 +65,7 @@ mutable struct Segment <: AbstractSegment
     items::Vector{Residue}              # list of residues (children)
     container::Opt{AbstractTopology}    # parent topology
     size::Int
-
+    
     Segment(name::String, id::Int) = begin
         new(name, id, Residue[], nothing, 0)
     end

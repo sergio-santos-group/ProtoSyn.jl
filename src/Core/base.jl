@@ -157,3 +157,6 @@ export reindex
     end
     c
 end
+
+
+Base.haskey(r::Residue, k::AbstractString) = haskey(r.itemsbyname, k)
