@@ -58,26 +58,21 @@ function adjacency(p::AbstractDigraph)
     end
     
     adjlist = Dict{Int, Vector{Int}}()
-    # bfs(p) do c
-    #     if !haskey(adjlist, c.parent.index)
-    #         c.parent.index = []
-    #     end
-    #     push!(adjlist[c.parent.index], c.index)
-    # end
-
-    queue = AbstractDigraph[]
-    push!(queue, p)
-    while !isempty(queue)
-        p = popfirst!(queue)
-        lst = []
-        for c in p.children
-            push!(lst, c.index)
-            push!(queue, c)
-        end
-        adjlist[p.index] = lst
+    bfs(p) do c
+        hasparent(c) && push!(get!(adjlist, c.parent.index, []), c.index)
     end
+    # queue = AbstractDigraph[]
+    # push!(queue, p)
+    # while !isempty(queue)
+    #     p = popfirst!(queue)
+    #     lst = []
+    #     for c in p.children
+    #         push!(lst, c.index)
+    #         push!(queue, c)
+    #     end
+    #     adjlist[p.index] = lst
+    # end
     adjlist
-    
 end
 
 
