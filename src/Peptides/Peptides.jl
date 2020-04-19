@@ -102,40 +102,45 @@ build(::Type{T}, seq::Vector{String}, db::ResidueDB) where {T<:AbstractFloat} = 
 end
 
 
-setoffset!(state::State{T}, at::Atom, default) where T = begin
-    # rotates all sibling dihedrals to "at" so that the
-    # dihedral angle identified by "at" is equal to "default" 
-    if hasparent(at)
-        ϕ = state[at].ϕ-default
-        for child in at.parent.children
-            state[child].ϕ -= ϕ
-        end
-    end
-    state.i2c = true
-    state
-end
+# setoffset!(state::State{T}, at::Atom, default) where T = begin
+#     # rotates all sibling dihedrals to "at" so that the
+#     # dihedral angle identified by "at" is equal to "default" 
+#     if hasparent(at)
+#         ϕ = state[at].ϕ-default
+#         for child in at.parent.children
+#             state[child].ϕ -= ϕ
+#         end
+#     end
+#     state.i2c = true
+#     state
+# end
 
+# @inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where {T<:AbstractFloat}= begin
+#     at = r[atname]
+#     at !== nothing && setdihedral!(s, at, value)
+#     s
+# end
 
+# @inline setdihedral!(s::State{T}, at::Atom, value::T) where {T<:AbstractFloat}= begin
+#     s[at].Δϕ = value
+#     s
+# end
 
-set!(state{T}, residue::Residue, dtype::DihedralTypes.Type, value::T) where {T<:AbstractFloat}= begin
-    at = residue[dtype]
-    if at !== nothing
-        state[at].Δϕ = value
-    end
-    state
-end
-
-setss!(state::State, top::Topology, (ϕ, ψ, ω)::Tuple{Number,Number,Number}) = begin
+setss!(state::State, seg::Segment, (ϕ, ψ, ω)::NTuple{3,Number}) = begin
     t = eltype(state)
     ϕ, ψ, ω = t(ϕ), t(ψ), t(ω)
-    for r in eachresidue(top)
-        state[r["CA"]].Δϕ = ϕ   # dihedral C-N-CA-C
-        state[r["C" ]].Δϕ = ψ   # dihedral N-CA-C-N
-        state[r["N" ]].Δϕ = ω   # dihedral CA-C-N-CA
+    for r in eachresidue(seg)
+        setdihedral!(state, r[DihedralTypes.phi], ϕ)
+        setdihedral!(state, r[DihedralTypes.psi], ψ)
+        setdihedral!(state, r[DihedralTypes.omega], ω)
+        # state[r[@ϕ]].Δϕ = ϕ   # dihedral C-N-CA-C
+        # state[r[@ψ]].Δϕ = ψ   # dihedral N-CA-C-N
+        # state[r[@ω]].Δϕ = ω   # dihedral CA-C-N-CA
     end
     state.i2c = true
     state
 end
+setss!(s::State, seg::Segment, (ϕ, ψ)::NTuple{2,Number}) = setss!(s, seg, (ϕ,ψ,pi))
 
 
 #----------------------------------------------------
@@ -166,10 +171,11 @@ function peptidesplit(r1::Residue, r2::Residue)
         # remove peptide bond
         atC = get(r1, "C")
         atN = get(r2, "N")
-        i = findfirst(a->a===atN, atC.bonds)
-        j = findfirst(a->a===atC, atN.bonds)
-        deleteat!(atC.bonds, i)
-        deleteat!(atN.bonds, j)
+        unbond(atC, atN)
+        # i = findfirst(a->a===atN, atC.bonds)
+        # j = findfirst(a->a===atC, atN.bonds)
+        # deleteat!(atC.bonds, i)
+        # deleteat!(atN.bonds, j)
         popparent!(atN)
     end
 end
