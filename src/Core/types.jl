@@ -94,7 +94,7 @@ struct ReactionToolbelt{F<:Function, G<:Function, H<:Function}
 end
 
 function Root()::Residue
-    root = Residue("ROOT", -1)
+    root = Residue("ROOT", genid())
     y = Atom("OY", -2, -2, "?")
     x = Atom("OX", -1, -1, "?")
     o = Atom("OO",  0,  0, "?")
