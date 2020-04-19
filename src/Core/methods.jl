@@ -16,60 +16,146 @@ end
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end
 
-function build_tree!(top::Topology)
 
-    queue = Atom[]
-    byatom = eachatom(top)
+
+
+# function build_tree(molecule::ProtoSyn.Molecule)
+#     ts = ProtoSyn.TraverseState(size(molecule))
+#     head = tail = 0
+
+#     root = TreeNode(get(molecule.residues[1], "N"))
+#     tree = Vector{TreeNode}(undef, size(molecule))
     
-    # reset graph flags
-    foreach(r->r.visited=false, eachresidue(top))
-    foreach(at->at.visited=false, byatom)
+#     ts.visited[root.atom.id+root.atom.residue.offset] = true
+#     tree[tail+=1] = root
 
-    for atom in byatom
-        atom.visited && continue
-        atom.visited = true
-        push!(queue, atom)
-        while !isempty(queue)
-            parent = popfirst!(queue)
-            for at in parent.bonds
-                at.visited && continue
-                setparent!(at, parent)
-                at.visited = true
-                push!(queue, at)
+#     #root.id+root.residue.offset
+    
+#     atoms = collect(ProtoSyn.iterbyatom(molecule))
+
+#     while head < tail
+#         # id1 = ts.indices[head+=1]
+#         parent = tree[head+=1]
+#         id1 = parent.atom.id + parent.atom.residue.offset
+#         for id2 in molecule.bonds[id1]
+#             if !ts.visited[id2]
+#                 node = TreeNode(atoms[id2], root)
+#                 push!(parent.children, node)
+#                 ts.visited[id2] = true
+#                 # ts.indices[tail+=1] = id2
+#                 tree[tail+=1] = node
+#             end
+#         end
+#     end
+#     return tree
+# end
+
+build_tree!(top::Topology) = build_tree!(t->[t[1,1,"N"]], top)
+
+function build_tree!(seedfinder::Function, top::Topology)
+
+    head = tail = 0
+    natoms = count_atoms(top)
+    tree = Vector{Atom}(undef, natoms)
+    
+    seeds = seedfinder(top)
+    root = origin(top)
+
+    # build atom tree
+    for seed in seeds    
+        tree[tail+=1] = seed
+        seed.visited = true
+        while head < tail
+            parent = tree[head+=1]
+            for atom in parent.bonds
+                atom.visited && continue
+                setparent!(atom, parent)
+                tree[tail+=1] = atom 
+                atom.visited = true
             end
         end
+        hasparent(seed) && error("invalid seed encountered")
+        setparent!(seed, root)
     end
-
-    root = origin(top)
-    for atom in byatom
-        
-        # if this atom is orphan, then make it a child
-        # of the root (origin)
-        if !hasparent(atom)
-            setparent!(atom, root)
-            continue
-        end
-
-        # build residue graph
-        child_res = atom.container
-        parent_res = atom.parent.container
-        if child_res===parent_res || (child_res.visited && parent_res.visited)
-            continue
-        end
-        setparent!(child_res, parent_res)
-        parent_res.visited = true
-        child_res.visited = true
-    end
-
-    for atom in byatom
+    
+    # build residue graph
+    for atom in tree
         atom.ascendents = ascendents(atom, 4)
+        r = atom.container
+        p = atom.parent.container
+        if r===p || p===top.root || (r.visited && p.visited)
+            continue
+        end
+        if r.container !== p.container
+            error("parent and child residue must belong to the same segment")
+        end
+        setparent!(r, p)
+        r.visited = p.visited = true
     end
-    top
+    tree
 end
+
+count_atoms(c::AbstractContainer) = mapreduce(x->count_atoms(x), +, c.items, init=0)
+count_atoms(r::Residue) = r.size
+count_atoms(a::Atom) = 1
+
+
+# function build_tree!(top::Topology)
+
+#     queue = Atom[]
+#     byatom = eachatom(top)
+    
+#     # reset graph flags
+#     foreach(r->r.visited=false, eachresidue(top))
+#     foreach(at->at.visited=false, byatom)
+
+#     for atom in byatom
+#         atom.visited && continue
+#         atom.visited = true
+#         push!(queue, atom)
+#         while !isempty(queue)
+#             parent = popfirst!(queue)
+#             for at in parent.bonds
+#                 at.visited && continue
+#                 setparent!(at, parent)
+#                 at.visited = true
+#                 push!(queue, at)
+#             end
+#         end
+#     end
+
+#     root = origin(top)
+#     for atom in byatom
+        
+#         # if this atom is orphan, then make it a child
+#         # of the root (origin)
+#         if !hasparent(atom)
+#             setparent!(atom, root)
+#             continue
+#         end
+
+#         # build residue graph
+#         child_res = atom.container
+#         parent_res = atom.parent.container
+#         if child_res===parent_res || (child_res.visited && parent_res.visited)
+#             continue
+#         end
+#         setparent!(child_res, parent_res)
+#         parent_res.visited = true
+#         child_res.visited = true
+#     end
+
+#     for atom in byatom
+#         atom.ascendents = ascendents(atom, 4)
+#     end
+#     top
+# end
+
 
 export ascendents
 ascendents(c::AbstractContainer, level::Int) = begin
-    level == 1 ? (c.index,) : (c.index, ascendents(c.parent, level-1)...)
+    level > 1 ? (c.index, ascendents(c.parent, level-1)...) : (c.index,)
+    # level == 1 ? (c.index,) : (c.index, ascendents(c.parent, level-1)...)
 end
 
 export sync!
@@ -278,10 +364,10 @@ end
 # export append!
 Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
     residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
-
-    root = ProtoSyn.origin(segment)
+    
+    root = origin(segment)
     setparent!(rxtb.root(residues[1]), root)
-
+    
     segment
 end
 
