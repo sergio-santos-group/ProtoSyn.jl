@@ -24,7 +24,7 @@ render(top, state, "init")
 
 
 if true
-    Peptides.setss!(state, top, Peptides.SecondaryStructure[:linear])
+    Peptides.setss!(state, top[1], Peptides.SecondaryStructure[:linear])
     # println("done setss!")
     sync!(state, top, true)
     println("done sync!")
@@ -83,11 +83,11 @@ if true
         atom.ascendents = ascendents(atom, 4)
     end
 
-    Peptides.setss!(state, top, Peptides.SecondaryStructure[:linear])
+    Peptides.setss!(state, top[1], Peptides.SecondaryStructure[:linear])
     ProtoSyn.i2c!(state, top, true)
     render(top,state,"added")
 
-    Peptides.setss!(state, top, Peptides.SecondaryStructure[:helix])
+    Peptides.setss!(state, top[1], Peptides.SecondaryStructure[:helix])
     ProtoSyn.i2c!(state, top, true)
     render(top,state,"helix")
 
