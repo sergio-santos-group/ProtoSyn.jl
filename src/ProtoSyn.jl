@@ -28,6 +28,28 @@ include("core/types.jl")
 include("core/base.jl")
 include("core/state.jl")
 
+
+
+# export CSPair
+# const CSPair = Tuple{AbstractContainer, State}
+# pair(c::AbstractContainer, s::State) = begin
+#     p = c
+#     while hascontainer(p)
+#         p = p.container
+#     end
+#     p.id != s.id && error("unable to pair container with state having different IDs")
+#     Pair(c,s)
+# end
+# 
+# @inline container(csp::CSPair) = csp[1]
+# @inline state(csp::CSPair) = csp[2]
+# 
+# container(t::Topology; topmost::Bool) = t
+# container(c::AbstractContainer; topmost=false) = begin
+#     topmost && hascontainer(c) ? container(c.container; topmost=true) : c.container
+# end
+
+
 export ResidueDB
 const ResidueDB = Dict{String, Tuple{Residue, State}}
 
