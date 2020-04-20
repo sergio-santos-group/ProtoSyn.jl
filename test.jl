@@ -93,7 +93,8 @@ if true
 
 end
 
-
+s = select(top, rname"GLY" & (name"CA" | name"C"))
+println(s)
 
 end
 
