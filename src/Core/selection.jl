@@ -3,9 +3,6 @@ export @sn_str, @rn_str, @an_str, select
 
 struct ById end
 struct ByName end
-struct ByAtom end
-struct ByResidue end
-struct BySegment end
 struct BySymbol end
 
 const Static=Val{0}
@@ -20,10 +17,19 @@ end
 
 mutable struct Selection{B} <: AbstractSelection
     isentry::Bool
-    # name::AbstractString
-    re::Regex
+    pattern::Union{AbstractString,Regex}
+    match::Function
     Selection{B}(n::AbstractString) where B = begin
-        new{B}(true, Regex(n))
+        s = new{B}(true)
+        if startswith(n, '@')
+            s.pattern = Regex(n[2:end])
+            s.match = occursin
+        else
+            s.pattern = n
+            s.match = isequal
+        end
+        # new{B}(true, startswith(n, '@') ? Regex(n[2:end]) : Regex("^$n\$"))
+        s
     end
 end
 
@@ -67,7 +73,7 @@ name(io::IO, s::NegateSelection, prefix="", suffix="") where T = begin
 end
 
 name(io::IO, s::Selection{T}, prefix="", suffix="") where T = begin
-    println(io, "$(prefix)Selection{$(nameof(T))}($(s.re))$suffix")
+    println(io, "$(prefix)Selection{$(nameof(T))}($(s.pattern))$suffix")
 end
 
 name(io::IO, s::TrueSelection, prefix="", suffix="") = begin
@@ -84,16 +90,19 @@ end
 Base.show(io::IO, s::AbstractSelection) = name(io, s)
 
 
-# [sr]*(name|id)
+# [sra]*(n|id)
 
 macro sn_str(s)
-    return Selection{BySegment}(s)
+    return Selection{Segment}(s)
 end
 macro rn_str(s)
-    return Selection{ByResidue}(s)
+    return Selection{Residue}(s)
 end
 macro an_str(s)
-    return Selection{ByAtom}(s)
+    return Selection{Atom}(s)
+end
+macro sym_str(s)
+    return Selection{BySymbol}(s)
 end
 
 macro x_str(s)
@@ -101,13 +110,13 @@ macro x_str(s)
     nfields = length(fields)
     s = TrueSelection()
     if nfields > 0
-        s = isempty(fields[1]) ? s : s & Selection{ByAtom}(fields[1])
+        s = isempty(fields[1]) ? s : s & Selection{Atom}(fields[1])
     end
     if nfields > 1
-        s = isempty(fields[2]) ? s : s & Selection{ByResidue}(fields[2])
+        s = isempty(fields[2]) ? s : s & Selection{Residue}(fields[2])
     end
     if nfields > 2
-        s = isempty(fields[3]) ? s : s & Selection{BySegment}(fields[3])
+        s = isempty(fields[3]) ? s : s & Selection{Segment}(fields[3])
     end
     s
 end
@@ -122,11 +131,11 @@ end
 
 select(ac::AbstractContainer, s::TrueSelection) = _collect(ac, s, trues(count_atoms(ac)))
 
-select(top::Topology, s::Selection{BySegment}) = begin
+select(top::Topology, s::Selection{Segment}) = begin
     mask = falses(count_atoms(top))
     for seg in top.items
         # if seg.name == s.name
-        if occursin(s.re, seg.name)
+        if s.match(s.pattern, seg.name)
             for atom in eachatom(seg)
                 mask[atom.index] = true
             end
@@ -135,21 +144,28 @@ select(top::Topology, s::Selection{BySegment}) = begin
     _collect(top,s,mask)
 end
 
-select(ac::AbstractContainer, s::Selection{ByResidue}) = begin
+select(ac::AbstractContainer, s::Selection{BySymbol}) = begin
+    mask = falses(count_atoms(ac))
+    for (i,atom) in enumerate(eachatom(ac))
+        mask[i] = s.match(s.pattern, atom.symbol)
+    end
+    _collect(ac,s,mask)
+end
+
+select(ac::AbstractContainer, s::Selection{Residue}) = begin
     mask = falses(count_atoms(ac))
     for (i,atom) in enumerate(eachatom(ac))
         # mask[i] = atom.container.name==s.name
-        mask[i] = occursin(s.re, atom.container.name)
+        mask[i] = s.match(s.pattern, atom.container.name)
     end
     _collect(ac,s,mask)
 end
 
 
-select(ac::AbstractContainer, s::Selection{ByAtom}) = begin
+select(ac::AbstractContainer, s::Selection{Atom}) = begin
     mask = falses(count_atoms(ac))
     for (i,atom) in enumerate(eachatom(ac))
-        # mask[i] = atom.name==s.name
-        mask[i] = occursin(s.re, atom.name)
+        mask[i] = s.match(s.pattern, atom.name)
     end
     _collect(ac,s,mask)
 end

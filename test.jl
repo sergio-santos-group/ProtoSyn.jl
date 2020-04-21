@@ -6,21 +6,23 @@ include("src/ProtoSyn.jl")
 using .ProtoSyn
 using .ProtoSyn.Peptides
 
-pymol = ProtoSyn.XMLRPC.ServerProxy("http://localhost", 9123)
-pymol.delete("all")
+if true
+    pymol = ProtoSyn.XMLRPC.ServerProxy("http://localhost", 9123)
+    pymol.delete("all")
 
-function render(t,s,name)
-    io = IOBuffer()
-    write(io, t, s)
-    pymol.read_pdbstr(String(take!(io)), name)
+    function render(t,s,name)
+        io = IOBuffer()
+        write(io, t, s)
+        pymol.read_pdbstr(String(take!(io)), name)
+    end
+
+    lib = ProtoSyn.Peptides.loaddb()
+    println("done loading DB")
+    top, state = Peptides.build("AA", lib)
+    # top, state = Peptides.build("GSPAA", lib)
+    println("done building")
+    render(top, state, "init")
 end
-
-lib = ProtoSyn.Peptides.loaddb()
-println("done loading DB")
-top, state = Peptides.build("AA", lib)
-# top, state = Peptides.build("GSPAA", lib)
-println("done building")
-render(top, state, "init")
 
 
 if true
@@ -93,8 +95,9 @@ if true
 
 end
 
-s = select(top, rname"GLY" & (name"CA" | name"C"))
-println(s)
+s = select(top, rn"GLY" & !(an"CA" | an"C"))
+println(collect(s))
+
 
 end
 
