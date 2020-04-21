@@ -28,7 +28,7 @@ include("core/types.jl")
 include("core/base.jl")
 include("core/state.jl")
 
-include("core/selection.jl")
+include("core/selection2.jl")
 
 # export CSPair
 # const CSPair = Tuple{AbstractContainer, State}
