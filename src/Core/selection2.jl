@@ -110,7 +110,7 @@ mutable struct DistanceSelection{T} <: AbstractSelection
     isentry::Bool
     distance::Number
     sele::AbstractSelection
-    DistanceSelection(distance::Number, sele::T) where {T<:AbstractSelection} = begin
+    DistanceSelection(distance::Number, sele::T) where T = begin
         clear(sele)
         new{state_type(T)}(true, distance, sele)
     end
@@ -156,7 +156,7 @@ end
 
 
 @inline _collect(ac::AbstractContainer, s::AbstractSelection, m::BitVector) =
-s.isentry ? select(ac, m) : m
+    s.isentry ? select(ac, m) : m
 
 @inline select(ac::AbstractContainer, mask::BitVector) =
     collect(at for (m,at) in zip(mask,eachatom(ac)) if m)
