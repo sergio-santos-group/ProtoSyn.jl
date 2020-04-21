@@ -45,15 +45,15 @@ Base.iterate(iter::ItemIterator{Topology,_ByAtom}, (s,r,a)=(1,1,1)) = begin
     (t.items[s].items[r].items[a], (s,r,a+1))
 end
 
-# Base.iterate(iter::ItemIterator{Segment,_ByAtom}, (r,a)=(1,1)) = begin
-#     s = iter.target
-#     if r > length(s.residues)
-#         return nothing
-#     elseif a > length(s.residues[r].atoms)
-#         return iterate(iter, (r+1,1))
-#     end
-#     (s.residues[r].atoms[a], (r,a+1))
-# end
+Base.iterate(iter::ItemIterator{Segment,_ByAtom}, (r,a)=(1,1)) = begin
+    s = iter.target
+    if r > length(s.items)
+        return nothing
+    elseif a > length(s.items[r].items)
+        return iterate(iter, (r+1,1))
+    end
+    (s.items[r].items[a], (r,a+1))
+end
 
 Base.iterate(iter::ItemIterator{Residue,_ByAtom}, (a,)=(1,)) = begin
     r = iter.target
