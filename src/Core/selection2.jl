@@ -21,6 +21,10 @@ state_rule(::Type{Statefull}, ::Type{Statefull}) = Statefull
 
 clear(s::AbstractSelection...) = foreach(x->x.isentry=false, s)
 
+matcher(n::AbstractString) = begin
+    startswith(n,'@') ? (Regex(n[2:end]), occursin) : (n, isequal)
+end
+
 
 #region LEAF SELECTORS
 
@@ -38,16 +42,44 @@ name(io::IO, s::TrueSelection, prefix="", suffix="") = begin
     println(io, suffix)
 end
 
+
+
+mutable struct TripleSelection <: AbstractSelection
+    isentry::Bool
+    apattern::Union{AbstractString,Regex}
+    amatch::Function
+    rpattern::Union{AbstractString,Regex}
+    rmatch::Function
+    spattern::Union{AbstractString,Regex}
+    smatch::Function
+    TripleSelection(an::AbstractString, rn::AbstractString, sn::AbstractString) = begin
+        ap,am = matcher(an)
+        rp,rm = matcher(rn)
+        sp,sm = matcher(sn)
+        new(true, ap, am, rp, rm, sp, sm)
+    end
+end
+
+state_type(::Type{TripleSelection}) = Stateless
+
+name(io::IO, s::TripleSelection, prefix="", suffix="") = begin
+    print(io, prefix)
+    print(io, "TripleSelection($(s.apattern),$(s.rpattern),$(s.spattern))")
+    println(io, suffix)
+end
+
 # =========================================================
 mutable struct Selection{T} <: AbstractSelection
     isentry::Bool
     pattern::Union{AbstractString,Regex}
     match::Function
     Selection{T}(n::AbstractString) where T = begin
-        if startswith(n, '@')
-            return new{T}(true, Regex(n[2:end]), occursin)
-        end
-        new{T}(true, n, isequal)
+        # if startswith(n, '@')
+        #     return new{T}(true, Regex(n[2:end]), occursin)
+        # end
+        # new{T}(true, n, isequal)
+        p, m = matcher(n)
+        new{T}(true, p, m)
     end
 end
 
@@ -137,20 +169,18 @@ macro  rn_str(s); Selection{Residue}(s); end
 macro  an_str(s); Selection{Atom}(s); end
 
 macro x_str(s)
-    println("this macro could return a special selector that checks all fields in a simple pass")
     fields = reverse(split(s, '/'))
     nfields = length(fields)
-    s = TrueSelection()
-    if nfields > 0
-        s = isempty(fields[1]) ? s : s & Selection{Atom}(fields[1])
+    nfields > 3 && error("Invalid selector")
+    if all(isempty, fields)
+        selector = TrueSelection()
+    else
+        an = nfields > 0 && !isempty(fields[1]) ? fields[1] : "@"
+        rn = nfields > 1 && !isempty(fields[2]) ? fields[2] : "@"
+        sn = nfields > 2 && !isempty(fields[3]) ? fields[3] : "@"
+        selector = TripleSelection(an, rn, sn)
     end
-    if nfields > 1
-        s = isempty(fields[2]) ? s : s & Selection{Residue}(fields[2])
-    end
-    if nfields > 2
-        s = isempty(fields[3]) ? s : s & Selection{Segment}(fields[3])
-    end
-    s
+    selector
 end
 
 
@@ -237,6 +267,16 @@ Base.all(l::AbstractSelection) = UnarySelection(all, l; element_wise=false)
 # # end
 
 
+# -------------------------
+select(ac::AbstractContainer, s::TripleSelection) = begin
+    mask = falses(count_atoms(ac))
+    for (i,atom) in enumerate(eachatom(ac))
+        mask[i] = s.amatch(s.apattern, atom.name) && 
+                  s.rmatch(s.rpattern, atom.container.name) &&
+                  s.smatch(s.spattern, atom.container.container.name)
+    end
+    _collect(ac, s, mask)
+end
 
 # -------------------------
 
