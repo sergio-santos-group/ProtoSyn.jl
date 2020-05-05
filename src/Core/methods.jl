@@ -4,14 +4,26 @@ export build_tree!
 
 export bond, unbond
 
+# residue(a::Atom) = a.container
+# segment(r::Residue) = r.container
+# topology(s::Segment) = s.container
+
+segment(at::Atom) = hascontainer(at) ? at.container.container : nothing
+
+Base.firstindex(x::T, c::Vector{T}) where T = findfirst(i->i===x, c)
+Base.firstindex(x::T, c::AbstractContainer{T}) where T = firstindex(x, c.items)
+
 @inline function unbond(at1::Atom, at2::Atom)
-    i = findfirst(a->a===at1, at2.bonds)
+    i = firstindex(at1, at2.bonds)
+    #i = findfirst(a->a===at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
-    j = findfirst(a->a===at2, at1.bonds)
+    j = firstindex(at2, at1.bonds)
+    # j = findfirst(a->a===at2, at1.bonds)
     j !== nothing && deleteat!(at1.bonds, j)
 end
 
 @inline function bond(at1::Atom, at2::Atom)
+    @assert segment(at1)===segment(at2) "can only bond atoms within the same segment"
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end
@@ -310,21 +322,19 @@ Base.detach(r::Residue) = begin
 
             # remove inter-residue bonds
             unbond(atom, other)
-            #deleteat!(atom.bonds, i)
-            #if (j = findfirst(at->at===atom, other.bonds)) !== nothing
-            #    deleteat!(other.bonds, j)
-            #end
 
             # detach from atom graph
-            if atom === other.parent
+            # if atom === other.parent
+            if isparent(atom, other)
                 popparent!(other)
-            elseif other === atom.parent
+            # elseif other === atom.parent
+            elseif isparent(other, atom)
                 popparent!(atom)
             end
         end
 
         # remove connection to the root node
-        if orig!==nothing && atom.parent===orig
+        if orig!==nothing && isparent(orig, atom)
             popparent!(atom)
         end
     end
@@ -447,7 +457,7 @@ end
 export setoffset!
 
 setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
-    # rotates all sibling dihedrals to "at" so that the
+    # rotates all sibling dihedrals of "at" so that the
     # dihedral angle identified by "at" is equal to "default" 
     if hasparent(at)
         ϕ = state[at].ϕ - T(default)
@@ -456,5 +466,23 @@ setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
         end
     end
     state.i2c = true
+    state
+end
+
+
+translate!(state::State, s::Segment, dx::Number) = begin
+    for at in eachatom(s)
+        state[at].t += dx
+    end
+    state.c2i = true
+    state
+end
+
+rotate!(state::State, s::Segment, r::Matrix) = begin
+    for at in eachatom(s)
+        t = state[at].t
+        t .= r*t
+    end
+    state.c2i = true
     state
 end
