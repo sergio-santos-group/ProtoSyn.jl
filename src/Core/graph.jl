@@ -1,8 +1,8 @@
-export hasparent, haschildren
+export hasparent, haschildren, isparent
 export setparent!, popparent!
 export popchild!
 
-# Objects implementing the AbstractDigraph interface
+# Types implementing the AbstractDigraph interface
 # should have the following fields
 #  - parent::Union{T,Nothing}
 #  - children::Vector{T}
@@ -14,15 +14,7 @@ abstract type AbstractDigraph end
 
 @inline hasparent(c::AbstractDigraph) = c.parent !== nothing
 @inline haschildren(c::AbstractDigraph) = !isempty(c.children)
-
-
-function initgraph!(c::T) where {T<:AbstractDigraph}
-    c.children = Vector{T}()
-    c.ascendents = nothing
-    c.parent = nothing
-    c.visited = false
-    c
-end
+@inline isparent(p::AbstractDigraph, c::AbstractDigraph) = p===c.parent
 
 
 @doc """

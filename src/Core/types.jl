@@ -17,6 +17,14 @@ abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
 abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
 
 
+function initgraph!(c::T) where {T<:AbstractDigraph}
+    c.children = Vector{T}()
+    c.ascendents = nothing
+    c.parent = nothing
+    c.visited = false
+    c
+end
+
 mutable struct Atom <: AbstractAtom
     name::String                    # atom name
     id::Int                         # atom ID
