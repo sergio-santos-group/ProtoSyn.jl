@@ -77,23 +77,55 @@ macro fieldcopy!(dst::Symbol, src::Symbol, components::QuoteNode...)
     esc(ex)
 end
 
-# using .XMLRPC
+using .XMLRPC: ServerProxy
 
-# macro pymol(ex, objname=nothing)
-#     @assert isdefined(Main, :proxy) "a pymol proxy must be defined"
-#     @assert Main.proxy isa XMLRPC.ServerProxy "proxy must be of type ProtoSyn.XMLRPC.ServerProxy"
+# macro pymol(ex, obj=nothing, host="localhost", port=9123)
+const proxy_defaults = Dict{Symbol,Any}(
+    :port=>9123,
+    :host=>"http://localhost"
+)
 
-#     return quote
-#         local val = $(esc(ex))
-#         if val isa ProtoSyn.State
-#             Main.proxy.load_coordset(val.coords, $(esc(objname)), 0)
-#             # Main.proxy.set_title($(esc(objname)), -1, $(string(ex)))
-#         elseif val isa Tuple{Molecule,State}
-#             io = IOBuffer()
-#             write(io, val[1], val[2], PDB)
-#             Main.proxy.read_pdbstr(String(take!(io)), $(esc(objname)) !== nothing || val[1].name)
-#             close(io)
-#         end
-#         val
-#     end
-# end
+export @pymol
+macro pymol(ex...)
+    body = ex[end]
+    kwargs = ex[1:end-1]
+    port = proxy_defaults[:port]
+    host = proxy_defaults[:host]
+    obj  = nothing
+    println("ola")
+    for kwarg in kwargs
+        if Meta.isexpr(kwarg, :(=))
+            key,val = kwarg.args
+            if isa(key, Symbol)
+                if key == :port
+                    port = val
+                elseif key == :host
+                    host = val
+                elseif key == :obj
+                    obj = val
+                end
+            else
+                throw(ArgumentError("non-symbolic keyword '$key'"))
+            end
+        else
+            throw(ArgumentError("non-keyword argument like option '$kwarg'"))
+        end
+    end
+    return quote
+        local val = $(esc(body))
+        proxy = getfield($(@__MODULE__), :ServerProxy)($host,$port)
+        println(proxy)
+        println(typeof(val))
+        if val isa State
+            proxy.load_coordset(val.coords, $(esc(obj)), 0)
+        elseif val isa Tuple{Topology,State}
+            io = IOBuffer()
+            write(io, val[1], val[2])
+            proxy.read_pdbstr(String(take!(io)), $(esc(obj)) !== nothing || val[1].name)
+            close(io)
+        end
+        val
+    end
+    
+end
+
