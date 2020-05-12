@@ -76,13 +76,13 @@ end
 @inline Base.size(s::Segment) = (s.size, mapreduce(r->r.size, +, s.items; init=0))
 
 @inline Base.size(t::Topology) = begin
-    nseg = nres = 0
+    nres = natm = 0
     for seg in t.items
-        ns,nr = size(seg)
-        nseg += ns
+        nr,na = size(seg)
         nres += nr
+        natm += na
     end
-    (t.size, nseg, nres)
+    (t.size, nres, natm)
 end
 
 @inline Base.isempty(c::AbstractContainer) = c.size==0
