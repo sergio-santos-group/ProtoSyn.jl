@@ -19,6 +19,7 @@ function reset_ic(pose::Pose{Segment})
     segment = pose.graph
     state = pose.state
     T = eltype(state)
+
     if length(segment) > 0
 
         residue = segment[1]
@@ -50,94 +51,70 @@ function reset_ic(pose::Pose{Segment})
     pose
 end
 
-function loadresidue(::Type{T}, fname::AbstractString) where {T<:AbstractFloat}
+function loadfragment(::Type{T}, fname::AbstractString) where {T<:AbstractFloat}
     # read the full pdb file. The tree has not yet been build
     # because the read function knows nothing about the
     # internal graph structure that we wish to impose
     pose = read(T, fname, ProtoSyn.PDB)
     
 
-    # but now we know this is a peptide
-    # and can build the graph, by passing the
-    # appropriate seed finding function
+    # but now we know this is a peptide and can build
+    # the graph by passing the appropriate seed finding function
     build_tree!(peptideseed, pose.graph)
+
+    # convert cartesian to internal coordinates (sync)
     ProtoSyn.request_c2i(pose.state; all=true)
     sync!(pose)
 
-    # extract the first residue
-    # subpose = pop!(pose, pose.graph[1,1])
-    subpose = ProtoSyn.fragment(pose)
-    reset_ic(subpose)
-    # res = subpose.graph[1]
-    # state = subpose.state
-    # subpose.graph.name = res.name
-    # #----
-    # nstate = state[res["N"]]
-    # nstate.b = T(1.2)
-    # nstate.θ = T(deg2rad(120))
-    # nstate.ϕ = T(0)
-
-    # #----
-    # if isproline(res)
-    #     xstate = state[res["CD"]]
-    #     angle = T(deg2rad(122.5))
-    # else
-    #     xstate = state[res["H"]]
-    #     angle = T(deg2rad(120))
-    # end
-    # xstate.θ = angle
-    # xstate.ϕ  = T(0)
+    # convert this pose to a fragment and reset internal
+    # coordinates
+    frag = ProtoSyn.fragment(pose)
+    reset_ic(frag)
     
-    # #----
-    # castate = state[res["CA"]]
-    # castate.θ = angle
-    # castate.ϕ = T(pi)  
-
-    # setoffset!(state, res["CA"], 0)
-    # setoffset!(state, res["C"],  0)
-    # setoffset!(state, res["O"], pi)
-
-    subpose
+    # rename and return fragment
+    frag.graph.name = join(map(r->r.name, eachresidue(frag.graph)), "-")
+    frag
 end
 
-loadresidue(fname::AbstractString) = loadresidue(Float64, fname)
+loadfragment(fname::AbstractString) = loadfragment(Float64, fname)
 
 
 
 function loaddb(::Type{T}, dir::AbstractString=resource_dir) where {T<:AbstractFloat}
     lib = ResidueDB()
-    filenames = filter(f->endswith(f, ".pdb"), readdir(dir))
-    for filename in filenames
-        rpose = loadresidue(T, joinpath(dir, filename))
-        lib[rpose.graph.name] = rpose
+    # filenames = filter(f->endswith(f, ".pdb"), readdir(dir))
+    # for filename in filenames
+    #     frag = loadfragment(T, joinpath(dir, filename))
+    #     lib[frag.graph.name] = frag
+    # end
+    foreach(readdir(dir)) do filename
+        if endswith(filename, ".pdb")
+            frag = loadfragment(T, joinpath(dir, filename))
+            lib[frag.graph.name] = frag
+        end
     end
     lib
 end
 
 loaddb(dir::AbstractString=resource_dir) = loaddb(Float64, dir)
 
-
 build(letters::String, db::ResidueDB) = build(Float64, letters, db)
 
 build(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
     
-    state = State{T}()
     top = Topology("UNK", 1)
-    segment = Segment!(top, "A", 1)
-    top.id = state.id = ProtoSyn.genid()
+    state = State{T}()
+    state.id = top.id
     pose = Pose(top, state)
 
-    if length(seq) > 0
+    if !isempty(seq)
         frag = fragment(T, seq, db)
+        frag.graph.name = "A"
+        frag.graph.id = 1
         append!(pose, frag, PeptideRxToolbelt)
         
         reindex(top)
 
-        for atom in eachatom(top)
-            atom.ascendents = ascendents(atom, 4)
-        end
-    
-        # request internal-to-cartesian conversion
         ProtoSyn.request_i2c(state; all=true)
     end
 
@@ -145,21 +122,29 @@ build(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
 end
 
 
+"""
+build a new fragment
+"""
 fragment(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
+    
+    seg = Segment(seq, -1)
     state = State{T}()
-    seg = Segment("?",-1)
     prev = nothing
+
     for (resid,letter) in enumerate(seq)
         refpose = db[one_2_three[letter]]
         res = copy(refpose.graph)
         st = copy(refpose.state)
-        res.id = resid
-        append!(state, st)
+        #res.id = resid
         push!(seg, res.items...)
+        append!(state, st)
         prev !== nothing && peptidejoin(prev, res)
         prev = res
     end
+    reindex(seg)
     seg.id = state.id = ProtoSyn.genid()
+
+    setss!(state, seg, SecondaryStructure[:linear])
     Pose(seg, state)
 end
 
@@ -184,6 +169,7 @@ setss!(s::State, seg::Segment, (ϕ, ψ)::NTuple{2,Number}) = setss!(s, seg, (ϕ,
 #----------------------------------------------------
 
 peptideroot(r::Residue) = get(r, "N")
+peptideroot(s::Segment) = s[1,"N"]
 
 function peptidejoin(r1::Residue, r2::Residue)
     if hasparent(r2)
