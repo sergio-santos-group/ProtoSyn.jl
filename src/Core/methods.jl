@@ -379,15 +379,21 @@ function fragment(pose::Pose{Topology})
     
     topology = pose.graph
     segment = topology[1]
-    (imin,imax) = extrema(map(at->at.index, eachatom(segment)))
-    state = splice!(pose.state, imin:imax)
+    #(imin,imax) = extrema(map(at->at.index, eachatom(segment)))
+    #state = splice!(pose.state, imin:imax)
+    state = splice!(pose.state, 1:count_atoms(segment))
     detach(segment)
     segment.id = state.id = genid()
 
     Pose(segment, state)
 end
-Base.detach(s::Segment) = hascontainer(s) && delete!(s.container, s)
-
+Base.detach(s::Segment) = begin
+    root = origin(s)
+    for at in root.children
+        isparent(root, at) && popparent!(at)
+    end
+    hascontainer(s) && delete!(s.container, s)
+end
 
 # function fragment(pose::Pose{Segment})
     
@@ -414,7 +420,7 @@ isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
 """
 append a fragment as a new segment
 """
-Base.append!(pose::Pose{Topology}, frag::Pose{Segment}, rxtb::ReactionToolbelt) = begin
+Base.append!(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
     !isfragment(frag) && error("invalid fragment")
     push!(pose.graph, frag.graph)
     append!(pose.state, frag.state)
@@ -430,31 +436,34 @@ end
 """
 append a fragment onto an existing segment
 """
-# Base.append!(pose::Pose{Segment}, frag::Pose{Segment}, rxtb::ReactionToolbelt) = begin
+# Base.append!(pose::Pose{Topology}, frag::Pose{Segment}, segment::Segment, rxtb::ReactionToolbelt) = begin
+Base.append!(pose::Pose{Topology}, frag::Fragment, selector::IdSelector, rxtb::ReactionToolbelt) = begin
 
-#     !isfragment(frag) && error("invalid fragment")
-    
-#     # state insertion point. If this segment is empty,
-#     # then go to all previous segments to identify the first
-#     # non-empty one.
-#     segment = pose.graph
-#     topology = segment.container
-#     i = findfirst(segment, topology)
-#     while i > 1 && isempty(topology[i])
-#         i -= 1
-#     end
-#     sipoint = mapreduce(a->a.index, max, eachatom(topology[i]); init=0)
-#     insert!(pose.state, sipoint+1, frag.state)
+    !isfragment(frag) && error("invalid fragment")
+    segment = select(pose.graph, selector)
 
-#     # simply append residues to this segment
-#     residues = frag.graph.items
-#     push!(segment, residues...)
+    # state insertion point. If this segment is empty,
+    # then go to all previous segments to identify the first
+    # non-empty one.
+    topology = pose.graph
+    i = findfirst(segment, topology)
+    while i > 1 && isempty(topology[i])
+        i -= 1
+    end
+    sipoint = mapreduce(a->a.index, max, eachatom(topology[i]); init=0)
+    insert!(pose.state, sipoint+1, frag.state)
+
+    # simply append residues to this segment but keep
+    # a reference to the last residue for latter use
+    residues = frag.graph.items
+    lst = segment[end]
+    push!(segment, residues...)
     
-#     root = origin(pose.graph)
-#     setparent!(rxtb.root(frag.graph), root)
-#     reindex(pose.graph)
-#     pose
-# end
+    rxtb.join(lst, residues[1])
+    
+    reindex(pose.graph)
+    pose
+end
 
 
 
