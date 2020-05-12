@@ -112,3 +112,19 @@ function Root()::Residue
     root
 end
 
+export Segment!, Residue!, Atom!
+Segment!(t::Topology, name::String, id::Int) = begin
+    s = Segment(name,id)
+    push!(t, s)
+    s
+end
+Residue!(s::Segment, name::String, id::Int) = begin
+    r = Residue(name,id)
+    push!(s, r)
+    r
+end
+Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String) = begin
+    a = Atom(name, id, index, symbol)
+    push!(r, a)
+    a
+end
