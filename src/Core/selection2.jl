@@ -340,3 +340,32 @@ select(ac::AbstractContainer, s::BinarySelection{Statefull,Statefull}) = begin
         _collect(ac, s, (s.op).(lmask, rmask))
     end
 end
+
+#---------------------
+abstract type AbstractSerialSelector end
+struct IndexSelector <: AbstractSerialSelector
+    val::Int
+end
+
+export ix
+const ix = IndexSelector(1)
+
+struct IdSelector <: AbstractSerialSelector
+    val::Int
+end
+
+export id
+const id = IdSelector(1)
+
+Base.:(*)(x::Number, y::IndexSelector) = IndexSelector(x)
+Base.:(*)(x::Number, y::IdSelector) = IdSelector(x)
+
+function select(ac::AbstractContainer, s::IdSelector)
+    for item in ac.items
+        if item.id == s.val
+            return item
+        end
+    end
+    nothing
+end
+
