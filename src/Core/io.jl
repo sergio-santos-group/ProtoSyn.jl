@@ -5,11 +5,11 @@ const PDB = Val{1}
 
 
 Base.read(::Type{T}, filename::AbstractString, ::Type{PDB}) where {T<:AbstractFloat} = begin
-    top,state = open(filename) do fin
+    pose = open(filename) do fin
         read(T, fin, PDB)
     end
-    top.name = basename(filename)
-    top,state
+    pose.graph.name = basename(filename)
+    pose
 end
 Base.read(filename::AbstractString, ::Type{PDB}) = read(Float64, filename, PDB)
 
@@ -38,23 +38,20 @@ Base.read(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             resid = parse(Int, line[23:26])
 
             if seg.name != segname
-                seg = Segment(segname, segid)
-                push!(top, seg)
+                seg = Segment!(top, segname, segid)
                 segid += 1
             end
 
             if res.id != resid || res.name != resname
-                res = Residue(resname, resid)
-                push!(seg, res)
+                res = Residue!(seg, resname, resid)
             end
 
             atsymbol = length(line)>77 ? string(strip(line[77:78])) : "?"
             atname = string(strip(line[13:16]))
             atid = parse(Int, line[7:11])
 
-            atom = Atom(atname, atid, atmindex, atsymbol)
+            atom = Atom!(res, atname, atid, atmindex, atsymbol)
             id2atom[atid] = atom
-            push!(res, atom)
             
             s = state[atmindex]
             s.t[1] = parse(T, line[31:38])
@@ -67,25 +64,20 @@ Base.read(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
                 bond(pivot, id2atom[i])
-                # other = id2atom[i]
-                # other ∉ pivot.bonds && push!(pivot.bonds, other)
-                # pivot ∉ other.bonds && push!(other.bonds, pivot)
             end
         end
     end
     top.id = state.id = genid()
     
-    build_tree!(top)
+    # request conversion from cartesian to internal
+    # request_c2i(state; all=true)
     
-    # request conversion from cartesian to internal and sync coordinates
-    state.c2i = true
-    sync!(state, top)
-
-    top, state
+    Pose(top,state)
 end
 
 
-Base.write(io::IO, top::Topology, state::State) = begin
+# Base.write(io::IO, top::Topology, state::State) = begin
+Base.write(io::IO, top::AbstractContainer, state::State) = begin
     
     println(io, "MODEL")
     for atom in eachatom(top)
