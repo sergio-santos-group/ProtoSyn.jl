@@ -33,7 +33,7 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
     if key == :Δϕ
         setfield!(ns, :changed, true)
     end
-    setfield!(ns, key, val)
+    setfield!(ns, key, T(val))
 end
 
 
@@ -116,6 +116,15 @@ end
 
 
 Base.copy(s::State{T}) where T = deepcopy(s)
+
+
+request_c2i(s::State; all=false) = (s.c2i = true)
+
+request_i2c(s::State; all=false) = begin
+    s[0].changed = all
+    s.i2c = true
+    s
+end
 
 
 #endregion State
