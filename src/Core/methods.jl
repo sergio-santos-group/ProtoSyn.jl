@@ -10,15 +10,14 @@ export bond, unbond
 
 segment(at::Atom) = hascontainer(at) ? at.container.container : nothing
 
-Base.firstindex(x::T, c::Vector{T}) where T = findfirst(i->i===x, c)
-Base.firstindex(x::T, c::AbstractContainer{T}) where T = firstindex(x, c.items)
+Base.findfirst(x::T, c::Vector{T}) where T = findfirst(i->i===x, c)
+Base.findfirst(x::T, c::AbstractContainer{T}) where T = findfirst(x, c.items)
 
 @inline function unbond(at1::Atom, at2::Atom)
-    i = firstindex(at1, at2.bonds)
-    #i = findfirst(a->a===at1, at2.bonds)
+    i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
-    j = firstindex(at2, at1.bonds)
-    # j = findfirst(a->a===at2, at1.bonds)
+    
+    j = findfirst(at2, at1.bonds)
     j !== nothing && deleteat!(at1.bonds, j)
 end
 
@@ -27,7 +26,6 @@ end
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end
-
 
 
 
@@ -62,7 +60,7 @@ end
 #     return tree
 # end
 
-build_tree!(top::Topology) = build_tree!(t->[t[1,1,"N"]], top)
+#build_tree!(top::Topology) = build_tree!(t->[t[1,1,"N"]], top)
 
 function build_tree!(seedfinder::Function, top::Topology)
 
@@ -171,16 +169,22 @@ ascendents(c::AbstractContainer, level::Int) = begin
 end
 
 export sync!
-sync!(state::State, top::Topology, force=false) = begin
+# sync!(state::State, top::Topology) = begin
+sync!(pose::Pose{Topology}) = begin
+    state = pose.state
+    top = pose.graph
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
         c2i!(state, top)
     elseif state.i2c
-        i2c!(state, top, force)
+        i2c!(state, top)
     end
-    state
+    pose
 end
+
+
+
 
 
 c2i!(state::State{T}, top::Topology) where T = begin
@@ -219,7 +223,7 @@ end
 
 
 
-i2c!(state::State, top::Topology, force=false) = begin
+i2c!(state::State, top::Topology) = begin
     # assert top.id==state.id
     
     vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
@@ -229,10 +233,11 @@ i2c!(state::State, top::Topology, force=false) = begin
     queue = Atom[]
 
     root = origin(top)
+    root_changed = state[root].changed
     xyz = zeros(3, state.size)
     for child in root.children
         # force all child states to be updated
-        state[child].changed |= force
+        state[child].changed |= root_changed
         push!(queue, child)
     end
     
@@ -342,12 +347,13 @@ Base.detach(r::Residue) = begin
 end
 
 
-Base.pop!(top::Topology, state::State, res::Residue) = begin
-    if state.id != top.id
-        error("mismatch between state and topology IDs")
+# Base.pop!(top::Topology, state::State, res::Residue) = begin
+Base.pop!(pose::Pose{Topology}, res::Residue) = begin
+    #if state.id != top.id
+    #    error("mismatch between state and topology IDs")
     #elseif isorphan(res)
     #    error("unable to pop orphan residues from topology+state")
-    elseif res.container.container !== top
+    if res.container.container !== pose.graph
         error("given residue does not belong to the provided topology")
     end
 
@@ -356,36 +362,138 @@ Base.pop!(top::Topology, state::State, res::Residue) = begin
 
     # remove node states from parent state and create
     # a new state for this residue
-    st = splice!(state, res[1].index:res[end].index)
-    reindex(top)
+    st = splice!(pose.state, res[1].index:res[end].index)
+    reindex(pose.graph)
     
     # new common ID
     res.id = st.id = genid()
 
-    return (res,st)
-    
+    #return (res,st)
+    Pose(res,st)
 end
 
 
+function fragment(pose::Pose{Topology})
+    
+    length(pose.graph) != 1 && error("only topologies with a single segment can be turned into fragments")
+    
+    topology = pose.graph
+    segment = topology[1]
+    (imin,imax) = extrema(map(at->at.index, eachatom(segment)))
+    state = splice!(pose.state, imin:imax)
+    detach(segment)
+    segment.id = state.id = genid()
 
+    Pose(segment, state)
+end
+Base.detach(s::Segment) = hascontainer(s) && delete!(s.container, s)
+
+
+# function fragment(pose::Pose{Segment})
+    
+#     length(pose.graph) != 1 && error("only segments with a single residue can be turned into fragments")
+    
+#     segment = pose.graph
+#     residue = segment[1]
+#     state = splice!(pose.state, residue)
+#     detach(residue)
+#     residue.id = state.id = genid()
+
+#     Pose(residue, state)
+# end
+
+
+
+
+# const Fragment = Vector{Residue}
+# isfragment(p::Pose) = !hascontainer(p.graph) && !isempty(p.graph)
+isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
 
 
 #---------------------------
-# export append!
-Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
-    residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
+"""
+append a fragment as a new segment
+"""
+Base.append!(pose::Pose{Topology}, frag::Pose{Segment}, rxtb::ReactionToolbelt) = begin
+    !isfragment(frag) && error("invalid fragment")
+    push!(pose.graph, frag.graph)
+    append!(pose.state, frag.state)
     
-    root = origin(segment)
-    setparent!(rxtb.root(residues[1]), root)
-    
-    segment
+    setparent!(
+        rxtb.root(frag.graph),
+        origin(pose.graph)
+    )
+    reindex(pose.graph)
+    pose
 end
+
+"""
+append a fragment onto an existing segment
+"""
+# Base.append!(pose::Pose{Segment}, frag::Pose{Segment}, rxtb::ReactionToolbelt) = begin
+
+#     !isfragment(frag) && error("invalid fragment")
+    
+#     # state insertion point. If this segment is empty,
+#     # then go to all previous segments to identify the first
+#     # non-empty one.
+#     segment = pose.graph
+#     topology = segment.container
+#     i = findfirst(segment, topology)
+#     while i > 1 && isempty(topology[i])
+#         i -= 1
+#     end
+#     sipoint = mapreduce(a->a.index, max, eachatom(topology[i]); init=0)
+#     insert!(pose.state, sipoint+1, frag.state)
+
+#     # simply append residues to this segment
+#     residues = frag.graph.items
+#     push!(segment, residues...)
+    
+#     root = origin(pose.graph)
+#     setparent!(rxtb.root(frag.graph), root)
+#     reindex(pose.graph)
+#     pose
+# end
+
+
+
+
+
+
+
+# export append!
+# Base.append!(segment::Segment, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+#     residues = _insert!(segment, 1, state, 1, seq, db, rxtb)
+# Base.append!(segment::Segment, state::State, frag::Fragment, fstate::State, rxtb::ReactionToolbelt) = begin
+#     !isfragment(frag) && error("invalid fragment")
+    
+#     # state insertion point. If this segment is empty,
+#     # then go to all previous segments to identify the first
+#     # non-empty one.
+#     topology = segment.container
+#     i = findfirst(segment, topology)
+#     while i > 1 && isempty(topology[i])
+#         i -= 1
+#     end
+#     sipoint = mapreduce(a->a.index, max, eachatom(topology[i]); init=0)
+#     insert!(state, sipoint+1, fstate)
+
+#     # simply append residues to this segment
+#     foreach(r->push!(segment, r), frag)
+    
+#     root = origin(segment)
+#     setparent!(rxtb.root(frag[1]), root)
+    
+#     segment
+# end
 
 Base.append!(parent::Residue, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
     segment = parent.container
     
     # residue insertion point
-    ripoint = findfirst(r->r===parent, segment.items)
+    ripoint = findfirst(parent, segment)
+    # ripoint = findfirst(r->r===parent, segment.items)
     
     # state insertion point
     sipoint = mapreduce(a->a.index, max, parent.items)
@@ -470,19 +578,19 @@ setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
 end
 
 
-translate!(state::State, s::Segment, dx::Number) = begin
-    for at in eachatom(s)
-        state[at].t += dx
-    end
-    state.c2i = true
-    state
-end
+# translate!(state::State, s::Segment, dx::Number) = begin
+#     for at in eachatom(s)
+#         state[at].t += dx
+#     end
+#     state.c2i = true
+#     state
+# end
 
-rotate!(state::State, s::Segment, r::Matrix) = begin
-    for at in eachatom(s)
-        t = state[at].t
-        t .= r*t
-    end
-    state.c2i = true
-    state
-end
+# rotate!(state::State, s::Segment, r::Matrix) = begin
+#     for at in eachatom(s)
+#         t = state[at].t
+#         t .= r*t
+#     end
+#     state.c2i = true
+#     state
+# end
