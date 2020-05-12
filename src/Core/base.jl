@@ -122,6 +122,36 @@ end
     r1
 end
 
+Base.copy(s::Segment) = begin
+    old2new = IdDict{AbstractContainer,AbstractContainer}()
+    s1 = Segment(s.name, s.id)
+    root = origin(s)
+
+    # copy residues and atoms
+    for r in eachresidue(s)
+        r1 = Residue!(s1, r.name, r.id)
+        old2new[r] = r1
+        for at in eachatom(r)
+            old2new[at] = Atom!(r1, at.name, at.id, at.index, at.symbol)
+        end
+    end
+
+    # deal with atom graph and bonds
+    for at in eachatom(s)
+        at1 = old2new[at]
+        hasparent(at) && !isparent(root, at) && setparent!(at1, old2new[at.parent])
+        for other in at.bonds
+            push!(at1.bonds, old2new[other])
+        end
+    end
+
+    # deal with residue graph
+    for r in eachresidue(s)
+        hasparent(r) && setparent!(old2new[r], old2new[r.parent])
+    end
+
+    s1
+end
 
 
 Base.delete!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
@@ -150,13 +180,37 @@ export hascontainer
 @inline genid() = Int(rand(UInt16))
 
 export reindex
-@inline reindex(c::AbstractContainer) = begin
-    index = 0
-    for atom in eachatom(c)
-        atom.index = (index += 1)
+# @inline reindex(c::AbstractContainer) = begin
+@inline reindex(t::Topology) = begin
+    # index = 0
+    aid = rid = sid = 0
+    for seg in t.items
+        seg.id = (sid +=1 )
+        for res in seg.items
+            res.id = (rid +=1 )
+            for atm in res.items
+                atm.index = (aid +=1 )
+            end
+        end
     end
-    c
+    # update ascendents (not possible before because
+    # of possible problems with index assignment)
+    for atm in eachatom(t)
+        atm.ascendents = ascendents(atm, 4)
+    end
+
+    t
 end
 
+reindex(s::Segment) = begin
+    aid = rid = 0
+    for res in s.items
+        res.id = (rid += 1)
+        for atm in res.items
+            atm.index = (aid +=1 )
+        end
+    end
+    s
+end
 
 Base.haskey(r::Residue, k::AbstractString) = haskey(r.itemsbyname, k)
