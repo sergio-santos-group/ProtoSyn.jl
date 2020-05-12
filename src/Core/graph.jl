@@ -15,6 +15,7 @@ abstract type AbstractDigraph end
 @inline hasparent(c::AbstractDigraph) = c.parent !== nothing
 @inline haschildren(c::AbstractDigraph) = !isempty(c.children)
 @inline isparent(p::AbstractDigraph, c::AbstractDigraph) = p===c.parent
+@inline isparent(::Nothing, c::AbstractDigraph) = false
 
 
 @doc """
