@@ -1,5 +1,7 @@
 
-export @sn_str, @rn_str, @an_str, select
+export @sym_str, @sn_str, @rn_str, @an_str, @x_str
+export select
+
 
 struct ById end
 struct ByName end
@@ -54,16 +56,16 @@ mutable struct BinarySelection <: AbstractSelection
     end
 end
 
-# abstract type AbstractDynamicSelection <: AbstractSelection end
-# mutable struct DistanceSelection <: AbstractDynamicSelection
-#     isentry::Bool
-#     distance::Number
-#     sele::AbstractSelection
-#     DistanceSelection(distance::Number, sele::AbstractSelection) = begin
-#         sele.isentry = false
-#         new(true, distance, sele)
-#     end
-# end
+abstract type AbstractDynamicSelection <: AbstractSelection end
+mutable struct DistanceSelection <: AbstractDynamicSelection
+    isentry::Bool
+    distance::Number
+    sele::AbstractSelection
+    DistanceSelection(distance::Number, sele::AbstractSelection) = begin
+        sele.isentry = false
+        new(true, distance, sele)
+    end
+end
 
 
 name(io::IO, s::NegateSelection, prefix="", suffix="") where T = begin
@@ -92,18 +94,10 @@ Base.show(io::IO, s::AbstractSelection) = name(io, s)
 
 # [sra]*(n|id)
 
-macro sn_str(s)
-    return Selection{Segment}(s)
-end
-macro rn_str(s)
-    return Selection{Residue}(s)
-end
-macro an_str(s)
-    return Selection{Atom}(s)
-end
-macro sym_str(s)
-    return Selection{BySymbol}(s)
-end
+macro sym_str(s); Selection{BySymbol}(s); end
+macro  sn_str(s); Selection{Segment}(s); end
+macro  rn_str(s); Selection{Residue}(s); end
+macro  an_str(s); Selection{Atom}(s); end
 
 macro x_str(s)
     fields = reverse(split(s, '/'))
@@ -134,7 +128,6 @@ select(ac::AbstractContainer, s::TrueSelection) = _collect(ac, s, trues(count_at
 select(top::Topology, s::Selection{Segment}) = begin
     mask = falses(count_atoms(top))
     for seg in top.items
-        # if seg.name == s.name
         if s.match(s.pattern, seg.name)
             for atom in eachatom(seg)
                 mask[atom.index] = true
@@ -155,7 +148,6 @@ end
 select(ac::AbstractContainer, s::Selection{Residue}) = begin
     mask = falses(count_atoms(ac))
     for (i,atom) in enumerate(eachatom(ac))
-        # mask[i] = atom.container.name==s.name
         mask[i] = s.match(s.pattern, atom.container.name)
     end
     _collect(ac,s,mask)
@@ -182,18 +174,6 @@ Base.:|(l::TrueSelection, r::TrueSelection) = l
 
 Base.:!(l::AbstractSelection) = NegateSelection(l)
 
-# Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)
-#Base.:&(l::AbstractDynamicSelection, r::AbstractSelection) =
-#    BinarySelection(l, r, &)
-
-# select(ac::AbstractContainer, s::DistanceSelection) = begin
-#     mask = select(ac, s.sele)
-#     return function (state::State)
-#         println(mask)
-#         println(state.id)
-#         _collect(ac,s,mask)
-#     end
-# end
 
 select(ac::AbstractContainer, s::BinarySelection) = begin
     lmask = select(ac, s.left)
@@ -207,16 +187,68 @@ select(ac::AbstractContainer, s::NegateSelection) = begin
     _collect(ac, s, mask)
 end
 
-# select(ac::AbstractContainer, s::NegateSelection{Static}) = begin
-#     mask = .!select(ac, s.sele)
-#     _collect(ac, s, mask)
-# end
 
-# select(ac::AbstractContainer, s::NegateSelection{Dynamic}) = begin
-#     f = select(ac, s.sele)
-#     return function(state::State)
-#         mask = .!f(state)
-#         _collect(ac, s, mask)
-#     end
-# end
+# Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)
+# Base.:(:)(l::AbstractSelection, r::Number) = DistanceSelection(r, l)
+# Base.:&(l::AbstractDynamicSelection, r::AbstractSelection) =
+#    DynamicBinarySelection(&, l, r)
+# Base.:&(l::AbstractSelection, r::AbstractDynamicSelection) =
+#     DynamicBinarySelection(&, l, r)
 
+select(ac::AbstractContainer, s::DistanceSelection) = begin
+    mask = select(ac, s.sele)
+    return function (state::State)
+        println(mask)
+        println(state.id)
+        println("selecting atom within $(s.distance) of $(s.sele)")
+        _collect(ac,s,mask)
+    end
+end
+
+
+DistanceSelection{Static}
+DistanceSelection{Dynamic}
+select(ac::AbstractContainer, s::DistanceSelection{Static}) = begin
+    mask = select(ac, s.sele)
+    return function (state::State)
+        # <calc distances> & mask
+        _collect(ac, s, mask)
+    end
+end
+select(ac::AbstractContainer, s::DistanceSelection{Dynamic}) = begin
+    selector = select(ac, s.sele)
+    return function (state::State)
+        mask = selector(state)
+        # <calc distances> & mask
+        _collect(ac, s, mask)
+    end
+end
+select(ac::AbstractContainer, s::BinarySelection{Static,Static}) = begin
+    lmask = select(ac, s.left)
+    rmask = select(ac, s.right)
+    mask = (s.op).(lmask, rmask)
+    _collect(ac, s, mask)
+end
+
+select(ac::AbstractContainer, s::BinarySelection{Static,Dynamic}) = begin
+    lmask = select(ac, s.left)
+    rselector = select(ac, s.left)
+    return function (state::State)
+        rmask = rselector(state)
+        # <calc distances> & mask
+        mask = (s.op).(lmask, rmask)
+        _collect(ac, s, mask)
+    end
+end
+
+select(ac::AbstractContainer, s::BinarySelection{Dynamic,Dynamic}) = begin
+    lselector = select(ac, s.left)
+    rselector = select(ac, s.left)
+    return function (state::State)
+        lmask = lselector(state)
+        rmask = rselector(state)
+        # <calc distances> & mask
+        mask = (s.op).(lmask, rmask)
+        _collect(ac, s, mask)
+    end
+end
