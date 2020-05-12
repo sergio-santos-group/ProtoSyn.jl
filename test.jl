@@ -1,19 +1,38 @@
 module Tst
 
-
 include("src/ProtoSyn.jl")
 
 using .ProtoSyn
 using .ProtoSyn.Peptides
 
-if true
-    pymol = ProtoSyn.XMLRPC.ServerProxy("http://localhost", 9123)
-    pymol.delete("all")
+lib = Peptides.loaddb()
+# frag = Peptides.fragment(Float64, "AAGAA", lib)
+@pymol pose = Peptides.build("AAGAAS", lib)
+# @pymol sync!(pose)
+
+#Peptides.setss!(pose.state, pose.graph[1], Peptides.SecondaryStructure[:linear])
+@pymol sync!(pose)
+
+
+frag = Peptides.fragment(Float64, "SYT", lib)
+frag.graph.name = "B"
+append!(pose, frag, 1id, PeptideRxToolbelt)
+#reindex(pose.graph)
+
+Peptides.setss!(pose.state, pose.graph[1], Peptides.SecondaryStructure[:linear])
+@pymol sync!(pose)
+
+#@pymol pose
+
+
+if false
+    #pymol = ProtoSyn.XMLRPC.ServerProxy("http://localhost", 9123)
+    #pymol.delete("all")
 
     function render(t,s,name)
-        io = IOBuffer()
-        write(io, t, s)
-        pymol.read_pdbstr(String(take!(io)), name)
+        #io = IOBuffer()
+        #write(io, t, s)
+        #pymol.read_pdbstr(String(take!(io)), name)
     end
 
     lib = ProtoSyn.Peptides.loaddb()
@@ -25,7 +44,7 @@ if true
 end
 
 
-if true
+if false
     Peptides.setss!(state, top[1], Peptides.SecondaryStructure[:linear])
     # println("done setss!")
     sync!(state, top, true)
@@ -95,8 +114,8 @@ if true
 
 end
 
-s = select(top, rn"GLY" & !(an"CA" | an"C"))
-println(collect(s))
+#s = select(top, rn"GLY" & !(an"CA" | an"C"))
+#println(collect(s))
 
 
 end
