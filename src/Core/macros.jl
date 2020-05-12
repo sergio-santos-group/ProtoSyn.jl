@@ -89,10 +89,11 @@ export @pymol
 macro pymol(ex...)
     body = ex[end]
     kwargs = ex[1:end-1]
+    
+    obj  = nothing
     port = proxy_defaults[:port]
     host = proxy_defaults[:host]
-    obj  = nothing
-    println("ola")
+    
     for kwarg in kwargs
         if Meta.isexpr(kwarg, :(=))
             key,val = kwarg.args
@@ -114,14 +115,13 @@ macro pymol(ex...)
     return quote
         local val = $(esc(body))
         proxy = getfield($(@__MODULE__), :ServerProxy)($host,$port)
-        println(proxy)
-        println(typeof(val))
         if val isa State
             proxy.load_coordset(val.coords, $(esc(obj)), 0)
-        elseif val isa Tuple{Topology,State}
+        # elseif val isa Tuple{Topology,State}
+        elseif val isa Pose
             io = IOBuffer()
-            write(io, val[1], val[2])
-            proxy.read_pdbstr(String(take!(io)), $(esc(obj)) !== nothing || val[1].name)
+            write(io, val.graph, val.state)
+            proxy.read_pdbstr(String(take!(io)), val.graph.name)
             close(io)
         end
         val
