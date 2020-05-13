@@ -396,24 +396,7 @@ Base.detach(s::Segment) = begin
     hascontainer(s) && delete!(s.container, s)
 end
 
-# function fragment(pose::Pose{Segment})
-    
-#     length(pose.graph) != 1 && error("only segments with a single residue can be turned into fragments")
-    
-#     segment = pose.graph
-#     residue = segment[1]
-#     state = splice!(pose.state, residue)
-#     detach(residue)
-#     residue.id = state.id = genid()
 
-#     Pose(residue, state)
-# end
-
-
-
-
-# const Fragment = Vector{Residue}
-# isfragment(p::Pose) = !hascontainer(p.graph) && !isempty(p.graph)
 isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
 
 
@@ -433,6 +416,7 @@ Base.append!(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = beg
     reindex(pose.graph)
     pose
 end
+
 
 """
 append a fragment onto an existing segment
