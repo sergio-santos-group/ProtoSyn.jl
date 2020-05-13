@@ -22,6 +22,17 @@ append!(pose, frag, 1id, PeptideRxToolbelt)
 Peptides.setss!(pose.state, pose.graph[1], Peptides.SecondaryStructure[:linear])
 @pymol sync!(pose)
 
+#--------
+
+using .ProtoSyn.Sugars
+
+sugarlib = Sugars.loaddb()
+pose = Sugars.build(repeat(["GLU14"],4), sugarlib)
+pose.graph.name = "GLU14x4"
+@pymol pose
+@pymol sync!(pose)
+
+
 #@pymol pose
 
 
