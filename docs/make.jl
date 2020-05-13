@@ -9,12 +9,15 @@ makedocs(
         "Manual" => [
             "manual/getting-started.md"
         ],
-        "Core" => [
+        "ProtoSyn" => [
             "core/index.md"
             "core/graph.md"
         ],
         "Peptides" => [
             "peptides/index.md"
+        ],
+        "XMLRPC" => [
+            "xmlrpc/index.md"
         ]
     ]
 )

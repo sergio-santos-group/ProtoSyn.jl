@@ -4,6 +4,13 @@ using HTTP
 
 export ServerProxy
 
+"""
+    ServerProxy(host::String, port::Int)
+
+Instantiate a server proxy listening on `host`and  `port`. This
+object is meant to act as a proxy to a remote service implementing
+the XML/RPC protocol, and was designed to work with PyMOL.
+"""
 struct ServerProxy
     host::String
     port::Int
