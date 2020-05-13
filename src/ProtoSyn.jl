@@ -60,15 +60,16 @@ include("core/selection2.jl")
 # container(c::AbstractContainer; topmost=false) = begin
 #     topmost && hascontainer(c) ? container(c.container; topmost=true) : c.container
 # end
-
+export Fragment
 const Fragment = Pose{Segment}
+
 export ResidueDB
 const ResidueDB = Dict{String, Fragment}
 
 include("core/io.jl")           # <-- ATTENTION
 include("core/iterators.jl")    # <-- ATTENTION
 include("core/methods.jl")
-
+include("core/loaders.jl")
 
 #export from
 #from(db::ResidueDB, key::String) = begin
@@ -85,6 +86,7 @@ include("core/methods.jl")
 #region SUBMODULES ------------------------------
 
 include("Peptides/Peptides.jl")
+include("Sugars/Sugars.jl")
 # include("Forcefields/Forcefields.jl")
 # include("Calculators/Calculators.jl")
 # include("Drivers/Drivers.jl")
