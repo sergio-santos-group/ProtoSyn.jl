@@ -58,35 +58,13 @@ function reset_ic(pose::Pose{Segment})
 end
 
 """
-    loadfragment[T=Float64,] fname) -> Pose{Fragment,State}
+    loadfragment[T=Float64,] fname) -> Pose{Segment}
 
 Load a PDB file and convert it into a fragment.
 """
 function loadfragment(::Type{T}, fname::AbstractString) where {T<:AbstractFloat}
-    # read the full pdb file. The tree has not yet been build
-    # because the read function knows nothing about the
-    # internal graph structure that we wish to impose
-    if endswith(fname, ".pdb")
-        pose = read(T, fname, ProtoSyn.PDB)
-    else
-        error("Unsupported file type: only PDB files are supported")
-    end
-
-    # but now we know this is a peptide and can build
-    # the graph by passing the appropriate seed finding function
-    build_tree!(peptideseed, pose.graph)
-
-    # convert cartesian to internal coordinates (sync)
-    ProtoSyn.request_c2i(pose.state; all=true)
-    sync!(pose)
-
-    # convert this pose to a fragment and reset internal
-    # coordinates
-    frag = ProtoSyn.fragment(pose)
+    frag = ProtoSyn.loadfragment(T, fname, peptideseed)
     reset_ic(frag)
-    
-    # rename and return fragment
-    frag.graph.name = join(map(r->r.name, eachresidue(frag.graph)), "-")
     frag
 end
 
@@ -95,13 +73,8 @@ loadfragment(fname::AbstractString) = loadfragment(Float64, fname)
 
 
 function loaddb(::Type{T}, dir::AbstractString=resource_dir) where {T<:AbstractFloat}
-    lib = ResidueDB()
-    foreach(readdir(dir)) do filename
-        if endswith(filename, ".pdb")
-            frag = loadfragment(T, joinpath(dir, filename))
-            lib[frag.graph.name] = frag
-        end
-    end
+    lib = ProtoSyn.loaddb(T, dir, peptideseed)
+    foreach(reset_ic, values(lib))
     lib
 end
 
@@ -141,7 +114,7 @@ fragment(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
     state = State{T}()
     prev = nothing
 
-    for (resid,letter) in enumerate(seq)
+    for letter in seq
         refpose = db[one_2_three[letter]]
         res = copy(refpose.graph)
         st = copy(refpose.state)
