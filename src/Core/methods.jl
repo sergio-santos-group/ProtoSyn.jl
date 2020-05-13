@@ -89,20 +89,21 @@ function build_tree!(seedfinder::Function, top::Topology)
     end
     
     # build residue graph
-    for atom in tree
-        atom.ascendents = ascendents(atom, 4)
-        r = atom.container
-        p = atom.parent.container
-        if r===p || p===top.root || (r.visited && p.visited)
-            continue
+    if head > 0
+        for atom in tree
+            atom.ascendents = ascendents(atom, 4)
+            r = atom.container
+            p = atom.parent.container
+            if r===p || p===top.root || (r.visited && p.visited)
+                continue
+            end
+            if r.container !== p.container
+                error("parent and child residue must belong to the same segment")
+            end
+            setparent!(r, p)
+            r.visited = p.visited = true
         end
-        if r.container !== p.container
-            error("parent and child residue must belong to the same segment")
-        end
-        setparent!(r, p)
-        r.visited = p.visited = true
     end
-    tree
 end
 
 count_atoms(c::AbstractContainer) = mapreduce(x->count_atoms(x), +, c.items, init=0)
