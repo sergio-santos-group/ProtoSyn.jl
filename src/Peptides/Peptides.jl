@@ -86,7 +86,7 @@ function loadfragment(::Type{T}, fname::AbstractString) where {T<:AbstractFloat}
     reset_ic(frag)
     
     # rename and return fragment
-    frag.graph.name = fname
+    frag.graph.name = join(map(r->r.name, eachresidue(frag.graph)), "-")
     frag
 end
 
