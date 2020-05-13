@@ -11,6 +11,7 @@ makedocs(
         ],
         "Core" => [
             "core/index.md"
+            "core/graph.md"
         ],
         "Peptides" => [
             "peptides/index.md"

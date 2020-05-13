@@ -8,18 +8,42 @@ export popchild!
 #  - children::Vector{T}
 #  - visited::Bool
 #  - ascendents::Union{Nothing,NTuple{N,Int}}
+"""
+    AbstractDigraph
 
+Supertype for a directed graph node.
+"""
 abstract type AbstractDigraph end
 
+"""
+    hasparent(c::AbstractDigraph) -> Bool
 
+Test whether the given AbstractDigraph `c` has a parent.
+"""
 @inline hasparent(c::AbstractDigraph) = c.parent !== nothing
+
+
+"""
+    haschildren(c::AbstractDigraph) -> Bool
+
+Test whether the given AbstractDigraph `c` has children.
+"""
 @inline haschildren(c::AbstractDigraph) = !isempty(c.children)
+
+
+"""
+    isparent(p::AbstractDigraph, c::AbstractDigraph) -> Bool
+
+Test whether `p` is the parent of `c`.
+"""
 @inline isparent(p::AbstractDigraph, c::AbstractDigraph) = p===c.parent
 @inline isparent(::Nothing, c::AbstractDigraph) = false
 
 
-@doc """
-set parent of child
+"""
+    setparent!(c::T, p::T) where {T<:AbstractDigraph}
+
+Set `p` as the parent of `c`.
 """
 function setparent!(child::T, parent::T) where {T<:AbstractDigraph}
     hasparent(child) && error("unable to setparent! of non-orphan item")
@@ -29,6 +53,11 @@ function setparent!(child::T, parent::T) where {T<:AbstractDigraph}
 end
 
 
+"""
+    popparent!(c::AbstractDigraph}
+
+Remove the parent from `c` and make `c` orphan.
+"""
 function popparent!(child::AbstractDigraph)
     if hasparent(child)
         parent = child.parent
@@ -41,10 +70,19 @@ function popparent!(child::AbstractDigraph)
     child
 end
 
+"""
+    popchild!(p::AbstractDigraph} -> child
 
+Remove a child from `p` and return it. The returned element is orphan.
+"""
 popchild!(p::AbstractDigraph) = popparent!(pop!(p.children))
 
 
+"""
+    adjacency(p::AbstractDigraph)
+
+Build and return the adjacency list for all nodes reachable from `p`.
+"""
 function adjacency(p::AbstractDigraph)
     while hasparent(p)
         p = p.parent
@@ -54,27 +92,21 @@ function adjacency(p::AbstractDigraph)
     bfs(p) do c
         hasparent(c) && push!(get!(adjlist, c.parent.index, []), c.index)
     end
-    # queue = AbstractDigraph[]
-    # push!(queue, p)
-    # while !isempty(queue)
-    #     p = popfirst!(queue)
-    #     lst = []
-    #     for c in p.children
-    #         push!(lst, c.index)
-    #         push!(queue, c)
-    #     end
-    #     adjlist[p.index] = lst
-    # end
     adjlist
 end
 
 
-function node(io::IO, c::AbstractDigraph)
-    print(io, "$c(<- $(repr(c.parent))) with $(length(c.children)) children")
-end
-node(c::AbstractDigraph) = node(stdout, c)
+# function node(io::IO, c::AbstractDigraph)
+#     print(io, "$c(<- $(repr(c.parent))) with $(length(c.children)) children")
+# end
+# node(c::AbstractDigraph) = node(stdout, c)
 
+"""
+    function bfs(f::Function, c::T) where {T <: AbstractDigraph} -> Nothing
 
+Perform a breadth-first search starting from `c` and call function
+`f` on each visited node.
+"""
 function bfs(f::Function, c::T) where {T <: AbstractDigraph}
     queue = Vector{T}()
     push!(queue, c)
@@ -83,4 +115,5 @@ function bfs(f::Function, c::T) where {T <: AbstractDigraph}
         f(p)
         append!(queue, p.children)
     end
+    nothing
 end

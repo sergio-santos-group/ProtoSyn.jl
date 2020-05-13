@@ -11,6 +11,8 @@ CurrentModule = Peptides
 loadfragment
 ```
 
+----
+
 ```@autodocs
 Modules = [Peptides]
 ```
