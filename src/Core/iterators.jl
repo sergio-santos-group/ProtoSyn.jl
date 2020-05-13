@@ -5,6 +5,7 @@ export eachatom, eachresidue
 # const _ByResidue = Val{2}
 struct _ByAtom end
 struct _ByResidue end
+struct _BySegment end
 
 struct ItemIterator{T <: AbstractContainer,B}
     target::T
@@ -14,11 +15,11 @@ end
 Base.size(iter::ItemIterator{T,B}) where {T,B} = iter.size
 Base.length(iter::ItemIterator{T,B}) where {T,B} = iter.size[end]
 
-Base.show(io::IO,iter::ItemIterator{T,_ByAtom}) where T =
-    println(io, "ItemIterator{$(nameof(T)), _ByAtom} with size $(iter.size)")
+# Base.show(io::IO,iter::ItemIterator{T,_ByAtom}) where T =
+#     println(io, "ItemIterator{$(nameof(T)), _ByAtom} with size $(iter.size)")
 
-Base.show(io::IO,iter::ItemIterator{T,_ByResidue}) where T =
-    println(io, "ItemIterator{$(nameof(T)), _ByResidue} with size $(iter.size)")
+Base.show(io::IO,iter::ItemIterator{T,B}) where {T,B} =
+    println(io, "ItemIterator{$(nameof(T)), $(nameof(B))} with size $(iter.size)")
 
 # Base.show(io::IO,iter::ItemIterator{T,_ByResidue}) where T = begin
 #     println(io, "ItemIterator{$(nameof(T)), _ByResidue} with size $(iter.size)")
@@ -92,6 +93,16 @@ Base.iterate(iter::ItemIterator{Segment,_ByResidue}, (r,)=(1,)) = begin
 end
 
 #region ResidueIterator
+
+# export eachsegment
+# eachsegment(t::Topology) = ItemIterator{Topology,_BySegment}(t, (length(t),))
+# Base.iterate(iter::ItemIterator{Topology,_BySegment}, (s,)=(1,)) = begin
+#     t = iter.target
+#     if s > length(t)
+#         return nothing
+#     end
+#     (t.items[s], (s+1,))
+# end
 
 
 #endregion Iterators
