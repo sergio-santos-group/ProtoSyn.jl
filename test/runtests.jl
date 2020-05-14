@@ -1,10 +1,6 @@
 push!(LOAD_PATH, "../src")
 
-#include("../src/ProtoSyn.jl")
-
-using Test
-#using .ProtoSyn
-
-using ProtoSyn
+using Test, ProtoSyn
 
 include("graph.jl")
+
