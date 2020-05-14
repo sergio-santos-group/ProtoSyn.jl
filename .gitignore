@@ -12,5 +12,6 @@ docs/site/
 .ipynb_checkpoints/
 private/
 *.zip
+old_stuff
 test/lj/
 
