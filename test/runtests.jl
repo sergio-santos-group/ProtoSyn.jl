@@ -1,9 +1,10 @@
-include("../src/ProtoSyn.jl")
+push!(LOAD_PATH, "../src")
+
+#include("../src/ProtoSyn.jl")
+
 using Test
-using .ProtoSyn
+#using .ProtoSyn
 
-# include("bonds.jl")
-# include("angles.jl")
-#include("nb.jl")
+using ProtoSyn
 
-include("types.jl")
+include("graph.jl")
