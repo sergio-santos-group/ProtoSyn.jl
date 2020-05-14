@@ -74,8 +74,9 @@ end
     popchild!(p::AbstractDigraph} -> child
 
 Remove a child from `p` and return it. The returned element is orphan.
+Return `nothing` if the item has no children.
 """
-popchild!(p::AbstractDigraph) = popparent!(pop!(p.children))
+popchild!(p::AbstractDigraph) = isempty(p.children) ? nothing : popparent!(p.children[1])
 
 
 """
