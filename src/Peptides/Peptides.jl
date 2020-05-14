@@ -2,7 +2,6 @@ module Peptides
 
 using ..ProtoSyn
 
-
 # resource directory for this module
 const resource_dir = let
     modname = string(nameof(@__MODULE__))
@@ -21,7 +20,7 @@ Determine if a residue is a proline.
 
 
 
-function reset_ic(pose::Pose{Segment})
+function reset_ic(pose::Fragment)
     segment = pose.graph
     state = pose.state
     T = eltype(state)
@@ -194,4 +193,29 @@ const PeptideRxToolbelt = ReactionToolbelt(peptidejoin, peptidesplit, peptideroo
 
 
 
+# #-------
+# Dict(
+#     :start=>"AAGASTYEG"
+# )
+# Dict(
+#     :S => ("a", :A),
+#     :A => (("a", :A), ("b", :B)),
+#     :B => (("b", :B), ),
+# )
+
+# struct LGrammar
+#     vars::Vector{String}
+#     axiom::Vector{String}
+#     rules::Dict{String,Vararg}
+# end
+
+# LGrammar(
+#     ["GLU"],
+#     ["GLUE"],
+#     Dict(
+#         "GLU14"=> glu14 [ glu146 ] glu14
+#          glu14 => glu14 glu14
+#     )
+# )
+# #-------
 end
