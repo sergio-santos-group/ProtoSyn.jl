@@ -5,13 +5,8 @@
 *.zip
 *.txt
 
-build/
 docs/build/
-docs/site/
 .vscode/
 .ipynb_checkpoints/
-private/
 *.zip
-old_stuff
-test/lj/
 
