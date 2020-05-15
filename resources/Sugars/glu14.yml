@@ -1,26 +1,26 @@
 name: GLU14
 atoms:
-  C1: {id:  1, symbol: C}
-  C2: {id:  2, symbol: C}
-  C3: {id:  3, symbol: C}
-  C4: {id:  4, symbol: C}
-  C5: {id:  5, symbol: C}
-  C6: {id:  6, symbol: C}
-  O2: {id:  7, symbol: O}
-  O3: {id:  8, symbol: O}
-  O4: {id:  9, symbol: O}
-  O5: {id: 10, symbol: O}
-  O6: {id: 11, symbol: O}
-  H1: {id: 12, symbol: H}
-  H2: {id: 13, symbol: H}
-  H3: {id: 14, symbol: H}
-  H4: {id: 15, symbol: H}
-  H5: {id: 16, symbol: H}
-  H61: {id: 17, symbol: H}
-  H62: {id: 18, symbol: H}
-  HO2: {id: 19, symbol: H}
-  HO3: {id: 20, symbol: H}
-  HO6: {id: 21, symbol: H}
+  C1:  {id:  1, symbol: C, b: 1.5307, theta: 109.1581, phi:  -56.9522}
+  C2:  {id:  2, symbol: C, b: 1.5322, theta: 109.0266, phi:  176.9022}
+  C3:  {id:  3, symbol: C, b: 1.5318, theta: 109.5030, phi:  -69.0363}
+  C4:  {id:  4, symbol: C, b: 1.4290, theta: 119.9999, phi: -180.0000}
+  C5:  {id:  5, symbol: C, b: 1.5301, theta: 109.5666, phi:   50.7042}
+  C6:  {id:  6, symbol: C, b: 1.5295, theta: 109.4971, phi:   62.4629}
+  O2:  {id:  7, symbol: O, b: 1.4287, theta: 109.5322, phi: -176.8588}
+  O3:  {id:  8, symbol: O, b: 1.4289, theta: 109.5597, phi:  -63.2293}
+  O4:  {id:  9, symbol: O, b: 1.2000, theta: 109.5000, phi:  -62.4000}
+  O5:  {id: 10, symbol: O, b: 1.4285, theta: 109.4485, phi: -177.5122}
+  O6:  {id: 11, symbol: O, b: 1.4291, theta: 109.5123, phi: -174.9616}
+  H1:  {id: 12, symbol: H, b: 1.0904, theta: 109.4464, phi:  177.5751}
+  H2:  {id: 13, symbol: H, b: 1.0906, theta: 109.5064, phi:   62.9805}
+  H3:  {id: 14, symbol: H, b: 1.0900, theta: 109.5735, phi:   57.0983}
+  H4:  {id: 15, symbol: H, b: 1.0908, theta: 109.5809, phi:  170.8596}
+  H5:  {id: 16, symbol: H, b: 1.0910, theta: 109.4748, phi:  -57.5554}
+  H61: {id: 17, symbol: H, b: 1.0894, theta: 109.5137, phi:  -54.9686}
+  H62: {id: 18, symbol: H, b: 1.0898, theta: 109.4680, phi:   65.0311}
+  HO2: {id: 19, symbol: H, b: 0.9672, theta: 114.0321, phi:  179.7556}
+  HO3: {id: 20, symbol: H, b: 0.9673, theta: 113.9923, phi: -179.5715}
+  HO6: {id: 21, symbol: H, b: 0.9665, theta: 114.0528, phi: -179.9311}
 bonds:
   C1:  ["C2", "O5", "H1"]
   C2:  ["C1", "C3", "O2", "H2"]
@@ -54,25 +54,3 @@ graph:
   O3: ["HO3"]
   O4: ["C4"]
   O6: ["HO6"]
-state:  
-  C1:  {b: 1.5307, theta: 109.1581, phi:  -56.9522}
-  C2:  {b: 1.5322, theta: 109.0266, phi:  176.9022}
-  C3:  {b: 1.5318, theta: 109.5030, phi:  -69.0363}
-  C4:  {b: 1.4290, theta: 119.9999, phi: -180.0000}
-  C5:  {b: 1.5301, theta: 109.5666, phi:   50.7042}
-  C6:  {b: 1.5295, theta: 109.4971, phi:   62.4629}
-  O2:  {b: 1.4287, theta: 109.5322, phi: -176.8588}
-  O3:  {b: 1.4289, theta: 109.5597, phi:  -63.2293}
-  O4:  {b: 1.2000, theta: 109.5000, phi:  -62.4000}
-  O5:  {b: 1.4285, theta: 109.4485, phi: -177.5122}
-  O6:  {b: 1.4291, theta: 109.5123, phi: -174.9616}
-  H1:  {b: 1.0904, theta: 109.4464, phi:  177.5751}
-  H2:  {b: 1.0906, theta: 109.5064, phi:   62.9805}
-  H3:  {b: 1.0900, theta: 109.5735, phi:   57.0983}
-  H4:  {b: 1.0908, theta: 109.5809, phi:  170.8596}
-  H5:  {b: 1.0910, theta: 109.4748, phi:  -57.5554}
-  H61: {b: 1.0894, theta: 109.5137, phi:  -54.9686}
-  H62: {b: 1.0898, theta: 109.4680, phi:   65.0311}
-  HO2: {b: 0.9672, theta: 114.0321, phi:  179.7556}
-  HO3: {b: 0.9673, theta: 113.9923, phi: -179.5715}
-  HO6: {b: 0.9665, theta: 114.0528, phi: -179.9311}
