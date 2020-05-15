@@ -5,20 +5,21 @@ using Documenter, ProtoSyn, ProtoSyn.Peptides
 makedocs(
     sitename="ProtoSyn.jl",
     pages = [
-        "Home" => "index.md",
-        "Manual" => [
-            "manual/getting-started.md"
-        ],
+        # "Home" => "index.md",
+        # "Manual" => [
+        #     "manual/getting-started.md"
+        # ],
         "ProtoSyn" => [
             "core/index.md"
             "core/graph.md"
+            "core/types.md"
         ],
-        "Peptides" => [
-            "peptides/index.md"
-        ],
-        "XMLRPC" => [
-            "xmlrpc/index.md"
-        ]
+        # "Peptides" => [
+        #     "peptides/index.md"
+        # ],
+        # "XMLRPC" => [
+        #     "xmlrpc/index.md"
+        # ]
     ]
 )
 

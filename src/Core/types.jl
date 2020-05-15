@@ -4,12 +4,13 @@ export Atom, Residue, Segment, Topology
 
 const Opt = Union{Nothing, T} where T
 
-# Subtypes of AbstractContainer shoud implement the following fields:
-#  - name
-#  - id
-#  - items[]
-#  - container
-#  - size
+
+"""
+    AbstractContainer{T} <: AbstractDigraph
+
+Supertype for a container of elements of type `T`, implementing
+the `AbstractDigraph` interface.
+"""
 abstract type AbstractContainer{T} <: AbstractDigraph  end
 abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
 abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
@@ -25,6 +26,29 @@ function initgraph!(c::T) where {T<:AbstractDigraph}
     c
 end
 
+"""
+    Atom <: AbstractAtom
+
+An `Atom` type.
+
+    Atom(name::String, id::Int, index::Int, symbol::String)
+    
+Construct an `Atom`, with the given `name`, `id`, `index`, and `symbol`.
+The created atom has no bonds and container; it is also a free directed-graph
+node.
+
+# Examples
+```jldoctest
+julia> at = Atom("H1", 1, 1, "H")
+Atom{/H1:1}
+
+julia> hascontainer(at), isempty(at.bonds)
+(false, true)
+
+julia> hasparent(at), haschildren(at)
+(false, false)
+```
+"""
 mutable struct Atom <: AbstractAtom
     name::String                    # atom name
     id::Int                         # atom ID
