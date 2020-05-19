@@ -95,6 +95,8 @@ build(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
         
         reindex(top)
 
+        # QUESTION
+        # Doesn't setss!, inside 'fragment' function already do this?
         ProtoSyn.request_i2c(state; all=true)
     end
 
@@ -126,9 +128,16 @@ fragment(::Type{T}, seq::String, db::ResidueDB) where {T<:AbstractFloat} = begin
     seg.id = state.id = ProtoSyn.genid()
 
     setss!(state, seg, SecondaryStructure[:linear])
+
+    # A Pose{Segment} is called a fragment
     Pose(seg, state)
 end
 
+# QUESTION
+# I added this function, following the 'build' example before. It seems Float64
+# is the default. Shouldn't this be a const variable, defined somewhere, to be
+# easy to change?
+fragment(seq::String, db::ResidueDB) = fragment(Float64, seq, db)
 
 setss!(state::State, seg::Segment, (ϕ, ψ, ω)::NTuple{3,Number}) = begin
     t = eltype(state)

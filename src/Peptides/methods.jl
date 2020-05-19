@@ -120,8 +120,7 @@ function build(::Type{T}, sequence::Vector{String}, aminoacids::ResidueLib) wher
     # reset aminoacid orientation
     reset!(aminoacids)
 
-    # instantiate a new molecule bearing
-    # the requested aminoacids
+    # instantiate a new molecule bearing the requested aminoacids
     mol = Molecule(
         name="peptide",
         residues = [

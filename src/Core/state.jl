@@ -125,6 +125,8 @@ Base.copy(s::State{T}) where T = deepcopy(s)
 
 request_c2i(s::State; all=false) = (s.c2i = true)
 
+# QUESTION
+# What is the "all" keyword for? s[0] is the root?
 request_i2c(s::State; all::Bool=false) = begin
     s[0].changed = all
     s.i2c = true
