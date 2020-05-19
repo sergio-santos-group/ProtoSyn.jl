@@ -173,6 +173,9 @@ end
 export hascontainer
 @inline hascontainer(c::AbstractContainer) = c.container !== nothing
 
+# QUESTION
+# Whatever we do, origin(something) is always the ROOT? In what case for this
+# function return 'nothing'?
 
 @inline origin(t::Topology) = get(t.root, "OO")
 @inline origin(c::AbstractContainer) = hascontainer(c) ? origin(c.container) : nothing
@@ -196,6 +199,7 @@ export reindex
     # update ascendents (not possible before because
     # of possible problems with index assignment)
     for atm in eachatom(t)
+        println(atm, atm === nothing)
         atm.ascendents = ascendents(atm, 4)
     end
 

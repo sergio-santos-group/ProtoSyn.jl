@@ -227,4 +227,17 @@ const PeptideRxToolbelt = ReactionToolbelt(peptidejoin, peptidesplit, peptideroo
 #     )
 # )
 # #-------
+
+# QUESTION
+# Should there be a dedicated function inside Peptides module to append new
+# aminoacids to a pose?
+function Base.append!(pose::Pose{Topology}, aminoacids::String, residue_library::Opt{ResidueDB} = nothing)
+    if residue_library === nothing
+        residue_library = loaddb()
+    end
+    single_residue = Peptides.fragment(aminoacids, residue_library)
+    append!(pose, single_residue, 1id, PeptideRxToolbelt)
+    sync!(pose)
+end
+
 end

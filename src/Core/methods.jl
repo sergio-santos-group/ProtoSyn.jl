@@ -301,6 +301,8 @@ function _detach(c::AbstractContainer)
     
     # 2. detach from graph
     #  2.1. remove parent
+    # QUESTION
+    # The 'hasparent' test is already performed inside 'popparent!' function
     hasparent(c) && popparent!(c)
     
     #  2.2 remove children
@@ -340,6 +342,9 @@ Base.detach(r::Residue) = begin
         end
 
         # remove connection to the root node
+        # QUESTION
+        # During '_detach' function, we do hasparent(c) && popparent!(c)
+        # Doesn't this popparent!(atom) already?
         if orig!==nothing && isparent(orig, atom)
             popparent!(atom)
         end
@@ -449,8 +454,6 @@ Base.append!(pose::Pose{Topology}, frag::Fragment, selector::IdSelector, rxtb::R
     reindex(pose.graph)
     pose
 end
-
-
 
 
 

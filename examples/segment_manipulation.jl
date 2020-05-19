@@ -19,8 +19,9 @@ println("ProtoSyn loaded successfully.")
 # flag previously. Using this macro without on open server on PyMOL will cause 
 # an error.
 residue_library = Peptides.loaddb()
-pose = Peptides.build("AAGAAS", residue_library)
+pose = Peptides.build("AAA", residue_library)
 @pymol sync!(pose)
+println("Done buiilding example peptide.")
 
 # QUESTION
 # Should the user know when he needs to sync or not? Maybe this task should be
@@ -43,6 +44,43 @@ pose = Peptides.build("AAGAAS", residue_library)
 # necessary to manipulate peptides and are specific for this type of molecules.
 # For example, polycarbohydrates should have different joining, splitting and
 # root lookup settings and rules.
-single_residue = Peptides.fragment("P", residue_library)
-@pymol append!(pose, single_residue, 1id, PeptideRxToolbelt)
-@pymol @pymol sync!(pose)
+# single_residue = Peptides.fragment("P", residue_library)
+# @pymol append!(pose, single_residue, 1id, PeptideRxToolbelt)
+# @pymol sync!(pose)
+
+# Optinally, one can use a wrapping function to append a residue to the end
+# of an existing pose.
+# @pymol append!(pose, "A")
+
+# Example 3.
+# -> Append multiple residues to the end of the peptide
+# The same functions used in the previous example can be employed to add more
+# than 1 residue simultaneously to the end of the petidic chain.
+# multiple_residues = Peptides.fragment("PAPA", residue_library)
+# @pymol append!(pose, multiple_residues, 1id, PeptideRxToolbelt)
+# @pymol sync!(pose)
+
+@pymol append!(pose, "PAPA")
+
+# QUESTION
+# When adding mutiple residues, the resulting conformation is not linear, it has
+# some deviation
+
+# QUESTION
+# Selections always return atom arrays?
+
+# Example 4.
+# -> Remove the last residue on the peptidic segment
+# The 
+pop!(pose, pose.graph[1][end])
+@pymol sync!(pose)
+
+# QUESTION
+# When doing @pymol pop!(pose, pose.graph[1][end]) it gives and error:
+# Attempt to access 10-element Array{AtomState{Float64},1} at index [69] ?
+
+# Example 5.
+# -> Remove a residue in the center of the peptidic segment
+# The same pp
+pop!(pose, pose.graph[1, 2])
+@pymol sync!(pose)
