@@ -4,6 +4,12 @@ using StaticArrays
 #region AtomState --------------------------------------------------------------
 
 export AtomState
+
+"""
+    AtomState{T<:AbstractFloat}
+
+
+"""
 mutable struct AtomState{T<:AbstractFloat}
     t::MVector{3,T}         # translation vector
     r::MMatrix{3,3,T,9}     # local to global rotation matrix
