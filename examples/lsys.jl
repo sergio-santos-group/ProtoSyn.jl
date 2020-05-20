@@ -3,7 +3,7 @@ module Tst
 include("../src/ProtoSyn.jl")
 
 using .ProtoSyn
-
+using .ProtoSyn.LSystem
 
 function α31(f1::Fragment, f2::Fragment)
     r1 = f1.graph[end]
@@ -19,10 +19,6 @@ function α31(f1::Fragment, f2::Fragment)
         setparent!(r2, r1)  # r1->r2
     end
 end
-# α31(s1::Segment, s2::Segment) = α31(s1[end], s2[1])
-# α31(r1::Residue, s2::Segment) = α31(r1, s2[1])
-# α31(s1::Segment, r2::Residue) = α31(s1[end], r2)
-
 
 function α21(f1::Fragment, f2::Fragment)
     r1 = f1.graph[end]
@@ -44,31 +40,27 @@ function α21(f1::Fragment, f2::Fragment)
         st.ϕ = deg2rad(0)
     end
 end
-# α21(s1::Segment, s2::Segment) = α21(s1[end], s2[1])
-# α21(r1::Residue, s2::Segment) = α21(r1, s2[1])
-# α21(s1::Segment, r2::Residue) = α21(s1[end], r2)
 
 
 
-r13  = read(Float64, "examples/r13.yml", ProtoSyn.YML)
+r13  = read(Float64, "examples/r13.yml",  ProtoSyn.YML)
 r123 = read(Float64, "examples/r123.yml", ProtoSyn.YML)
 
-grammar = ProtoSyn.LSystem.LGrammar()
+grammar = LGrammar{Char,String}()
 
 # add variables
-grammar.variables['A'] = ProtoSyn.fragment(r13)
-grammar.variables['B'] = ProtoSyn.fragment(r123)
+grammar['A'] = ProtoSyn.fragment(r13)
+grammar['B'] = ProtoSyn.fragment(r123)
 
+# add operators
+grammar['α'] = α31
+grammar['β'] = α21
 
 # add rules
-# ProtoSyn.LSystem.addrule!(grammar, 'B' => ProtoSyn.LSystem.StochasticRule(1.00, "AαA"))
-ProtoSyn.LSystem.addrule!(grammar, 'A' => ProtoSyn.LSystem.StochasticRule(0.75, "AαA"))
-ProtoSyn.LSystem.addrule!(grammar, 'A' => ProtoSyn.LSystem.StochasticRule(0.25, "B[αA]βA"))
+# push!(grammar, StochasticRule(1.00, 'B' => "AαA"))
+push!(grammar, StochasticRule(0.75, 'A' => "AαA"))
+push!(grammar, StochasticRule(0.25, 'A' => "B[αA]βA"))
 
-
-# add ...
-grammar.operators['α'] = α31
-grammar.operators['β'] = α21
 
 
 mytoolbelt = ReactionToolbelt(
@@ -77,26 +69,28 @@ mytoolbelt = ReactionToolbelt(
     (s)->s[1,"C1"],
 )
 
-@pymol grammar.variables['A']
-@pymol grammar.variables['B']
+@pymol LSystem.getvar(grammar, 'A')
+@pymol LSystem.getvar(grammar, 'B')
 
-write(stdout, grammar.variables['A'])
-write(stdout, grammar.variables['B'])
+write(stdout, LSystem.getvar(grammar, 'A'))
+write(stdout, LSystem.getvar(grammar, 'B'))
 
-@show derivation = ProtoSyn.LSystem.derive(grammar, "A", 3)
+@show derivation = derive(grammar, "A", 3)
+
 @pymol begin
-    @show derivation = "B[αAαAαAαA]βB[αA]βAαAαA"
-    top = Topology(derivation, 1)
-    state = State{Float64}()
-    state.id = top.id
-    pose = Pose(top, state)
+    # @show derivation = "B[αAαAαAαA]βB[αA]βAαAαA"
+    # top = Topology("UNK", 1)
+    # state = State{Float64}()
+    # state.id = top.id
+    # pose = Pose(top, state)
 
-    frag = ProtoSyn.LSystem.build(grammar, derivation)
-    frag.graph.name = "A"
-    frag.graph.id = 1
-    append(pose, frag, mytoolbelt)
-    reindex(top)
-    ProtoSyn.request_i2c(pose.state; all=true)
+    # frag = build(grammar, derivation)
+    # frag.graph.name = "A"
+    # frag.graph.id = 1
+    # append(pose, frag, mytoolbelt)
+    # reindex(top)
+    # ProtoSyn.request_i2c(pose.state; all=true)
+    pose = build(grammar, derivation)
     sync!(pose)
 end
 

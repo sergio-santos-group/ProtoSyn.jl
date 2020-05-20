@@ -2,43 +2,32 @@ module LSystem
 
 using ..ProtoSyn
 
-# include("graph.jl")
-# include("../ProtoSyn.jl")
-# using ..ProtoSyn
+export StochasticRule, LGrammar
+export derive, build
 
-mutable struct LNode <: ProtoSyn.AbstractDigraph
-    parent::Union{LNode,Nothing}
-    children::Vector{LNode}
-    visited::Bool
-    name::Char
-    index::Int
-    LNode(p::Union{LNode,Nothing}, name::Char, index::Int) = begin
-        node = new(nothing, LNode[], false, name, index)
-        if p !== nothing
-            node.parent = p
-            push!(p.children, node)
-        end
-        node
+struct StochasticRule{K,V}
+    p::Float64
+    # rule::T
+    source::K
+    production::V
+    StochasticRule(p::Float64, rule::Pair{K,V}) where {K,V} = begin
+        (p > 1 || p < 0) && error("Invalid probability")
+        new{K,V}(p, rule.first, rule.second)
     end
 end
 
 
-struct StochasticRule
-    p::Float64
-    rule::String
+struct LGrammar{K,V}
+    rules::Dict{K, Vector{StochasticRule{K,V}}}
+    variables::Dict{K, Fragment}
+    operators::Dict{K, Function}
 end
 
 
-struct LGrammar
-    rules::Dict{Char,Tuple{Vararg{StochasticRule}}}
-    variables::Dict{Char,Fragment}
-    operators::Dict{Char, Function}
-end
-
-LGrammar() = LGrammar(
-    Dict{Char, StochasticRule}(),
-    Dict{Char, Fragment}(),
-    Dict{Char, Function}()
+LGrammar{K,V}() where {K,V} = LGrammar(
+    Dict{K, Vector{StochasticRule{K,V}}}(),
+    Dict{K, Fragment}(),
+    Dict{K, Function}()
 )
 
 
@@ -54,59 +43,61 @@ getrule(g::LGrammar, r) = begin
     while x < p
         x += ruleset[(i+=1)].p
     end
-    ruleset[i].rule
+    ruleset[i].production
 end
+
 
 getvar(g::LGrammar, k) = begin
     !haskey(g.variables, k) && throw(KeyError(k))
     g.variables[k]
 end
 
+
 getop(g::LGrammar, k) = begin
     !haskey(g.operators, k) && throw(KeyError(k))
     g.operators[k]
 end
 
-addrule!(g::LGrammar, r::Pair{Char, StochasticRule}) = begin
-    rules = get!(g.rules, r.first, ())
-    g.rules[r.first] = (rules..., r.second)
+
+Base.push!(g::LGrammar{K,V}, r::StochasticRule{K,V}) where {K,V} = begin
+    push!(
+        get!(g.rules, r.source, []),
+        r
+    )
     g
 end
 
-derive(lg::LGrammar, axiom::String) = join(getrule(lg,c) for c in axiom)
-derive(lg::LGrammar, axiom::String, niter::Int) = begin
+
+Base.setindex!(g::LGrammar{K,V}, x::Fragment, key::K) where {K,V} = begin
+    g.variables[key] = x
+    g
+end
+
+
+Base.setindex!(g::LGrammar{K,V}, x::Function, key::K) where {K,V} = begin
+    g.operators[key] = x
+    g
+end
+
+
+derive(lg::LGrammar, axiom) = [
+    x
+    for r in axiom
+        for x in getrule(lg,r) ]
+
+derive(lg::LGrammar, axiom, niter::Int) = begin
    niter > 0 ? derive(lg, derive(lg, axiom), niter-1) : axiom
 end
 
-function build(derivation::String)
-    graph = LNode[]
-    stack = LNode[]
-    node = nothing
-    for letter in derivation
-        if letter == '['
-            push!(stack, node)
-        elseif letter == ']'
-            node = pop!(stack)
-        else
-            node = LNode(node, letter, length(graph)+1)
-            push!(graph, node)
-        end
-    end
-    graph
-end
 
-Base.getindex(lg::LGrammar, i) = begin
-    haskey(lg.operators, i) ? getop(lg, i) : getvar(lg, i)
-end
 isop(lg::LGrammar, k) = haskey(lg.operators, k)
 isvar(lg::LGrammar, k) = haskey(lg.variables, k)
 
-function build(grammar::LGrammar, derivation::String)
+function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat}
 
-    seg = Segment(derivation, -1)
-    state = State{Float64}()
+    state = State{T}()
+    seg = Segment("derivation", -1)
 
-    
     stack = Fragment[]
     opstack = Function[]
     parent::Opt{Fragment} = nothing
@@ -121,18 +112,14 @@ function build(grammar::LGrammar, derivation::String)
             parent = pop!(stack)
         elseif isvar(grammar, letter)
             frag = getvar(grammar, letter)
-            # join = isempty(opstack) ? defop : pop!(opstack)
             
-
-            #r = copy(frag.graph)
-            #s = copy(frag.state)
             frag2 = copy(frag)
 
             push!(seg, frag2.graph.items...)
             append!(state, frag2.state)
             if parent !== nothing
                 join = pop!(opstack)
-                println(join)
+                #println(join)
                 join(parent, frag2)
             end
             parent = frag2
@@ -144,65 +131,21 @@ function build(grammar::LGrammar, derivation::String)
     return Pose(seg, state)
 end
 
+build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
 
-# grammar = LGrammar()
-# addrule!(grammar, '1' => StochasticRule(1.0, "11"))
-# addrule!(grammar, '0' => StochasticRule(1.5, "1[0]0"))
-# addrule!(grammar, '0' => StochasticRule(0.5, "00"))
+build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat} = begin
+    top = Topology("unknown", 1)
+    state = State{T}()
+    state.id = top.id
+    pose = Pose(top, state)
 
-# for i=1:4
-#     @show derive(grammar, "0", i)
-# end
-
-# sugar = LGrammar()
-# addrule!(sugar, 'B' => StochasticRule(1.00, "AαA"))
-# addrule!(sugar, 'A' => StochasticRule(0.75, "AαA"))
-# addrule!(sugar, 'A' => StochasticRule(0.25, "B[βA]αA"))
-
-# for i=1:4
-#     @show derive(sugar, "B", i)
-# end
-
-#--------------------
-
-# struct LLGrammar{T}
-#     rules::Dict{T,Tuple{Vararg{StochasticRule}}}
-#     variables::Dict{T,Fragment}
-#     operators::Dict{T, Function}
-# end
-
-# LLGrammar{T}() where T = LLGrammar{T}(
-#     Dict{T,StochasticRule}(),
-#     Dict{T,Fragment}(),
-#     Dict{T, Function}()
-# )
-# LLGrammar() = LLGrammar{Char}()
-
-# Base.push!(g::LLGrammar, r::Pair{T, StochasticRule}) where T = begin
-#     rules = get!(g.rules, r.first, ())
-#     g.rules[r.first] = (rules..., r.second)
-#     g
-# end
-
-# Base.get(g::LLGrammar, r) = begin
-#     if !haskey(g.rules, r)
-#         return r
-#     end
-    
-#     i = 1
-#     p = rand()
-#     ruleset = g.rules[r]
-#     x = ruleset[1].p
-#     while x < p
-#         x += ruleset[(i+=1)].p
-#     end
-#     ruleset[i].rule
-# end
-
-# derive(lg::LLGrammar{Char}, axiom::String) = join(get(lg,c) for c in axiom)
-# derive(lg::LLGrammar{Char}, axiom::String, niter::Int) = begin
-#    niter > 0 ? derive(lg, derive(lg, axiom), niter-1) : axiom
-# end
-
+    if !isempty(derivation)
+        frag = fragment(T, grammar, derivation)
+        append(pose, frag)
+        # reindex(top)
+        ProtoSyn.request_i2c(state; all=true)
+    end
+    pose
+end
 
 end
