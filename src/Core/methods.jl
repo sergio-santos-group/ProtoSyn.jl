@@ -396,6 +396,12 @@ Base.detach(s::Segment) = begin
     hascontainer(s) && delete!(s.container, s)
 end
 
+root(c::AbstractContainer) = begin
+    for atom in eachatom(c)
+        !hasparent(atom) && return atom
+    end
+    nothing
+end
 
 isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
 
@@ -409,19 +415,32 @@ function append end
 
 Append a fragment as a new segment.
 """
-append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
+append(pose::Pose{Topology}, frag::Fragment) = begin
     !isfragment(frag) && error("invalid fragment")
     
     push!(pose.graph, frag.graph)
     append!(pose.state, frag.state)
     
     setparent!(
-        rxtb.root(frag.graph),
+        root(frag.graph),
         origin(pose.graph)
     )
     reindex(pose.graph)
     pose
 end
+# append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
+#     !isfragment(frag) && error("invalid fragment")
+    
+#     push!(pose.graph, frag.graph)
+#     append!(pose.state, frag.state)
+    
+#     setparent!(
+#         rxtb.root(frag.graph),
+#         origin(pose.graph)
+#     )
+#     reindex(pose.graph)
+#     pose
+# end
 
 
 """
