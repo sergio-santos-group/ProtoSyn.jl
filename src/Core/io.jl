@@ -3,6 +3,55 @@ using Printf: @sprintf
 
 const PDB = Val{1}
 
+using YAML
+const YML = Val{2}
+Base.read(::Type{T}, filename::AbstractString, ::Type{YML}) where {T<:AbstractFloat} = begin
+    
+    yml = YAML.load(open(filename))
+    natoms = length(yml["atoms"])
+    
+    state = State{T}(natoms)
+    top = Topology(yml["name"], 1)
+    seg = Segment!(top, top.name, 1)
+    res = Residue!(seg, top.name, 1)
+    
+    # add atoms
+    for (index,pivot) in enumerate(yml["atoms"])
+        atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
+        s = state[index]
+        s.θ = deg2rad(T(pivot["theta"]))
+        s.ϕ = deg2rad(T(pivot["phi"]))
+        s.b = T(pivot["b"])
+    end
+
+    # add bonds
+    for (pivot,others) in yml["bonds"]
+        atom = res[pivot]
+        foreach(other->bond(atom,res[other]), others)
+    end
+
+    # bond graph
+    graph = yml["graph"]
+    for (pivot,others) in graph["adjacency"]
+        atom = res[pivot]
+        foreach(other->setparent!(res[other], atom), others)
+    end
+
+    root = origin(top)
+    setparent!(
+        res[graph["root"]],
+        origin(top)
+    )
+    
+    for atom in eachatom(top)
+        atom.ascendents = ascendents(atom, 4)
+    end
+
+    request_i2c(state; all=true)
+    top.id = state.id = genid()
+    sync!(Pose(top, state))
+
+end
 
 Base.read(::Type{T}, filename::AbstractString, ::Type{PDB}) where {T<:AbstractFloat} = begin
     pose = open(filename) do fin
@@ -85,7 +134,7 @@ Base.write(io::IO, top::AbstractContainer, state::State) = begin
         # s = @sprintf("ATOM %6d %4s %-4sA %3d    %8.3f%8.3f%8.3f%24s",
         s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
             atom.index, atom.name,
-            atom.container.name, atom.container.container.name,
+            atom.container.name, atom.container.container.name[1],
             atom.container.id,
             sti.t[1], sti.t[2], sti.t[3],
             atom.symbol)
@@ -99,3 +148,5 @@ Base.write(io::IO, top::AbstractContainer, state::State) = begin
     end
     println(io, "ENDMDL")
 end
+
+Base.write(io::IO, pose::Pose) = write(io, pose.graph, pose.state)
