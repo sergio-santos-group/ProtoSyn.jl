@@ -21,6 +21,7 @@ struct Pose{T<:AbstractContainer}
         new{T}(c,s)
     end
 end
+Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
 include("core/base.jl")
 include("core/selection.jl")
@@ -58,7 +59,7 @@ include("Sugars/Sugars.jl")
 #     end
 # end
 
-
+include("Core/lsystem.jl")
 
 
 
