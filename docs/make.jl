@@ -1,6 +1,6 @@
 push!(LOAD_PATH, "../src")
 
-using Documenter, ProtoSyn, ProtoSyn.Peptides
+using Documenter, ProtoSyn, ProtoSyn.Peptides, ProtoSyn.Sugars
 
 makedocs(
     sitename="ProtoSyn.jl",
@@ -14,9 +14,9 @@ makedocs(
         #     "core/graph.md"
         #     "core/types.md"
         # ],
-        "Peptides" => [
-            "peptides/index.md"
-        ],
+        # "Peptides" => [
+        #     "peptides/index.md"
+        # ],
         "Sugars" => [
             "sugars/index.md"
         ],

@@ -5,6 +5,7 @@ using YAML
 using ..ProtoSyn
 using ..ProtoSyn.Builder
 
+export grammar
 
 # resource directory for this module
 const resource_dir = let
