@@ -116,7 +116,7 @@ end
 
 Build a [`LGrammar`](@ref) for peptides, taking as variables the fragments
 in `dir`. The [`peptidejoin`](@ref) function is included as the default operator.
-The returned L-grammar is required for build peptides from fragments.
+The returned L-grammar is required for building peptides from fragments.
 
 # Examples
 ```julia-repl

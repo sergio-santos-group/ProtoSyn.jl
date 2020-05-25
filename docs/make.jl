@@ -17,6 +17,9 @@ makedocs(
         "Peptides" => [
             "peptides/index.md"
         ],
+        "Sugars" => [
+            "sugars/index.md"
+        ],
         # "XMLRPC" => [
         #     "xmlrpc/index.md"
         # ]
