@@ -129,7 +129,7 @@ end
 Base.copy(s::State{T}) where T = deepcopy(s)
 
 
-request_c2i(s::State; all=false) = (s.c2i = true)
+request_c2i(s::State; all=false) = (s.c2i = true; s)
 
 request_i2c(s::State; all::Bool=false) = begin
     s[0].changed = all

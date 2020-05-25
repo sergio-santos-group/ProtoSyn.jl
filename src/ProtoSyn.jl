@@ -5,6 +5,11 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
 #region CORE ------------------------------------
 include("XMLRPC/XMLRPC.jl")
 
+export °, Å, nm
+const ° = deg2rad(1)
+const Å = 1
+const nm = 10Å
+
 # #endregion
 
 include("core/graph.jl")
@@ -36,10 +41,12 @@ const ResidueDB = Dict{String, Fragment}
 include("core/io.jl")           # <-- ATTENTION
 include("core/iterators.jl")    # <-- ATTENTION
 include("core/methods.jl")
-include("core/loaders.jl")
+# include("core/loaders.jl")
+
 
 
 #region SUBMODULES ------------------------------
+include("Core/builder.jl")
 
 include("Peptides/Peptides.jl")
 include("Sugars/Sugars.jl")
@@ -59,7 +66,6 @@ include("Sugars/Sugars.jl")
 #     end
 # end
 
-include("Core/lsystem.jl")
 
 
 

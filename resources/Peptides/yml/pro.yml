@@ -1,0 +1,41 @@
+name: PRO
+code: P
+atoms:
+  - {name:   N, id:   1, symbol:  N, b:   3.673306, theta:   2.703880, phi:  -0.000000}
+  - {name:  CD, id:   2, symbol:  C, b:   1.457198, theta:   1.866970, phi:   3.084162}
+  - {name: HD1, id:   3, symbol:  H, b:   1.089960, theta:   1.911769, phi:   1.372409}
+  - {name: HD2, id:   4, symbol:  H, b:   1.090522, theta:   1.911239, phi:  -0.721812}
+  - {name:  CG, id:   5, symbol:  C, b:   1.499758, theta:   1.801850, phi:  -2.813762}
+  - {name: HG1, id:   6, symbol:  H, b:   1.090226, theta:   1.912002, phi:  -2.477757}
+  - {name: HG2, id:   7, symbol:  H, b:   1.089285, theta:   1.911958, phi:   1.709843}
+  - {name:  CB, id:   8, symbol:  C, b:   1.484040, theta:   1.815272, phi:   3.005381}
+  - {name: HB1, id:   9, symbol:  H, b:   1.089677, theta:   1.917322, phi:   2.025613}
+  - {name: HB2, id:  10, symbol:  H, b:   1.090430, theta:   1.919441, phi:  -2.154721}
+  - {name:  CA, id:  11, symbol:  C, b:   1.451231, theta:   2.438151, phi:  -0.112089}
+  - {name:  HA, id:  12, symbol:  H, b:   1.090951, theta:   1.910737, phi:   1.089462}
+  - {name:   C, id:  13, symbol:  C, b:   1.521871, theta:   1.911160, phi:  -1.003841}
+  - {name:   O, id:  14, symbol:  O, b:   1.228493, theta:   2.103228, phi:  -0.000128}
+bonds:
+  N: [CD, CA]
+  CD: [N, HD1, HD2, CG]
+  HD1: [CD]
+  HD2: [CD]
+  CG: [CD, HG1, HG2, CB]
+  HG1: [CG]
+  HG2: [CG]
+  CB: [CG, HB1, HB2, CA]
+  HB1: [CB]
+  HB2: [CB]
+  CA: [N, CB, HA, C]
+  HA: [CA]
+  C: [CA, O]
+  O: [C]
+graph:
+  root: N
+  adjacency:
+    N: [CD, CA]
+    CD: [HD1, HD2, CG]
+    CG: [HG1, HG2]
+    CB: [HB1, HB2]
+    CA: [CB, HA, C]
+    C: [O]

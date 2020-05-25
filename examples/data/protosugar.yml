@@ -1,0 +1,18 @@
+protosugar:
+  rules:
+    A:
+      - {p: 0.75, production: [A,α,A]}
+      - {p: 0.25, production: [B,"[",α,A,"]",β,A]}
+  variables:
+    A: examples/data/r13.yml
+    B: examples/data/r123.yml
+  defop: α
+  operators:
+    α:
+      residue1: C3
+      residue2: C1
+    β:
+      residue1: C2
+      residue2: C1
+      presets:
+        C1: {θ: 2.356194490192345, ϕ: 0, b: 2.5}

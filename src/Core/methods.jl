@@ -68,11 +68,14 @@ function build_tree!(seedfinder::Function, top::Topology)
     natoms = count_atoms(top)
     tree = Vector{Atom}(undef, natoms)
     
-    seeds = seedfinder(top)
+    #seeds = seedfinder(top)
     root = origin(top)
 
     # build atom tree
-    for seed in seeds    
+    # for seed in seeds
+    for seg in top.items
+        seed = seedfinder(seg)
+        seed === nothing && continue
         tree[tail+=1] = seed
         seed.visited = true
         while head < tail
@@ -385,6 +388,7 @@ function fragment(pose::Pose{Topology})
     state = splice!(pose.state, 1:count_atoms(segment))
     detach(segment)
     segment.id = state.id = genid()
+    segment.name = topology.name
 
     Pose(segment, state)
 end
@@ -416,6 +420,8 @@ function append end
 Append a fragment as a new segment.
 """
 append(pose::Pose{Topology}, frag::Fragment) = begin
+    #println(hascontainer(frag.graph))
+    #println(isempty(frag.graph))
     !isfragment(frag) && error("invalid fragment")
     
     push!(pose.graph, frag.graph)
@@ -660,13 +666,13 @@ end
 
 export setdihedral!
 
-@inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
-    at = r[atname]
-    at !== nothing && setdihedral!(s, at, value)
-    s
-end
+# @inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
+#     at = r[atname]
+#     at !== nothing && setdihedral!(s, at, value)
+#     s
+# end
 
-@inline setdihedral!(s::State{T}, at::Atom, val::T) where T = (s[at].Δϕ = val; s)
+@inline setdihedral!(s::State, at::Atom, val) = (s[at].Δϕ = val; s)
 
 
 export setoffset!
@@ -701,3 +707,12 @@ end
 #     state.c2i = true
 #     state
 # end
+
+function join(r1::Residue, s1::String, r2::Residue, s2::String)
+    hasparent(r2) && error("r2 is already connected")
+    at1 = r1[s1]
+    at2 = r2[s2]
+    bond(at1, at2)          # at1 <-> at2
+    setparent!(at2, at1)    # at1 -> at2
+    setparent!(r2, r1)    # r1 -> r2
+end

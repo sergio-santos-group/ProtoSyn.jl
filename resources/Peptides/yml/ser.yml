@@ -1,0 +1,34 @@
+name: SER
+code: S
+atoms:
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
+  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
+  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276}
+  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300}
+  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563}
+  - {name:  OG, id:   8, symbol:  O, b:   1.429819, theta:   1.910671, phi:   3.141108}
+  - {name:  HG, id:   9, symbol:  H, b:   0.960604, theta:   1.910445, phi:   3.141170}
+  - {name:   C, id:  10, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
+  - {name:   O, id:  11, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+bonds:
+  N: [H, CA]
+  H: [N]
+  CA: [N, HA, CB, C]
+  HA: [CA]
+  CB: [CA, HB1, HB2, OG]
+  HB1: [CB]
+  HB2: [CB]
+  OG: [CB, HG]
+  HG: [OG]
+  C: [CA, O]
+  O: [C]
+graph:
+  root: N
+  adjacency:
+    N: [H, CA]
+    CA: [HA, CB, C]
+    CB: [HB1, HB2, OG]
+    OG: [HG]
+    C: [O]

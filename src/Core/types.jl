@@ -94,12 +94,13 @@ end
 mutable struct Segment <: AbstractSegment
     name::String                        # segment name
     id::Int                             # segment ID
+    code::Char
     items::Vector{Residue}              # list of residues (children)
     container::Opt{AbstractTopology}    # parent topology
     size::Int
     
     Segment(name::String, id::Int) = begin
-        new(name, id, Residue[], nothing, 0)
+        new(name, id, '?', Residue[], nothing, 0)
     end
 end
 

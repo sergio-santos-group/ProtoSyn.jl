@@ -8,7 +8,7 @@ CurrentModule = Peptides
 ### load stuff
 
 ```@docs
-loadfragment
+peptidejoin
 ```
 
 ----
