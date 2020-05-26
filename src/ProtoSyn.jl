@@ -5,12 +5,10 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
 #region CORE ------------------------------------
 include("XMLRPC/XMLRPC.jl")
 
-export °, Å, nm
-const ° = deg2rad(1)
-const Å = 1
-const nm = 10Å
 
 # #endregion
+include("core/units.jl")
+using .Units: tonumber
 
 include("core/graph.jl")
 include("core/macros.jl")
@@ -46,7 +44,7 @@ include("core/methods.jl")
 
 
 #region SUBMODULES ------------------------------
-include("Core/builder.jl")
+include("Core/Builder.jl")
 
 include("Peptides/Peptides.jl")
 include("Sugars/Sugars.jl")

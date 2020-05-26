@@ -20,8 +20,8 @@ end
 load(filename::AbstractString) = load(Float64, filename)
 load(filename::AbstractString, ::Type{K}) where K = load(Float64, filename, K)
 
-tonumber(v::Number) = v
-tonumber(v::String) = eval(Meta.parse(v))
+#tonumber(v::Number) = v
+#tonumber(v::String) = eval(Meta.parse(v))
 
 load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     
