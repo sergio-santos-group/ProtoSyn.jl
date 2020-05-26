@@ -1,14 +1,15 @@
-# Peptides
-
 ```@meta
 CurrentModule = Peptides
 ```
 
+# Peptides
 
-### load stuff
 
 ```@docs
-peptidejoin
+isproline
+build_graph!
+grammar
+setss!
 ```
 
 ----

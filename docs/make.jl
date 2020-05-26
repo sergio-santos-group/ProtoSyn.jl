@@ -14,10 +14,10 @@ makedocs(
         #     "core/graph.md"
         #     "core/types.md"
         # ],
-        # "Peptides" => [
-        #     "peptides/index.md"
-        # ],
         "Builder" => "core/builder.md",
+        "Peptides" => [
+            "peptides/index.md"
+        ],
         "Sugars" => [
             "sugars/index.md"
         ],
