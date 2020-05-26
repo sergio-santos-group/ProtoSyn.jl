@@ -7,7 +7,7 @@ include("XMLRPC/XMLRPC.jl")
 
 
 # #endregion
-include("core/units.jl")
+include("Units.jl")
 using .Units: tonumber
 
 include("core/graph.jl")
