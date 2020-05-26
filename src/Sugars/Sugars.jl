@@ -1,7 +1,5 @@
 module Sugars
 
-using YAML
-
 using ..ProtoSyn
 using ..ProtoSyn.Builder
 
@@ -29,15 +27,10 @@ julia> pose = Builder.build(g, "AAA")
 ...
 ```
 """
-function grammar(::Type{T}, key::String) where {T <: AbstractFloat}
+function grammar(::Type{T}, polyname::String) where {T <: AbstractFloat}
     filename = joinpath(resource_dir, "grammars.yml")
-    open(filename) do io
-        @info "loading grammar for '$key' from file $filename"
-        yml = YAML.load(io)
-        lgfactory(T, yml[key])
-    end
+    Builder.fromfile(T, filename, polyname)
 end
-
-grammar(key::String) = grammar(Float64, key)
+grammar(polyname::String) = grammar(Float64, polyname)
 
 end
