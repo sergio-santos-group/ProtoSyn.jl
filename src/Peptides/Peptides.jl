@@ -127,11 +127,7 @@ julia> pose = Builder.build(grammar, "AAGASTASSE")
 """
 function grammar(::Type{T}) where {T <: AbstractFloat}
     filename = joinpath(resource_dir, "grammars.yml")
-    open(filename) do io
-        @info "loading grammar from file" filename
-        yml = YAML.load(io)
-        lgfactory(T, yml["peptide"])
-    end
+    Builder.fromfile(T, filename, "peptide")
 end
 
 
