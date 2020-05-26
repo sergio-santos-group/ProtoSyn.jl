@@ -36,5 +36,5 @@ deploydocs(
     #target = "build",
     #devbranch = "refactoring",
     devurl = "dev",
-    versions = ["stable" => "v^", "v#.#", devurl => devurl, "v0.2-alpha"=>"v0.2-alpha"],
+    versions = ["stable" => "v^", "v#.#", "dev" => "dev", "v0.2-alpha"=>"v0.2-alpha"],
 )
