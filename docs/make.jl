@@ -34,4 +34,6 @@ deploydocs(
     #deps = nothing,
     #make = nothing,
     #target = "build",
+    devbranch = "refactoring",
+    devurl = "dev",
 )
