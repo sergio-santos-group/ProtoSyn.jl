@@ -1,13 +1,16 @@
 module Builder
 
+using YAML
+
 using ..ProtoSyn
+using ..ProtoSyn.Units: tonumber
 
 export StochasticRule, LGrammar
-export derive, build, lgfactory
+export derive, build, lgfactory, fromfile
+export @seq_str
 
 struct StochasticRule{K,V}
     p::Float64
-    # rule::T
     source::K
     production::V
     StochasticRule(p::Float64, rule::Pair{K,V}) where {K,V} = begin
@@ -15,7 +18,9 @@ struct StochasticRule{K,V}
         new{K,V}(p, rule.first, rule.second)
     end
 end
-
+Base.show(io::IO, sr::StochasticRule) = begin
+    println(io, sr.source, "(p=", sr.p, ") -> ", sr.production)
+end
 
 mutable struct LGrammar{K,V}
     rules::Dict{K, Vector{StochasticRule{K,V}}}
@@ -146,7 +151,11 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFl
     return Pose(seg, state)
 end
 
+"""
+    build([T=Float64,] grammar::LGrammar, derivation)
 
+Build a `Pose{Topology}`.
+"""
 function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat}
     top = Topology("UNK", 1)
     state = State{T}()
@@ -156,16 +165,34 @@ function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat
     if !isempty(derivation)
         frag = fragment(T, grammar, derivation)
         append(pose, frag)
-        # reindex(top)
         ProtoSyn.request_i2c(state; all=true)
     end
     pose
 end
 build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
 
-export @seq_str
+
+"""
+    @seq_str -> Vector{String}
+
+Construct a vector of strings from the provided string. 
+
+# Examples
+```jldoctest
+julia> seq"ABC"
+3-element Array{String,1}:
+ "A"
+ "B"
+ "C"
+```
+"""
 macro seq_str(s); [string(c) for c in s]; end
 
+"""
+    opfactory(args) -> Function
+
+Closure
+"""
 function opfactory(args)
     return function(f1::Fragment, f2::Fragment)
         r1 = f1.graph[end]
@@ -194,6 +221,9 @@ end
 
 
 """
+    lgfactory([T=Float64,] template::Dict) -> LGrammar{String,Vector{String}}
+
+
 # Example
 ```yml
 amylose:
@@ -201,8 +231,6 @@ amylose:
     A:
       - {p: 0.75, production: [A,α,A]}
       - {p: 0.25, production: [B,"[",α,A,"]",β,A]}
-      - {p: 0.25, production: [B,+,α,A,-,β,A]}
-      - {p: 0.25, production: [B,↓,α,A,↑,β,A]}
   variables:
     A: resources/Sugars/GLC14.pdb
   operators:
@@ -222,30 +250,47 @@ function lgfactory(::Type{T}, template::Dict) where T
 
     vars = template["variables"]
     for (key,name) in vars
-        println(name)
+        @info "Loading variable '$key' from $name"
         pose = ProtoSyn.load(T, name)
-        #if !hasgraph(pose.graph)
-        #    build_graph!(pose.graph)
-        #    ProtoSyn.c2i!(pose.state, pose.graph)
-        #end
         grammar[key] = ProtoSyn.fragment(pose)
     end
 
     ops = template["operators"]
     for (opname,opargs) in ops
+        if haskey(opargs, "presets")
+            for presets in values(opargs["presets"])
+                for (k,v) in presets
+                    presets[k] = tonumber(v)
+                end
+            end
+        end
+
+        @info "Loading operator $opname"
         grammar[opname] = opfactory(opargs)
     end
     grammar.defop = Builder.getop(grammar, template["defop"])
 
     if haskey(template, "rules")
         for (key,rules) in template["rules"]
+            @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
+                @info "  $sr"
             end
         end
     end
     grammar
+end
+lgfactory(template::Dict) = lgfactory(Float64, template)
+
+
+function fromfile(::Type{T}, filename::AbstractString, key::String) where T
+    open(filename) do io
+        @info "loading grammar from file $filename"
+        yml = YAML.load(io)
+        lgfactory(T, yml[key])
+    end
 end
 
 end
