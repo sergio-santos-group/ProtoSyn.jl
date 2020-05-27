@@ -1,0 +1,45 @@
+components:
+  atoms:
+    CoulombLennardJones:
+    # type    Z        mass  charge    sigma         epsilon
+    - [H0,    1,      1.008,   0.00, 2.47135e-01,  6.56888e-02]
+    - [Br,   35,     79.90 ,   0.00, 0.00000e+00,  0.00000e+00]
+    - [ C,    6,     12.01 ,   0.00, 3.39967e-01,  3.59824e-01]
+    - [CA,    6,     12.01 ,   0.00, 3.39967e-01,  3.59824e-01]
+    - [CB,    6,     12.01 ,   0.00, 3.39967e-01,  3.59824e-01]
+  bonds:
+    HarmonicType:
+    - [ CT, H0,    0.1090,  284512.0]  #  03GLY changed from 331 bsd on NMA nmodes; AA, SUGARS
+    - [  C,  C,    0.1525,  259408.0]  #  new99
+    - [  C, OS,    0.1323,  376560.0]  #  new99
+    # MorseType:
+    # - [  C, H4,    0.1080,  307105.6]  #  new99
+    # - [  C, H5,    0.1080,  307105.6]  #  new99
+    # - [ CA, OH,    0.1364,  376560.0]  #  new99
+
+  angles:
+    HarmonicType:
+    - [ H0, CT, H0,   109.500,   292.880]  #  03GLY
+    - [ H0, CT,  N,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
+    - [  C, CT, H0,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
+    - [ HW, OW, HW,   104.520,   836.800]  #  TIP3P water
+    - [ HW, HW, OW,   127.740,     0.000]  #  (found in crystallographic water with 3 bonds)
+    - [  C,  C,  O,   120.000,   669.440]  #  new99
+    - [  C,  C, OH,   120.000,   669.440]  #  new99
+  improper:
+    CosineType:
+    - [ CA, CA, CA, OH,    180.00,   4.60240,         2]  #  new99
+    - [ H5,  O,  C, OH,    180.00,   4.60240,         2]  #  new99
+    - [ H5,  O,  C, OS,    180.00,   4.60240,         2]  #  new99
+    - [ CM, CT, CM, HA,    180.00,   4.60240,         2]  #  new99
+    - [ CA, CA, CA, Br,    180.00,   4.60240,         2]  #  new99
+  proper:
+    NCosineType:
+    - [ CT, CT, OS, CT, [0.0, 180],   [1.60247,0.41840], [3,2]]  # 
+    # - [ CT, CT, OS, CT,     180.0,   0.41840,         2]  # 
+  #   - [  N, CT,  C,  N,     180.0,   2.86144,         1]  #  Amber03
+  #   - [  N, CT,  C,  N,     180.0,   6.08228,         2]  #  Amber03
+  #   - [  N, CT,  C,  N,     180.0,   1.93092,         3]  #  Amber03
+
+  
+  
