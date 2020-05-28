@@ -8,7 +8,7 @@ components:
     - [CA,    6,     12.01 ,   0.00, 3.39967e-01,  3.59824e-01]
     - [CB,    6,     12.01 ,   0.00, 3.39967e-01,  3.59824e-01]
   bonds:
-    HarmonicType:
+    HarmonicBond:
     - [ CT, H0,    0.1090,  284512.0]  #  03GLY changed from 331 bsd on NMA nmodes; AA, SUGARS
     - [  C,  C,    0.1525,  259408.0]  #  new99
     - [  C, OS,    0.1323,  376560.0]  #  new99
@@ -18,7 +18,7 @@ components:
     # - [ CA, OH,    0.1364,  376560.0]  #  new99
 
   angles:
-    HarmonicType:
+    HarmonicAngle:
     - [ H0, CT, H0,   109.500,   292.880]  #  03GLY
     - [ H0, CT,  N,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
     - [  C, CT, H0,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
@@ -27,14 +27,14 @@ components:
     - [  C,  C,  O,   120.000,   669.440]  #  new99
     - [  C,  C, OH,   120.000,   669.440]  #  new99
   improper:
-    CosineType:
+    CosineDihedral:
     - [ CA, CA, CA, OH,    180.00,   4.60240,         2]  #  new99
     - [ H5,  O,  C, OH,    180.00,   4.60240,         2]  #  new99
     - [ H5,  O,  C, OS,    180.00,   4.60240,         2]  #  new99
     - [ CM, CT, CM, HA,    180.00,   4.60240,         2]  #  new99
     - [ CA, CA, CA, Br,    180.00,   4.60240,         2]  #  new99
   proper:
-    NCosineType:
+    NCosineDihedral:
     - [ CT, CT, OS, CT, [0.0, 180],   [1.60247,0.41840], [3,2]]  # 
     # - [ CT, CT, OS, CT,     180.0,   0.41840,         2]  # 
   #   - [  N, CT,  C,  N,     180.0,   2.86144,         1]  #  Amber03

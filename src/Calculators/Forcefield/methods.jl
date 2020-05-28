@@ -1,419 +1,197 @@
+# using ...ProtoSyn
+Atom=Int
+Segment=Int
+include("types.jl")
 
-const BondedList = Dict{Union{Int,Symbol}, Vector{Tuple{Vararg{Int}}}}
-const ExclusionList = Dict{Int, Vector{Int}}
+#const BondedList{N} where N = Dict{Union{Int,Symbol}, Vector{NTuple{N, Int}}}
+export genbonded, loadparm
 
+const BondedList = Dict{Int, Vector{Tuple{Vararg{Atom}}}}
 
-function genbonded(mol::Molecule, maxdepth::Int=3)
-    if mol.bonds !== nothing
-        return genbonded(mol.bonds, maxdepth)
+function dfs(f::Function, pivot::Atom, path::Vector{Atom}, maxdepth::Int, depth::Int=0)
+    # path[depth+1] = pivot
+    push!(path, pivot)
+    pivot.visited = true
+    f(depth, path)
+    if depth < maxdepth
+        for atom in pivot.bonds
+            !atom.visited && dfs(f, atom, path, maxdepth, depth+1)
+        end
     end
-    nothing
+    pivot.visited = false
+    pop!(path)
 end
 
 
-function genbonded(graph::ConnectGraph, maxdepth::Int=3)
+function genbonded(graph::Segment, depth::Int)
     
-    bonded = BondedList()
+    blist = BondedList()
+    byatom = eachatom(graph)
+    path = Vector{ProtoSyn.Atom}()
+    # path = Vector{ProtoSyn.Atom}(undef, depth+1)
 
-    visited = falses(length(graph))
-    
-    function traverse(pivot::Int, path::Vector{Int}, depth::Int=0)
-        # do nothing if one is beyond the maximum
-        # allowed depth
-        if depth > maxdepth
-            return
-        end
-        
-        # add this item to the path
-        push!(path, pivot)
+    for atom in byatom
+        atom.visited = false
+    end
 
-        # save the path to the adequate container:
-        #  by now, the depth correponds to the number
-        #  of bonds away from the initial atom 
-        if (depth > 0) && (path[1] < path[end])
-            push!(get!(bonded, depth, []), Tuple(path))
-        end
-        
-        # if we have reached the maximum depth, then return
-        #  and prevent another cycle of traversal that will not
-        #  be useful.
-        if depth == maxdepth
-            return
-        end
-
-        # traverse the graph 
-        visited[pivot] = true
-        for i in graph[pivot]
-            if !visited[i]
-                traverse(i, copy(path), depth+1)
+    for i = 1:depth
+        blist[i] = Vector{NTuple{i,Atom}}()
+    end
+    for atom in byatom
+        dfs(atom, path, depth) do d,pth
+            if pth[1].index < pth[end].index
+               push!(blist[d], Tuple(pth))
             end
         end
-        visited[pivot] = false
-        
     end
-
-    for i = 1:length(graph)
-        traverse(i, Int[])
-    end
-
-    # if the 1 to 3 keys exist, create named alias
-    haskey(bonded, 1) && (bonded[:bonds ] = bonded[1])
-    haskey(bonded, 2) && (bonded[:angles] = bonded[2])
-    haskey(bonded, 3) && (bonded[:proper] = bonded[3])
-    haskey(bonded, maxdepth) && (bonded[:pairs] = bonded[maxdepth])
-
-    return bonded
+    blist
 end
 
-
-
-
-
-function genexcluded(mol::Molecule, maxdepth::Int=3)
-    if mol.bonds !== nothing
-        return genexcluded(mol.bonds, maxdepth)
-    end
-    nothing
-end
-
-
-function genexcluded(graph::ConnectGraph, maxdepth::Int=3)
-    
-    excluded = ExclusionList()
-    visited = falses(length(graph))
-    
-    function traverse(pivot::Int, cur::Int, path::Vector{Int}, depth::Int=0)
-        # do nothing if already beyond the max depth
-        (depth > maxdepth) && return
-        
-        # add this index tp the path only if depth > 0.
-        # Otherwise, the first entry of the exclusion list
-        # for each atom is the atom itself, and we want the
-        # exclusion list to contain only indices greater
-        # than the key itsefl
-        (depth > 0) && (cur > pivot) && push!(path, cur)
-        
-        # prevent the next function call overhead
-        (depth == maxdepth) && return
-
-        # mark this atom as visited , traverse the graph
-        # and unmark the atom back
-        visited[cur] = true
-        for i in graph[cur]
-            !visited[i] && traverse(pivot, i, path, depth+1)
-        end
-        visited[cur] = false
-    end
-    
-
-    for k = 1:length(graph)
-        # get the list for atom k
-        excl = get!(excluded, k, [])
-        
-        # build the list and sort it
-        traverse(k, k, excl)
-        sort!(excl)
-
-        # add a terminal index to flag end of list (this
-        # index does not exist and ensures consistency of the list)
-        push!(excl, -1)
-    end
-
-    excluded
-end
-
-
-
-
-
-
+# struct ForcefieldSpec
+#     name::String
+#     genpairs::Bool
+#     fudgeLJ::Float64
+#     fudgeQQ::Float64
+#     exclusion_depth::Int
+#     components::Dict{Symbol, Dict{String, AbstractFFComponentType}} = Dict()
+# end
 
 @inline function genkey(types::T...) where {T<:AbstractString}
-    join(types, ":")
+    #join(types, ":")
+    types
+    # tuple(types...)
 end
 
+struct ForcefieldParameters
+    exclusion_depth::Int
+    components::Dict{Symbol, Dict{KeyType, AbstractComponentType}}
+    ForcefieldParameters() = new(3, Dict())
+end
 
-
-# function load(ffield::String)
-#     filename = joinpath(resource_dir, ffield, "forcefield.yml")
-#     println("loading forcefield $filename")
-#     open(filename) do io
-#         load(io)
-#     end
-# end
-
-
-
-# function load(io::IO)
-#     raw = YAML.load(io)
-
-#     ffield = Forcefield()
-
-#     # iterate over forcefield components
-#     #  (bonds, angles, proper dihedrals, improper ...)
-#     for component in keys(raw)
-        
-#         # Instantiate an appropiate container for this type
-#         #  this is a dictionary with keys given by
-#         #  the atomtypes comprising the component
-#         container = Dict{String, IForcefieldType}()
-#         ffield[Symbol(component)] = container
-
-        
-#         for (typename, entries) in raw[component]
-            
-#             # get the adequate type for this component.
-#             # These will be subtypes of IForcefieldType
-#             # such as HarmonicBondType, HarmonicAngleType, ...
-#             type = getfield(Forcefield, Symbol(typename))
-            
-#             # determine how many entry fields define the key
-#             #    - bonds require 2 fields;
-#             #    - angles require 3 fields,
-#             #    - (im)proper require 4 fields
-#             n = length(entries[1]) - fieldcount(type)
-#             if type <: IAppendableForcefieldType
-#                 n += 1
-#             end
-            
-#             # iterate over all entries for the current
-#             # component type. These will correspond to
-#             # different combinations of atom types.
-#             for entry in entries
-                
-#                 # convert all arguments to the required
-#                 # types of the target type
-#                 args = [
-#                     convert(eltype(t),v)
-#                     for (t,v) in zip(fieldtypes(type), entry[n+1:end])
-#                 ]
-                
-#                 # generate a key and get the item from the container
-#                 # (if it exists). If it is a subtype of 
-#                 # IAppendableForcefieldType, then multiple definitions
-#                 # in the raw data are appended to that instance. Otherwise,
-#                 # it is replaced!
-#                 key = genkey(entry[1:n]...)
-#                 item = get(container, key, nothing)
-#                 if isa(item, IAppendableForcefieldType)
-#                     push!(item, args...)
-#                 else
-#                     container[key] = type(args...)
-#                 end
-                
-#             end
-#         end
-#     end
-
-#     return ffield
-# end
-
-
-
-
-function lookup(component::Symbol, comptypes::Dict{String, IForcefieldComponentType}, atomtypes::String...)
+using YAML
+function loadparm(::Type{T}, filename::AbstractString) where {T<:AbstractFloat}
+    @info "Loading forcefield parameters from file '$filename'"
+    yml = YAML.load(open(filename))
     
-    # direct order
-    key = genkey(atomtypes...)
-    haskey(comptypes, key) && return comptypes[key]
-    
-    if component === :improper
-        key = genkey("X", atomtypes[2:end]...)
-        haskey(comptypes, key) && return comptypes[key]
-        
-        key = genkey("X", "X", atomtypes[3:end]...)
-        haskey(comptypes, key) && return comptypes[key]
-    elseif component === :proper
-        key = genkey(reverse(atomtypes)...)
-        haskey(comptypes, key) && return comptypes[key]
-    
-        key = genkey("X", atomtypes[2], atomtypes[3], "X")
-        haskey(comptypes, key) && return comptypes[key]
+    parm = ForcefieldParameters()
 
-        key = genkey("X", atomtypes[3], atomtypes[2], "X")
-        haskey(comptypes, key) && return comptypes[key]
-    else
-        key = genkey(reverse(atomtypes)...)
-        haskey(comptypes, key) && return comptypes[key]
+    for (name,components) in yml["components"]
+        container = get!(parm.components, Symbol(name), Dict())
+        println(name, "------------------")
+
+        for (typename, items) in components
+            println(">> ", typename)
+            type = getfield(Forcefield, Symbol(typename)){String,T}
+            println("type: ", type)
+            println("fieldcount: ", fieldcount(type))
+            println("keylen: ", keylen(type))
+            # nfields = parmcount(type)
+            nfields = fieldcount(type)-keylen(type)
+            println("nfields: ", nfields)
+            println("fieldtypes: ", fieldtypes(type))
+            ftypes = fieldtypes(type)[2:end]
+            println(ftypes)
+            klen = keylen(type)
+            for item in items
+                # println(item[end-nfields:end])
+                #key = 
+                #container[key] = type(item...)
+                args = item[klen+1:end]
+                args = [
+                    convert(t, v isa Vector ? Tuple(v) : v)
+                    # convert(t, v)
+                    for (t,v) in zip(ftypes,args)
+                ]
+                key = genkey(item[1:klen]...)
+               
+                # println(type("", args...))
+                println(key, ", ", args)
+                println(type(key, args...))
+                # push!(container, T(key, args...))
+                container[key] = type(key, args...)
+            end
+        end
+
     end
+    parm
+end
+loadparm(filename::AbstractString) = loadparm(Float64, filename)
 
+Base.getindex(ffparms::ForcefieldParameters, comp::Symbol, keys::String...) = begin
+    
+    components = ffparms.components[comp]
+    
+    haskey(components, keys) && return components[keys]
+
+    if comp === :improper
+        key = ("X", keys[2:end]...)
+        haskey(components, key) && return components[key]
+        
+        key = ("X", "X", keys[3], keys[4])
+        haskey(components, key) && return components[key]
+    elseif comp === :proper
+        key = reverse(keys)
+        haskey(components, key) && return components[key]
+    
+        key = ("X", keys[2], keys[3], "X")
+        haskey(components, key) && return components[key]
+
+        key = ("X", keys[3], keys[2], "X")
+        haskey(components, key) && return components[key]
+    else
+        key = reverse(keys)
+        haskey(components, key) && return components[key]
+    end
     nothing
 end
 
 
+function genff(graph, ffparams::ForcefieldParameters, resmaps::Dict)
+    blist = genbonded(graph, ffparams.exclusion_depth)
+    #excluded = genexcluded(graph, ffparams.exclusion_depth)
 
-function loadmap(mapname)
-    filename = joinpath(resource_dir, mapname)
-    open(filename) do io
-        loadmap(io)
-    end
-end
-
-loadmap(io::IO) = YAML.load(io)
-
-# function loadmap(io::IO)
-#     raw = YAML.load(io)
-    
-#     d = Dict()
-
-#     # reverse first and second levels
-#     for (resname,components) in raw
-#         for compname in keys(components)
-#             key = Symbol(compname)
-#             c = get!(d, key, Dict())
-#             c[resname] = components[compname]
-#         end
-#     end
-
-#     d
-# end
-
-
-
-function gentop(mol::Molecule, ff::ForcefieldSpec, resinfo::Dict)
-    
-    if !mol.coherent
-        error("molecule is not coherent")
-    end
-    
-    # the topology itsef. It is currently empty (all container
-    # attributes are empty)
-    top = Topology(mol.size)
-
-    # temporary array for storing additional interaction indices
-    # for use with the cporduct function (prevents multiple memory
-    # allocations ahead)
-    add_indices = zeros(Int,10)
-
-
-    # copy the connectivity graph to be used in the latter
-    # appending of additional ff components 
-    graph = ConnectGraph(
-        k=>v[:]
-        for (k,v) in mol.bonds
-    )
-    
-
-    # Add additional bonds. These additional bonds are
-    # used for exclusion generation
-    for residue in mol.residues
-        
-        resmap = resinfo[residue.source.name]
-        addbonds = get(resmap, "bonds", nothing)
-        (addbonds===nothing) && continue
-
-        for bond in addbonds
-            ProtoSyn.cproduct(residue, bond, 0, add_indices) do ij
-                !in(ij[2], graph[ij[1]]) && push!(graph[ij[1]], ij[2])
-                !in(ij[1], graph[ij[2]]) && push!(graph[ij[2]], ij[1])
-            end
-        end
-    end
-
-
-    # generate bonded lists
-    blist = genbonded(graph, ff.exclusion_depth)
-    excluded = genexcluded(graph, ff.exclusion_depth)
-    
-
-    # assign atom types using the resinfo map
-    atoms = map(ProtoSyn.iterbyatom(mol)) do at
-        qt = resinfo[at.parent.name]["atoms"][at.name]
-        q = qt["charge"]
-        t = qt["type"]
-        Atom(q, ff.components[:atoms][t])
-    end
-    push!(top, atoms...)
-    
-    # add exclusions
-    for (k,excl) in excluded
-        atoms[k].exclusions = excl
-    end
-
-    # deal with pairs (ex. 1-4 pairs for scaled nb interactions)
-    # if ff.genpairs
-    #     top.pairs = [
-    #         (l[1], l[end])
-    #         for l in blist[:pairs]
-    #     ]
-    # end
-    println("do not forget about pairs")
-
-    # add additional forcefield components (as defined by
-    # the residue map info)
-    for residue in mol.residues
-        resmap = resinfo[residue.source.name]
+    for residue in eachresidue(graph)
+        resmap = get(resmaps, residue.name, nothing)
+        resmap===nothing && error("unable to find map for residue $(residue.name)")
 
         # iterate over additional ff component names/values
         for (compname, addcomps) in resmap
-            # skip "atoms" (dealt with separately) and
-            # "bonds" (already taken into account)
-            in(compname, ("atoms", "bonds")) && continue
-
-            blist_entry = get!(blist, Symbol(compname), [])
-
-            # number of indices making up this component
-            ilen = length(addcomps[1])
-
+            blistitem = get!(blist, Symbol(compname)) do; []; end
             for addcomp in addcomps
-                addcomp = Tuple(addcomp)
-                ProtoSyn.cproduct(residue, addcomp, 0, add_indices) do indices
-                    indices = Tuple(view(indices,1:ilen))
-                    if indices[1] > indices[end]
-                        indices = reverse(indices)
-                    end
-                    !in(indices, blist_entry) && push!(blist_entry, indices)
-                end
+                push!(blistitem, cprod(residue, addcomp...))
             end
-        end
-    end
-
-
-    # finally generate full Topology
-    cache = Dict()
-    
-    for (compsymb, comptypes) in ff.components
-        
-        if (compsymb===:atoms) || !haskey(blist, compsymb)
-            continue
-        end
-
-        for indices in blist[compsymb]
-            
-            # get atom types for these indices and look fot the
-            # adequate component type in the forcefield. If not
-            # found (nothing returned), skip to the next tuple of indices. 
-            atomtypes = map(i -> atoms[i].type.name, indices)
-            comptype = lookup(compsymb, comptypes, atomtypes...)
-            if comptype === nothing
-                println("unable to find ff entry \"$(compsymb)\" for types $(atomtypes) $(indices)")
-                continue
-            end
-
-            typeofcomptype = typeof(comptype)
-            if !haskey(cache, typeofcomptype)
-                
-                # get name of the required object type:
-                #  ex: HarmonicBondType => HarmonicBond
-                typename = string(nameof(typeofcomptype))
-                typename = replace(typename, "Type"=>"")
-                
-                # get the required object type and cache it
-                #  ex: HarmonicBond (string) => HarmonicBond (DataType)
-                cache[typeofcomptype] = getfield(Forcefield, Symbol(typename))
-            end
-
-            # get target type from cache
-            type = cache[typeofcomptype]
-            
-            # and instantiate a new object of type <type> and add
-            # it to the container
-            obj = type(indices..., comptype)
-            push!(top, obj)
         end
 
     end
 
-    top
 end
 
+"""
+!!!
+    NOTE: requires attention
+"""
+# function cprod(residue::Residue, names::String...)
+#     stack = []
+#     for name in names
+#         if startswith(name, '-') && hasparent(residue) && haskey(residue.parent, name)
+#             push!(stack, residue.parent[name])
+#         elseif startswith(name, '+') && haschildren(residue) && haskey(residue.children[1], name)
+#             push!(stack, residue.children[1][name])
+#         elseif haskey(residue, name)
+#             push!(stack, residue[name])
+#         else
+#             return
+#         end
+#     end
+#     stack
+# end
+
+
+#const HarmonicBond{T}     where {T<:AbstractFloat} = HarmonicThing{2,Int,T}
+
+# const HarmonicBond{T}  where {T<:AbstractFloat} =  Bond{HarmonicType{T}}
+
+# for subtype in subtypes(XX)
+#     @eval begin
+#     end
+# end
