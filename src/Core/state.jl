@@ -99,6 +99,7 @@ Base.firstindex(s::State) = 1-s.index_offset
 Base.lastindex(s::State) = s.size
 
 Base.eltype(::Type{State{T}}) where T = T
+Base.eltype(::State{T}) where T = T
 
 Base.splice!(s::State, range::UnitRange{Int}) = begin
     i = s.index_offset + range.start
