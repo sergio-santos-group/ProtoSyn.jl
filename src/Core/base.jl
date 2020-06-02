@@ -52,7 +52,7 @@ end
 #region get --------------------------------------------------------------------
 
 
-Base.get(res::Residue, name::String, default=nothing) = begin
+Base.get(res::Residue, name::AbstractString, default=nothing) = begin
     get(res.itemsbyname, name, default)
 end
 
