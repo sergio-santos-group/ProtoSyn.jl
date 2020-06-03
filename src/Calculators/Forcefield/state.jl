@@ -49,7 +49,7 @@ end
 
 Base.reset(s::State{T}) where T = begin
     e = s.e
-    for k in keys(e); k[e] = 0; end
+    for k in keys(e); e[k] = 0; end
     fill!(s.f, 0)
     s
 end
