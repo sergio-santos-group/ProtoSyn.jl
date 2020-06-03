@@ -2,6 +2,8 @@ module Forcefield
 
 using ...ProtoSyn
 using ..Calculators
+using ...ProtoSyn.Units: tonumber
+using ...ProtoSyn: @dot, @cross
 
 # resource directory for this module
 const resource_dir = let
@@ -16,6 +18,7 @@ include("types.jl")
 include("potentials.jl")
 include("methods.jl")
 include("bonded.jl")
+include("nonbonded.jl")
 
 
 # include("macros.jl")
