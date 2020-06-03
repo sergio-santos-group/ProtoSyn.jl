@@ -23,3 +23,8 @@ end
     @test tonumber("1°+pi")≈deg2rad(1)+pi atol=1e-10
     @test tonumber("1+pi")≈1+pi
 end
+
+@testset "composite" begin
+    @test tonumber("kJ/mol/rad^2")==1
+    @test 1*kJ/mol/rad^2==1
+end
