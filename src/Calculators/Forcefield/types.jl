@@ -47,17 +47,15 @@ ForcefieldParameters(::Type{T}, filename::AbstractString) where {T<:AbstractFloa
             
             type = getfield(Forcefield, Symbol(typename)){String,T}
             
-            ftypes = fieldtypes(type)[2:end]
             klen = keylen(type)
             for item in items
-                args0 = item[klen+1:end]
-                args1 = [
-                    convert(t, v isa Vector ? Tuple(v) : v)
-                    for (t,v) in zip(ftypes,args0)
-                ]
                 key = genkey(item[1:klen]...)
-                container[key] = type(Tuple(item[1:klen]), args1...)
-                # println(key, type(key, args1...))
+                args = map(tonumber, item[klen+1:end])
+                if haskey(container, key)
+                    container[key] += type(Tuple(item[1:klen]), args...)
+                else
+                    container[key] = type(Tuple(item[1:klen]), args...)
+                end
             end
         end
     end
