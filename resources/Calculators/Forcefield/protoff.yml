@@ -69,103 +69,103 @@ components:
 
   bonds:
     HarmonicBond:
-    - [ CT, H0,    0.1090,  284512.0]  #  03GLY changed from 331 bsd on NMA nmodes; AA, SUGARS
-    - [  C,  C,    0.1525,  259408.0]  #  new99
-    - [  C, OS,    0.1323,  376560.0]  #  new99
-    - [  C, H4,    0.1080,  307105.6]  #  new99
-    - [  C, H5,    0.1080,  307105.6]  #  new99
-    - [ CA, OH,    0.1364,  376560.0]  #  new99
-    - [ CM, OS,    0.1240,  401664.0]  #  new99
-    - [ Cl, CT,    0.1766,  194137.6]  #  new99
-    - [ Br, CT,    0.1944,  133051.2]  #  new99
-    - [  I, CT,    0.2166,  123846.4]  #  new99
-    - [  F, CA,    0.1359,  323004.8]  #  new99
-    - [ Cl, CA,    0.1727,  161502.4]  #  new99
-    - [  I, CA,    0.2075,  143092.8]  #  new99
-    - [ Br, CA,    0.1890,  143929.6]  #  new99
-    - [ OW, HW,   0.09572,  462750.4]  #  P water
-    - [ HW, HW,   0.15136,  462750.4]  #  P water
-    - [  C, CA,   0.14090,  392459.2]  #  7,(1986),230; TYR
-    - [  C, CB,   0.14190,  374049.6]  #  7,(1986),230; GUA
-    - [  C, CM,   0.14440,  343088.0]  #  7,(1986),230; THY,URA
-    - [  C, CT,   0.15220,  265265.6]  #  7,(1986),230; AA
-    - [  C, NA,   0.13880,  349782.4]  #  7,(1986),230; GUA.URA
-    - [  C, NC,   0.13580,  382417.6]  #  7,(1986),230; CYT
-    - [  C,  O,   0.12290,  476976.0]  #  7,(1986),230; AA,CYT,GUA,THY,URA
-    - [  C, O2,   0.12500,  548940.8]  #  7,(1986),230; GLU,ASP
-    - [  C, OH,   0.13640,  376560.0]  #  7,(1986),230; TYR
-    - [ CA, CA,   0.14000,  392459.2]  #  7,(1986),230; BENZENE,PHE,TRP,TYR
-    - [ CA, CB,   0.14040,  392459.2]  #  7,(1986),230; ADE,TRP
-    - [ CA, CM,   0.14330,  357313.6]  #  7,(1986),230; CYT
-    - [ CA, CT,   0.15100,  265265.6]  #  7,(1986),230; PHE,TYR
-    - [ CA, HA,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; PHE,TRP,TYR
-    - [ CA, H4,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; no assigned
-    - [ CA, N2,   0.13400,  402500.8]  #  7,(1986),230; ARG,CYT,GUA
-    - [ CA, NA,   0.13810,  357313.6]  #  7,(1986),230; GUA
-    - [ CA, NC,   0.13390,  404174.4]  #  7,(1986),230; ADE,CYT,GUA
-    - [ CB, CB,   0.13700,  435136.0]  #  7,(1986),230; ADE,GUA
-    - [ CB, NB,   0.13910,  346435.2]  #  7,(1986),230; ADE,GUA
-    - [ CB, NC,   0.13540,  385764.8]  #  7,(1986),230; ADE,GUA
-    - [ CK, H5,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; ADE,GUA
-    - [ CK, NB,   0.13040,  442667.2]  #  7,(1986),230; ADE,GUA
-    - [ CM, CM,   0.13500,  459403.2]  #  7,(1986),230; CYT,THY,URA
-    - [ CM, CT,   0.15100,  265265.6]  #  7,(1986),230; THY
-    - [ CM, HA,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; CYT,URA
-    - [ CM, H4,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; CYT,URA
-    - [ CM, H5,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; not assigned
-    - [ CQ, H5,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; ADE
-    - [ CQ, NC,   0.13240,  420073.6]  #  7,(1986),230; ADE
-    - [ CT, CT,   0.15260,  259408.0]  #  7,(1986),230; AA, SUGARS
-    - [ CT, HC,   0.10900,  284512.0]  #  ged from 331 bsd on NMA nmodes; AA, SUGARS
-    - [ CT, H1,   0.10900,  284512.0]  #  ged from 331 bsd on NMA nmodes; AA, RIBOSE
-    - [ CT, H2,   0.10900,  284512.0]  #  ged from 331 bsd on NMA nmodes; SUGARS
-    - [ CT, H3,   0.10900,  284512.0]  #  ged from 331 bsd on NMA nmodes; not assigned
-    - [ CT, HP,   0.10900,  284512.0]  #  nged from 331; AA-lysine, methyl ammonium cation
-    - [ CT, N2,   0.14630,  282001.6]  #  7,(1986),230; ARG
-    - [ CT, OH,   0.14100,  267776.0]  #  7,(1986),230; SUGARS
-    - [ CT, OS,   0.14100,  267776.0]  #  7,(1986),230; NUCLEIC ACIDS
-    - [  H, N2,   0.10100,  363171.2]  #  7,(1986),230; ADE,CYT,GUA,ARG
-    - [  H, NA,   0.10100,  363171.2]  #  7,(1986),230; GUA,URA,HIS
-    - [ HO, OH,   0.09600,  462750.4]  #  7,(1986),230; SUGARS,SER,TYR
-    - [ HO, OS,   0.09600,  462750.4]  #  7,(1986),230; NUCLEOTIDE ENDS
-    - [ O2,  P,   0.14800,  439320.0]  #  7,(1986),230; NA PHOSPHATES
-    - [ OH,  P,   0.16100,  192464.0]  #  7,(1986),230; NA PHOSPHATES
-    - [ OS,  P,   0.16100,  192464.0]  #  7,(1986),230; NA PHOSPHATES
-    - [  C,  N,   0.13350,  410032.0]  #  7,(1986),230; AA
-    - [ CA, CN,   0.14000,  392459.2]  #  7,(1986),230; TRP
-    - [ CB, CN,   0.14190,  374049.6]  #  7,(1986),230; TRP
-    - [ CC, CT,   0.15040,  265265.6]  #  7,(1986),230; HIS
-    - [ CC, CV,   0.13750,  428441.6]  #  7,(1986),230; HIS(delta)
-    - [ CC, CW,   0.13710,  433462.4]  #  7,(1986),230; HIS(epsilon)
-    - [ CC, NA,   0.13850,  353129.6]  #  7,(1986),230; HIS
-    - [ CC, NB,   0.13940,  343088.0]  #  7,(1986),230; HIS
-    - [ CN, NA,   0.13800,  358150.4]  #  7,(1986),230; TRP
-    - [ CR, H5,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes;HIS
-    - [ CR, NA,   0.13430,  399153.6]  #  7,(1986),230; HIS
-    - [ CR, NB,   0.13350,  408358.4]  #  7,(1986),230; HIS
-    - [ CT,  N,   0.14490,  282001.6]  #  7,(1986),230; AA
-    - [ CT, N3,   0.14710,  307105.6]  #  7,(1986),230; LYS
-    - [ CT,  S,   0.18100,  189953.6]  #  ged from 222.0 based on dimethylS nmodes
-    - [ CT, SH,   0.18100,  198321.6]  #  ged from 222.0 based on methanethiol nmodes
-    - [ CV, H4,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes; HIS
-    - [ CV, NB,   0.13940,  343088.0]  #  7,(1986),230; HIS
-    - [ CW, H4,   0.10800,  307105.6]  #  ged from 340. bsd on C6H6 nmodes;HIS(epsilon,+)
-    - [ CW, NA,   0.13810,  357313.6]  #  7,(1986),230; HIS,TRP
-    - [  H,  N,   0.10100,  363171.2]  #  7,(1986),230; AA
-    - [  H, N3,   0.10100,  363171.2]  #  7,(1986),230; LYS
-    - [ HS, SH,   0.13360,  229283.2]  #  7,(1986),230; CYS
-    - [  S,  S,   0.20380,  138908.8]  #  7,(1986),230; CYX   (SCHERAGA)
-    - [ CT,  F,   0.13800,  307105.6]  #  13,(1992),963;CF4; R0=1.332 FOR CHF3
+    - [ CT, H0,    0.1090nm,  284512.0*kJ/mol/nm^2]  #  03GLY changed from 331 bsd on NMA nmodes; AA, SUGARS
+    - [  C,  C,    0.1525nm,  259408.0*kJ/mol/nm^2]  #  new99
+    - [  C, OS,    0.1323nm,  376560.0*kJ/mol/nm^2]  #  new99
+    - [  C, H4,    0.1080nm,  307105.6*kJ/mol/nm^2]  #  new99
+    - [  C, H5,    0.1080nm,  307105.6*kJ/mol/nm^2]  #  new99
+    - [ CA, OH,    0.1364nm,  376560.0*kJ/mol/nm^2]  #  new99
+    - [ CM, OS,    0.1240nm,  401664.0*kJ/mol/nm^2]  #  new99
+    - [ Cl, CT,    0.1766nm,  194137.6*kJ/mol/nm^2]  #  new99
+    - [ Br, CT,    0.1944nm,  133051.2*kJ/mol/nm^2]  #  new99
+    - [  I, CT,    0.2166nm,  123846.4*kJ/mol/nm^2]  #  new99
+    - [  F, CA,    0.1359nm,  323004.8*kJ/mol/nm^2]  #  new99
+    - [ Cl, CA,    0.1727nm,  161502.4*kJ/mol/nm^2]  #  new99
+    - [  I, CA,    0.2075nm,  143092.8*kJ/mol/nm^2]  #  new99
+    - [ Br, CA,    0.1890nm,  143929.6*kJ/mol/nm^2]  #  new99
+    - [ OW, HW,   0.09572nm,  462750.4*kJ/mol/nm^2]  #  P water
+    - [ HW, HW,   0.15136nm,  462750.4*kJ/mol/nm^2]  #  P water
+    - [  C, CA,   0.14090nm,  392459.2*kJ/mol/nm^2]  #  7,(1986),230; TYR
+    - [  C, CB,   0.14190nm,  374049.6*kJ/mol/nm^2]  #  7,(1986),230; GUA
+    - [  C, CM,   0.14440nm,  343088.0*kJ/mol/nm^2]  #  7,(1986),230; THY,URA
+    - [  C, CT,   0.15220nm,  265265.6*kJ/mol/nm^2]  #  7,(1986),230; AA
+    - [  C, NA,   0.13880nm,  349782.4*kJ/mol/nm^2]  #  7,(1986),230; GUA.URA
+    - [  C, NC,   0.13580nm,  382417.6*kJ/mol/nm^2]  #  7,(1986),230; CYT
+    - [  C,  O,   0.12290nm,  476976.0*kJ/mol/nm^2]  #  7,(1986),230; AA,CYT,GUA,THY,URA
+    - [  C, O2,   0.12500nm,  548940.8*kJ/mol/nm^2]  #  7,(1986),230; GLU,ASP
+    - [  C, OH,   0.13640nm,  376560.0*kJ/mol/nm^2]  #  7,(1986),230; TYR
+    - [ CA, CA,   0.14000nm,  392459.2*kJ/mol/nm^2]  #  7,(1986),230; BENZENE,PHE,TRP,TYR
+    - [ CA, CB,   0.14040nm,  392459.2*kJ/mol/nm^2]  #  7,(1986),230; ADE,TRP
+    - [ CA, CM,   0.14330nm,  357313.6*kJ/mol/nm^2]  #  7,(1986),230; CYT
+    - [ CA, CT,   0.15100nm,  265265.6*kJ/mol/nm^2]  #  7,(1986),230; PHE,TYR
+    - [ CA, HA,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; PHE,TRP,TYR
+    - [ CA, H4,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; no assigned
+    - [ CA, N2,   0.13400nm,  402500.8*kJ/mol/nm^2]  #  7,(1986),230; ARG,CYT,GUA
+    - [ CA, NA,   0.13810nm,  357313.6*kJ/mol/nm^2]  #  7,(1986),230; GUA
+    - [ CA, NC,   0.13390nm,  404174.4*kJ/mol/nm^2]  #  7,(1986),230; ADE,CYT,GUA
+    - [ CB, CB,   0.13700nm,  435136.0*kJ/mol/nm^2]  #  7,(1986),230; ADE,GUA
+    - [ CB, NB,   0.13910nm,  346435.2*kJ/mol/nm^2]  #  7,(1986),230; ADE,GUA
+    - [ CB, NC,   0.13540nm,  385764.8*kJ/mol/nm^2]  #  7,(1986),230; ADE,GUA
+    - [ CK, H5,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; ADE,GUA
+    - [ CK, NB,   0.13040nm,  442667.2*kJ/mol/nm^2]  #  7,(1986),230; ADE,GUA
+    - [ CM, CM,   0.13500nm,  459403.2*kJ/mol/nm^2]  #  7,(1986),230; CYT,THY,URA
+    - [ CM, CT,   0.15100nm,  265265.6*kJ/mol/nm^2]  #  7,(1986),230; THY
+    - [ CM, HA,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; CYT,URA
+    - [ CM, H4,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; CYT,URA
+    - [ CM, H5,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; not assigned
+    - [ CQ, H5,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; ADE
+    - [ CQ, NC,   0.13240nm,  420073.6*kJ/mol/nm^2]  #  7,(1986),230; ADE
+    - [ CT, CT,   0.15260nm,  259408.0*kJ/mol/nm^2]  #  7,(1986),230; AA, SUGARS
+    - [ CT, HC,   0.10900nm,  284512.0*kJ/mol/nm^2]  #  ged from 331 bsd on NMA nmodes; AA, SUGARS
+    - [ CT, H1,   0.10900nm,  284512.0*kJ/mol/nm^2]  #  ged from 331 bsd on NMA nmodes; AA, RIBOSE
+    - [ CT, H2,   0.10900nm,  284512.0*kJ/mol/nm^2]  #  ged from 331 bsd on NMA nmodes; SUGARS
+    - [ CT, H3,   0.10900nm,  284512.0*kJ/mol/nm^2]  #  ged from 331 bsd on NMA nmodes; not assigned
+    - [ CT, HP,   0.10900nm,  284512.0*kJ/mol/nm^2]  #  nged from 331; AA-lysine, methyl ammonium cation
+    - [ CT, N2,   0.14630nm,  282001.6*kJ/mol/nm^2]  #  7,(1986),230; ARG
+    - [ CT, OH,   0.14100nm,  267776.0*kJ/mol/nm^2]  #  7,(1986),230; SUGARS
+    - [ CT, OS,   0.14100nm,  267776.0*kJ/mol/nm^2]  #  7,(1986),230; NUCLEIC ACIDS
+    - [  H, N2,   0.10100nm,  363171.2*kJ/mol/nm^2]  #  7,(1986),230; ADE,CYT,GUA,ARG
+    - [  H, NA,   0.10100nm,  363171.2*kJ/mol/nm^2]  #  7,(1986),230; GUA,URA,HIS
+    - [ HO, OH,   0.09600nm,  462750.4*kJ/mol/nm^2]  #  7,(1986),230; SUGARS,SER,TYR
+    - [ HO, OS,   0.09600nm,  462750.4*kJ/mol/nm^2]  #  7,(1986),230; NUCLEOTIDE ENDS
+    - [ O2,  P,   0.14800nm,  439320.0*kJ/mol/nm^2]  #  7,(1986),230; NA PHOSPHATES
+    - [ OH,  P,   0.16100nm,  192464.0*kJ/mol/nm^2]  #  7,(1986),230; NA PHOSPHATES
+    - [ OS,  P,   0.16100nm,  192464.0*kJ/mol/nm^2]  #  7,(1986),230; NA PHOSPHATES
+    - [  C,  N,   0.13350nm,  410032.0*kJ/mol/nm^2]  #  7,(1986),230; AA
+    - [ CA, CN,   0.14000nm,  392459.2*kJ/mol/nm^2]  #  7,(1986),230; TRP
+    - [ CB, CN,   0.14190nm,  374049.6*kJ/mol/nm^2]  #  7,(1986),230; TRP
+    - [ CC, CT,   0.15040nm,  265265.6*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CC, CV,   0.13750nm,  428441.6*kJ/mol/nm^2]  #  7,(1986),230; HIS(delta)
+    - [ CC, CW,   0.13710nm,  433462.4*kJ/mol/nm^2]  #  7,(1986),230; HIS(epsilon)
+    - [ CC, NA,   0.13850nm,  353129.6*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CC, NB,   0.13940nm,  343088.0*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CN, NA,   0.13800nm,  358150.4*kJ/mol/nm^2]  #  7,(1986),230; TRP
+    - [ CR, H5,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes;HIS
+    - [ CR, NA,   0.13430nm,  399153.6*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CR, NB,   0.13350nm,  408358.4*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CT,  N,   0.14490nm,  282001.6*kJ/mol/nm^2]  #  7,(1986),230; AA
+    - [ CT, N3,   0.14710nm,  307105.6*kJ/mol/nm^2]  #  7,(1986),230; LYS
+    - [ CT,  S,   0.18100nm,  189953.6*kJ/mol/nm^2]  #  ged from 222.0 based on dimethylS nmodes
+    - [ CT, SH,   0.18100nm,  198321.6*kJ/mol/nm^2]  #  ged from 222.0 based on methanethiol nmodes
+    - [ CV, H4,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes; HIS
+    - [ CV, NB,   0.13940nm,  343088.0*kJ/mol/nm^2]  #  7,(1986),230; HIS
+    - [ CW, H4,   0.10800nm,  307105.6*kJ/mol/nm^2]  #  ged from 340. bsd on C6H6 nmodes;HIS(epsilon,+)
+    - [ CW, NA,   0.13810nm,  357313.6*kJ/mol/nm^2]  #  7,(1986),230; HIS,TRP
+    - [  H,  N,   0.10100nm,  363171.2*kJ/mol/nm^2]  #  7,(1986),230; AA
+    - [  H, N3,   0.10100nm,  363171.2*kJ/mol/nm^2]  #  7,(1986),230; LYS
+    - [ HS, SH,   0.13360nm,  229283.2*kJ/mol/nm^2]  #  7,(1986),230; CYS
+    - [  S,  S,   0.20380nm,  138908.8*kJ/mol/nm^2]  #  7,(1986),230; CYX   (SCHERAGA)
+    - [ CT,  F,   0.13800nm,  307105.6*kJ/mol/nm^2]  #  13,(1992),963;CF4; R0=1.332 FOR CHF3
 
   angles:
     HarmonicAngle:
-    - [ H0, CT, H0,   109.500,   292.880]  #  03GLY
-    - [ H0, CT,  N,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
-    - [  C, CT, H0,   109.500,   418.400]  #  03GLY AA general  changed based on NMA nmodes
-    - [ HW, OW, HW,   104.520,   836.800]  #  TIP3P water
-    - [ HW, HW, OW,   127.740,     0.000]  #  (found in crystallographic water with 3 bonds)
-    - [  C,  C,  O,   120.000,   669.440]  #  new99
-    - [  C,  C, OH,   120.000,   669.440]  #  new99
+    - [ H0, CT, H0,   109.500°,   292.880*kJ/mol/rad^2]  #  03GLY
+    - [ H0, CT,  N,   109.500°,   418.400*kJ/mol/rad^2]  #  03GLY AA general  changed based on NMA nmodes
+    - [  C, CT, H0,   109.500°,   418.400*kJ/mol/rad^2]  #  03GLY AA general  changed based on NMA nmodes
+    - [ HW, OW, HW,   104.520°,   836.800*kJ/mol/rad^2]  #  TIP3P water
+    - [ HW, HW, OW,   127.740°,     0.000*kJ/mol/rad^2]  #  (found in crystallographic water with 3 bonds)
+    - [  C,  C,  O,   120.000°,   669.440*kJ/mol/rad^2]  #  new99
+    - [  C,  C, OH,   120.000°,   669.440*kJ/mol/rad^2]  #  new99
 
   improper:
     CosineDihedral:
@@ -177,11 +177,8 @@ components:
 
   proper:
     NCosineDihedral:
-    - [ CT, CT, OS, CT, [0.0, 180],   [1.60247,0.41840], [3,2]]  # 
-    # - [ CT, CT, OS, CT,     180.0,   0.41840,         2]  # 
-  #   - [  N, CT,  C,  N,     180.0,   2.86144,         1]  #  Amber03
-  #   - [  N, CT,  C,  N,     180.0,   6.08228,         2]  #  Amber03
-  #   - [  N, CT,  C,  N,     180.0,   1.93092,         3]  #  Amber03
-
+    - [ CT, CT, OS, CT,       0.0,   1.60247,         3]  # 
+    - [ CT, CT, OS, CT,     180.0,   0.41840,         2]  # 
+    - [  N, CT,  C,  N,     180.0,   2.86144,         1]  #  Amber03
   
   
