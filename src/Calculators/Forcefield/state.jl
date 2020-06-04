@@ -17,7 +17,7 @@ end
 Base.copy!(dst::ProtoSyn.State{T}, src::State{T}) where T = begin
     x = src.x
     @inbounds for i=1:src.size
-        t = st[i].t
+        t = dst[i].t
         t[1] = x[i,1]
         t[2] = x[i,2]
         t[3] = x[i,3]
