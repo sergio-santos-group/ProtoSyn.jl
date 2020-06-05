@@ -41,11 +41,12 @@ ForcefieldParameters(::Type{T}, filename::AbstractString) where {T<:AbstractFloa
         for (typename, items) in components
             # get the adequate parametric type and make it a
             # concrete type with string keys and fields of type T
-            if !isdefined(Forcefield, Symbol(typename))
-                error("Unknown component type '$typename'")
-            end
+            #if !isdefined(Forcefield, Symbol(typename))
+            #    error("Unknown component type '$typename'")
+            #end
             
-            type = getfield(Forcefield, Symbol(typename)){String,T}
+            # type = getfield(Forcefield, Symbol(typename)){String,T}
+            type = typefor(Symbol(typename)){String,T}
             
             klen = keylen(type)
             for item in items
@@ -111,12 +112,14 @@ const ExclusionList = Dict{Int, Vector{Int}}
 
 struct Forcefield2
     exclusions::ExclusionList
-    components::Dict{DataType, Vector{<:AbstractPotential}}
+    # components::Dict{DataType, Vector{<:AbstractPotential}}
+    components::Dict{Symbol, Vector{<:AbstractPotential}}
 end
 Forcefield2() = Forcefield2(Dict(), Dict())
 
 Base.push!(ff::Forcefield2, item::T) where {T<:AbstractPotential} = begin
-    container = get!(ff.components, T) do; Vector{T}(); end
+    # container = get!(ff.components, T) do; Vector{T}(); end
+    container = get!(ff.components, name(T)) do; Vector{T}(); end
     push!(container, item)
     ff
 end
