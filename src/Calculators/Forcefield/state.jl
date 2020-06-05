@@ -2,7 +2,8 @@ struct State{T<:AbstractFloat}
     size::Int
     x::Matrix{T}
     f::Matrix{T}
-    e::Dict{DataType,T}
+    # e::Dict{DataType,T}
+    e::Dict{Symbol,T}
 end
 
 State{T}(n::Int) where T = State{T}(n, zeros(T,n,3), zeros(T,n,3), Dict())
@@ -56,3 +57,5 @@ end
 
 
 energy(s::State) = sum(values(s.e))
+setenergy!(s::State, key::Symbol, value) = (s.e[key]=value; s)
+#setenergy!(s::State, base::Symbol, suffix::Symbol, value) = (s.e[key]=value; s)
