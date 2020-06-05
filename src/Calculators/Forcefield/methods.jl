@@ -82,7 +82,8 @@ function genff(graph::ProtoSyn.AbstractContainer, ffparams::ForcefieldParameters
 
     natoms = ProtoSyn.count_atoms(graph)
     atomtypes = Vector{String}(undef, natoms)
-    
+    nbatoms = []
+
     # Use the residue maps to assign atom types
     for residue in eachresidue(graph)
 
@@ -113,16 +114,16 @@ function genff(graph::ProtoSyn.AbstractContainer, ffparams::ForcefieldParameters
             # and add it to the forcefield
             obj = concrete(typedef, (atom.index,), atomchrg)
             push!(ff, obj)
-
+            push!(nbatoms, obj)
         end
     end
 
     
-    # go over all force-field components if the forcefield definition
+    # go over all force-field components in the forcefield definition
     for (compkey, comptypes) in ffparams.components
         
         # skip this component if it relates to :atoms or
-        # the blist does ntot contain an entry for this component
+        # the blist does not contain an entry for this component
         if (compkey===:atoms) || !haskey(blist, compkey)
             continue
         end
@@ -146,6 +147,16 @@ function genff(graph::ProtoSyn.AbstractContainer, ffparams::ForcefieldParameters
     end
     
     genexcluded!(ff, graph, ffparams.exclusion_depth)
+
+    if ffparams.genpairs
+        for item in blist[:pairs]
+            i = item[1].index
+            j = item[end].index
+            obj = combine(nbatoms[i], nbatoms[j])
+            obj = scale(obj; q=ffparams.fudgeQQ, lj=ffparams.fudgeLJ)
+            push!(ff, obj)
+        end
+    end
 
     @warn "add pairs"
 
