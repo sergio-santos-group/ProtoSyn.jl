@@ -6,7 +6,7 @@ using YAML
 using .ProtoSyn
 using .ProtoSyn.Builder
 using .ProtoSyn.Peptides
-using .ProtoSyn.Calculators.Forcefield
+using .ProtoSyn.Calculators#.Forcefield
 
 grammar = Peptides.grammar(Float64)
 pose = build(grammar, seq"AAAAAAAAAA")
@@ -20,16 +20,17 @@ resmaps = YAML.load_file("resources/Calculators/Forcefield/aminoacids.yml")
 
 
 ftop = genff(pose.graph, ff, resmaps)
-state = Forcefield.State(pose.state)
+state = Calculators.State(pose.state)
 
 const   FORCES = Val{true}
 const NOFORCES = Val{false}
 
 @noinline function f1(n::Int, dof)
     for i=1:n
-        ProtoSyn.Calculators.eval!(state, ftop, dof)
+        # ProtoSyn.Calculators.eval!(state, ftop, dof)
+        eval!(state, ftop, dof)
     end
-    println(Forcefield.energy(state))
+    println(energy(state))
 end
 
 @time f1(    1, NOFORCES)
@@ -43,16 +44,16 @@ function sd(n)
 
     for i=1:n
         ProtoSyn.Calculators.eval!(state, ftop, FORCES)
-        eNew = Forcefield.energy(state)
+        eNew = energy(state)
         copy!(pose.state, state)
         
-        if i%5000==0
+        if i%1==0
             println("Step ", i, " E = ", eNew, " with λ=", λ)
             for (k,v) in state.e
                 # println("   ", name(k),"{", k.parameters[2],"} = ", v)
-                println("   ", name(k), " = ", v)
+                println("   ", k, " = ", v)
             end
-            @pymol pose
+            # @pymol pose
         end
         @. state.x += λ*state.f
         if eNew < eOld
@@ -64,6 +65,6 @@ function sd(n)
 
     end
 end
-# sd(1000_000)
+sd(10)
 
 end
