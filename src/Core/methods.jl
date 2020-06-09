@@ -227,18 +227,21 @@ end
 
 
 
-i2c!(state::State, top::Topology) = begin
+i2c!(state::State{T}, top::Topology) where T = begin
     # assert top.id==state.id
     
-    vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
-    vji = MVector{3,Float64}(0.0, 0.0, 0.0)
-    n   = MVector{3,Float64}(0.0, 0.0, 0.0)
+    vjk = MVector{3,T}(0, 0, 0)
+    vji = MVector{3,T}(0, 0, 0)
+    n   = MVector{3,T}(0, 0, 0)
+    # vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
+    # vji = MVector{3,Float64}(0.0, 0.0, 0.0)
+    # n   = MVector{3,Float64}(0.0, 0.0, 0.0)
     
     queue = Atom[]
 
     root = origin(top)
     root_changed = state[root].changed
-    xyz = zeros(3, state.size)
+    #xyz = zeros(3, state.size)
     for child in root.children
         # force all child states to be updated
         state[child].changed |= root_changed
@@ -292,9 +295,10 @@ i2c!(state::State, top::Topology) = begin
         # @nexprs 3 u -> istate.t[u] = vji_u + jstate.t[u]
         # xyz[:, i] .= istate.t
         @. istate.t = vji + jstate.t
-        @. xyz[:,i] = istate.t
+        #@. xyz[:,i] = istate.t
     end
-    xyz
+    state.i2c = false
+    state
 end
 
 

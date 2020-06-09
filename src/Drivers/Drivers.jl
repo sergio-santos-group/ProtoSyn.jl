@@ -10,6 +10,16 @@ using ..ProtoSyn
 #   - completed::Bool
 abstract type IDriverState end
 
+# @inline step(s::IDriverState) = (s.step += 1; s)
+
+# @inline stall(s::IDriverState) = (s.stalled = true; s)
+# @inline complete(s::IDriverState) = (s.completed = true; s)
+# @inline converge(s::IDriverState) = (s.converged = true; s)
+
+# @inline isstalled(s::IDriverState) = s.stalled
+# @inline isconverged(s::IDriverState) = s.converged
+# @inline iscompleted(s::IDriverState) = s.completed
+
 
 # IDriver
 #   defines:
@@ -21,7 +31,7 @@ abstract type IDriver end
 #abstract type AbstractSampler end
 
 # steepest descent
-#include("sd.jl")
+include("sd.jl")
 
 # molecular dynamics
 #include("thermostats.jl")

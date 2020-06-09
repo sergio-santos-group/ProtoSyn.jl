@@ -65,3 +65,21 @@ export energy
 energy(s::State) = sum(values(s.e))
 setenergy!(s::State, key::Symbol, value) = (s.e[key]=value; s)
 #setenergy!(s::State, base::Symbol, suffix::Symbol, value) = (s.e[key]=value; s)
+
+
+@inline coordinates(s::State) = s.x
+@inline forces(s::State) = s.f
+
+function atmax(state::Calculators.State{T}, comp::Symbol) where T
+    m = T(0)
+    idx = 0
+    x = getproperty(state, comp)
+    for i = 1:state.size
+        f = x[i,1]^2 + x[i,2]^2 + x[i,3]^2
+        if f > m
+            m = f
+            idx = i
+        end
+    end
+    return sqrt(m),idx
+end
