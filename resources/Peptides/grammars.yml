@@ -6,37 +6,41 @@ peptide:
   #  P:
   #    - {p: 1.0, production: [β,P]}
   variables:
-    B: resources/Peptides/yml/bkb.yml
+    # B: resources/Peptides/yml/bkb.yml
     A: resources/Peptides/yml/ala.yml
-    C: resources/Peptides/yml/cys.yml
-    D: resources/Peptides/yml/asp.yml
-    E: resources/Peptides/yml/glu.yml
-    F: resources/Peptides/yml/phe.yml
-    G: resources/Peptides/yml/gly.yml
-    H: resources/Peptides/yml/hie.yml
-    I: resources/Peptides/yml/ile.yml
-    K: resources/Peptides/yml/lys.yml
-    L: resources/Peptides/yml/leu.yml
-    M: resources/Peptides/yml/met.yml
-    N: resources/Peptides/yml/asn.yml
-    P: resources/Peptides/yml/pro.yml
-    Q: resources/Peptides/yml/gln.yml
-    R: resources/Peptides/yml/arg.yml
-    S: resources/Peptides/yml/ser.yml
-    T: resources/Peptides/yml/thr.yml
-    V: resources/Peptides/yml/val.yml
-    W: resources/Peptides/yml/trp.yml
-    Y: resources/Peptides/yml/tyr.yml
+    # C: resources/Peptides/yml/cys.yml
+    # D: resources/Peptides/yml/asp.yml
+    # E: resources/Peptides/yml/glu.yml
+    # F: resources/Peptides/yml/phe.yml
+    # G: resources/Peptides/yml/gly.yml
+    # H: resources/Peptides/yml/hie.yml
+    # I: resources/Peptides/yml/ile.yml
+    # K: resources/Peptides/yml/lys.yml
+    # L: resources/Peptides/yml/leu.yml
+    # M: resources/Peptides/yml/met.yml
+    # N: resources/Peptides/yml/asn.yml
+    # P: resources/Peptides/yml/pro.yml
+    # Q: resources/Peptides/yml/gln.yml
+    # R: resources/Peptides/yml/arg.yml
+    # S: resources/Peptides/yml/ser.yml
+    # T: resources/Peptides/yml/thr.yml
+    # V: resources/Peptides/yml/val.yml
+    # W: resources/Peptides/yml/trp.yml
+    # Y: resources/Peptides/yml/tyr.yml
   operators:
     α:
       residue1: C
       residue2: N
       presets:
-        N:  {θ: *theta, ϕ: 0.0, b: 1.2}
-        H:  {θ: *theta, ϕ: 0.0}
-        CA: {θ: *theta, ϕ: *pi}
+        N:  {θ: 120°, ϕ:   0°, b: 1.2Å}
+        H:  {θ: 120°, ϕ:   0°}
+        CA: {θ: 120°, ϕ: 180°}
+        # N:  {θ: *theta, ϕ: 0.0, b: 1.2}
+        # H:  {θ: *theta, ϕ: 0.0}
+        # CA: {θ: *theta, ϕ: *pi}
       offsets:
         CA: 0
         C:  0
-        O:  *pi
+        O:  180°
+        # O:  *pi
   defop: α

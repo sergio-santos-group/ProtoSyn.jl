@@ -265,6 +265,13 @@ function lgfactory(::Type{T}, template::Dict) where T
             end
         end
 
+        if haskey(opargs, "offsets")
+            offsets = opargs["offsets"]
+            for (k,v) in offsets
+                offsets[k] = tonumber(v)
+            end
+        end
+
         @info "Loading operator $opname"
         grammar[opname] = opfactory(opargs)
     end
