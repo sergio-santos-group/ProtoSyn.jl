@@ -173,10 +173,10 @@ ascendents(c::AbstractContainer, level::Int) = begin
 end
 
 export sync!
-# sync!(state::State, top::Topology) = begin
-sync!(pose::Pose{Topology}) = begin
-    state = pose.state
-    top = pose.graph
+sync!(pose::Pose{Topology}) = (sync!(pose.state, pose.graph); pose)
+sync!(state::State, top::Topology) = begin
+    #state = pose.state
+    #top = pose.graph
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
@@ -184,7 +184,8 @@ sync!(pose::Pose{Topology}) = begin
     elseif state.i2c
         i2c!(state, top)
     end
-    pose
+    # pose
+    state
 end
 
 
