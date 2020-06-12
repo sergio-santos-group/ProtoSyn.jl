@@ -1,7 +1,7 @@
 using Base.Cartesian
 import ..Calculators.eval!
 
-@generated function eval!(state::State{T}, ff::Forcefield, ::Type{Val{DoF}}) where {T<:AbstractFloat, DoF}
+@generated function eval!(state::State, ff::Forcefield, ::Type{Val{DoF}}) where {DoF}
 quote
     reset(state)
     # for v in values(ff.components)
