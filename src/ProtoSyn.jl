@@ -23,7 +23,7 @@ struct Pose{T<:AbstractContainer}
 end
 
 include("core/base.jl")
-include("core/selection.jl")
+include("core/selection2.jl")
 
 
 export Fragment
