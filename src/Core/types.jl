@@ -94,12 +94,13 @@ end
 mutable struct Segment <: AbstractSegment
     name::String                        # segment name
     id::Int                             # segment ID
+    code::Char
     items::Vector{Residue}              # list of residues (children)
     container::Opt{AbstractTopology}    # parent topology
     size::Int
     
     Segment(name::String, id::Int) = begin
-        new(name, id, Residue[], nothing, 0)
+        new(name, id, '?', Residue[], nothing, 0)
     end
 end
 
@@ -152,3 +153,18 @@ Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String) = begin
     push!(r, a)
     a
 end
+
+
+# export request_reindexing
+# baremodule FLAGS
+#     using Base: <<
+#     const INDEXING = 1 << 0
+# end
+
+# function request_reindexing(c::AbstractContainer)
+#     c.flags |= FLAGS.INDEXING
+#     hascontainer(c) && request_reindexing(c.container)
+# end
+
+# export requires_reindexing
+# requires_reindexing(c::AbstractContainer) = (c.flags & FLAGS.INDEXING) != 0

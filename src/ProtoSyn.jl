@@ -3,14 +3,17 @@ module ProtoSyn
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
 #region CORE ------------------------------------
-include("XMLRPC/XMLRPC.jl")
+include("Core/XMLRPC/XMLRPC.jl")
+include("Core/Units/Units.jl")
+using .Units: tonumber
+
 
 # #endregion
 
-include("core/graph.jl")
-include("core/macros.jl")
-include("core/types.jl")
-include("core/state.jl")
+include("Core/graph.jl")
+include("Core/macros.jl")
+include("Core/types.jl")
+include("Core/state.jl")
 
 export Pose
 struct Pose{T<:AbstractContainer}
@@ -21,6 +24,7 @@ struct Pose{T<:AbstractContainer}
         new{T}(c,s)
     end
 end
+Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
 include("core/base.jl")
 include("core/selection2.jl")
@@ -32,19 +36,21 @@ const Fragment = Pose{Segment}
 export ResidueDB
 const ResidueDB = Dict{String, Fragment}
 
-include("core/io.jl")           # <-- ATTENTION
-include("core/iterators.jl")    # <-- ATTENTION
-include("core/methods.jl")
-include("core/loaders.jl")
+include("Core/io.jl")           # <-- ATTENTION
+include("Core/iterators.jl")    # <-- ATTENTION
+include("Core/methods.jl")
+# include("Core/loaders.jl")
+
 
 
 #region SUBMODULES ------------------------------
+include("Core/Builder/Builder.jl")
 
 include("Peptides/Peptides.jl")
 include("Sugars/Sugars.jl")
 # include("Forcefields/Forcefields.jl")
-# include("Calculators/Calculators.jl")
-# include("Drivers/Drivers.jl")
+include("Calculators/Calculators.jl")
+include("Drivers/Drivers.jl")
 
 #endregion
 
@@ -57,7 +63,6 @@ include("Sugars/Sugars.jl")
 #         embed_javascript()
 #     end
 # end
-
 
 
 

@@ -55,7 +55,7 @@ baremodule DihedralTypes
 end
 
 
-
+export SecondaryStructure
 # phi, psi, omega
 const SecondaryStructure = Dict{Symbol, NTuple{3,Number}}(
     :antiparallel_sheet => map(deg2rad, (-139.0, 135.0, 180.0)),

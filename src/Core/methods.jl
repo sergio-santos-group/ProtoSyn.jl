@@ -68,11 +68,14 @@ function build_tree!(seedfinder::Function, top::Topology)
     natoms = count_atoms(top)
     tree = Vector{Atom}(undef, natoms)
     
-    seeds = seedfinder(top)
+    #seeds = seedfinder(top)
     root = origin(top)
 
     # build atom tree
-    for seed in seeds    
+    # for seed in seeds
+    for seg in top.items
+        seed = seedfinder(seg)
+        seed === nothing && continue
         tree[tail+=1] = seed
         seed.visited = true
         while head < tail
@@ -170,10 +173,10 @@ ascendents(c::AbstractContainer, level::Int) = begin
 end
 
 export sync!
-# sync!(state::State, top::Topology) = begin
-sync!(pose::Pose{Topology}) = begin
-    state = pose.state
-    top = pose.graph
+sync!(pose::Pose{Topology}) = (sync!(pose.state, pose.graph); pose)
+sync!(state::State, top::Topology) = begin
+    #state = pose.state
+    #top = pose.graph
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
@@ -181,7 +184,8 @@ sync!(pose::Pose{Topology}) = begin
     elseif state.i2c
         i2c!(state, top)
     end
-    pose
+    # pose
+    state
 end
 
 
@@ -224,18 +228,21 @@ end
 
 
 
-i2c!(state::State, top::Topology) = begin
+i2c!(state::State{T}, top::Topology) where T = begin
     # assert top.id==state.id
     
-    vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
-    vji = MVector{3,Float64}(0.0, 0.0, 0.0)
-    n   = MVector{3,Float64}(0.0, 0.0, 0.0)
+    vjk = MVector{3,T}(0, 0, 0)
+    vji = MVector{3,T}(0, 0, 0)
+    n   = MVector{3,T}(0, 0, 0)
+    # vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
+    # vji = MVector{3,Float64}(0.0, 0.0, 0.0)
+    # n   = MVector{3,Float64}(0.0, 0.0, 0.0)
     
     queue = Atom[]
 
     root = origin(top)
     root_changed = state[root].changed
-    xyz = zeros(3, state.size)
+    #xyz = zeros(3, state.size)
     for child in root.children
         # force all child states to be updated
         state[child].changed |= root_changed
@@ -289,9 +296,10 @@ i2c!(state::State, top::Topology) = begin
         # @nexprs 3 u -> istate.t[u] = vji_u + jstate.t[u]
         # xyz[:, i] .= istate.t
         @. istate.t = vji + jstate.t
-        @. xyz[:,i] = istate.t
+        #@. xyz[:,i] = istate.t
     end
-    xyz
+    state.i2c = false
+    state
 end
 
 
@@ -390,6 +398,7 @@ function fragment(pose::Pose{Topology})
     state = splice!(pose.state, 1:count_atoms(segment))
     detach(segment)
     segment.id = state.id = genid()
+    segment.name = topology.name
 
     Pose(segment, state)
 end
@@ -401,60 +410,175 @@ Base.detach(s::Segment) = begin
     hascontainer(s) && delete!(s.container, s)
 end
 
+root(c::AbstractContainer) = begin
+    for atom in eachatom(c)
+        !hasparent(atom) && return atom
+    end
+    nothing
+end
 
 isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
+
+export append
+function append end
 
 
 #---------------------------
 """
-append a fragment as a new segment
+    append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt)
+
+Append a fragment as a new segment.
 """
-Base.append!(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
+append(pose::Pose{Topology}, frag::Fragment) = begin
+    #println(hascontainer(frag.graph))
+    #println(isempty(frag.graph))
     !isfragment(frag) && error("invalid fragment")
+    
     push!(pose.graph, frag.graph)
     append!(pose.state, frag.state)
     
     setparent!(
-        rxtb.root(frag.graph),
+        root(frag.graph),
         origin(pose.graph)
     )
     reindex(pose.graph)
     pose
 end
-
-
-"""
-append a fragment onto an existing segment
-"""
-# Base.append!(pose::Pose{Topology}, frag::Pose{Segment}, segment::Segment, rxtb::ReactionToolbelt) = begin
-Base.append!(pose::Pose{Topology}, frag::Fragment, selector::IdSelector, rxtb::ReactionToolbelt) = begin
-
-    !isfragment(frag) && error("invalid fragment")
-    segment = select(pose.graph, selector)
-
-    # state insertion point. If this segment is empty,
-    # then go to all previous segments to identify the first
-    # non-empty one.
-    topology = pose.graph
-    i = findfirst(segment, topology)
-    while i > 1 && isempty(topology[i])
-        i -= 1
-    end
-    sipoint = mapreduce(a->a.index, max, eachatom(topology[i]); init=0)
-    insert!(pose.state, sipoint+1, frag.state)
-
-    # simply append residues to this segment but keep
-    # a reference to the last residue for latter use
-    residues = frag.graph.items
-    lst = segment[end]
-    push!(segment, residues...)
+# append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
+#     !isfragment(frag) && error("invalid fragment")
     
-    rxtb.join(lst, residues[1])
+#     push!(pose.graph, frag.graph)
+#     append!(pose.state, frag.state)
+    
+#     setparent!(
+#         rxtb.root(frag.graph),
+#         origin(pose.graph)
+#     )
+#     reindex(pose.graph)
+#     pose
+# end
+
+
+"""
+    append(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
+
+Append a fragment onto an existing segment. This fragment will be made a child
+to the origin of the provided topology.
+"""
+append(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
+    
+    # if !isempty(segment)
+    #     error("the given segment must be empty")
+    # else
+    if !in(segment, pose.graph)
+        error("the given segment must belong to the given topology")
+    elseif !isfragment(frag)
+        error("invalid fragment")
+    end
+
+    sip = sipoint(segment)
+    _insert(segment, pose.state, frag, sip)
+    
+    setparent!(
+        rxtb.root(frag.graph),
+        origin(pose.graph)
+    )
+
+    reindex(pose.graph)
+    pose
+end
+
+"""
+    append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt)
+
+Append a `fragment` to the containing segment of the provided `residue` and
+make it a child of that same `residue`.
+"""
+append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt) = begin
+        
+    if !in(residue, pose.graph)
+        error("the given residue must belong to the given topology")
+    elseif !isfragment(frag)
+        error("invalid fragment")
+    end
+    
+    # state insertion point
+    segment = residue.container
+    sip = sipoint(segment)
+
+    _insert(segment, pose.state, frag, sip)
+    rxtb.join(residue, frag.graph[1])
     
     reindex(pose.graph)
     pose
 end
 
+export insert
+insert(pose::Pose{Topology}, frag::Fragment, r1::Residue, r2::Residue, rxtb::ReactionToolbelt) = begin
+    if !in(r1, pose.graph)
+        error("r1 must belong to the given topology")
+    elseif !in(r2, pose.graph)
+        error("r2 must belong to the given topology")
+    elseif r1.container !== r2.container
+        error("r1 and r2 must be in the same segment")
+    elseif r1 !== r2.parent
+        error("r2 must be a child of r1")
+    elseif !isfragment(frag)
+        error("invalid fragment")
+    end
+    
+    segment = r1.container
+    sip = sipoint(segment)
+    rxtb.split(r1, r2)
+    _insert(segment, pose.state, frag, sip)
+    rxtb.join(r1, frag.graph[1])
+    rxtb.join(r2, frag.graph[end])
+    
+    reindex(pose.graph)
+    pose
+end
+
+"""
+    sipoint(seg::Segment)
+
+Determine the insertion point for the given `segment`.
+"""
+function sipoint(seg::Segment)
+    top = seg.container
+    i = findfirst(seg, top)
+    while i > 1 && isempty(top[i])
+        i -= 1
+    end
+    lstidx = isempty(top[1]) ? 0 : mapreduce(a->a.index, eachatom(top[1,end]))
+    # lstidx = mapreduce(a->a.index, max, eachatom(top[i]); init=0)
+    lstidx+1
+end
+
+
+# append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt) = begin
+        
+#     if !in(residue, pose.graph)
+#         error("the given anchor must belong to the given topology")
+#     elseif !isfragment(frag)
+#         error("invalid fragment")
+#     end
+    
+#     # state insertion point
+#     segment = residue.container
+#     sip = sipoint(segment)
+
+#     _insert(segment, pose.state, frag, sip)
+#     rxtb.join(residue, frag.graph[1])
+    
+#     reindex(pose.graph)
+#     pose
+# end
+
+
+function _insert(segment::Segment, state::State, frag::Fragment, sip::Int)
+    push!(segment, frag.graph.items...)
+    insert!(state, sip, frag.state)
+end
 
 
 
@@ -485,78 +609,78 @@ end
 #     segment
 # end
 
-Base.append!(parent::Residue, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
-    segment = parent.container
+# Base.append!(parent::Residue, state::State, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+#     segment = parent.container
     
-    # residue insertion point
-    ripoint = findfirst(parent, segment)
-    # ripoint = findfirst(r->r===parent, segment.items)
+#     # residue insertion point
+#     ripoint = findfirst(parent, segment)
+#     # ripoint = findfirst(r->r===parent, segment.items)
     
-    # state insertion point
-    sipoint = mapreduce(a->a.index, max, parent.items)
+#     # state insertion point
+#     sipoint = mapreduce(a->a.index, max, parent.items)
     
-    # perform insertion
-    residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
+#     # perform insertion
+#     residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
     
-    # join new sequence to parent
-    rxtb.join(parent, residues[1])
-    segment
-end
+#     # join new sequence to parent
+#     rxtb.join(parent, residues[1])
+#     segment
+# end
 
 
-_insert!(segment::Segment, ripoint::Int, state::State, sipoint::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
-    prev = nothing
-    residues = Residue[]
-    for s in seq
-        res, st = from(db, s)
+# _insert!(segment::Segment, ripoint::Int, state::State, sipoint::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+#     prev = nothing
+#     residues = Residue[]
+#     for s in seq
+#         res, st = from(db, s)
         
-        # insert sub-state into state
-        insert!(state, sipoint, st)
-        sipoint += length(res)
+#         # insert sub-state into state
+#         insert!(state, sipoint, st)
+#         sipoint += length(res)
         
-        # insert residue into segment
-        insert!(segment, ripoint, res)
-        res.id = ripoint
-        ripoint += 1
+#         # insert residue into segment
+#         insert!(segment, ripoint, res)
+#         res.id = ripoint
+#         ripoint += 1
 
-        prev !== nothing && rxtb.join(prev, res)
-        push!(residues, res)
-        prev = res
-    end
-    residues
-end
+#         prev !== nothing && rxtb.join(prev, res)
+#         push!(residues, res)
+#         prev = res
+#     end
+#     residues
+# end
 
-Base.insert!(segment::Segment, state::State, i::Int, j::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
-    if i < 0
-        throw(BoundsError(segment, i))
-    elseif i > length(segment)
-        throw(BoundsError(segment, j))
-    end
+# Base.insert!(segment::Segment, state::State, i::Int, j::Int, seq::Vector{String}, db::ResidueDB, rxtb::ReactionToolbelt) = begin
+#     if i < 0
+#         throw(BoundsError(segment, i))
+#     elseif i > length(segment)
+#         throw(BoundsError(segment, j))
+#     end
 
-    r1 = segment[i]
-    r2 = segment[j]
+#     r1 = segment[i]
+#     r2 = segment[j]
     
-    sipoint = mapreduce(a->a.index, max, r1.items; init=0)
-    ripoint = findfirst(r->r===r1, segment.items)
-    residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
-    rxtb.join(r1, residues[1])
-    rxtb.join(residues[end], r2)
+#     sipoint = mapreduce(a->a.index, max, r1.items; init=0)
+#     ripoint = findfirst(r->r===r1, segment.items)
+#     residues = _insert!(segment, ripoint+1, state, sipoint+1, seq, db, rxtb)
+#     rxtb.join(r1, residues[1])
+#     rxtb.join(residues[end], r2)
     
-    segment
-end
+#     segment
+# end
 
 
 
 
 export setdihedral!
 
-@inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
-    at = r[atname]
-    at !== nothing && setdihedral!(s, at, value)
-    s
-end
+# @inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
+#     at = r[atname]
+#     at !== nothing && setdihedral!(s, at, value)
+#     s
+# end
 
-@inline setdihedral!(s::State{T}, at::Atom, val::T) where T = (s[at].Δϕ = val; s)
+@inline setdihedral!(s::State, at::Atom, val) = (s[at].Δϕ = val; s)
 
 
 export setoffset!
@@ -591,3 +715,12 @@ end
 #     state.c2i = true
 #     state
 # end
+
+function join(r1::Residue, s1::String, r2::Residue, s2::String)
+    hasparent(r2) && error("r2 is already connected")
+    at1 = r1[s1]
+    at2 = r2[s2]
+    bond(at1, at2)          # at1 <-> at2
+    setparent!(at2, at1)    # at1 -> at2
+    setparent!(r2, r1)    # r1 -> r2
+end

@@ -1,25 +1,25 @@
-# Atom
+# ProtoSyn
+
+| **Status**                                                         |
+|:-------------------------------------------------------------------------|
+| [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] [![][build-status-img]][build-status-url]|
 
 
-```plantuml
+## Installation
 
-class Atom {
-    id : Int = -1
-    name : String = "?"
-    symbol : String = "?"
-    x : Float64 = -1.0
-    y : Float64 = -1.0
-    z : Float64 = -1.0
-    parent : Opt{T} = nothing
-}
+A description will go here!
 
-class Residue {
-    name : String
-    bonds : ConnectGraph? = nothing
-    atoms : Opt{Vector{_Atom{Residue}}} = nothing
-    atomsbyname : Opt{Dict{String, _Atom}} = nothing
-}
+## Documentation
 
-Atom "0..*" o-- "1" Residue
-@enduml
-```
+- [**STABLE**][docs-stable-url] &mdash; documentation of the most recently tagged version.
+- [**LATEST**][docs-dev-url] &mdash; documentation of the in-development version.
+
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://sergio-santos-group.github.io/ProtoSyn.jl/stable
+
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://sergio-santos-group.github.io/ProtoSyn.jl/dev
+
+[build-status-img]: https://travis-ci.org/sergio-santos-group/ProtoSyn.jl.svg?branch=master
+[build-status-url]: https://travis-ci.org/sergio-santos-group/ProtoSyn.jl

@@ -52,7 +52,7 @@ end
 #region get --------------------------------------------------------------------
 
 
-Base.get(res::Residue, name::String, default=nothing) = begin
+Base.get(res::Residue, name::AbstractString, default=nothing) = begin
     get(res.itemsbyname, name, default)
 end
 
@@ -69,7 +69,7 @@ end
 @inline Base.in(item::T, c::AbstractContainer{T}) where {T<:AbstractContainer} = begin
     item.container===c
 end
-
+Base.in(name::String, r::Residue) = haskey(r.itemsbyname, name)
 
 @inline Base.size(r::Residue) = (r.size,)
 
@@ -179,6 +179,9 @@ export hascontainer
 
 @inline origin(t::Topology) = get(t.root, "OO")
 @inline origin(c::AbstractContainer) = hascontainer(c) ? origin(c.container) : nothing
+
+export hasgraph
+@inline hasgraph(t::Topology) = !isempty(origin(t).children)
 
 @inline genid() = Int(rand(UInt16))
 

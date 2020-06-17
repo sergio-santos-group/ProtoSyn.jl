@@ -1,6 +1,8 @@
 module Calculators
 
 using ..ProtoSyn
+using ..ProtoSyn: @dot, @cross
+using ..ProtoSyn.Units: tonumber
 
 # resource directory for this module
 const resource_dir = let
@@ -10,8 +12,18 @@ end
 
 
 # hook point for function overloading
+export eval!
 function eval! end
 
-include("Forcefield/Forcefield.jl")
+# include("state.jl")
+include("types.jl")
+include("forcefield.jl")
+
+include("potentials.jl")
+include("methods.jl")
+include("bonded.jl")
+include("nonbonded.jl")
+
+#include("Forcefield/Forcefield.jl")
 
 end

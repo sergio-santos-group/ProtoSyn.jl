@@ -129,3 +129,23 @@ macro pymol(ex...)
     
 end
 
+export @setproperties
+macro setproperties(kwargs...)
+    target = kwargs[1]
+    ex = quote end
+    for kwarg in kwargs[2:end]
+        if Meta.isexpr(kwarg, :(=))
+            key,val = kwarg.args
+            if isa(key, Symbol)
+                push!(ex.args, :(setproperty!($target, $(Meta.quot(key)), $val)))
+            else
+                throw(ArgumentError("non-symbolic keyword '$key'"))
+            end
+        else
+            throw(ArgumentError("non-keyword argument like option '$kwarg'"))
+        end
+    end
+    esc(ex)
+end
+
+# println(@macroexpand @setproperties state b=1.2 θ = deg2rad(120) ϕ=0)

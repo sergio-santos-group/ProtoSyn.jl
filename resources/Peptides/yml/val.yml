@@ -1,0 +1,45 @@
+name: VAL
+code: V
+atoms:
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
+  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
+  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276}
+  - {name:  HB, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300}
+  - {name: CG1, id:   7, symbol:  C, b:   1.525884, theta:   1.910449, phi:   1.046931}
+  - {name: HG11, id:   8, symbol:  H, b:   1.089995, theta:   1.910502, phi:   1.047171}
+  - {name: HG12, id:   9, symbol:  H, b:   1.090507, theta:   1.910329, phi:   3.141474}
+  - {name: HG13, id:  10, symbol:  H, b:   1.089814, theta:   1.911031, phi:  -1.047033}
+  - {name: CG2, id:  11, symbol:  C, b:   1.525095, theta:   1.911075, phi:   3.141387}
+  - {name: HG21, id:  12, symbol:  H, b:   1.089791, theta:   1.910429, phi:   1.046235}
+  - {name: HG22, id:  13, symbol:  H, b:   1.089442, theta:   1.912047, phi:  -3.141374}
+  - {name: HG23, id:  14, symbol:  H, b:   1.089995, theta:   1.910407, phi:  -1.046846}
+  - {name:   C, id:  15, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
+  - {name:   O, id:  16, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+bonds:
+  N: [H, CA]
+  H: [N]
+  CA: [N, HA, CB, C]
+  HA: [CA]
+  CB: [CA, HB, CG1, CG2]
+  HB: [CB]
+  CG1: [CB, HG11, HG12, HG13]
+  HG11: [CG1]
+  HG12: [CG1]
+  HG13: [CG1]
+  CG2: [CB, HG21, HG22, HG23]
+  HG21: [CG2]
+  HG22: [CG2]
+  HG23: [CG2]
+  C: [CA, O]
+  O: [C]
+graph:
+  root: N
+  adjacency:
+    N: [H, CA]
+    CA: [HA, CB, C]
+    CB: [HB, CG1, CG2]
+    CG1: [HG11, HG12, HG13]
+    CG2: [HG21, HG22, HG23]
+    C: [O]
