@@ -26,8 +26,8 @@ struct Pose{T<:AbstractContainer}
 end
 Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
-include("core/base.jl")
-include("core/selection2.jl")
+include("Core/base.jl")
+include("Core/selection2.jl")
 
 
 export Fragment
