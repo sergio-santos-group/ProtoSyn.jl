@@ -1,0 +1,46 @@
+# theta = deg2rad(120)
+theta: &theta 2.0943951023931953
+pi: &pi 3.1415926535897
+peptide:
+  #rules:
+  #  P:
+  #    - {p: 1.0, production: [β,P]}
+  variables:
+    A: Peptides/yml/ala.yml
+    B: Peptides/yml/bkb.yml
+    C: Peptides/yml/cys.yml
+    D: Peptides/yml/asp.yml
+    E: Peptides/yml/glu.yml
+    F: Peptides/yml/phe.yml
+    G: Peptides/yml/gly.yml
+    H: Peptides/yml/hie.yml
+    I: Peptides/yml/ile.yml
+    K: Peptides/yml/lys.yml
+    L: Peptides/yml/leu.yml
+    M: Peptides/yml/met.yml
+    N: Peptides/yml/asn.yml
+    P: Peptides/yml/pro.yml
+    Q: Peptides/yml/gln.yml
+    R: Peptides/yml/arg.yml
+    S: Peptides/yml/ser.yml
+    T: Peptides/yml/thr.yml
+    V: Peptides/yml/val.yml
+    W: Peptides/yml/trp.yml
+    Y: Peptides/yml/tyr.yml
+  operators:
+    α:
+      residue1: C
+      residue2: N
+      presets:
+        N:  {θ: 120°, ϕ:   0°, b: 1.2Å}
+        H:  {θ: 120°, ϕ:   0°}
+        CA: {θ: 120°, ϕ: 180°}
+        # N:  {θ: *theta, ϕ: 0.0, b: 1.2}
+        # H:  {θ: *theta, ϕ: 0.0}
+        # CA: {θ: *theta, ϕ: *pi}
+      offsets:
+        CA: 0
+        C:  0
+        O:  180°
+        # O:  *pi
+  defop: α
