@@ -2,15 +2,23 @@ abstract type AbstractSelection end
 
 struct Selection <: AbstractSelection
     body::Function
+    is_exit_node::Bool
 end
 
-function (sele::Selection)(container::AbstractContainer)
-    return sele.body(container)
-end
+# function (sele::Selection)(container::AbstractContainer)
+#     if sele.is_exit_node
+#         mask = sele.body(container)
+#         # Apply mask to container and return actual selection
+#         return mask # CHANGE
+#     else
+#         # Return mask only
+#         return sele.body(container)
+#     end
+# end
 
-function (sele::Selection)(pose::Pose)
-    return sele.body(pose.graph)
-end
+# function (sele::Selection)(pose::Pose)
+#     return sele.body(pose.graph)
+# end
 
 
 # Should be in types.jl
@@ -98,36 +106,166 @@ end
 
 # --- AND SELECTOR
 
-struct AndSelection <: AbstractSelection
+# struct AndSelection <: AbstractSelection
 
-    left::AbstractSelection
-    right::AbstractSelection
+#     left::AbstractSelection
+#     right::AbstractSelection
+#     is_exit_node::Bool
+#     body::Function
 
-end
+#     AndSelection(left::AbstractSelection, right::AbstractSelection, is_exit_node::Bool) = new(left, right, is_exit_node, generate_body(left, right, intersect))
 
-function (sele::AndSelection)(container::AbstractContainer)
-    return intersect(sele.left(container), sele.right(container))
-end
+# end
 
-Base.:&(a::AbstractSelection, b::AbstractSelection) = begin
-    return AndSelection(a, b)
+function generate_body(left::AbstractSelection, right::AbstractSelection, f::Function)
+    return function(container)
+        return f(left(container), right(container))
+    end
 end
 
 # --- OR SELECTOR
-
-struct OrSelection <: AbstractSelection
+struct BinarySelection <: AbstractSelection
 
     left::AbstractSelection
     right::AbstractSelection
+    is_exit_node::Bool
+    body::Function
 
+    # AndSelection(left::AbstractSelection, right::AbstractSelection, is_exit_node::Bool) = new(left, right, is_exit_node, generate_body(left, right, union))
 end
 
-function (sele::OrSelection)(container::AbstractContainer)
-    return union(sele.left(container), sele.right(container))
+# For some reason this isn't working !!!
+# Base.show(io::IO, ::MIME"text/plain", ::Type{T}) where {T <: AbstractSelection} = begin
+#     println("Instance of AbstractSelection")
+# end
+
+# function (sele::AndSelection)(container::AbstractContainer)
+#     if sele.is_exit_node
+#         # Return actual selection
+#         println("RETURN ACTUAL SELECTION")
+#     else
+#         # Return mask
+#         return intersect(sele.left(container), sele.right(container))
+#     end
+# end
+
+Base.:&(a::AbstractSelection, b::AbstractSelection, is_exit_node::Bool) = begin
+    return BinarySelection(a, b, is_exit_node, generate_body(a, b, intersect))
 end
 
-Base.:|(a::AbstractSelection, b::AbstractSelection) = begin
-    return OrSelection(a, b)
+function(sele::AbstractSelection)(container::AbstractContainer)
+    # Decides whether to return a mask or an actual selection based on sele.is_exit_node
+    println("Calculating selection ...")
+    if sele.is_exit_node
+        # Retun an actual selection after calculating the mask
+        sele.body(container)
+        return "Returning actual selection HERE !"
+    else
+        # Return a mask
+        return sele.body(container)
+    end
 end
 
-# NOTE: If we highjack the intersect and union functions we can return AbstractContainers.
+# function (sele::OrSelection)(container::AbstractContainer)
+#     # TODO
+#     # This function must deal with problems when Mask{Residue} meets Mask{Atom}
+
+#     if sele.is_exit_node
+#         println("RETURN ACTUAL SELECTION")
+#         # Return actual selection
+#     else
+#         # Return mask
+#         return union(sele.left(container), sele.right(container))
+#     end
+# end
+
+Base.:|(a::AbstractSelection, b::AbstractSelection, is_exit_node::Bool) = begin
+    return BinarySelection(a, b, is_exit_node, generate_body(a, b, union))
+end
+
+# ---
+# NOTE: If we highjack the intersect and union functions we can return AbstractContainers (?)
+
+export @teste
+macro teste(expr::Expr, level::Int = 0)
+    
+    # TODO This function must be defined elsewhere, somehow
+    # TODO This function must return a mask
+    _teste = generate_resname_selector(expr.args[2])
+    println("EXPRESSION: $(expr.args) ($(typeof(expr)))")
+
+    push!(expr.args[3].args, level + 1)
+    extra_selections = eval(expr.args[3])
+
+    if level == 0
+        return eval(expr.args[1])(Selection(_teste, false), extra_selections, true)
+    else
+        return eval(expr.args[1])(Selection(_teste, false), extra_selections, false)
+    end
+end
+
+
+function generate_resname_selector(residue_name::String)
+    return function(container::AbstractContainer)
+        println("Searching container for all instances of residue $residue_name")
+        return [1, 0, 0]
+    end
+end
+
+
+macro teste(str::String, level::Int = 0)
+
+    # TODO This function must be defined elsewhere, somehow
+    # TODO This function must return a mask
+    _teste = generate_resname_selector(str)
+
+    if level == 0
+        return Selection(_teste, true)
+    else
+        return Selection(_teste, false)
+    end
+end
+
+# Generate a function with a blank space
+# export generate_selector
+
+# function generate_selector(selector::Expr, x::String)
+#     selector.args[2].args[2] = x
+#     return selector
+# end
+
+# const selector1 = quote
+#     residue_name = to_fill
+#     println(residue_name)
+# end
+
+export @within
+macro within(distance::Int, expr::Expr, level::Int = 0)
+
+    # TODO This function must be defined elsewhere, somehow
+    # TODO This function must return a mask
+    
+    # Level control: The current level is carried to the next call of this same
+    # function (or similar) by pushing its value into the next expression
+    # arguments 
+    push!(expr.args, level + 1)
+    # println("EXPRESSION: $(expr) ($(typeof(expr)))")
+    # println("EXPRESSION: $(expr.args[1])")
+    extra_selections = eval(expr)
+
+    _teste = generate_double_selector(distance, extra_selections)
+
+    if level == 0
+        return Selection(_teste, true)
+    else
+        return Selection(_teste, false)
+    end
+end
+
+# Here X and Y should be of ANY type because we don't know what are we giving to
+# the function
+function generate_double_selector(x, y)
+    return function(container::AbstractContainer)
+        println("Looking for residues within $x of $(y(container))")
+    end
+end
