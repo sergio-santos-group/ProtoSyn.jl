@@ -430,20 +430,28 @@ function append end
 Append a fragment as a new segment.
 """
 append(pose::Pose{Topology}, frag::Fragment) = begin
-    #println(hascontainer(frag.graph))
-    #println(isempty(frag.graph))
+    # NOTE: THIS IS THE APPEND CALLED BY BUILD.
+    # Note: A Fragment is a Pose with just 1 Segment.
+
     !isfragment(frag) && error("invalid fragment")
     
+    # Merge the fragment graph to the pose graph.
     push!(pose.graph, frag.graph)
+
+    # Merge the fragment state to the pose state.
     append!(pose.state, frag.state)
     
+    # Make sure the fragment graph has the same origin of the new pose.
     setparent!(
         root(frag.graph),
         origin(pose.graph)
     )
+
+    # Re-index the pose to account for the new segment/residue/atoms
     reindex(pose.graph)
     pose
 end
+
 # append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt) = begin
 #     !isfragment(frag) && error("invalid fragment")
     
@@ -501,7 +509,7 @@ append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToo
     elseif !isfragment(frag)
         error("invalid fragment")
     end
-    
+
     # state insertion point
     segment = residue.container
     sip = sipoint(segment)

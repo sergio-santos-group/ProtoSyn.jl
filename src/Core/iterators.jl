@@ -7,7 +7,7 @@ struct _ByAtom end
 struct _ByResidue end
 struct _BySegment end
 
-struct ItemIterator{T <: AbstractContainer,B}
+struct ItemIterator{T <: AbstractContainer, B}
     target::T
     size::Tuple{Vararg{Int}}
 end
@@ -46,7 +46,7 @@ Base.iterate(iter::ItemIterator{Topology,_ByAtom}, (s,r,a)=(1,1,1)) = begin
     (t.items[s].items[r].items[a], (s,r,a+1))
 end
 
-Base.iterate(iter::ItemIterator{Segment,_ByAtom}, (r,a)=(1,1)) = begin
+Base.iterate(iter::ItemIterator{Segment, _ByAtom}, (r,a)=(1,1)) = begin
     s = iter.target
     if r > length(s.items)
         return nothing
@@ -56,7 +56,7 @@ Base.iterate(iter::ItemIterator{Segment,_ByAtom}, (r,a)=(1,1)) = begin
     (s.items[r].items[a], (r,a+1))
 end
 
-Base.iterate(iter::ItemIterator{Residue,_ByAtom}, (a,)=(1,)) = begin
+Base.iterate(iter::ItemIterator{Residue, _ByAtom}, (a,)=(1,)) = begin
     r = iter.target
     if a > length(r)
         return nothing
@@ -70,11 +70,11 @@ end
 #region ResidueIterator --------------------------------------------------------
 export eachresidue
 
-eachresidue(c::T) where {T<:AbstractContainer} = 
-    ItemIterator{T,_ByResidue}(c, size(c)[1:end-1])
+eachresidue(c::T) where {T <: AbstractContainer} = 
+    ItemIterator{T, _ByResidue}(c, size(c)[1:end-1])
 
 
-Base.iterate(iter::ItemIterator{Topology,_ByResidue}, (s,r)=(1,1)) = begin
+Base.iterate(iter::ItemIterator{Topology, _ByResidue}, (s, r)=(1, 1)) = begin
     t = iter.target
     if s > length(t)
         return nothing
@@ -84,7 +84,7 @@ Base.iterate(iter::ItemIterator{Topology,_ByResidue}, (s,r)=(1,1)) = begin
     (t.items[s].items[r], (s,r+1))
 end
 
-Base.iterate(iter::ItemIterator{Segment,_ByResidue}, (r,)=(1,)) = begin
+Base.iterate(iter::ItemIterator{Segment, _ByResidue}, (r,)=(1,)) = begin
     s = iter.target
     if r > length(s)
         return nothing
@@ -94,15 +94,16 @@ end
 
 #region ResidueIterator
 
-# export eachsegment
-# eachsegment(t::Topology) = ItemIterator{Topology,_BySegment}(t, (length(t),))
-# Base.iterate(iter::ItemIterator{Topology,_BySegment}, (s,)=(1,)) = begin
-#     t = iter.target
-#     if s > length(t)
-#         return nothing
-#     end
-#     (t.items[s], (s+1,))
-# end
+# QUESTION: This works?
+export eachsegment
+eachsegment(t::Topology) = ItemIterator{Topology,_BySegment}(t, (length(t),))
+Base.iterate(iter::ItemIterator{Topology,_BySegment}, (s,)=(1,)) = begin
+    t = iter.target
+    if s > length(t)
+        return nothing
+    end
+    (t.items[s], (s+1,))
+end
 
 
 #endregion Iterators

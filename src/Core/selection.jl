@@ -208,6 +208,7 @@ getf(ac, fields::Symbol...) = begin
 end
 
 
+# QUESTION: Why more than 1 fields... ? Doesn't it just save the last one?
 _select(ac::AbstractContainer, s::Selection, fields::Symbol...) = begin
     println("evaluating static")
     mask = falses(count_atoms(ac))

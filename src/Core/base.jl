@@ -22,6 +22,8 @@ _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = 
     if !in(item, container)
         push!(container.items, item)
         item.container = container
+
+        # Update the container size to reflect the addition
         container.size += 1
     end
     container
@@ -32,7 +34,7 @@ Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer
 end
 
 Base.push!(res::Residue, atm::Atom) = begin
-    if !in(atm,res)
+    if !in(atm, res)
         res.itemsbyname[atm.name] = atm
         _push!(res, atm)
     end
@@ -191,18 +193,18 @@ export reindex
     # index = 0
     aid = rid = sid = 0
     for seg in t.items
-        seg.id = (sid +=1 )
+        seg.id = (sid += 1)
         for res in seg.items
-            res.id = (rid +=1 )
+            res.id = (rid += 1)
             for atm in res.items
-                atm.index = (aid +=1 )
+                atm.index = (aid += 1)
             end
         end
     end
+
     # update ascendents (not possible before because
     # of possible problems with index assignment)
     for atm in eachatom(t)
-        println(atm, atm === nothing)
         atm.ascendents = ascendents(atm, 4)
     end
 
