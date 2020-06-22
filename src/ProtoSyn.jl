@@ -27,7 +27,6 @@ end
 Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
 include("Core/base.jl")
-include("Core/selection2.jl")
 
 
 export Fragment
@@ -39,6 +38,9 @@ const ResidueDB = Dict{String, Fragment}
 include("Core/io.jl")           # <-- ATTENTION
 include("Core/iterators.jl")    # <-- ATTENTION
 include("Core/methods.jl")
+
+include("Core/selection2.jl") # Makes use of iterators, must come after
+
 # include("Core/loaders.jl")
 
 

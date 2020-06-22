@@ -15,6 +15,7 @@ struct Stateless <: AbstractStateMode end
 struct Statefull <: AbstractStateMode end
 
 export @resname, @segname, @atomname, @atomsymb, @atomid, @atomix
+export @res, @seg, @atom
 
 # -- MASKS
 # A Mask struct is necessary, instead of a simple BitVector, to be able to know
@@ -83,17 +84,72 @@ BinarySelection(left::AbstractSelection, right::AbstractSelection, is_exit_node:
 #     return Nothing
 # end
 
+# ADD TITLE
+
 function or(left::Mask{T}, right::Mask{T})::Mask{T} where {T <: AbstractContainer}
     return Mask{T}(left.content .| right.content)
+end
+
+function or(left::Bool, right::Bool)::Bool
+    return left || right
 end
 
 function and(left::Mask{T}, right::Mask{T})::Mask{T} where {T <: AbstractContainer}
     return Mask{T}(left.content .& right.content)
 end
 
+function and(left::Bool, right::Bool)::Bool
+    return left && right
+end
+
+# --- PROMOTION / DEMOTION OF MASKS --------------------------------------------
+
+# type_rule always returns two values, in the following order:
+# 1) the lowest ranking type of the two types given
+# 2) the highest ranking type of the two types given
+function type_rule(m1::Mask{T1}, m2::Mask{T2})::Tuple{Mask, Mask} where {T1, T2 <: AbstractContainer}
+    levels = Dict(Atom => 1, Residue => 2, Segment => 3, Topology => 4)
+    
+    m1_type = typeof(m1).parameters[1]
+    m2_type = typeof(m2).parameters[1]
+    return levels[m1_type] < levels[m2_type] ? (m1, m2) : (m2, m1)
+end
+
+const lkm = Dict(Segment => eachsegment, Residue => eachresidue, Atom => eachatom) # Put somewhere else
+
 function generate_body(left::AbstractSelection, right::AbstractSelection, f::Function)
+    # This function is responsible for 
     return function(container, force_update::Bool = false)
-        return f(left(container, force_update), right(container, force_update))
+        left_mask       = left(container, force_update)
+        right_mask      = right(container, force_update)
+        left_mask_type  = typeof(left_mask).parameters[1]
+        right_mask_type = typeof(right_mask).parameters[1]
+        
+        if left_mask_type == right_mask_type
+            return f(left_mask, right_mask)
+        else
+            # Promotion / Demotion of Mask Type
+            # 1. Find lowest and highest ranking types in the conflict
+            low_mask, high_mask = type_rule(left_mask, right_mask)
+            low_type            = typeof(low_mask).parameters[1]
+            high_type           = typeof(high_mask).parameters[1]
+
+            # 2. Create empy mask.content with same size of lowest ranking type
+            mask = falses(length(low_mask.content))
+            index = 1
+
+            # 3. Iterate over both masks and perform the associated function
+            # (and / or) on the correct items, whose result is saved in the new
+            # Mask, to return.
+            for (high_index, high_item) in enumerate(lkm[high_type](container))
+                for low_item in lkm[low_type](high_item)
+                    mask[index] = f(high_mask.content[high_index], low_mask.content[index])
+                    index += 1
+                end
+            end
+
+            return Mask{low_type}(mask)
+        end
     end
 end
 
@@ -154,15 +210,15 @@ function(sele::AbstractSelection)(container::AbstractContainer, force_update::Bo
     end
 end
 
-# --- PROPERTY SELECTOR BODY GENERATOR -----------------------------------------
+# --- PROPERTY SELECTOR GENERATOR -----------------------------------------
 
 # Note all generators must return a function who, in turn, returns a Mask{T}
 # This generator should return one such function to get the given 'field' equal
 # to 'name', for the defined t type
-const AcceptableTypes = Union{String, Int, Vector{Any}, Vector{String}, Regex}
+const AcceptableTypes = Union{String, Int, Vector{Any}, Vector{String}, Regex, Symbol}
 function generate_property_selector_body(name::AcceptableTypes, t::DataType, field::Symbol)::Function
 
-    lkm = Dict(Segment => eachsegment, Residue => eachresidue, Atom => eachatom)
+    # lkm = Dict(Segment => eachsegment, Residue => eachresidue, Atom => eachatom)
     com = Dict(
         String         => isequal,
         Int            => isequal,
@@ -190,7 +246,6 @@ function generate_property_selector_body(name::AcceptableTypes, t::DataType, fie
     end
 end
 
-# --- PROPERTY SELECTOR MACRO GENERATOR ----------------------------------------
 
 # This macro generates other macros, given the 'fname'. Such macros will search
 # the final container for a given 'field' (of type 't'), and return a Mask with
@@ -265,12 +320,98 @@ macro generate_property_macro(fname, t, field)
     end
 end
 
-@generate_property_macro( segname, Segment, :name)
-@generate_property_macro( resname, Residue, :name)
-@generate_property_macro(atomname,    Atom, :name)
+@generate_property_macro( segname, Segment,   :name)
+@generate_property_macro( resname, Residue,   :name)
+@generate_property_macro(atomname,    Atom,   :name)
 @generate_property_macro(atomsymb,    Atom, :symbol)
-@generate_property_macro(  atomid,    Atom, :id)
-@generate_property_macro(  atomix,    Atom, :index)
+@generate_property_macro(  atomid,    Atom,     :id)
+@generate_property_macro(  atomix,    Atom,  :index)
+
+# --- TRUE SELECTIONS ----------------------------------------------------------
+
+function generate_true_selector_body(t::DataType)::Function
+
+    lookup_function     = lkm[t]
+
+    return function(container::AbstractContainer, force_update::Bool = false)
+
+        m = trues(lookup_function(container).size[end])
+        return Mask{t}(m)
+    end
+end
+
+macro generate_true_macro(fname, t)
+    quote
+        macro $(esc(fname))(expr::Expr, level::Int...)
+            # L = length(unique([typeof(i) for i in expr.args]))
+            println(expr)
+            println(expr.args)
+            println(expr.head)
+
+            level = length(level) == 0 ? (0,) : level # Set default level to 0
+
+            # if typeof(expr.args[end]) == Expr
+            # Composite entry (Ex: @resname "ALA" | @resname "GLN")
+            
+            # Increase the level when calling the next selector, so that it
+            # is not marked as an exit_node
+            push!(expr.args[1].args, level[1] + 1)
+
+            # Evaluate the next selector. Should return a Selector to merge 
+            # with the current one, using the exprs.args[1] call.
+            extra_selections = eval(expr.args[1])
+
+            # We need to evaluate expr.args[2] because it could be a Regex
+            # entry, in which case the generate_property_selector_body
+            # requires a Regex object, not the current Expression.
+            rs = generate_true_selector_body(eval($(esc(t))))
+
+            if level[1] == 0
+                return eval(expr.head)(
+                    Selection(rs, false, Stateless),
+                    extra_selections,
+                    true)
+            else
+                return eval(expr.head)(
+                    Selection(rs, false, Stateless),
+                    extra_selections,
+                    false)
+            end
+            # else
+            #     if L == 1
+            #         # Multiple parameter entry (Ex: @resnamein ["GLN", "ALA"])
+            #         rs = generate_property_selector_body(
+            #             expr.args, $(esc(t)), $(esc(field)))
+            #     else
+            #         # Regex parameter entry (Ex: @resname r"AL.")
+            #         rs = generate_property_selector_body(
+            #             eval(expr), $(esc(t)), $(esc(field)))
+            #     end
+
+            #     if level[1] == 0
+            #         return Selection(rs, true, Stateless)
+            #     else
+            #         return Selection(rs, false, Stateless)
+            #     end
+            # end
+        end
+
+        macro $(esc(fname))(level::Int...)
+            level = length(level) == 0 ? (0,) : level # Set default level to 0
+            rs = generate_true_selector_body($(esc(t)))
+
+            if level[1] == 0
+                return Selection(rs, true, Stateless)
+            else
+                return Selection(rs, false, Stateless)
+            end
+        end
+    end
+end
+
+@generate_true_macro( seg, Segment)
+@generate_true_macro( res, Residue)
+@generate_true_macro(atom,    Atom)
 
 # ---
 
@@ -321,10 +462,11 @@ end
 # properties, such as :id or :index DONE
 # - @resnamein ["GLN", "GLY"] -> Property selectors with vectors DONE
 # - When mixing Residue and Atom selections, a promotion/demotion step should
-# happend. Residues become Atoms, per general rule.
+# happend. Residues become Atoms, per general rule. DONE
 # - Deal with situations where Stateless and Statefull selectors mix
 # - Give variables to selectors. Ex. a = [1, 2 ,3]; (@atomid a)(pose.graph)
-# - Get demoted results on demand. Ex. @resname "ALA" as list of all atoms whose
-# residue they belong to is an "ALA".
+# - True selections (Ex. @atom) DONE
+# - Get demoted results on demand. Ex. @atom & @resname "ALA" as list of all
+# atoms whose residue they belong to is an "ALA". DONE
 
 # pose = ProtoSyn.Builder.build(ProtoSyn.Peptides.grammar(), ProtoSyn.Builder.seq"AAQG")
