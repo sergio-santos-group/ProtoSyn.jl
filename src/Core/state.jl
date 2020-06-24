@@ -68,6 +68,9 @@ mutable struct State{T<:AbstractFloat}
     # f::Array{T,2}
     # v::Array{T,2}
     e::Dict{Symbol,T}
+
+    distance_matrix::Opt{Matrix{T}}
+    dm_update::Bool     # flag to request distance matrix update
 end
 
 State{T}(n::Int) where T = begin
@@ -79,7 +82,7 @@ State{T}(n::Int) where T = begin
     items[1].t[2] =  1.0
     items[2].t[1] = -1.0
     # State{T}(items, n, -1, false, false, 3)
-    State{T}(items, n, -1, false, false, 3, nothing, nothing, Dict())
+    State{T}(items, n, -1, false, false, 3, nothing, nothing, Dict(), nothing, false)
 end
 
 State(n::Int) = State{Float64}(n)
@@ -87,7 +90,7 @@ State(n::Int) = State{Float64}(n)
 State(::Type{T}, n::Int) where T = State{T}(n)
 
 State(items::Vector{AtomState{T}}) where T = begin
-    s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict())
+    s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict(), nothing, false)
 end
 State{T}() where T = State{T}(0)
 
@@ -97,6 +100,7 @@ end
 Base.getindex(s::State, at::Atom) = begin
     s.items[at.index+s.index_offset]
 end
+# QUESTION: Make getindex for residue?
 
 Base.firstindex(s::State) = 1-s.index_offset
 Base.lastindex(s::State) = s.size

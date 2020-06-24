@@ -180,7 +180,7 @@ write(io::IO, top::AbstractContainer, state::State) = begin
     println(io, "ENDMDL")
 end
 
-write(io::IO, pose::Pose) = write(io, pose.graph, pose.state)
+write(io::IOStream, pose::Pose{Topology}) = write(io, pose.graph, pose.state)
 
 write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     println(io, "name: ", top.name)
