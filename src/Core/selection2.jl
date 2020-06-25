@@ -9,19 +9,20 @@ abstract type AbstractStateMode end
 # the existence of a resolving function for each combination of StateMode and
 # Selection type, such as, for example:
 # select(sele::Selection{Stateless}, ...);
-# select(sele::Selection{Statefull}, ...);
+# select(sele::Selection{Stateful}, ...);
 # select(sele::BinarySelection{Stateless}, ...);
-# select(sele::BinarySelection{Statefull}); etc
+# select(sele::BinarySelection{Stateful}); etc
 # Having them as parameters in the structs means a single resolving function
-# needs to exist, who then does the necessary partition between Statefull and
+# needs to exist, who then does the necessary partition between Stateful and
 # Stateless calls. No difference exists between Selection and BinarySelection
 # calls, as they both resolve to calling either the existing saved mask, or
 # calculating a new mask with sele.body(container).
 struct Stateless <: AbstractStateMode end
-struct Statefull <: AbstractStateMode end
+struct Stateful <: AbstractStateMode end
 
 export @resname, @segname, @atomname, @atomsymb, @atomid, @atomix
 export @res, @seg, @atom
+export @within, @withinall
 
 # Look-up menu
 # Returns the correct function to loop over the given AbstractContainer type
@@ -32,7 +33,6 @@ const lkm = Dict(Segment => eachsegment, Residue => eachresidue, Atom => eachato
 # the type being enumerated, for promotion/demotion tasks
 struct Mask{T <: AbstractContainer}
     content::BitVector
-
 end
 Mask() = Mask{AbstractContainer}(BitVector())
 Mask{T}() where {T <: AbstractContainer} = Mask{T}(BitVector())
@@ -53,12 +53,10 @@ Selection(body::Function, is_exit_node::Bool, state_mode::Type{<:AbstractStateMo
 # string with the identification of that function
 function title(sele::Selection)::String
     s = string(sele)
-    ss = vcat([split(x, "(") for x in split(s, ")")]...)
-    if length(split(ss[7], ",")) <= 1
-        return split(ss[5], ",")[1]
-    else
-        return *(split(ss[7], ",")[2:-1:1]...)[2:end]
-    end
+    reg_expr = r"\)}\((.+),\s(\w+)\,\s:(\w+)"
+    reg_matches = eachmatch(reg_expr, s)
+    m = [_m for _m in reg_matches][end]
+    return m.captures[2]*" - "*uppercasefirst(m.captures[3])*" - "*m.captures[1]
 end
 
 # Name function return a decription of the whole Selector for printing
@@ -114,38 +112,7 @@ Base.show(io::IO, ::MIME"text/plain", s::T) where {T <: AbstractSelection} =
 #     return sele(pose.graph)
 # end
 
-
-# Should be in types.jl
-# Returns an array with all elements of DataType loopup in the AbstractContainer
-# even if the given abstract container contains another container who in turns
-# contains the desired DataType
-# Ex. retrieve(pose.graph, ProtoSyn.AbstractAtom)
-#   > returns all Atom instances on the Pose.
-# function retrieve(container::AbstractContainer, lookup::DataType)
-#     results = [container]
-#     child = typeof(container).super
-
-#     while child.super.parameters[1] != Nothing
-#         if child == lookup
-#             return results
-#         else
-#             child = child.super.parameters[1]
-#             new_results = []
-#             for item in results
-#                 for _item in item.items
-#                     push!(new_results, _item)
-#                 end
-#             end
-#             results = new_results
-#         end
-#     end
-#     if child == lookup
-#         return results
-#     end
-#     return Nothing
-# end
-
-# ADD TITLE
+# --- ADD / OR FUNCTIONS -------------------------------------------------------
 
 function or(left::Mask{T}, right::Mask{T})::Mask{T} where {T <: AbstractContainer}
     return Mask{T}(left.content .| right.content)
@@ -206,10 +173,11 @@ function demote(left_mask::Mask, right_mask::Mask, container::AbstractContainer,
 end
 
 
-# This function is responsible for generating the body of BinarySelections. This
-# function is, in turn, responsible for performing the promotion/demotion of
-# Masks based on their types, if they are different from each other. Right now,
-# this function only produces demotion results.
+# This function is responsible for generating the body of BinarySelections, as 
+# well as dispatch of the correct function depending of Stateless and Stateful
+# state_modes. This function is, in turn, responsible for performing the
+# promotion/demotion of Masks based on their types, if they are different from
+# each other. Right now, this function only produces demotion results.
 function generate_body(left::AbstractSelection, right::AbstractSelection, f::Function, state_mode::Type{T}) where {T <: AbstractStateMode}
     if state_mode == Stateless
         return function(container::AbstractContainer, force_update::Bool = false)
@@ -249,7 +217,7 @@ end
 
 # These two functions take two selections and merge them in a BinarySelection,
 # which then can be saved, applied, etc. When merging two Selection objects,
-# the state_mode is set to Statefull if at least one of the selections occurs
+# the state_mode is set to Stateful if at least one of the selections occurs
 # with that state_mode. This means that, when resolving, if at least one of the
 # Selections needs to be updated, all of them are calculated. However, when
 # calculating a Stateless selection (belonging to this BinarySelection), if
@@ -257,9 +225,9 @@ end
 # and not calculate it again.
 
 state_rule(::Type{Stateless}, ::Type{Stateless}) = Stateless
-state_rule(::Type{Statefull}, ::Type{Stateless}) = Statefull
-state_rule(::Type{Stateless}, ::Type{Statefull}) = Statefull
-state_rule(::Type{Statefull}, ::Type{Statefull}) = Statefull
+state_rule(::Type{Stateful}, ::Type{Stateless}) = Stateful
+state_rule(::Type{Stateless}, ::Type{Stateful}) = Stateful
+state_rule(::Type{Stateful}, ::Type{Stateful}) = Stateful
 
 Base.:&(a::AbstractSelection, b::AbstractSelection, is_exit_node::Bool) = begin
     state_mode = state_rule(a.state_mode, b.state_mode)
@@ -298,23 +266,34 @@ end
 
 # -- RESOLVE FUNCTION ----------------------------------------------------------
 
+function resolve(mask::Mask{T}, container::AbstractContainer)::Vector{T} where {T <: AbstractContainer}
+    results = Vector{T}()
+    for (index, item) in enumerate(lkm[typeof(mask).parameters[1]](container))
+        if mask.content[index]
+            push!(results, item)
+        end
+    end
+    return results
+end
+
 # This is the Selection resolve function. It returns either an actual selection
 # of AbstractContainers or a mask, depending on whether it is an exit node or
 # not, respectively. 
 function(sele::AbstractSelection)(container::AbstractContainer, force_update::Bool = false)
 
-    @assert sele.state_mode == ProtoSyn.Stateless "Statefull Selections require a State. Please use Selection(::AbstractContainer, ::State)"
+    @assert sele.state_mode == ProtoSyn.Stateless "Stateful Selections require a State. Please use Selection(::AbstractContainer, ::State)"
     
     # 1. If there is already a calculated mask and the force_update flag was not
     # set to true, return the saved mask.
-    if sele.state_mode == Statefull || length(sele.mask.content) == 0 || force_update
+    if length(sele.mask.content) == 0 || force_update
         sele.mask = sele.body(container, force_update)
     end
 
     # 2. Return a mask or an actual selection based on sele.is_exit_node
     if sele.is_exit_node
-        # Change this to return actual selection!
-        return sele.mask
+        # This can be changed to return only the mask or the actual selection
+        resolved_selection = resolve(sele.mask, container)
+        return sele.mask, resolved_selection
     else
         return sele.mask
     end
@@ -324,11 +303,13 @@ function(sele::AbstractSelection)(container::AbstractContainer, state::State, fo
    
     # 1. If there is already a calculated mask and the force_update flag was not
     # set to true, return the saved mask.
-    if sele.state_mode == Statefull || length(sele.mask.content) == 0 || force_update
+    # Note: Another "reason" to automatically force update is if the given pose
+    # ID is different than the saved/old one. To be implemented.
+    if sele.state_mode == Stateful || length(sele.mask.content) == 0 || force_update
         # 1.1 The function used to actually calculate the selection mask depends
         # on the state_mode of the selection. Stateless selections do not
         # require a State.
-        if sele.state_mode == Statefull
+        if sele.state_mode == Stateful
             sele.mask = sele.body(container, state, force_update)
         else
             sele.mask = sele.body(container, force_update)
@@ -338,7 +319,8 @@ function(sele::AbstractSelection)(container::AbstractContainer, state::State, fo
     # 2. Return a mask or an actual selection based on sele.is_exit_node
     if sele.is_exit_node
         # Change this to return actual selection!
-        return sele.mask
+        resolved_selection = resolve(sele.mask, container)
+        return sele.mask, resolved_selection
     else
         return sele.mask
     end
@@ -350,15 +332,31 @@ end
 # Ex: (!@atom)(pose.graph)
 # Ex: (!@resname "ALA")(pose.graph)
 
-function Base.:!(sele::Selection)
+function Base.:!(sele::AbstractSelection)
     old_body = deepcopy(sele.body)
-    sele.body = function(container::AbstractContainer, force_update::Bool = false)
-        return !((old_body)(container, force_update))
+    if sele.state_mode == Stateless
+        sele.body = function(container::AbstractContainer, force_update::Bool = false)
+            return !((old_body)(container, force_update))
+        end
+    else
+        sele.body = function(container::AbstractContainer, state::State, force_update::Bool = false)
+            return !((old_body)(container, state, force_update))
+        end
     end
 
     sele.mask = Mask{typeof(sele.mask).parameters[1]}(.!sele.mask.content)
     return sele
 end
+
+# function Base.:!(sele::BinarySelection)
+#     old_body = deepcopy(sele.body)
+#     sele.body = function(container::AbstractContainer, force_update::Bool = false)
+#         return !((old_body)(container, force_update))
+#     end
+
+#     sele.mask = Mask{typeof(sele.mask).parameters[1]}(.!sele.mask.content)
+#     return sele
+# end
 
 function Base.:!(m::Mask{T}) where {T <: AbstractContainer}
     return Mask{T}(.!(m.content))
@@ -374,7 +372,6 @@ end
 const AcceptableTypes = Union{String, Int, Vector{Any}, Vector{String}, Regex, Symbol}
 function generate_property_selector_body(name::AcceptableTypes, t::DataType, field::Symbol)::Function
 
-    # lkm = Dict(Segment => eachsegment, Residue => eachresidue, Atom => eachatom)
     com = Dict(
         String         => isequal,
         Int            => isequal,
@@ -546,7 +543,6 @@ end
 
 # --- WITHIN SELECTOR ----------------------------------------------------------
 
-export @within
 macro within(distance::Real, expr::Expr, level::Int...)
 
     # Level control: The current level is carried to the next call of this same
@@ -560,9 +556,28 @@ macro within(distance::Real, expr::Expr, level::Int...)
     rs = generate_within_selector(distance, extra_selections, or)
 
     if level[1] == 0
-        return Selection(rs, true, Statefull)
+        return Selection(rs, true, Stateful)
     else
-        return Selection(rs, false, Statefull)
+        return Selection(rs, false, Stateful)
+    end
+end
+
+macro withinall(distance::Real, expr::Expr, level::Int...)
+
+    # Level control: The current level is carried to the next call of this same
+    # function (or similar) by pushing its value into the next expression
+    # arguments 
+    level = length(level) == 0 ? (0,) : level # Set default level to 0
+    push!(expr.args, level[1] + 1)
+
+    extra_selections = eval(expr)
+    
+    rs = generate_within_selector(distance, extra_selections, and)
+
+    if level[1] == 0
+        return Selection(rs, true, Stateful)
+    else
+        return Selection(rs, false, Stateful)
     end
 end
 
@@ -575,8 +590,7 @@ function generate_within_selector(distance::Real, selection::AbstractSelection, 
     return function(container::AbstractContainer, state::State, force_update::Bool = false)
         mask = selection(container)
         # 1) Demote whatever type of Mask 'selection' returns to Mask{Atom} 
-        atom_mask = demote(mask, (@atom)(container), container, and)
-
+        atom_mask = demote(mask, (@atom)(container)[1], container, and)
         
         # 2) Loop over the selected Atoms and return neighbours
         # Note: Here, the distances between atoms are calculated in a naive
@@ -614,7 +628,7 @@ export print_selection
 # in blue, when loaded into a visualizer such as PyMOL.
 function print_selection(io::IOStream, pose::Pose{Topology}, mask::Mask{T}) where {T <: AbstractContainer}
     
-    atom_mask = demote(mask, (@atom)(pose.graph), pose.graph, and)
+    atom_mask = demote(mask, (@atom)(pose.graph)[1], pose.graph, and)
 
     Base.write(io, "MODEL\n")
     for (atom_index, atom) in enumerate(eachatom(pose.graph))
@@ -644,13 +658,14 @@ end
 
 # --- TODO: --------------------------------------------------------------------
 # - @dihedral selector
+# - @sidechain selector
 # - @within selector DONE
 # - @withinall selector DONE
 # - Mask{T} struct DONE.
-# - Statefull and Stateless functions. Some of these functions must receive not
+# - Stateful and Stateless functions. Some of these functions must receive not
 # only an AbstractContainer but also a State with coordinates DONE
-# - Deal with situations where Stateless and Statefull selectors mix DONE
-# - Some Statefull functions don't need to select everything all the time, and
+# - Deal with situations where Stateless and Stateful selectors mix DONE
+# - Some Stateful functions don't need to select everything all the time, and
 # should be able to pre-select the stateless part of such function as a seperate
 # selection. This only applies when not doing design. This means that after
 # selecting something, a stateless Selector object should keep information until
@@ -668,7 +683,7 @@ end
 # - Get promoted results on demand. Ex. @res & @atomname "CA" as list of all
 # residues who contain at least one "CA" atom. Does this make sense?
 # - Return actual AbstractContainer instances when resolving an exit_node
-# selection
+# selection DONE
 
 # pose = sync!(ProtoSyn.Builder.build(ProtoSyn.Peptides.grammar(), ProtoSyn.Builder.seq"AAQG"))
-# io = open("../teste.pdb", "w"); print_selection(io, pose, (@resname "ALA")(pose.graph)); close(io)
+# io = open("../teste.pdb", "w"); print_selection(io, pose, (@resname "ALA")(pose.graph)[1]); close(io)
