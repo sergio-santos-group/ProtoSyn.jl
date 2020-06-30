@@ -149,7 +149,9 @@ select(sele::DistanceSelection{M, T}, container::AbstractContainer, state::State
 end
 
 # SHORT SYNTAX
+# Ex: (2.1:rn"GLN")(pose)
 Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)
+
 
 # --- PROMOTION / DEMOTION OF MASKS --------------------------------------------
 
