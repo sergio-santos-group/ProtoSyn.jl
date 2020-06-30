@@ -73,6 +73,7 @@ end
 mutable struct Residue <: AbstractResidue
     name::String                    # residue name
     id::Int                         # residue ID
+    index::Int                      # residue index
     items::Vector{Atom}             # list of atoms (children)
     itemsbyname::Dict{String, Atom} # child atoms indexed by name
     container::Opt{AbstractSegment} # parent segment
@@ -84,7 +85,7 @@ mutable struct Residue <: AbstractResidue
     ascendents::Opt{NTuple{4,Int}}
     
     Residue(name::String, id::Int) = begin
-        r = new(name, id, Atom[], Dict{String,Atom}(), nothing, 0)
+        r = new(name, id, id, Atom[], Dict{String,Atom}(), nothing, 0)
         initgraph!(r)
         r
     end
@@ -94,13 +95,14 @@ end
 mutable struct Segment <: AbstractSegment
     name::String                        # segment name
     id::Int                             # segment ID
+    index::Int                          # segment index
     code::Char
     items::Vector{Residue}              # list of residues (children)
     container::Opt{AbstractTopology}    # parent topology
     size::Int
     
     Segment(name::String, id::Int) = begin
-        new(name, id, '?', Residue[], nothing, 0)
+        new(name, id, id, '?', Residue[], nothing, 0)
     end
 end
 
@@ -118,6 +120,26 @@ mutable struct Topology <: AbstractTopology
         new(name, id, Segment[], 0, Root(), nothing)
     end
 end
+
+
+# AbstractContainer order (?)
+Base.:<(::Type{Atom},     ::Type{Atom})     = false
+Base.:<(::Type{Atom},     ::Type{Residue})  = true
+Base.:<(::Type{Atom},     ::Type{Segment})  = true
+Base.:<(::Type{Atom},     ::Type{Topology}) = true
+Base.:<(::Type{Residue},  ::Type{Atom})     = false
+Base.:<(::Type{Residue},  ::Type{Residue})  = false
+Base.:<(::Type{Segment},  ::Type{Atom})     = false
+Base.:<(::Type{Topology}, ::Type{Atom})     = false
+Base.:<(::Type{Residue},  ::Type{Segment})  = true
+Base.:<(::Type{Residue},  ::Type{Topology}) = true
+Base.:<(::Type{Segment},  ::Type{Residue})  = false
+Base.:<(::Type{Segment},  ::Type{Segment})  = false
+Base.:<(::Type{Topology}, ::Type{Residue})  = false
+Base.:<(::Type{Segment},  ::Type{Topology}) = true
+Base.:<(::Type{Topology}, ::Type{Segment})  = false
+Base.:<(::Type{Topology}, ::Type{Topology}) = false
+
 
 export ReactionToolbelt
 struct ReactionToolbelt{F<:Function, G<:Function, H<:Function}

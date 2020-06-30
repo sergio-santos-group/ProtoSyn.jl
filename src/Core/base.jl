@@ -187,6 +187,8 @@ export hasgraph
 
 @inline genid() = Int(rand(UInt16))
 
+# Question A: Does reindex work on indexes or on IDs ?
+
 export reindex
 # @inline reindex(c::AbstractContainer) = begin
 @inline reindex(t::Topology) = begin
@@ -194,8 +196,10 @@ export reindex
     aid = rid = sid = 0
     for seg in t.items
         seg.id = (sid += 1)
+        seg.index = sid
         for res in seg.items
             res.id = (rid += 1)
+            res.index = rid
             for atm in res.items
                 atm.index = (aid += 1)
             end
@@ -211,12 +215,15 @@ export reindex
     t
 end
 
+# Question A: Does reindex work on indexes or on IDs ?
+
 reindex(s::Segment) = begin
     aid = rid = 0
     for res in s.items
         res.id = (rid += 1)
+        res.index = rid
         for atm in res.items
-            atm.index = (aid +=1 )
+            atm.index = (aid += 1)
         end
     end
     s

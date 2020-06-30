@@ -109,7 +109,14 @@ function build_tree!(seedfinder::Function, top::Topology)
     end
 end
 
-count_atoms(c::AbstractContainer) = mapreduce(x->count_atoms(x), +, c.items, init=0)
+# COUNTERS
+count_segments(t::Topology) = length(t.items)
+
+count_residues(c::AbstractContainer) = mapreduce(x -> count_residues(x), +, c.items; init=0)
+count_residues(s::Segment) = length(s.items)
+count_residues(r::Residue) = 1
+
+count_atoms(c::AbstractContainer) = mapreduce(x -> count_atoms(x), +, c.items, init=0)
 count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
 

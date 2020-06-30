@@ -168,6 +168,9 @@ macro  sn_str(s); Selection{Segment}(s); end
 macro  rn_str(s); Selection{Residue}(s); end
 macro  an_str(s); Selection{Atom}(s); end
 
+# PROBLEM 1 - This doesn't allow selection by other fields, such as 'symbol' or
+# others that might be added later.
+
 macro x_str(s)
     fields = reverse(split(s, '/'))
     nfields = length(fields)
