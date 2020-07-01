@@ -246,9 +246,10 @@ function promote(mask::Mask{T1}, t::Type{<: AbstractContainer}, counter1::Functi
     
     i = 1
     for (index, item) in enumerate(iterator(container))
-        if f(mask[i:(i += counter2(item)) - 1])
+        if f(mask[i:(i + counter2(item)) - 1])
             new_mask[index] = true
         end
+        i += counter2(item)
     end
     
     return new_mask
@@ -268,10 +269,9 @@ function demote(mask::Mask{T1}, t::Type{<: AbstractContainer}, iterator::Functio
     i = 1
     for (entry, item) in zip(mask, iterator(container))
         if entry
-            new_mask[i:(i += counter(item) - 1)] = true
-        else
-            i += counter(item)
+            new_mask[i:(i + counter(item) - 1)] = true
         end
+        i += counter(item)
     end
 
     return new_mask
@@ -295,24 +295,15 @@ end
 
 (sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
 
+
+# --- USE CASE EXAMPLES
+
 # function design_step(pose::Pose, mask::Mask)
-#     residue_list = apply(pose.graph, mask) # Return list of Residue object pointers
 #     for (index, mask_i) in enumerate(mask)
 #         if mask_i
 #             random_residue = generate_random_residue()
-#             mutate(residue_list[index], random_residue)
+#             mutate(pose, index, random_residue)
 #         end
-#     end
-# end
-
-
-# """
-#     This function uses the same mask every step, regardless of mutations that
-#     have occurred.
-# """
-# function design(pose::Pose, mask::Mask, steps::Int = 1000)
-#     for step in range(steps)
-#         design_step(pose, mask)
 #     end
 # end
 
@@ -321,10 +312,56 @@ end
 #     This function calculates the mask every step, therefore accounting for
 #     previous mutations.
 # """
-# function design(pose::Pose, sele::AbstractSelection, steps::Int = 1000)
+# function design_1(pose::Pose, sele::AbstractSelection, steps::Int = 1000)
 #     for step in range(steps)
-#         f = select(sele, pose.graph)
+#         mask = select(sele, pose) # or mask = select(sele, pose.graph, pose.state)
+#         design_step(pose, mask)
+#     end
+# end
+
+
+# """
+#     This function calculates the mask every step, therefore accounting for
+#     previous mutations.
+#     This function uses the same mask every step, regardless of mutations that
+#     have occurred.
+# """
+# function design_2(pose::Pose, sele::AbstractSelection, steps::Int = 1000)
+#     f = select(sele, pose.graph)
+#     for step in range(steps)
 #         mask = f(pose.state)
 #         design_step(pose, mask)
 #     end
 # end
+
+export print_selection
+function print_selection(io::IOStream, pose::Pose{Topology}, mask::Mask{T}) where {T <: AbstractContainer}
+
+    if selection_type(mask) != Atom
+        mask  = demote(mask, Atom, pose.graph)
+    end
+    
+    Base.write(io, "MODEL\n")
+    for (atom_index, atom) in enumerate(eachatom(pose.graph))
+        sti = pose.state[atom.index] # returns and AtomState instance
+
+        # In this file, selected atoms will be displayed in red while
+        # non-selected atoms will be displayed in blue
+        atom_symbol = mask[atom_index] ? "O" : "N"
+
+        s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s\n",
+            atom.index, atom_symbol,
+            atom.container.name, atom.container.container.code,
+            atom.container.id,
+            sti.t[1], sti.t[2], sti.t[3],
+            atom_symbol)
+            Base.write(io, s)
+    end
+
+    for atom in eachatom(pose.graph)
+        Base.write(io, @sprintf("CONECT%5d", atom.index))
+       foreach(n->Base.write(io, @sprintf("%5d",n.index)), atom.bonds)
+       Base.write(io,"\n")
+    end
+    Base.write(io, "ENDMDL")
+end
