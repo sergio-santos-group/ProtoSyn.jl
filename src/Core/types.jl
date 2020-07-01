@@ -123,22 +123,23 @@ end
 
 
 # AbstractContainer order (?)
-Base.:<(::Type{Atom},     ::Type{Atom})     = false
-Base.:<(::Type{Atom},     ::Type{Residue})  = true
-Base.:<(::Type{Atom},     ::Type{Segment})  = true
-Base.:<(::Type{Atom},     ::Type{Topology}) = true
-Base.:<(::Type{Residue},  ::Type{Atom})     = false
-Base.:<(::Type{Residue},  ::Type{Residue})  = false
-Base.:<(::Type{Segment},  ::Type{Atom})     = false
-Base.:<(::Type{Topology}, ::Type{Atom})     = false
-Base.:<(::Type{Residue},  ::Type{Segment})  = true
-Base.:<(::Type{Residue},  ::Type{Topology}) = true
-Base.:<(::Type{Segment},  ::Type{Residue})  = false
-Base.:<(::Type{Segment},  ::Type{Segment})  = false
-Base.:<(::Type{Topology}, ::Type{Residue})  = false
-Base.:<(::Type{Segment},  ::Type{Topology}) = true
-Base.:<(::Type{Topology}, ::Type{Segment})  = false
-Base.:<(::Type{Topology}, ::Type{Topology}) = false
+# Allows for "Atom < Residue" and "min(Atom, Residue)", as examples
+Base.isless(::Type{Atom},     ::Type{Atom})     = false
+Base.isless(::Type{Atom},     ::Type{Residue})  = true
+Base.isless(::Type{Atom},     ::Type{Segment})  = true
+Base.isless(::Type{Atom},     ::Type{Topology}) = true
+Base.isless(::Type{Residue},  ::Type{Atom})     = false
+Base.isless(::Type{Residue},  ::Type{Residue})  = false
+Base.isless(::Type{Segment},  ::Type{Atom})     = false
+Base.isless(::Type{Topology}, ::Type{Atom})     = false
+Base.isless(::Type{Residue},  ::Type{Segment})  = true
+Base.isless(::Type{Residue},  ::Type{Topology}) = true
+Base.isless(::Type{Segment},  ::Type{Residue})  = false
+Base.isless(::Type{Segment},  ::Type{Segment})  = false
+Base.isless(::Type{Topology}, ::Type{Residue})  = false
+Base.isless(::Type{Segment},  ::Type{Topology}) = true
+Base.isless(::Type{Topology}, ::Type{Segment})  = false
+Base.isless(::Type{Topology}, ::Type{Topology}) = false
 
 
 export ReactionToolbelt

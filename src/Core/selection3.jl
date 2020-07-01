@@ -1,37 +1,28 @@
 abstract type AbstractSelection end
 
-# Callable functor
-
-function (sele::AbstractSelection)(container::AbstractContainer)
-    return select(sele, container)
-end
-
-function (sele::AbstractSelection)(container::AbstractContainer, state::State)
-    if typeof(sele).parameters[1] == Stateful
-        return select(sele, container)(state)
-    else
-        return select(sele, container)
-    end
-end
-
-(sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
-
-
-# ----
-
 abstract type AbstractStateMode end
 
 struct Stateful <: AbstractStateMode end
 struct Stateless <: AbstractStateMode end
 
-const iterator = Dict(Atom => eachatom, Residue => eachresidue, Segment => eachsegment)
+state_mode_type(s::AbstractSelection) = typeof(s).parameters[1]
+selection_type(s::AbstractSelection)  = typeof(s).parameters[2]
 
-# ---
+state_mode_rule(::Type{Stateless}, ::Type{Stateless}) = Stateless
+state_mode_rule(::Type{Stateful},  ::Type{Stateless}) = Stateful
+state_mode_rule(::Type{Stateless}, ::Type{Stateful})  = Stateful
+state_mode_rule(::Type{Stateful},  ::Type{Stateful})  = Stateful
+
+
+
+# ----
 
 struct Mask{T <: AbstractContainer}
     content::BitVector
 end
 Mask{T}() where {T <: AbstractContainer} = Mask{T}(BitVector())
+
+selection_type(m::Mask) = typeof(m).parameters[1]
 
 Base.getindex(m::Mask{T}, i::Int) where {T <: AbstractContainer} = m.content[i]
 Base.getindex(m::Mask{T}, i::UnitRange{<: Real}) where {T <: AbstractContainer} = m.content[i]
@@ -48,12 +39,89 @@ Base.iterate(m::Mask{T}, (s,)=(1,)) where {T <: AbstractContainer} = begin
     (m.content[s], (s+1,))
 end
 
+# Cases where they are of the same type
 Base.:|(m1::Mask{T}, m2::Mask{T}) where {T <: AbstractContainer} = begin
     return Mask{T}(m1.content .| m2.content)
 end
 
 Base.:&(m1::Mask{T}, m2::Mask{T}) where {T <: AbstractContainer} = begin
     return Mask{T}(m1.content .& m2.content)
+end
+
+# Cases where promotion and demotion need to occur
+Base.:|(m1::Mask{T1}, m2::Mask{T2}) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
+    return Mask{T}(m1.content .| m2.content)
+end
+# ---
+
+# Suggestion, instead of left, right, call the Selections low_type, high_type
+# since we know that relationship since the struct cosntructor
+
+export BinarySelection
+mutable struct BinarySelection{LM, HM, LT, HT} <: AbstractSelection
+    is_exit_node::Bool
+    op::Function
+    low_sele::AbstractSelection
+    high_sele::AbstractSelection
+
+    BinarySelection(op::Function, l::L, r::R) where {L <: AbstractSelection, R <: AbstractSelection} = begin
+        
+        M1 = state_mode_type(l)
+        M2 = state_mode_type(r)
+        T1 = selection_type(l)
+        T2 = selection_type(r)
+
+        if T1 > T2
+            new{M2, M1, T2, T1}(true, op, r, l)
+        else
+            new{M1, M2, T1, T2}(true, op, l, r)
+        end
+    end
+end
+
+state_mode_type(s::BinarySelection) = state_mode_rule(state_mode_type(s.high_sele), state_mode_type(s.low_sele))
+selection_type(s::BinarySelection)  = min(selection_type(s.high_sele), selection_type(s.low_sele))
+
+Base.:&(l::AbstractSelection, r::AbstractSelection) = BinarySelection(&, l, r)
+Base.:|(l::AbstractSelection, r::AbstractSelection) = BinarySelection(|, l, r)
+
+
+# Stateless cases
+
+select(sele::BinarySelection{Stateless, Stateless, T, T}, container::AbstractContainer) where {T <: AbstractContainer} = begin
+    sele.op(select(sele.high_sele, container), select(sele.low_sele, container))
+end
+
+select(sele::BinarySelection{Stateless, Stateless, LT, HT}, container::AbstractContainer) where {LT <: AbstractContainer, HT <: AbstractContainer} = begin
+    sele.op(demote(select(sele.high_sele, container), LT, container), select(sele.low_sele, container))
+end
+
+# ---
+# Stateless and Stateful cases
+# This two functions are very similar, only changing wether they demote or not.
+# Maybe this could be the job of another funtion?
+select(sele::BinarySelection{LM, HM, T, T}, container::AbstractContainer) where {LM <: AbstractStateMode, HM <: AbstractStateMode, T <: AbstractContainer} = begin
+    
+    low_item  = select(sele.low_sele,  container)
+    high_item = select(sele.high_sele, container)
+    
+    return function (state::State)
+        LM === Stateful ? low_item  = low_item(state)  : nothing
+        HM === Stateful ? high_item = high_item(state) : nothing
+        return sele.op(high_item, low_item)
+    end
+end
+
+select(sele::BinarySelection{LM, HM, LT, HT}, container::AbstractContainer) where {LM <: AbstractStateMode, HM <: AbstractStateMode, LT <: AbstractContainer, HT <: AbstractContainer} = begin
+    
+    low_item  = select(sele.low_sele,  container)
+    high_item = select(sele.high_sele, container)
+    
+    return function (state::State)
+        LM === Stateful ? low_item  = low_item(state)  : nothing
+        HM === Stateful ? high_item = high_item(state) : nothing
+        return sele.op(demote(high_item, LT, container), low_item)
+    end
 end
 
 # ---
@@ -70,10 +138,16 @@ mutable struct ParameterSelection{S, T} <: AbstractSelection
 end
 
 export select
-function select(sele::ParameterSelection{S, T}, container::AbstractContainer) where {S <: AbstractStateMode, T <: AbstractContainer}
-    _iterate = iterator[T]
-    mask = Mask{T}(falses(_iterate(container).size[end]))
-    for item in _iterate(container)
+select(sele::ParameterSelection{Stateless, Atom},    container::AbstractContainer) = select(sele, container, eachatom,    count_atoms)
+select(sele::ParameterSelection{Stateless, Residue}, container::AbstractContainer) = select(sele, container, eachresidue, count_residues)
+select(sele::ParameterSelection{Stateless, Segment}, container::AbstractContainer) = select(sele, container, eachsegment, count_segments)
+
+function select(sele::ParameterSelection{Stateless, T}, container::AbstractContainer, iterator::Function, counter::Function) where {T <: AbstractContainer}
+
+    n_items = counter(container)
+    mask = Mask{T}(falses(n_items))
+
+    for item in iterator(container)
         if occursin(sele.pattern, getproperty(item, sele.field))
             mask[item.index] = true
         end
@@ -101,11 +175,12 @@ mutable struct TrueSelection{M, T} <: AbstractSelection
     end
 end
 
-function select(sele::TrueSelection{M, T}, container::AbstractContainer) where {M <: AbstractStateMode, T <: AbstractContainer}
-    return Mask{T}(trues(iterator[T](container).size[end]))
-end
+select(sele::TrueSelection{Stateless, Atom}, container::AbstractContainer) = Mask{Atom}(trues(count_atoms(container)))
+select(sele::TrueSelection{Stateless, Residue}, container::AbstractContainer) = Mask{Residue}(trues(count_residues(container)))
+select(sele::TrueSelection{Stateless, Segment}, container::AbstractContainer) = Mask{Segment}(trues(count_segments(container)))
 
 # SHORT SYNTAX ?
+
 
 # ---
 
@@ -120,14 +195,16 @@ mutable struct DistanceSelection{M, T} <: AbstractSelection
     end
 end
 
-function select(sele::DistanceSelection{M, T}, container::AbstractContainer) where {M <: AbstractStateMode, T <: AbstractContainer}
+function select(sele::DistanceSelection{Stateful, Atom}, container::AbstractContainer)
     mask      = select(sele.sele, container)
-    atom_mask = demote(mask, Atom, container)
+    if selection_type(mask) != Atom
+        mask  = demote(mask, Atom, container)
+    end
     co_sq     = sele.distance * sele.distance
 
     return function (state::State)
         masks = Array{Mask{Atom}, 1}()
-        for (atom_i_index, atom_selected) in enumerate(atom_mask)
+        for (atom_i_index, atom_selected) in enumerate(mask)
             if atom_selected
                 _mask   = Mask{Atom}(falses(count_atoms(container)))
                 atom_i  = state[atom_i_index].t
@@ -144,7 +221,7 @@ function select(sele::DistanceSelection{M, T}, container::AbstractContainer) whe
     end
 end
 
-select(sele::DistanceSelection{M, T}, container::AbstractContainer, state::State) where {M <: AbstractStateMode, T <: AbstractContainer} = begin
+select(sele::DistanceSelection{Stateful, Atom}, container::AbstractContainer, state::State) = begin
     return select(sele, container)(state)
 end
 
@@ -157,28 +234,19 @@ Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)
 
 export promote, demote
 
-promote(mask::Mask{Atom}, ::Type{Residue}, container::AbstractContainer, f::Function = all) = begin
-    new_mask = Mask{Residue}(falses(count_residues(container)))
-    return promote(mask, new_mask, eachresidue, count_atoms, container, f)
-end
+promote(mask::Mask{Atom},    t::Type{Residue}, container::AbstractContainer, f::Function = all) = promote(mask, t, count_residues, eachresidue, count_atoms,    container, f)
+promote(mask::Mask{Atom},    t::Type{Segment}, container::AbstractContainer, f::Function = all) = promote(mask, t, count_segments, eachsegment, count_atoms,    container, f)
+promote(mask::Mask{Residue}, t::Type{Segment}, container::AbstractContainer, f::Function = all) = promote(mask, t, count_segments, eachsegment, count_residues, container, f)
 
-promote(mask::Mask{Atom}, ::Type{Segment}, container::AbstractContainer, f::Function = all) = begin
-    new_mask = Mask{Residue}(falses(count_residues(container)))
-    return promote(mask, new_mask, eachsegment, count_atoms, container, f)
-end
-
-promote(mask::Mask{Residue}, ::Type{Segment}, container::AbstractContainer, f::Function = all) = begin
-    new_mask = Mask{Residue}(falses(count_residues(container)))
-    return promote(mask, new_mask, eachsegment, count_residues, container, f)
-end
-
-function promote(mask::Mask{T1}, new_mask::Mask{T2}, iterator::Function,
-    counter::Function, container::AbstractContainer,
+function promote(mask::Mask{T1}, t::Type{<: AbstractContainer}, counter1::Function, iterator::Function,
+    counter2::Function, container::AbstractContainer,
     f::Function = all)::Mask where {T1 <: AbstractContainer, T2 <: AbstractContainer}
+
+    new_mask = Mask{t}(falses(counter1(container)))
     
     i = 1
     for (index, item) in enumerate(iterator(container))
-        if f(mask[i:(i += counter(item)) - 1])
+        if f(mask[i:(i += counter2(item)) - 1])
             new_mask[index] = true
         end
     end
@@ -188,23 +256,14 @@ end
 
 # ---
 
-demote(mask::Mask{Residue}, ::Type{Atom}, container::AbstractContainer) = begin
-    new_mask = Mask{Atom}(falses(count_atoms(container)))
-    return demote(mask, new_mask, eachresidue, count_atoms, container)
-end
+demote(mask::Mask{Residue}, t::Type{Atom},    container::AbstractContainer) = demote(mask, t, eachresidue, count_atoms,    container)
+demote(mask::Mask{Segment}, t::Type{Atom},    container::AbstractContainer) = demote(mask, t, eachsegment, count_atoms,    container)
+demote(mask::Mask{Segment}, t::Type{Residue}, container::AbstractContainer) = demote(mask, t, eachsegment, count_residues, container)
 
-demote(mask::Mask{Segment}, ::Type{Atom}, container::AbstractContainer) = begin
-    new_mask = Mask{Atom}(falses(count_atoms(container)))
-    return demote(mask, new_mask, eachsegment, count_atoms, container)
-end
+function demote(mask::Mask{T1}, t::Type{<: AbstractContainer}, iterator::Function, counter::Function,
+    container::AbstractContainer)::Mask where {T1 <: AbstractContainer}
 
-demote(mask::Mask{Segment}, ::Type{Residue}, container::AbstractContainer) = begin
-    new_mask = Mask{Atom}(falses(count_atoms(container)))
-    return demote(mask, new_mask, eachsegment, count_residues, container)
-end
-
-function demote(mask::Mask{T1}, new_mask::Mask{T2}, iterator::Function, counter::Function,
-    container::AbstractContainer)::Mask where {T1 <: AbstractContainer, T2 <: AbstractContainer}
+    new_mask = Mask{t}(falses(counter(container)))
 
     i = 1
     for (entry, item) in zip(mask, iterator(container))
@@ -218,7 +277,23 @@ function demote(mask::Mask{T1}, new_mask::Mask{T2}, iterator::Function, counter:
     return new_mask
 end
 
+# ---
 
+# Callable functor (RESOLVE FUNCTION)
+
+function (sele::AbstractSelection)(container::AbstractContainer)
+    return select(sele, container)
+end
+
+function (sele::AbstractSelection)(container::AbstractContainer, state::State)
+    if state_mode_type(sele) == Stateful
+        return select(sele, container)(state)
+    else
+        return select(sele, container)
+    end
+end
+
+(sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
 
 # function design_step(pose::Pose, mask::Mask)
 #     residue_list = apply(pose.graph, mask) # Return list of Residue object pointers
