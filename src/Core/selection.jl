@@ -341,6 +341,7 @@ select(ac::AbstractContainer, s::BinarySelection{Statefull,Statefull}) = begin
     return function (state::State)
         lmask = lselector(state)
         rmask = rselector(state)
+        
         _collect(ac, s, (s.op).(lmask, rmask))
     end
 end

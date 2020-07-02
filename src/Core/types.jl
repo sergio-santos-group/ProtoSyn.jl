@@ -124,22 +124,13 @@ end
 
 # AbstractContainer order (?)
 # Allows for "Atom < Residue" and "min(Atom, Residue)", as examples
-Base.isless(::Type{Atom},     ::Type{Atom})     = false
-Base.isless(::Type{Atom},     ::Type{Residue})  = true
-Base.isless(::Type{Atom},     ::Type{Segment})  = true
-Base.isless(::Type{Atom},     ::Type{Topology}) = true
-Base.isless(::Type{Residue},  ::Type{Atom})     = false
-Base.isless(::Type{Residue},  ::Type{Residue})  = false
-Base.isless(::Type{Segment},  ::Type{Atom})     = false
-Base.isless(::Type{Topology}, ::Type{Atom})     = false
-Base.isless(::Type{Residue},  ::Type{Segment})  = true
-Base.isless(::Type{Residue},  ::Type{Topology}) = true
-Base.isless(::Type{Segment},  ::Type{Residue})  = false
-Base.isless(::Type{Segment},  ::Type{Segment})  = false
-Base.isless(::Type{Topology}, ::Type{Residue})  = false
-Base.isless(::Type{Segment},  ::Type{Topology}) = true
-Base.isless(::Type{Topology}, ::Type{Segment})  = false
-Base.isless(::Type{Topology}, ::Type{Topology}) = false
+Base.isless(::Type{<: T}, ::Type{<: AbstractContainer{T}}) where {T <: AbstractContainer} = true
+Base.isless(::Type{<: T}, ::Type{<: AbstractContainer{<: AbstractContainer{T}}}) where {T <: AbstractContainer} = true
+Base.isless(::Type{<: AbstractContainer{T}}, ::Type{<: T}) where {T <: AbstractContainer} = false
+Base.isless(::Type{<: AbstractContainer{<: AbstractContainer{T}}}, ::Type{<: T}) where {T <: AbstractContainer} = false
+Base.isless(::Type{T}, ::Type{T}) where {T <: AbstractContainer} = false
+Base.isless(::Type{Atom}, ::Type{Topology}) = true
+Base.isless(::Type{Topology}, ::Type{Atom}) = false
 
 
 export ReactionToolbelt

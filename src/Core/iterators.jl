@@ -105,5 +105,15 @@ Base.iterate(iter::ItemIterator{Topology,_BySegment}, (s,)=(1,)) = begin
     (t.items[s], (s+1,))
 end
 
+export counter
+counter(::Type{Segment})  = count_segments
+counter(::Type{Residue})  = count_residues
+counter(::Type{Atom})     = count_atoms
+
+export iterator
+iterator(::Type{Segment}) = eachsegment
+iterator(::Type{Residue}) = eachresidue
+iterator(::Type{Atom})    = eachatom
+
 
 #endregion Iterators
