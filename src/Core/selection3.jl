@@ -13,7 +13,7 @@ state_mode_rule(::Type{Stateful},  ::Type{Stateful})  = Stateful
 
 # -------- MASKS ---------------------------------------------------------------
 
-struct Mask{T <: AbstractContainer}
+mutable struct Mask{T <: AbstractContainer}
     content::BitVector
 end
 Mask{T}() where {T <: AbstractContainer} = Mask{T}(BitVector())
@@ -43,6 +43,11 @@ end
 
 Base.:&(m1::Mask{T}, m2::Mask{T}) where {T <: AbstractContainer} = begin
     return Mask{T}(m1.content .& m2.content)
+end
+
+Base.:!(m1::Mask{T}) where {T <: AbstractContainer} = begin
+    m1.content = .!m1.content
+    return m1
 end
 
 # ----------------- BINARY SELECTION -------------------------------------------
@@ -160,6 +165,32 @@ macro as_str(p); FieldSelection{Atom}(p, :symbol); end
 
 state_mode_type(s::FieldSelection{M, T}) where {M, T} = M
 selection_type(s::FieldSelection{M, T}) where {M, T} = T
+
+# ------------------------------------------------------------------------------
+# Unary Selection
+
+export UnarySelection
+mutable struct UnarySelection{M} <: AbstractSelection
+    is_exit_node::Bool
+    op::Function
+    sele::AbstractSelection
+
+    UnarySelection(op::Function, sele::AbstractSelection) where {T <: AbstractContainer} = begin
+        new{Stateless}(true, op, sele)
+    end
+end
+
+Base.:!(sele::AbstractSelection) = begin
+    sele.is_exit_node = false
+    UnarySelection(!, sele)
+end
+
+function select(sele::UnarySelection, container::AbstractContainer)
+    mask = select(sele.sele, container)
+    mask = (sele.op)(mask)
+end
+
+state_mode_type(s::UnarySelection{M}) where {M} = M
 
 # ------------------------------------------------------------------------------
 # True selections
