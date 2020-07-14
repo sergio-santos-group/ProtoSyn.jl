@@ -39,7 +39,7 @@ include("Core/io.jl")           # <-- ATTENTION
 include("Core/iterators.jl")    # <-- ATTENTION
 include("Core/methods.jl")
 
-include("Core/selection3.jl") # Makes use of iterators, must come after
+include("Core/Selections/selections.jl") # Makes use of iterators, must come after
 
 # include("Core/loaders.jl")
 

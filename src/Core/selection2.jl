@@ -685,6 +685,5 @@ end
 # - Return actual AbstractContainer instances when resolving an exit_node
 # selection DONE
 
-# pose = sync!(ProtoSyn.Builder.build(ProtoSyn.Peptides.grammar(), ProtoSyn.Builder.seq"AAQG"))
-# using ProtoSyn.Peptides; setss!(pose, SecondaryStructure[:linear]); sync!(pose)
-# io = open("../teste.pdb", "w"); print_selection(io, pose, (@resname "ALA")(pose.graph)[1]); close(io)
+# pose = sync!(ProtoSyn.Builder.build(ProtoSyn.Peptides.grammar(), ProtoSyn.Builder.seq"AAQG")); using ProtoSyn.Peptides; setss!(pose, SecondaryStructure[:linear]); sync!(pose)
+# io = open("../teste.pdb", "w"); print_selection(io, pose, sele); close(io)
