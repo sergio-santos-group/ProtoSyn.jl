@@ -23,15 +23,36 @@ function (sele::AbstractSelection)(container::AbstractContainer)
     return select(sele, container)
 end
 
-function (sele::AbstractSelection)(container::AbstractContainer, state::State)
+function (sele::AbstractSelection)(container::AbstractContainer, state::State; itemize::Bool = false)
     if state_mode_type(sele) == Stateful
-        return select(sele, container)(state)
+        mask = select(sele, container)(state)
+        if itemize
+            return gather(mask, container)
+        end
+        return mask
     else
-        return select(sele, container)
+        mask = select(sele, container)
+        if itemize
+            return gather(mask, container)
+        end
+        return mask
     end
 end
 
-(sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
+# (sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
+(sele::AbstractSelection)(pose::Pose; itemize::Bool = false) = sele(pose.graph, pose.state; itemize = itemize)
+
+
+function gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}
+    results = Vector{T}()
+    for item in iterator(T)(container)
+        if mask[item.index]
+            push!(results, item)
+        end
+    end
+    return results
+end
+
 
 # ---
 

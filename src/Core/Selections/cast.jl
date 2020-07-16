@@ -55,6 +55,7 @@ mutable struct CastSelection{M} <: AbstractSelection
 end
 
 state_mode_type(::CastSelection{M}) where {M} = M
+selection_type(sele::CastSelection{M})  where {M} = sele.T
 
 # --- Short Syntax -------------------------------------------------------------
 Base.any(sele::AbstractSelection, ::Type{T2}) where {T2 <: AbstractContainer} = begin
