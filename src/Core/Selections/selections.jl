@@ -35,6 +35,30 @@ end
 
 # ---
 
+# --- Polarity
+# export PolarSelection
+# mutable struct PolarSelection{M, T} <: AbstractSelection
+#     is_exit_node::Bool
+
+#     PolarSelection{}() = new{Stateless, Residue}(true)
+# end
+
+# # --- Select -------------------------------------------------------------------
+# function select(::PolarSelection, container::AbstractContainer)
+
+#     n_residues = count_residues(container)
+#     mask = Mask{Residue}(n_residues)
+
+#     for residue in eachresidue(container)
+#         if residue.name in ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]
+#             mask[residue.index] = true
+#         end
+#     end
+#     return mask
+# end
+
+# state_mode_type(::PolarSelection{M, T}) where {M, T} = M
+
 export print_selection
 function print_selection(io::IOStream, pose::Pose{Topology}, mask::Mask{T}) where {T <: AbstractContainer}
 

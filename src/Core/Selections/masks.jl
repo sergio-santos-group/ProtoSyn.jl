@@ -1,10 +1,38 @@
+"""
+    ProtoSyn.Mask{T}(content::BitVector) where {T <: AbstractContainer}
+
+A `Mask` is a typed wrapped on a `BitVector`. `Mask` types are `AbstractContainer`'s
+(Ex: Atom, Residue, Segment, ...)
+
+    ProtoSyn.Mask{T}() where {T <: AbstractContainer}
+
+Creates and empty `Mask` of length 0.
+
+    ProtoSyn.Mask{T}(n::Int) where {T <: AbstractContainer}
+
+Creates a `Mask` of length `n` with all bits set to false.  
+
+Masks can be combined using unary operators, such as `&` and `|` (Only if they
+are of the same type. Otherwise, the `promote` function can cast one of the
+masks to the other's type, if a corresponding `container` is given).
+The `!` unary operator is also available.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Mask{Atom}()
+ProtoSyn.Mask{Atom}(Bool[])
+
+julia> !ProtoSyn.Mask{Atom}(5)
+ProtoSyn.Mask{Atom}(Bool[1, 1, 1, 1, 1])
+```
+"""
 mutable struct Mask{T <: AbstractContainer}
     content::BitVector
 end
 Mask{T}() where {T <: AbstractContainer} = Mask{T}(BitVector())
 Mask{T}(n::Int) where {T <: AbstractContainer} = Mask{T}(falses(n))
 
-selection_type(m::Mask{T}) where {T} = T
+selection_type(::Mask{T}) where {T} = T
 
 
 # --- Utilities ----------------------------------------------------------------

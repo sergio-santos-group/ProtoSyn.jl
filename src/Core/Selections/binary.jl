@@ -1,21 +1,49 @@
 export BinarySelection
+# Note: BinarySelection is a BRANCH selection.
+
+"""
+    BinarySelection{LM, RM} <: AbstractSelection
+
+A `BinarySelection` merges two selections using different operators, such as `and`
+and `or`.
+
+    BinarySelection(op::Function, left::L, right::R) where {L <: AbstractSelection, R <: AbstractSelection}
+    
+Construct a new `BinarySelection` that combines both `left` and `right` AbstractSelections,
+using the defined operator `op`. If the defined selections have different resulting
+mask types (Ex: `Atom` and `Residue`), the resulting mask will be promoted to the lowest
+ranking type (Ex: `Atom`). If the defined selections have different state modes
+(Ex: `Stateless` and `Stateful`) the resulting selection will have a `Stateful` state mode.
+
+# Examples
+```jldoctest
+julia> sele = BinarySelection(&, rn"ALA", an"CA")
+BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(true, &, FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name), FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name))
+```
+
+# Short Syntax
+```jldoctest
+julia> rn"ALA" & an"CA"
+BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(true, &, FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name), FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name))
+```
+"""
 mutable struct BinarySelection{LM, RM} <: AbstractSelection
     is_exit_node::Bool
     op::Function
     left::AbstractSelection
     right::AbstractSelection
 
-    BinarySelection(op::Function, l::L, r::R) where {L <: AbstractSelection, R <: AbstractSelection} = begin
+    BinarySelection(op::Function, left::L, right::R) where {L <: AbstractSelection, R <: AbstractSelection} = begin
         
-        ML = state_mode_type(l)
-        MR = state_mode_type(r)
+        ML = state_mode_type(left)
+        MR = state_mode_type(right)
 
-        new{ML, MR}(true, op, r, l)
+        new{ML, MR}(true, op, left, right)
     end
 end
 
 
-# --- State Mode Rules --------------------------------------------------------- 
+# --- State Mode Rules ---------------------------------------------------------
 state_mode_rule(::Type{Stateless}, ::Type{Stateless}) = Stateless
 state_mode_rule(::Type{Stateful},  ::Type{Stateless}) = Stateful
 state_mode_rule(::Type{Stateless}, ::Type{Stateful})  = Stateful
@@ -24,7 +52,7 @@ state_mode_rule(::Type{Stateful},  ::Type{Stateful})  = Stateful
 state_mode_type(::BinarySelection{LM, RM}) where {LM, RM} = state_mode_rule(LM, RM)
 
 
-# --- Unary Operations ---------------------------------------------------------
+# --- Short Syntax -------------------------------------------------------------
 Base.:&(l::AbstractSelection, r::AbstractSelection) = BinarySelection(&, l, r)
 Base.:|(l::AbstractSelection, r::AbstractSelection) = BinarySelection(|, l, r)
 

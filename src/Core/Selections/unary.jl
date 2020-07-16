@@ -1,4 +1,18 @@
 export UnarySelection
+# Note: UnarySelection is a BRANCH selection.
+
+"""
+    UnarySelection{M} <: AbstractSelection
+
+A `UnarySelection` applies an operation `op` to the given `AbstractSelection`
+`sele`, such as `!`.
+
+# Examples
+```jldoctest
+julia> sele = !rn"ALA"
+UnarySelection{ProtoSyn.Stateless}(true, !, FieldSelection{ProtoSyn.Stateless,Residue}(false, r"ALA", :name))
+```
+"""
 mutable struct UnarySelection{M} <: AbstractSelection
     is_exit_node::Bool
     op::Function
