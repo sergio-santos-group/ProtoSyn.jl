@@ -18,7 +18,6 @@ include("distance.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------
-
 function (sele::AbstractSelection)(container::AbstractContainer)
     return select(sele, container)
 end
@@ -39,10 +38,24 @@ function (sele::AbstractSelection)(container::AbstractContainer, state::State; i
     end
 end
 
-# (sele::AbstractSelection)(pose::Pose) = sele(pose.graph, pose.state)
 (sele::AbstractSelection)(pose::Pose; itemize::Bool = false) = sele(pose.graph, pose.state; itemize = itemize)
 
 
+# --- Gather Function ----------------------------------------------------------
+"""
+    ProtoSyn.gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}
+
+Gather all instances of type `T` from container whose relative position is
+marked as `true` in the given `mask`.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.gather(rn"ALA"(pose), pose.graph)
+2-element Array{Residue,1}:
+ Residue{/UNK:1/UNK:1/ALA:1}
+ Residue{/UNK:1/UNK:1/ALA:2}
+```
+"""
 function gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}
     results = Vector{T}()
     for item in iterator(T)(container)
