@@ -150,6 +150,7 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFl
 
     return Pose(seg, state)
 end
+fragment(grammar::LGrammar, derivation) = fragment(Float64, grammar, derivation)
 
 """
     build([T=Float64,] grammar::LGrammar, derivation)
@@ -164,7 +165,7 @@ function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat
 
     if !isempty(derivation)
         frag = fragment(T, grammar, derivation)
-        append(pose, frag)
+        append!(pose, frag)
         ProtoSyn.request_i2c(state; all=true)
     end
     pose

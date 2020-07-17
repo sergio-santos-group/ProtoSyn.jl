@@ -134,4 +134,21 @@ setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}) = begin
 end
 
 
+setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, mask::ProtoSyn.Mask{T}) where {T} = begin
+    state = pose.state
+    for r in eachresidue(pose.graph)
+        if mask[r.index]
+            println("OI")
+            println(state[r[DihedralTypes.phi]].Δϕ)
+            setdihedral!(state, r[DihedralTypes.phi], ϕ)
+            println(state[r[DihedralTypes.phi]].Δϕ)
+            setdihedral!(state, r[DihedralTypes.psi],  ψ)
+            setdihedral!(state, r[DihedralTypes.omega], ω)
+        end
+    end
+    ProtoSyn.request_i2c(state)
+end
+setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = setss!(pose, (ϕ, ψ, ω), sele(pose))
+
+
 end

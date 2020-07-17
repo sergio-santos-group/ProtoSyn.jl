@@ -79,7 +79,6 @@ function select(sele::FieldSelection{Stateless, T}, container::AbstractContainer
 end
 
 # --- Short Syntax -------------------------------------------------------------
-
 export @sn_str, @rn_str, @an_str, @as_str
 macro sn_str(p); FieldSelection{Segment}(p, :name); end
 macro rn_str(p); FieldSelection{Residue}(p, :name); end

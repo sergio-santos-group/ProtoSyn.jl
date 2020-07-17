@@ -116,4 +116,5 @@ iterator(::Type{Residue}) = eachresidue
 iterator(::Type{Atom})    = eachatom
 
 
+
 #endregion Iterators

@@ -432,17 +432,17 @@ function append end
 
 #---------------------------
 """
-    append(pose::Pose{Topology}, frag::Fragment, rxtb::ReactionToolbelt)
+    append!(pose::Pose{Topology}, frag::Fragment)
 
 Append a fragment as a new segment.
 """
-append(pose::Pose{Topology}, frag::Fragment) = begin
+append!(pose::Pose{Topology}, frag::Fragment) = begin
     # NOTE: THIS IS THE APPEND CALLED BY BUILD.
     # Note: A Fragment is a Pose with just 1 Segment.
 
     !isfragment(frag) && error("invalid fragment")
     
-    # Merge the fragment graph to the pose graph.
+    # Merge the fragment graph (Segment) to the pose graph (Topology).
     push!(pose.graph, frag.graph)
 
     # Merge the fragment state to the pose state.
@@ -475,16 +475,13 @@ end
 
 
 """
-    append(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
+    append!(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
 
 Append a fragment onto an existing segment. This fragment will be made a child
 to the origin of the provided topology.
 """
-append(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
+append!(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToolbelt) = begin
     
-    # if !isempty(segment)
-    #     error("the given segment must be empty")
-    # else
     if !in(segment, pose.graph)
         error("the given segment must belong to the given topology")
     elseif !isfragment(frag)
@@ -504,12 +501,12 @@ append(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionToo
 end
 
 """
-    append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt)
+    append!(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt)
 
 Append a `fragment` to the containing segment of the provided `residue` and
 make it a child of that same `residue`.
 """
-append(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt) = begin
+append!(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt) = begin
         
     if !in(residue, pose.graph)
         error("the given residue must belong to the given topology")

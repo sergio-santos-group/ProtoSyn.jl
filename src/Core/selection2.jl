@@ -687,3 +687,4 @@ end
 
 # pose = sync!(ProtoSyn.Builder.build(ProtoSyn.Peptides.grammar(), ProtoSyn.Builder.seq"AAQG")); using ProtoSyn.Peptides; setss!(pose, SecondaryStructure[:linear]); sync!(pose)
 # io = open("../teste.pdb", "w"); print_selection(io, pose, sele); close(io)
+# io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io)

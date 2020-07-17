@@ -21,6 +21,9 @@ end
 _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
     if !in(item, container)
         push!(container.items, item)
+
+        # The next line makes it so that a fragment can only be appended to 1
+        # pose, 1 time only.
         item.container = container
 
         # Update the container size to reflect the addition

@@ -151,6 +151,7 @@ function Root()::Residue
     root
 end
 
+# QUESTION: What does this do ?!
 export Segment!, Residue!, Atom!
 Segment!(t::Topology, name::String, id::Int) = begin
     s = Segment(name,id)
@@ -158,7 +159,7 @@ Segment!(t::Topology, name::String, id::Int) = begin
     s
 end
 Residue!(s::Segment, name::String, id::Int) = begin
-    r = Residue(name,id)
+    r = Residue(name, id)
     push!(s, r)
     r
 end
@@ -167,6 +168,7 @@ Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String) = begin
     push!(r, a)
     a
 end
+
 
 
 # export request_reindexing
