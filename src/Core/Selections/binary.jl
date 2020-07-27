@@ -28,7 +28,6 @@ BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(true, &, FieldSelection{P
 ```
 """
 mutable struct BinarySelection{LM, RM} <: AbstractSelection
-    is_exit_node::Bool
     op::Function
     left::AbstractSelection
     right::AbstractSelection
@@ -38,7 +37,7 @@ mutable struct BinarySelection{LM, RM} <: AbstractSelection
         ML = state_mode_type(left)
         MR = state_mode_type(right)
 
-        new{ML, MR}(true, op, left, right)
+        new{ML, MR}(op, left, right)
     end
 end
 
@@ -50,7 +49,7 @@ state_mode_rule(::Type{Stateless}, ::Type{Stateful})  = Stateful
 state_mode_rule(::Type{Stateful},  ::Type{Stateful})  = Stateful
 
 state_mode_type(::BinarySelection{LM, RM}) where {LM, RM} = state_mode_rule(LM, RM)
-
+selection_type(sele::BinarySelection) = min(selection_type(sele.left), selection_type(sele.right))
 
 # --- Short Syntax -------------------------------------------------------------
 Base.:&(l::AbstractSelection, r::AbstractSelection) = BinarySelection(&, l, r)

@@ -19,27 +19,31 @@ include("distance.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------
-function (sele::AbstractSelection)(container::AbstractContainer)
-    return select(sele, container)
+function (sele::AbstractSelection)(container::AbstractContainer; gather::Bool = false)
+    mask = select(sele, container)
+    if gather
+        return ProtoSyn.gather(mask, container)
+    end
+    return mask
 end
 
-function (sele::AbstractSelection)(container::AbstractContainer, state::State; itemize::Bool = false)
+function (sele::AbstractSelection)(container::AbstractContainer, state::State; gather::Bool = false)
     if state_mode_type(sele) == Stateful
         mask = select(sele, container)(state)
-        if itemize
-            return gather(mask, container)
+        if gather
+            return ProtoSyn.gather(mask, container)
         end
         return mask
     else
         mask = select(sele, container)
-        if itemize
-            return gather(mask, container)
+        if gather
+            return ProtoSyn.gather(mask, container)
         end
         return mask
     end
 end
 
-(sele::AbstractSelection)(pose::Pose; itemize::Bool = false) = sele(pose.graph, pose.state; itemize = itemize)
+(sele::AbstractSelection)(pose::Pose; gather::Bool = false) = sele(pose.graph, pose.state; gather = gather)
 
 
 # --- Gather Function ----------------------------------------------------------
@@ -73,8 +77,6 @@ end
 # --- Polarity
 # export PolarSelection
 # mutable struct PolarSelection{M, T} <: AbstractSelection
-#     is_exit_node::Bool
-
 #     PolarSelection{}() = new{Stateless, Residue}(true)
 # end
 

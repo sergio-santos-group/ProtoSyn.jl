@@ -52,12 +52,16 @@ FieldSelection{ProtoSyn.Stateless,Atom}(true, r"C", :symbol)
 ```
 """
 mutable struct FieldSelection{M, T} <: AbstractSelection
-    is_exit_node::Bool
-    pattern::Regex
+    pattern::Union{Regex, String}
     field::Symbol
+    op::Function
     
-    FieldSelection{T}(pattern::String, field::Symbol) where {T <: AbstractContainer} = begin
-        new{Stateless, T}(true, Regex(pattern), field)
+    FieldSelection{T}(pattern::String, field::Symbol; is_regex = false) where {T <: AbstractContainer} = begin
+        if is_regex
+            new{Stateless, T}(Regex(pattern), field, occursin)
+        else
+            new{Stateless, T}(pattern, field, isequal)
+        end
     end
 end
 
@@ -71,7 +75,7 @@ function select(sele::FieldSelection{Stateless, T}, container::AbstractContainer
     mask = Mask{T}(n_items)
 
     for item in iterator(T)(container)
-        if occursin(sele.pattern, getproperty(item, sele.field))
+        if sele.op(sele.pattern, getproperty(item, sele.field))
             mask[item.index] = true
         end
     end
@@ -80,7 +84,8 @@ end
 
 # --- Short Syntax -------------------------------------------------------------
 export @sn_str, @rn_str, @an_str, @as_str
-macro sn_str(p); FieldSelection{Segment}(p, :name); end
-macro rn_str(p); FieldSelection{Residue}(p, :name); end
-macro an_str(p); FieldSelection{Atom}(p, :name); end
-macro as_str(p); FieldSelection{Atom}(p, :symbol); end
+parse_flags(flags) = isempty(flags) ? false : 'r' in flags[1]
+macro sn_str(p, flags...); FieldSelection{Segment}(p, :name; is_regex = parse_flags(flags)); end
+macro rn_str(p, flags...); FieldSelection{Residue}(p, :name; is_regex = parse_flags(flags)); end
+macro an_str(p, flags...); FieldSelection{Atom}(p, :name; is_regex = parse_flags(flags)); end
+macro as_str(p, flags...); FieldSelection{Atom}(p, :symbol; is_regex = parse_flags(flags)); end

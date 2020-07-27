@@ -43,11 +43,10 @@ Mask{T}() where {T <: AbstractContainer} = Mask{T}(BitVector())
 
 mutable struct Selection <: AbstractSelection
     body::Function
-    is_exit_node::Bool
     state_mode::Type{<:AbstractStateMode}
     mask::Mask
 end
-Selection(body::Function, is_exit_node::Bool, state_mode::Type{<:AbstractStateMode}) = Selection(body, is_exit_node, state_mode, Mask())
+Selection(body::Function, state_mode::Type{<:AbstractStateMode}) = Selection(body, state_mode, Mask())
 
 # Title function parses the selection function description to return a readable
 # string with the identification of that function

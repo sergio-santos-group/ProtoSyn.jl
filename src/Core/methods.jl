@@ -180,7 +180,7 @@ ascendents(c::AbstractContainer, level::Int) = begin
 end
 
 export sync!
-sync!(pose::Pose{Topology}) = (sync!(pose.state, pose.graph); pose)
+sync!(pose::Pose) = (sync!(pose.state, pose.graph); pose)
 sync!(state::State, top::Topology) = begin
     #state = pose.state
     #top = pose.graph
@@ -241,9 +241,6 @@ i2c!(state::State{T}, top::Topology) where T = begin
     vjk = MVector{3,T}(0, 0, 0)
     vji = MVector{3,T}(0, 0, 0)
     n   = MVector{3,T}(0, 0, 0)
-    # vjk = MVector{3,Float64}(0.0, 0.0, 0.0)
-    # vji = MVector{3,Float64}(0.0, 0.0, 0.0)
-    # n   = MVector{3,Float64}(0.0, 0.0, 0.0)
     
     queue = Atom[]
 
@@ -252,17 +249,17 @@ i2c!(state::State{T}, top::Topology) where T = begin
     #xyz = zeros(3, state.size)
     for child in root.children
         # force all child states to be updated
-        state[child].changed |= root_changed
+        state[child].changed |= root_changed # Updates state[child].changed to "true" only if 'root_changed' is true.
         push!(queue, child)
     end
     
     while !isempty(queue)
         atom = popfirst!(queue)
-        (i,j,k) = atom.ascendents
+        (i, j, k) = atom.ascendents
         
         istate = state[i]
         for child in atom.children
-            state[child].changed |= istate.changed
+            state[child].changed |= istate.changed # Updates state[child].changed to "true" only if 'istate.changed' is true. (which is, if root_changed is true)
             push!(queue, child)
         end
         !(istate.changed) && continue
@@ -275,8 +272,8 @@ i2c!(state::State{T}, top::Topology) where T = begin
         
         # local coord system
         b = istate.b
-        sθ,cθ = sincos(istate.θ)  # angle
-        sϕ,cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
+        sθ, cθ = sincos(istate.θ)  # angle
+        sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
         x_1 = -b*cθ
         x_2 =  b*cϕ*sθ
         x_3 =  b*sϕ*sθ
@@ -393,6 +390,33 @@ Base.pop!(pose::Pose{Topology}, res::Residue) = begin
     Pose(res,st)
 end
 
+Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
+
+    if seg.container !== pose.graph
+        error("given residue does not belong to the provided topology")
+    end
+
+    # remove node states from parent state and create
+    # a new state for this segment
+    st = splice!(pose.state, seg[1][1].index:seg[end][end].index)
+    
+    pop!(pose.graph.items, seg)
+    # deleteat!(pose.graph.items, findall(x -> x == seg, pose.graph.items))
+    # pose.graph.size -= 1
+
+    reindex(pose.graph)
+    
+    # new common ID
+    seg.id = st.id = genid()
+    Pose(seg, st)
+end
+
+
+Base.pop!(top::Topology, seg::Segment) = begin
+    deleteat!(top.items, findall(x -> x == seg, top.items))
+    top.size -= 1
+end
+
 
 function fragment(pose::Pose{Topology})
     
@@ -436,7 +460,7 @@ function append end
 
 Append a fragment as a new segment.
 """
-append!(pose::Pose{Topology}, frag::Fragment) = begin
+Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
     # NOTE: THIS IS THE APPEND CALLED BY BUILD.
     # Note: A Fragment is a Pose with just 1 Segment.
 
@@ -446,7 +470,7 @@ append!(pose::Pose{Topology}, frag::Fragment) = begin
     push!(pose.graph, frag.graph)
 
     # Merge the fragment state to the pose state.
-    append!(pose.state, frag.state)
+    Base.append!(pose.state, frag.state)
     
     # Make sure the fragment graph has the same origin of the new pose.
     setparent!(
@@ -499,6 +523,22 @@ append!(pose::Pose{Topology}, frag::Fragment, segment::Segment, rxtb::ReactionTo
     reindex(pose.graph)
     pose
 end
+
+# function join_all_segments(pose::Pose{Topology})
+#     ns = length(pose.graph)
+#     if ns > 1
+#         for i in 2:ns
+#             seg = pose.graph[i]
+#             seg[1].parent = pose.graph[1][end]
+#             push!(pose.graph[1][end].children, seg[1])
+#             for item in seg.items
+#                 push!(pose.graph[1], item)
+#             end
+#             pop!(pose.graph, seg)
+#         end
+#     end
+# end
+
 
 """
     append!(pose::Pose{Topology}, frag::Fragment, residue::Residue, rxtb::ReactionToolbelt)
@@ -728,11 +768,11 @@ end
 #     state
 # end
 
-function join(r1::Residue, s1::String, r2::Residue, s2::String)
+function join(r1::Residue, s1::String, r2::Residue, s2::String) # IMPORTANT
     hasparent(r2) && error("r2 is already connected")
     at1 = r1[s1]
     at2 = r2[s2]
     bond(at1, at2)          # at1 <-> at2
     setparent!(at2, at1)    # at1 -> at2
-    setparent!(r2, r1)    # r1 -> r2
+    setparent!(r2, r1)      # r1 -> r2
 end

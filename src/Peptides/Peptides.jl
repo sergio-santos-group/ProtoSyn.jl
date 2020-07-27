@@ -123,9 +123,23 @@ function acts on the internal coordinates and does not update cartesian
 coordinates, although a request for conversion is made. It is up to the calling
 function/user to explicitly synchornize coordinates via [`sync!`](@ref). 
 """
-setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}) = begin
+function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3, Number})
     state = pose.state
     for r in eachresidue(pose.graph)
+        println("  PHI: $(pose.state[r[DihedralTypes.phi]].ϕ) -> $ϕ (on atom $(r[DihedralTypes.phi]))")
+        println("  PSI: $(pose.state[r[DihedralTypes.psi]].ϕ) -> $ψ (on atom $(r[DihedralTypes.psi]))")
+        println("OMEGA: $(pose.state[r[DihedralTypes.omega]].ϕ) -> $ω (on atom $(r[DihedralTypes.omega]))")
+        # setdihedral!(state, r[DihedralTypes.phi], ϕ)
+        setdihedral!(state, r[DihedralTypes.psi],  ψ)
+        # setdihedral!(state, r[DihedralTypes.omega], ω)
+    end
+    ProtoSyn.request_i2c(state)
+end
+
+
+function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
+    state = pose.state
+    for r in residues
         setdihedral!(state, r[DihedralTypes.phi], ϕ)
         setdihedral!(state, r[DihedralTypes.psi],  ψ)
         setdihedral!(state, r[DihedralTypes.omega], ω)
@@ -133,22 +147,18 @@ setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}) = begin
     ProtoSyn.request_i2c(state)
 end
 
-
-setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, mask::ProtoSyn.Mask{T}) where {T} = begin
-    state = pose.state
-    for r in eachresidue(pose.graph)
-        if mask[r.index]
-            println("OI")
-            println(state[r[DihedralTypes.phi]].Δϕ)
-            setdihedral!(state, r[DihedralTypes.phi], ϕ)
-            println(state[r[DihedralTypes.phi]].Δϕ)
-            setdihedral!(state, r[DihedralTypes.psi],  ψ)
-            setdihedral!(state, r[DihedralTypes.omega], ω)
-        end
-    end
-    ProtoSyn.request_i2c(state)
+function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection)
+    residues = ProtoSyn.CastSelection(any, sele, Residue)(pose, gather = true)
+    setss!(pose, (ϕ, ψ, ω), residues)
 end
-setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = setss!(pose, (ϕ, ψ, ω), sele(pose))
+
+setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = setss!(pose, (ϕ, ψ, ω), [residue])
+
+function append_residues(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss = :linear, op = "α")
+    ProtoSyn.Builder.append_residues(pose, residue, grammar, derivation; op = op)
+    residues = residue.container.items[end-length(derivation)+1:end]
+    setss!(pose, SecondaryStructure[:linear], residues)
+end
 
 
 end

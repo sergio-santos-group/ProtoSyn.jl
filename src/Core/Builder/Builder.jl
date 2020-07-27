@@ -132,15 +132,17 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFl
             parent = pop!(stack)
         elseif isvar(grammar, letter)
             frag = getvar(grammar, letter)
+            println(" (!) NEW RESIDUE TO APPEND: $(frag.graph.items[1])")
             
             frag2 = copy(frag)
 
-            push!(seg, frag2.graph.items...)
-            append!(state, frag2.state)
+            push!(seg, frag2.graph.items...) # Appending the residues to the segment
+            append!(state, frag2.state)      # Merging the 2 states
+            println("PARENT: $(typeof(parent))")
             if parent !== nothing
                 join = isempty(opstack) ? grammar.defop : pop!(opstack)
-                #println(join)
-                join(parent, frag2)
+                println("Stack is empty? => $(isempty(opstack)) => Join: $join")
+                join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
             parent = frag2
         end
@@ -165,8 +167,11 @@ function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat
 
     if !isempty(derivation)
         frag = fragment(T, grammar, derivation)
-        append!(pose, frag)
+        append!(pose, frag) # Appending the fragment (which is a segment) to the Topology
+        
+        # NOTE: Bug happens somewhere ^ behind ^ this line
         ProtoSyn.request_i2c(state; all=true)
+        # io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io)
     end
     pose
 end
@@ -195,27 +200,31 @@ macro seq_str(s); [string(c) for c in s]; end
 Closure
 """
 function opfactory(args)
-    return function(f1::Fragment, f2::Fragment)
-        r1 = f1.graph[end]
+    return function(r1::Residue, f2::Fragment)
         r2 = f2.graph[ 1 ]
-        ProtoSyn.join(r1, args["residue1"], r2, args["residue2"])
+        ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state
         
+        println(" PRESETS: $(haskey(args, "presets"))")
         if haskey(args, "presets")
-            for (atname,presets) in args["presets"]
+            for (atname, presets) in args["presets"]
+                println("  Atom name: $atname")
                 atomstate = state[r2[atname]]
-                for (key,value) in presets
+                for (key, value) in presets
                     setproperty!(atomstate, Symbol(key), value)
+                    println("   Setting $key to $value.")
                 end
             end
         end
-
+        return
+        
+        println(" OFFSETS: $(haskey(args, "offsets"))")
         if haskey(args, "offsets")
-            for (atname,offset) in args["offsets"]
+            for (atname, offset) in args["offsets"]
+                println("  Atom name: $atname")
                 setoffset!(state, r2[atname], offset)
             end
         end
-
     end
 end
 
@@ -250,7 +259,7 @@ function lgfactory(::Type{T}, template::Dict) where T
     grammar = LGrammar{String,Vector{String}}()
 
     vars = template["variables"]
-    for (key,name) in vars
+    for (key, name) in vars
         filename = joinpath(ProtoSyn.resource_dir, name)
         @info "Loading variable '$key' from $filename"
         pose = ProtoSyn.load(T, filename)
@@ -258,10 +267,10 @@ function lgfactory(::Type{T}, template::Dict) where T
     end
 
     ops = template["operators"]
-    for (opname,opargs) in ops
+    for (opname, opargs) in ops
         if haskey(opargs, "presets")
             for presets in values(opargs["presets"])
-                for (k,v) in presets
+                for (k, v) in presets
                     presets[k] = tonumber(v)
                 end
             end
@@ -301,5 +310,17 @@ function fromfile(::Type{T}, filename::AbstractString, key::String) where T
         lgfactory(T, yml[key])
     end
 end
+
+function append_residues(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α") # TODO: Change name of 'single_residue'
+    single_residue = Builder.fragment(grammar, derivation)
+
+    push!(residue.container, single_residue.graph.items...)
+    append!(pose.state, single_residue.state)
+    grammar.operators[op](residue, single_residue)
+    reindex(pose.graph)
+    ProtoSyn.request_i2c(pose.state; all=true)
+end
+
+
 
 end

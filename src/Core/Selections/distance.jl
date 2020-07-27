@@ -25,12 +25,11 @@ DistanceSelection{ProtoSyn.Stateful}(true, 2.0, FieldSelection{ProtoSyn.Stateles
 ```
 """
 mutable struct DistanceSelection{M} <: AbstractSelection
-    is_exit_node::Bool
     distance::Number
     sele::AbstractSelection
 
     DistanceSelection(distance::Number, sele::S) where {S <: AbstractSelection} = begin
-        new{Stateful}(true, distance, sele)
+        new{Stateful}(distance, sele)
     end
 end
 

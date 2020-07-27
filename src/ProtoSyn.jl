@@ -21,7 +21,7 @@ struct Pose{T<:AbstractContainer}
     state::State
     Pose(c::T, s::State) where {T<:AbstractContainer}= begin
         c.id != s.id && error("unpairable container and state")
-        new{T}(c,s)
+        new{T}(c, s)
     end
 end
 Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))

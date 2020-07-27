@@ -17,7 +17,7 @@ mutable struct AtomState{T<:AbstractFloat}
     # internal coordinates
     b::T                    # self<->parent bond length
     θ::T                    # self<->parent<->grandparent angle
-    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral
+    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral <- GRANDCHILDREN ?!
     
     Δϕ::T                   # change in dihedral angles (to be applied to children)
     changed::Bool           # flag
@@ -36,6 +36,7 @@ AtomState{T}() where {T} = begin
 end
 
 Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
+    # println("Setting $key to $val in $ns")
     if key == :Δϕ
         setfield!(ns, :changed, true)
         setfield!(ns, key, T(val))

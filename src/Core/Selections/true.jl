@@ -13,10 +13,8 @@ TrueSelection{ProtoSyn.Stateless,Atom}(true)
 ```
 """
 mutable struct TrueSelection{M, T} <: AbstractSelection
-    is_exit_node::Bool
-
     TrueSelection{T}() where {T <: AbstractContainer} = begin
-        new{Stateless, T}(true)
+        new{Stateless, T}()
     end
 end
 

@@ -32,15 +32,11 @@ peptide:
       residue1: C
       residue2: N
       presets:
-        N:  {θ: 120°, ϕ:   0°, b: 1.2Å}
+        N:  {θ: 120°, ϕ:  180°, b: 1.2Å}
         H:  {θ: 120°, ϕ:   0°}
         CA: {θ: 120°, ϕ: 180°}
-        # N:  {θ: *theta, ϕ: 0.0, b: 1.2}
-        # H:  {θ: *theta, ϕ: 0.0}
-        # CA: {θ: *theta, ϕ: *pi}
       offsets:
         CA: 0
         C:  0
         O:  180°
-        # O:  *pi
   defop: α

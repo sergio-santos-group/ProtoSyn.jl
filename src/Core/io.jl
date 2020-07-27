@@ -36,7 +36,7 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     #conv = haskey(yml, "unit") && yml["unit"]=="degrees"
 
     # add atoms
-    for (index,pivot) in enumerate(yml["atoms"])
+    for (index, pivot) in enumerate(yml["atoms"])
         atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
         s = state[index]
         # if conv
@@ -53,16 +53,16 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     end
 
     # add bonds
-    for (pivot,others) in yml["bonds"]
+    for (pivot, others) in yml["bonds"]
         atom = res[pivot]
-        foreach(other->bond(atom,res[other]), others)
+        foreach(other -> bond(atom, res[other]), others)
     end
 
     # bond graph
     graph = yml["graph"]
-    for (pivot,others) in graph["adjacency"]
+    for (pivot, others) in graph["adjacency"]
         atom = res[pivot]
-        foreach(other->setparent!(res[other], atom), others)
+        foreach(other -> setparent!(res[other], atom), others)
     end
 
     root = origin(top)
@@ -180,7 +180,10 @@ write(io::IO, top::AbstractContainer, state::State) = begin
     println(io, "ENDMDL")
 end
 
-write(io::IOStream, pose::Pose{Topology}) = write(io, pose.graph, pose.state)
+write(io::IOStream, pose::Pose) = begin
+    sync!(pose)
+    write(io, pose.graph, pose.state)
+end
 
 write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     println(io, "name: ", top.name)
@@ -216,3 +219,4 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
 end
 
 write(io::IO, p::Pose, ::Type{T}) where T = write(io, p.graph, p.state, T)
+# write(io::IO, p::Pose, ::Type{T}) where T = write(io, p.graph, p.state, T)

@@ -14,12 +14,11 @@ UnarySelection{ProtoSyn.Stateless}(true, !, FieldSelection{ProtoSyn.Stateless,Re
 ```
 """
 mutable struct UnarySelection{M} <: AbstractSelection
-    is_exit_node::Bool
     op::Function
     sele::AbstractSelection
 
     UnarySelection{M}(op::Function, sele::AbstractSelection) where {M <: AbstractStateMode} = begin
-        new{M}(true, op, sele)
+        new{M}(op, sele)
     end
 end
 
@@ -28,7 +27,6 @@ selection_type(sele::UnarySelection{M}) where {M} = selection_type(sele.sele)
 
 # --- Unary Operations ---------------------------------------------------------
 Base.:!(sele::AbstractSelection) = begin
-    sele.is_exit_node = false
     UnarySelection{state_mode_type(sele)}(!, sele)
 end
 
