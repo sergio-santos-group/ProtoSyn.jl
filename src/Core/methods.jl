@@ -732,7 +732,8 @@ export setdihedral!
 #     s
 # end
 
-@inline setdihedral!(s::State, at::Atom, val) = (s[at].Δϕ = val; s)
+@inline setdihedral!(s::State, at::Atom, val) = (s[at].Δϕ = val - s[at].ϕ; s) # Sets dihedral so it becomes the value 'val'
+# @inline setdihedralto!(s::State, at::Atom, val) = (s[at].Δϕ = val; s)
 
 
 export setoffset!

@@ -14,16 +14,11 @@ io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io)
 
 setss!(pose, SecondaryStructure[:linear])
 sync!(pose)
-# QUESTION
-# Should the user know when he needs to sync or not? Maybe this task should be
-# automatically performed when:
-# 1. Building the peptide?
-# 2. Visualization functions (@pymol macro or print_to_PDB)?
 
 # Example 2.
 # -> Append a single residue to the end of the peptide, joining it to the existing segment
 last_res = pose.graph[1][end]
-Peptides.append_residues(pose, last_res, res_lib, seq"AA", ss = :linear, op = "α")
+Peptides.append_residues(pose, last_res, res_lib, seq"AAAAAAAAAAAAAAA", ss = :helix, op = "α")
 
 
 # ProtoSyn.join_all_segments(pose)

@@ -129,9 +129,9 @@ function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3, Number})
         println("  PHI: $(pose.state[r[DihedralTypes.phi]].ϕ) -> $ϕ (on atom $(r[DihedralTypes.phi]))")
         println("  PSI: $(pose.state[r[DihedralTypes.psi]].ϕ) -> $ψ (on atom $(r[DihedralTypes.psi]))")
         println("OMEGA: $(pose.state[r[DihedralTypes.omega]].ϕ) -> $ω (on atom $(r[DihedralTypes.omega]))")
-        # setdihedral!(state, r[DihedralTypes.phi], ϕ)
+        setdihedral!(state, r[DihedralTypes.phi], ϕ)
         setdihedral!(state, r[DihedralTypes.psi],  ψ)
-        # setdihedral!(state, r[DihedralTypes.omega], ω)
+        setdihedral!(state, r[DihedralTypes.omega], ω)
     end
     ProtoSyn.request_i2c(state)
 end
@@ -157,7 +157,7 @@ setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) =
 function append_residues(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss = :linear, op = "α")
     ProtoSyn.Builder.append_residues(pose, residue, grammar, derivation; op = op)
     residues = residue.container.items[end-length(derivation)+1:end]
-    setss!(pose, SecondaryStructure[:linear], residues)
+    setss!(pose, SecondaryStructure[ss], residues)
 end
 
 
