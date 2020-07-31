@@ -132,16 +132,13 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFl
             parent = pop!(stack)
         elseif isvar(grammar, letter)
             frag = getvar(grammar, letter)
-            println(" (!) NEW RESIDUE TO APPEND: $(frag.graph.items[1])")
             
             frag2 = copy(frag)
 
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
-            println("PARENT: $(typeof(parent))")
             if parent !== nothing
                 join = isempty(opstack) ? grammar.defop : pop!(opstack)
-                println("Stack is empty? => $(isempty(opstack)) => Join: $join")
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
             parent = frag2
@@ -153,6 +150,7 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFl
     return Pose(seg, state)
 end
 fragment(grammar::LGrammar, derivation) = fragment(Float64, grammar, derivation)
+
 
 """
     build([T=Float64,] grammar::LGrammar, derivation)
@@ -169,9 +167,7 @@ function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat
         frag = fragment(T, grammar, derivation)
         append!(pose, frag) # Appending the fragment (which is a segment) to the Topology
         
-        # NOTE: Bug happens somewhere ^ behind ^ this line
         ProtoSyn.request_i2c(state; all=true)
-        # io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io)
     end
     pose
 end
@@ -200,28 +196,28 @@ macro seq_str(s); [string(c) for c in s]; end
 Closure
 """
 function opfactory(args)
-    return function(r1::Residue, f2::Fragment)
-        r2 = f2.graph[ 1 ]
+    return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1)
+        # Index is of f2
+        if typeof(f2) == Fragment
+            r2 = f2.graph[residue_index]
+        else
+            r2 = f2.graph[1][residue_index]
+        end
         ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state
         
-        println(" PRESETS: $(haskey(args, "presets"))")
         if haskey(args, "presets")
             for (atname, presets) in args["presets"]
-                println("  Atom name: $atname")
                 atomstate = state[r2[atname]]
                 for (key, value) in presets
                     setproperty!(atomstate, Symbol(key), value)
-                    println("   Setting $key to $value.")
                 end
             end
         end
         return
         
-        println(" OFFSETS: $(haskey(args, "offsets"))")
         if haskey(args, "offsets")
             for (atname, offset) in args["offsets"]
-                println("  Atom name: $atname")
                 setoffset!(state, r2[atname], offset)
             end
         end
@@ -311,16 +307,36 @@ function fromfile(::Type{T}, filename::AbstractString, key::String) where T
     end
 end
 
-function append_residues(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α") # TODO: Change name of 'single_residue'
-    single_residue = Builder.fragment(grammar, derivation)
-
-    push!(residue.container, single_residue.graph.items...)
-    append!(pose.state, single_residue.state)
-    grammar.operators[op](residue, single_residue)
+function append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+    
+    frag = Builder.fragment(grammar, derivation)
+    push!(residue.container, frag.graph.items...)
+    insert!(pose.state, residue.items[end].index + 1, frag.state)
+    grammar.operators[op](residue, frag)
     reindex(pose.graph)
     ProtoSyn.request_i2c(pose.state; all=true)
 end
 
+
+
+function prepend_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+    
+    frag = Builder.fragment(grammar, derivation)
+    prepend!(residue.container, frag.graph.items)
+    insert!(pose.state, residue.items[1].index, frag.state)
+
+    # The existing root is now connected to the new first residue (from frag)
+    setparent!(ProtoSyn.root(frag.graph), ProtoSyn.origin(pose.graph))
+    ProtoSyn.origin(pose.graph).children[1].parent = nothing
+    popfirst!(ProtoSyn.origin(pose.graph).children)
+    
+    # MUST DO RE INDEX HERE WITHOUT ASCENDENTS
+    reindex(pose.graph, set_ascendents = false)
+
+    grammar.operators[op](frag.graph[end], pose, residue_index = 1 + length(frag.graph))
+    reindex(pose.graph)
+    ProtoSyn.request_i2c(pose.state; all=true)
+end
 
 
 end

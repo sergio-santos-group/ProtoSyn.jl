@@ -24,13 +24,31 @@ struct Pose{T<:AbstractContainer}
         new{T}(c, s)
     end
 end
+
+export Fragment
+const Fragment = Pose{Segment}
+
+Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
+    top = Topology(frag.graph.name, 1)
+    state = State{T}()
+    state.id = top.id
+    pose = Pose(top, state)
+    Base.append!(pose, frag)
+
+    ProtoSyn.request_i2c(state; all=true)
+    return pose
+end
+Pose(frag::Fragment) = Pose(Float64, frag)
+
 Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
 include("Core/base.jl")
 
 
-export Fragment
-const Fragment = Pose{Segment}
+
+# Fragment(pose::Pose) = begin
+#     Fragment()
+# end
 
 export ResidueDB
 const ResidueDB = Dict{String, Fragment}
@@ -47,8 +65,8 @@ include("Core/Selections/selections.jl") # Makes use of iterators, must come aft
 
 #region SUBMODULES ------------------------------
 include("Core/Builder/Builder.jl")
-
 include("Peptides/Peptides.jl")
+
 include("Sugars/Sugars.jl")
 # include("Forcefields/Forcefields.jl")
 include("Calculators/Calculators.jl")

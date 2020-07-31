@@ -36,7 +36,6 @@ AtomState{T}() where {T} = begin
 end
 
 Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
-    # println("Setting $key to $val in $ns")
     if key == :Δϕ
         setfield!(ns, :changed, true)
         setfield!(ns, key, T(val))
@@ -62,7 +61,7 @@ mutable struct State{T<:AbstractFloat}
     id::Int             # id to be matched to the corresponding container
     i2c::Bool           # flag to request internal to cartesian conversion
     c2i::Bool           # flag to request cartesian to internal conversion
-    index_offset::Int   # ...
+    index_offset::Int   # WHAT IS INDEX OFFSET? Serves to offset the 3 initial root atoms?
 
     x::Opt{Matrix{T}}
     f::Opt{Matrix{T}}
@@ -100,6 +99,9 @@ Base.getindex(s::State, i::Int) = begin
 end
 Base.getindex(s::State, at::Atom) = begin
     s.items[at.index+s.index_offset]
+end
+Base.getindex(s::State, seg::Segment) = begin
+    s.items[(seg[1][1].index + s.index_offset):(seg[end][end].index + s.index_offset)]
 end
 # QUESTION: Make getindex for residue?
 

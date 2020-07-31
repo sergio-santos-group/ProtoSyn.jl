@@ -9,16 +9,22 @@ println("ProtoSyn loaded successfully.")
 # Example 1.
 # -> Create a new segment from an aminoacid string
 res_lib = grammar();
-pose = Builder.build(res_lib, seq"AAAAQR");
-io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io)
+pose = Peptides.build(res_lib, seq"AAA");
+
+first_res = pose.graph[1][1];
+Peptides.prepend_residues!(pose, first_res, res_lib, seq"GGG", ss = SecondaryStructure[:helix], op = "α");
+
+last_res = pose.graph[1][end];
+Peptides.append_residues!(pose, last_res, res_lib, seq"KKK", ss = SecondaryStructure[:parallel_sheet], op = "α");
+
+io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+
 
 setss!(pose, SecondaryStructure[:linear])
-sync!(pose)
 
 # Example 2.
 # -> Append a single residue to the end of the peptide, joining it to the existing segment
-last_res = pose.graph[1][end]
-Peptides.append_residues(pose, last_res, res_lib, seq"AAAAAAAAAAAAAAA", ss = :helix, op = "α")
+Peptides.append_residues!(pose, last_res, res_lib, seq"AAAAAAAAAAAAAAA", ss = SecondaryStructure[:linear], op = "α")
 
 
 # ProtoSyn.join_all_segments(pose)

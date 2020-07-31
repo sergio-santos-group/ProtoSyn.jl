@@ -13,7 +13,6 @@ include("binary.jl")
 include("field.jl")
 include("serial.jl")
 include("unary.jl")
-include("cast.jl")
 include("true.jl")
 include("distance.jl")
 

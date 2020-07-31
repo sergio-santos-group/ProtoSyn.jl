@@ -46,6 +46,8 @@ Test whether `p` is the parent of `c`.
 Set `p` as the parent of `c`.
 """
 function setparent!(child::T, parent::T) where {T<:AbstractDigraph}
+    # println("Child: $child")
+    # println("Parent: $parent")
     hasparent(child) && error("unable to setparent! of non-orphan item")
     push!(parent.children, child)
     child.parent = parent

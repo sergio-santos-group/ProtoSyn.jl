@@ -79,9 +79,9 @@ Base.iterate(iter::ItemIterator{Topology, _ByResidue}, (s, r)=(1, 1)) = begin
     if s > length(t)
         return nothing
     elseif r > length(t.items[s])
-        return iterate(iter, (s+1,1))
+        return iterate(iter, (s+1, 1))
     end
-    (t.items[s].items[r], (s,r+1))
+    (t.items[s].items[r], (s, r+1))
 end
 
 Base.iterate(iter::ItemIterator{Segment, _ByResidue}, (r,)=(1,)) = begin
@@ -96,8 +96,8 @@ end
 
 # QUESTION: This works?
 export eachsegment
-eachsegment(t::Topology) = ItemIterator{Topology,_BySegment}(t, (length(t),))
-Base.iterate(iter::ItemIterator{Topology,_BySegment}, (s,)=(1,)) = begin
+eachsegment(t::Topology) = ItemIterator{Topology, _BySegment}(t, (length(t),))
+Base.iterate(iter::ItemIterator{Topology, _BySegment}, (s,)=(1,)) = begin
     t = iter.target
     if s > length(t)
         return nothing

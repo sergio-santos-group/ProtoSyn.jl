@@ -176,7 +176,6 @@ count_atoms(a::Atom) = 1
 export ascendents
 ascendents(c::AbstractContainer, level::Int) = begin
     level > 1 ? (c.index, ascendents(c.parent, level-1)...) : (c.index,)
-    # level == 1 ? (c.index,) : (c.index, ascendents(c.parent, level-1)...)
 end
 
 export sync!
@@ -234,7 +233,7 @@ c2i!(state::State{T}, top::Topology) where T = begin
 end
 
 
-
+# Needs a ROOT, otherwise won't work.
 i2c!(state::State{T}, top::Topology) where T = begin
     # assert top.id==state.id
     

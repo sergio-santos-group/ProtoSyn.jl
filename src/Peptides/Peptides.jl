@@ -101,7 +101,7 @@ The returned L-grammar is required for building peptides from fragments.
 # Examples
 ```julia-repl
 julia> g = Peptides.grammar();
-julia> pose = Builder.build(grammar, "AAGASTASSE")
+julia> pose = Builder.build(grammar, seq"AAGASTASSE")
 ...
 ```
 !!! NOTE
@@ -123,12 +123,9 @@ function acts on the internal coordinates and does not update cartesian
 coordinates, although a request for conversion is made. It is up to the calling
 function/user to explicitly synchornize coordinates via [`sync!`](@ref). 
 """
-function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3, Number})
-    state = pose.state
-    for r in eachresidue(pose.graph)
-        println("  PHI: $(pose.state[r[DihedralTypes.phi]].ϕ) -> $ϕ (on atom $(r[DihedralTypes.phi]))")
-        println("  PSI: $(pose.state[r[DihedralTypes.psi]].ϕ) -> $ψ (on atom $(r[DihedralTypes.psi]))")
-        println("OMEGA: $(pose.state[r[DihedralTypes.omega]].ϕ) -> $ω (on atom $(r[DihedralTypes.omega]))")
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number})
+    state = container.state
+    for r in eachresidue(container.graph)
         setdihedral!(state, r[DihedralTypes.phi], ϕ)
         setdihedral!(state, r[DihedralTypes.psi],  ψ)
         setdihedral!(state, r[DihedralTypes.omega], ω)
@@ -137,9 +134,10 @@ function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3, Number})
 end
 
 
-function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
-    state = pose.state
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
+    state = container.state
     for r in residues
+        @assert r in eachresidue(container.graph) "Residue $r not found in the given Pose container"
         setdihedral!(state, r[DihedralTypes.phi], ϕ)
         setdihedral!(state, r[DihedralTypes.psi],  ψ)
         setdihedral!(state, r[DihedralTypes.omega], ω)
@@ -147,18 +145,43 @@ function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residues::
     ProtoSyn.request_i2c(state)
 end
 
-function setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection)
-    residues = ProtoSyn.CastSelection(any, sele, Residue)(pose, gather = true)
-    setss!(pose, (ϕ, ψ, ω), residues)
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection)
+    residues = ProtoSyn.PromoteSelection(sele, Residue, any)(container, gather = true)
+    setss!(container, (ϕ, ψ, ω), residues)
 end
 
-setss!(pose::Pose{Topology}, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = setss!(pose, (ϕ, ψ, ω), [residue])
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = setss!(container, (ϕ, ψ, ω), [residue])
 
-function append_residues(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss = :linear, op = "α")
-    ProtoSyn.Builder.append_residues(pose, residue, grammar, derivation; op = op)
+
+function append_residues!(pose::Pose{Topology}, residue::Residue,
+    grammar::LGrammar, derivation;
+    ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+
+    Builder.append_residues!(pose, residue, grammar, derivation; op = op)
     residues = residue.container.items[end-length(derivation)+1:end]
-    setss!(pose, SecondaryStructure[ss], residues)
+    setss!(pose, ss, residues)
 end
 
+
+function prepend_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
+    ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+
+    Builder.prepend_residues!(pose, residue, grammar, derivation; op = op)
+
+    # Needs to set ss of appendage + 1 residue, so that the connection between
+    # the two parts is of the desired secondary structure
+    residues = residue.container.items[1:(length(derivation) + 1)]
+    setss!(pose, ss, residues)
+end
+
+
+function build(::Type{T}, grammar::LGrammar, derivation,
+    ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T<:AbstractFloat}
+
+    pose = Builder.build(T, grammar, derivation)
+    setss!(pose, ss)
+    pose
+end
+build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(Float64, grammar, derivation, ss)
 
 end

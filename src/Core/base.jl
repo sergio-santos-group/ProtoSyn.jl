@@ -16,6 +16,30 @@ end
 #endregion show
 
 
+#region prepend! ------------------------------------------------------------------
+
+
+#endregion prepend!
+Base.prepend!(container::AbstractContainer{T1}, item::T2) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
+    if !in(item, container)
+        container.items = push!([item], container.items...)
+
+        # The next line makes it so that a fragment can only be appended to 1
+        # pose, 1 time only.
+        item.container = container
+
+        # Update the container size to reflect the addition
+        container.size += 1
+    end
+    container
+end
+
+Base.prepend!(container::AbstractContainer{T1}, items::Vector{T2}) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
+    for item in Iterators.reverse(items)
+        prepend!(container, item)
+    end
+end
+
 #region push! ------------------------------------------------------------------
 
 _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
@@ -44,10 +68,19 @@ Base.push!(res::Residue, atm::Atom) = begin
     res
 end
 
-Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T<:AbstractContainer} = begin
+Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
     insert!(container.items, index, item)
     item.container = container
     container.size += 1
+    container
+end
+
+Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer} = begin
+    for item in Iterators.reverse(iterator(T)(items))
+        insert!(container.items, index, item)
+        item.container = container
+        container.size += 1
+    end
     container
 end
 
@@ -194,7 +227,7 @@ export hasgraph
 
 export reindex
 # @inline reindex(c::AbstractContainer) = begin
-@inline reindex(t::Topology) = begin
+@inline reindex(t::Topology; set_ascendents = true) = begin
     # index = 0
     aid = rid = sid = 0
     for seg in t.items
@@ -211,8 +244,10 @@ export reindex
 
     # update ascendents (not possible before because
     # of possible problems with index assignment)
-    for atm in eachatom(t)
-        atm.ascendents = ascendents(atm, 4)
+    if set_ascendents
+        for atm in eachatom(t)
+            atm.ascendents = ascendents(atm, 4)
+        end
     end
 
     t
