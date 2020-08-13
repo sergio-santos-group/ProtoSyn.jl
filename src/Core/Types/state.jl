@@ -6,11 +6,12 @@ using StaticArrays
 export AtomState
 
 """
-    AtomState{T<:AbstractFloat}
+    AtomState{T <: AbstractFloat}()
 
-
+An `AtomState` instance. Holds information regarding the state of the atom,
+including the cartesian and internal coordinates.
 """
-mutable struct AtomState{T<:AbstractFloat}
+mutable struct AtomState{T <: AbstractFloat}
     t::MVector{3,T}         # translation vector
     r::MMatrix{3,3,T,9}     # local to global rotation matrix
     
@@ -31,12 +32,14 @@ AtomState{T}() where {T} = begin
         zero(T),
         zero(T),
         zero(T),
-        false
-    )
+        false)
 end
 
+AtomState() = AtomState{Units.defaultFloat}()
+
 Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
-    # println("  Setting $key to $val (From $(getfield(ns, key)))")
+    # Intercepts `setproperty!` to change the :changed field to true.
+
     if key == :Δϕ
         setfield!(ns, :changed, true)
         setfield!(ns, key, T(val))
@@ -55,57 +58,73 @@ end
 
 #region State ------------------------------------------------------------------
 
-
 export State
-mutable struct State{T<:AbstractFloat}
+
+"""
+    State{T <: AbstractFloat}()
+
+A `State` includes all information of all `AtomStates` in a system.
+
+    State{T <: AbstractFloat}(n::Int)
+
+Returns a `State` with size `n`, with all `items` set to be an empty
+`AtomState`.
+
+State{T <: AbstractFloat}(items::Vector{AtomState{T}})
+
+Returns a `State` with size `length(items)`, with all the given `items`.
+"""
+mutable struct State{T <: AbstractFloat}
     items::Vector{AtomState{T}} 
     size::Int           # number of items
     id::Int             # id to be matched to the corresponding container
     i2c::Bool           # flag to request internal to cartesian conversion
     c2i::Bool           # flag to request cartesian to internal conversion
-    index_offset::Int   # WHAT IS INDEX OFFSET? Serves to offset the 3 initial root atoms?
+    index_offset::Int   # serves to offset the 3 initial root atoms
 
     x::Opt{Matrix{T}}
     f::Opt{Matrix{T}}
     # f::Array{T,2}
     # v::Array{T,2}
     e::Dict{Symbol,T}
-
-    distance_matrix::Opt{Matrix{T}}
-    dm_update::Bool     # flag to request distance matrix update
 end
 
 State{T}(n::Int) where T = begin
+
     items = Vector{AtomState{T}}(undef, n+3)
-    for i=1:n+3
+
+    for i = 1:n+3
         items[i] = AtomState{T}()
     end
+
     items[1].t[1] = -1.0
     items[1].t[2] =  1.0
     items[2].t[1] = -1.0
-    # State{T}(items, n, -1, false, false, 3)
-    State{T}(items, n, -1, false, false, 3, nothing, nothing, Dict(), nothing, false)
+
+    State{T}(items, n, -1, false, false, 3, nothing, nothing, Dict())
 end
 
-State(n::Int) = State{Float64}(n)
+State(n::Int) = State{Units.defaultFloat}(n)
 
 State(::Type{T}, n::Int) where T = State{T}(n)
 
 State(items::Vector{AtomState{T}}) where T = begin
     s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict(), nothing, false)
 end
+
 State{T}() where T = State{T}(0)
 
+# ---
+
 Base.getindex(s::State, i::Int) = begin
-    s.items[i+s.index_offset]
+    s.items[i + s.index_offset]
 end
 Base.getindex(s::State, at::Atom) = begin
-    s.items[at.index+s.index_offset]
+    s.items[at.index + s.index_offset]
 end
 Base.getindex(s::State, seg::Segment) = begin
     s.items[(seg[1][1].index + s.index_offset):(seg[end][end].index + s.index_offset)]
 end
-# QUESTION: Make getindex for residue?
 
 Base.firstindex(s::State) = 1-s.index_offset
 Base.lastindex(s::State) = s.size
@@ -148,33 +167,18 @@ end
 
 Base.copy(s::State{T}) where T = deepcopy(s)
 
-
 request_c2i(s::State; all=false) = (s.c2i = true; s)
 
-# QUESTION
-# What is the "all" keyword for? s[0] is the root?
 request_i2c(s::State; all::Bool=false) = begin
     s[0].changed = all
     s.i2c = true
     s
 end
 
-# function collectx(s::State{T}) where T
-#     x = Matrix{T}(undef, s.size, 3)
-#     collectx!(x, s)
-# end
-
-# function collectx!(x::Matrix{T}, s::State{T}) where T
-#     for i=1:s.size
-#         @. x[i,:] = s[i].t
-#     end
-#     x
-# end
-
 #endregion State
 
 
-#---------------------------------
+#--------------------------------- ???
 abstract type AbstractRepresentation end
 struct CartesianRepresentation{T} <: AbstractRepresentation
     state::State{T}

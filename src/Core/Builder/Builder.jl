@@ -303,21 +303,21 @@ end
 lgfactory(template::Dict) = lgfactory(Float64, template)
 
 
-@inline function bond(pose::Pose{Topology}, at1::Atom, at2::Atom, grammar::Builder.LGrammar; op = "α")
+# @inline function bond(pose::Pose{Topology}, at1::Atom, at2::Atom, grammar::Builder.LGrammar; op = "α")
 
-    @assert ProtoSyn.segment(at1) === ProtoSyn.segment(at2) "can only bond atoms within the same segment"
+#     @assert ProtoSyn.segment(at1) === ProtoSyn.segment(at2) "can only bond atoms within the same segment"
 
-    if at2.parent == ProtoSyn.origin(pose.graph)
-        popparent!(at2)
-        popparent!(at2.container)
-    end
+#     if at2.parent == ProtoSyn.origin(pose.graph)
+#         popparent!(at2)
+#         popparent!(at2.container)
+#     end
 
-    grammar.operators[op](at1.container, pose, residue_index = at2.container.index)
-    reindex(pose.graph)
-    ProtoSyn.request_i2c(pose.state)
+#     grammar.operators[op](at1.container, pose, residue_index = at2.container.index)
+#     reindex(pose.graph)
+#     ProtoSyn.request_i2c(pose.state)
 
-    return pose
-end
+#     return pose
+# end
 
 
 function fromfile(::Type{T}, filename::AbstractString, key::String) where T

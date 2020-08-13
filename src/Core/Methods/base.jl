@@ -1,3 +1,5 @@
+# This file should contain overloads of Julia's Base module.
+
 #region show -------------------------------------------------------------------
 
 name(io::IO, item::AbstractContainer) = begin
@@ -14,31 +16,6 @@ Base.show(io::IO, item::AbstractContainer) = begin
 end
 
 #endregion show
-
-
-#region prepend! ------------------------------------------------------------------
-
-
-#endregion prepend!
-# Base.insert!(container::AbstractContainer{T1}, index::Integer, item::T2) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
-#     if !in(item, container)
-#         insert!(container.items, index, item)
-
-#         # The next line makes it so that a fragment can only be appended to 1
-#         # pose, 1 time only.
-#         item.container = container
-
-#         # Update the container size to reflect the addition
-#         container.size += 1
-#     end
-#     container
-# end
-
-# Base.insert!(container::AbstractContainer{T1}, index::Integer, items::Vector{T2}) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
-#     for item in Iterators.reverse(items) # Note the reverse loop
-#         insert!(container, index, item)
-#     end
-# end
 
 #region push! ------------------------------------------------------------------
 
@@ -68,6 +45,10 @@ Base.push!(res::Residue, atm::Atom) = begin
     res
 end
 
+#endregion push!
+
+#region insert! ----------------------------------------------------------------
+
 Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
     insert!(container.items, index, item)
     item.container = container
@@ -84,30 +65,42 @@ Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) 
     container
 end
 
-#endregion push!
+Base.insert!(container::Residue, index::Integer, item::Atom) = begin
+    insert!(container.items, index, item)
+    item.container = container
+    container.size += 1
+    container.itemsbyname[item.name] = item
+    container
+end
 
+#endregion insert!
 
 #region get --------------------------------------------------------------------
-
 
 Base.get(res::Residue, name::AbstractString, default = nothing) = begin
     get(res.itemsbyname, name, default)
 end
 
 Base.getindex(r::Residue, n::AbstractString) = get(r, n)
+
 Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
-Base.getindex(c::AbstractContainer, i::Union{Int,AbstractString}...) = begin
+
+Base.getindex(c::AbstractContainer, i::Union{Int, AbstractString}...) = begin
     getindex(c.items[i[1]], i[2:end]...)
 end
 
-
 #endregion get
 
-
+#region in ---------------------------------------------------------------------
 @inline Base.in(item::T, c::AbstractContainer{T}) where {T<:AbstractContainer} = begin
     item.container===c
 end
+
 Base.in(name::String, r::Residue) = haskey(r.itemsbyname, name)
+
+#endregion in
+
+#region size -------------------------------------------------------------------
 
 @inline Base.size(r::Residue) = (r.size,)
 
@@ -123,14 +116,9 @@ Base.in(name::String, r::Residue) = haskey(r.itemsbyname, name)
     (t.size, nres, natm)
 end
 
-@inline Base.isempty(c::AbstractContainer) = c.size==0
-@inline Base.length(c::AbstractContainer) = c.size
+#endregion size
 
-@inline Base.lastindex(c::AbstractContainer) = c.size
-
-@inline Base.firstindex(c::AbstractContainer) = 1
-
-
+#region copy -------------------------------------------------------------------
 
 @inline Base.copy(a::Atom) = begin
     Atom(a.name, a.id, a.index, a.symbol)
@@ -191,6 +179,9 @@ Base.copy(s::Segment) = begin
     s1
 end
 
+#endregion copy
+
+#region delete! ----------------------------------------------------------------
 
 Base.delete!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
     if in(item, container)
@@ -204,67 +195,22 @@ Base.delete!(container::AbstractContainer{T}, item::T) where {T<:AbstractContain
     container
 end
 
+#endregion delete!
 
+#region Others ----------------------------------------------------------------
 
+@inline Base.isempty(c::AbstractContainer) = c.size==0
 
+@inline Base.length(c::AbstractContainer) = c.size
 
-export hascontainer
-@inline hascontainer(c::AbstractContainer) = c.container !== nothing
+@inline Base.lastindex(c::AbstractContainer) = c.size
 
-# QUESTION
-# Whatever we do, origin(something) is always the ROOT? In what case for this
-# function return 'nothing'?
+@inline Base.firstindex(c::AbstractContainer) = 1
 
-@inline origin(t::Topology) = get(t.root, "OO")
-@inline origin(c::AbstractContainer) = hascontainer(c) ? origin(c.container) : nothing
+@inline Base.haskey(r::Residue, k::AbstractString) = haskey(r.itemsbyname, k)
 
-export hasgraph
-@inline hasgraph(t::Topology) = !isempty(origin(t).children)
+@inline Base.findfirst(x::T, c::Vector{T}) where T = findfirst(i -> i === x, c)
 
-@inline genid() = Int(rand(UInt16))
+@inline Base.findfirst(x::T, c::AbstractContainer{T}) where T = findfirst(x, c.items)
 
-# Question A: Does reindex work on indexes or on IDs ?
-
-export reindex
-# @inline (c::AbstractContainer) = begin
-@inline reindex(t::Topology; set_ascendents = true) = begin
-    # index = 0
-    aid = rid = sid = 0
-    for seg in t.items
-        seg.id = (sid += 1)
-        seg.index = sid
-        for res in seg.items
-            res.id = (rid += 1)
-            res.index = rid
-            for atm in res.items
-                atm.index = (aid += 1)
-            end
-        end
-    end
-
-    # update ascendents (not possible before because
-    # of possible problems with index assignment)
-    if set_ascendents
-        for atm in eachatom(t)
-            atm.ascendents = ascendents(atm, 4)
-        end
-    end
-
-    t
-end
-
-# Question A: Does reindex work on indexes or on IDs ?
-
-reindex(s::Segment) = begin
-    aid = rid = 0
-    for res in s.items
-        res.id = (rid += 1)
-        res.index = rid
-        for atm in res.items
-            atm.index = (aid += 1)
-        end
-    end
-    s
-end
-
-Base.haskey(r::Residue, k::AbstractString) = haskey(r.itemsbyname, k)
+#endregion Others

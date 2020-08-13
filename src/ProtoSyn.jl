@@ -8,12 +8,13 @@ include("Core/Units/Units.jl")
 using .Units: tonumber
 
 
-# #endregion
+# #endregion CORE
 
-include("Core/graph.jl")
-include("Core/macros.jl")
-include("Core/types.jl")
-include("Core/state.jl")
+include("Core/Methods/macros.jl")
+include("Core/Types/graph.jl")
+include("Core/Types/state.jl")
+include("Core/Methods/graph.jl")
+include("Core/Methods/state.jl")
 
 export Pose
 struct Pose{T<:AbstractContainer}
@@ -42,7 +43,7 @@ Pose(frag::Fragment) = Pose(Float64, frag)
 
 Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
 
-include("Core/base.jl")
+include("Core/Methods/base.jl")
 
 
 
@@ -53,9 +54,8 @@ include("Core/base.jl")
 export ResidueDB
 const ResidueDB = Dict{String, Fragment}
 
-include("Core/io.jl")           # <-- ATTENTION
-include("Core/iterators.jl")    # <-- ATTENTION
-include("Core/methods.jl")
+include("Core/Methods/io.jl")           # <-- ATTENTION
+include("Core/Methods/iterators.jl")    # <-- ATTENTION
 
 include("Core/Selections/selections.jl") # Makes use of iterators, must come after
 

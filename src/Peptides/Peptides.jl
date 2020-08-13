@@ -235,8 +235,10 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
             push!(fragCA_children_names, atom.name)
             ProtoSyn.unbond(pose, atom, atom.parent)
         end
+
+        # Note: insert! already sets the residue.itemsbyname
         insert!(residue, poseCA_index + index, atom)
-        residue.itemsbyname[atom.name] = atom
+        # residue.itemsbyname[atom.name] = atom
     end
 
     _start = frag_sidechain[1].index

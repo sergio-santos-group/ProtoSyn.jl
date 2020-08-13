@@ -1,8 +1,19 @@
 export Opt
 export Atom, Residue, Segment, Topology
 
-
 const Opt = Union{Nothing, T} where T
+
+"""
+    AbstractDigraph
+
+Supertype for a directed graph node. Types implementing the AbstractDigraph
+interface should have the following fields:
+ - parent::Union{T,Nothing}
+ - children::Vector{T}
+ - visited::Bool
+ - ascendents::Union{Nothing,NTuple{N,Int}}
+"""
+abstract type AbstractDigraph end
 
 
 """
@@ -12,6 +23,7 @@ Supertype for a container of elements of type `T`, implementing
 the `AbstractDigraph` interface.
 """
 abstract type AbstractContainer{T} <: AbstractDigraph  end
+
 abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
 abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
 abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
@@ -19,12 +31,13 @@ abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
 
 
 function initgraph!(c::T) where {T<:AbstractDigraph}
-    c.children = Vector{T}()
+    c.children   = Vector{T}()
     c.ascendents = nothing
-    c.parent = nothing
-    c.visited = false
+    c.parent     = nothing
+    c.visited    = false
     c
 end
+
 
 """
     Atom <: AbstractAtom
@@ -69,7 +82,26 @@ mutable struct Atom <: AbstractAtom
     end
 end
 
+segment(at::Atom) = hascontainer(at) ? at.container.container : nothing
 
+
+"""
+    Residue <: AbstractResidue
+
+A `Residue` type.
+
+    Residue(name::String, id::Int)
+    
+Construct a `Residue`, with the given `name` and `id`.
+The created residue has no container; it is also a free directed-graph
+node.
+
+# Examples
+```jldoctest
+julia> res = Residue("UNK", 1)
+Residue{/UNK:1}
+```
+"""
 mutable struct Residue <: AbstractResidue
     name::String                    # residue name
     id::Int                         # residue ID
@@ -92,6 +124,22 @@ mutable struct Residue <: AbstractResidue
 end
 
 
+"""
+    Segment <: AbstractSegment
+
+A `Segment` type.
+
+    Segment(name::String, id::Int)
+    
+Construct a `Segment`, with the given `name` and `id`.
+The created segment has no container.
+
+# Examples
+```jldoctest
+julia> res = Segment("UNK", 1)
+Segment{/UNK:1}
+```
+"""
 mutable struct Segment <: AbstractSegment
     name::String                        # segment name
     id::Int                             # segment ID
@@ -107,6 +155,21 @@ mutable struct Segment <: AbstractSegment
 end
 
 
+"""
+    Topology <: AbstractTopology
+
+A `Topology` type.
+
+    Topology(name::String, id::Int)
+    
+Construct a `Topology`, with the given `name` and `id`.
+
+# Examples
+```jldoctest
+julia> res = Segment("UNK", 1)
+Segment{/UNK:1}
+```
+"""
 mutable struct Topology <: AbstractTopology
     name::String
     id::Int
@@ -122,7 +185,9 @@ mutable struct Topology <: AbstractTopology
 end
 
 
-# AbstractContainer order (?)
+#region order ----------------------------------------------------------------
+
+# AbstractContainer order
 # Allows for "Atom < Residue" and "min(Atom, Residue)", as examples
 Base.isless(::Type{<: T}, ::Type{<: AbstractContainer{T}}) where {T <: AbstractContainer} = true
 Base.isless(::Type{<: T}, ::Type{<: AbstractContainer{<: AbstractContainer{T}}}) where {T <: AbstractContainer} = true
@@ -132,14 +197,21 @@ Base.isless(::Type{T}, ::Type{T}) where {T <: AbstractContainer} = false
 Base.isless(::Type{Atom}, ::Type{Topology}) = true
 Base.isless(::Type{Topology}, ::Type{Atom}) = false
 
+# endregion order
 
-export ReactionToolbelt
-struct ReactionToolbelt{F<:Function, G<:Function, H<:Function}
-    join::F
-    split::G
-    root::H
-end
 
+"""
+    Root()::Residue
+    
+Return a new Root residue. A Root residue in a pseudo-residue that serves the
+purpose of establishing an anchor for initial internal coordinates definition.
+
+# Examples
+```jldoctest
+julia> root = ProtoSyn.Root()
+Residue{/ROOT:53033}
+```
+"""
 function Root()::Residue
     root = Residue("ROOT", genid())
     y = Atom("OY", -2, -2, "?")
@@ -151,36 +223,61 @@ function Root()::Residue
     root
 end
 
-# QUESTION: What does this do ?!
+
 export Segment!, Residue!, Atom!
-Segment!(t::Topology, name::String, id::Int) = begin
-    s = Segment(name,id)
-    push!(t, s)
+
+"""
+    Segment!(topology::Topology, name::String, id::Int)::Residue
+    
+Create a new `Segment` (with the given `name` and `id`) and add it to the given
+Topology `topology`. Returns the created `Segment` instance.
+
+# Examples
+```jldoctest
+julia> seg = Segment!(topology, "UNK", 1)
+Segment{/UNK:1/UNK:1}
+```
+"""
+function Segment!(topology::Topology, name::String, id::Int)::Segment
+    s = Segment(name, id)
+    push!(topology, s)
     s
 end
-Residue!(s::Segment, name::String, id::Int) = begin
+
+
+"""
+    Residue!(segment::Segment, name::String, id::Int)::Residue
+    
+Create a new `Residue` (with the given `name` and `id`) and add it to the given
+Segment `segment`. Returns the created `Residue` instance.
+
+# Examples
+```jldoctest
+julia> res = Residue!(segment, "ALA", 1)
+Residue{/UNK:1/UNK:1/ALA:1}
+```
+"""
+function Residue!(segment::Segment, name::String, id::Int)::Residue
     r = Residue(name, id)
-    push!(s, r)
+    push!(segment, r)
     r
 end
-Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String) = begin
+
+
+"""
+    Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String)
+    
+Create a new `Atom` (with the given `name`, `id`, `index` and `symbol`) and add
+it to the given Residue `residue`. Returns the created `Atom` instance.
+
+# Examples
+```jldoctest
+julia> atom = Atom!(residue, "H1", 1, 1, "H")
+Atom{/UNK:1/UNK:1/ALA:1/H1:1}
+```
+"""
+function Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String)::Atom
     a = Atom(name, id, index, symbol)
     push!(r, a)
     a
 end
-
-
-
-# export request_reindexing
-# baremodule FLAGS
-#     using Base: <<
-#     const INDEXING = 1 << 0
-# end
-
-# function request_reindexing(c::AbstractContainer)
-#     c.flags |= FLAGS.INDEXING
-#     hascontainer(c) && request_reindexing(c.container)
-# end
-
-# export requires_reindexing
-# requires_reindexing(c::AbstractContainer) = (c.flags & FLAGS.INDEXING) != 0
