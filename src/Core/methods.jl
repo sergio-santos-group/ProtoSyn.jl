@@ -2,7 +2,7 @@ using LinearAlgebra: dot
 
 export build_tree!
 
-export bond, unbond
+# export bond, unbond
 
 # residue(a::Atom) = a.container
 # segment(r::Residue) = r.container
@@ -13,16 +13,152 @@ segment(at::Atom) = hascontainer(at) ? at.container.container : nothing
 Base.findfirst(x::T, c::Vector{T}) where T = findfirst(i->i===x, c)
 Base.findfirst(x::T, c::AbstractContainer{T}) where T = findfirst(x, c.items)
 
-@inline function unbond(at1::Atom, at2::Atom)
+# function unbond(pose::Pose, at1::Atom, at2::Atom)
+
+#     sync!(pose)
+
+#     @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
+#     @assert at1.container !== at2.container "Atoms $at1 and $at2 can't be in the same residue."
+    
+#     i = findfirst(at1, at2.bonds)
+#     i !== nothing && deleteat!(at2.bonds, i)
+    
+#     j = findfirst(at2, at1.bonds)
+#     j !== nothing && deleteat!(at1.bonds, j)
+    
+#     # Detach from atom graph
+#     #  Remove at2 from at1.children and set at2.parent to nothing
+#     isparent(at1, at2) && popparent!(at2)
+#     #  Remove at1 from at2.children and set at1.parent to nothing
+#     isparent(at2, at1) && popparent!(at1)
+            
+#     state = pose.state
+
+#     # Detach from residue graph
+#     # This assumes ROOT is always on the side of the parent
+#     # Case at1 is parent of at2
+#     #  Remove at2 from at1.children and set at2.parent to nothing
+#     #  Add at2 to origin.children and set at2.parent to origin
+#     if isparent(at1.container, at2.container)
+#         _origin = origin(at1)
+
+#         #  Remove at2 from at1.children and set at2.parent to nothing
+#         # popparent!(at2)
+#         #  Remove at2.container from at1.containter.children and set
+#         # at2.container.parent to nothing
+#         popparent!(at2.container)
+
+#         push!(_origin.children, at2)
+#         push!(_origin.container.children, at2.container)
+
+#         at2.parent = _origin
+#         at2.container.parent = _origin.container
+
+#         at_s = state[at2]
+
+#     # Case at2 is parent of at1
+#     #  Remove at1 from at2.children and set at1.parent to nothing
+#     #  Add at1 to origin.children and set at1.parent to origin
+#     elseif isparent(at2.container, at1.container)
+#         _origin = origin(at2)
+
+#         #  Remove at1 from at2.children and set at1.parent to nothing
+#         # popparent!(at1)
+#         #  Remove at1.container from at2.containter.children and set
+#         # at1.container.parent to nothing
+#         popparent!(at1.container)
+
+#         push!(_origin.children, at1)
+#         push!(_origin.container.children, at1.container)
+
+#         at1.parent = _origin
+#         at1.container.parent = _origin.container
+
+#         at_s = state[at1]
+#     end
+
+#     at_s.b = distance(at_s, state[_origin])
+#     at_s.θ = angle(at_s, state[_origin], state[_origin.parent])
+#     at_s.ϕ = dihedral(at_s, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+#     ProtoSyn.request_i2c(state)
+# end
+
+
+# @inline function bond(pose::Pose{Topology}, at1::Atom, at2::Atom, grammar::Builder.LGrammar; op = "α", force_placement = false)
+
+#     @assert segment(at1)===segment(at2) "can only bond atoms within the same segment"
+
+#     if at2.parent == ProtoSyn.origin(pose.graph)
+#         popparent!(at2)
+#         popparent!(at2.container)
+#     end
+
+#     grammar.operators[op](at1.container, pose, residue_index = at2.container.index)
+#     reindex(pose.graph)
+#     ProtoSyn.request_i2c(pose.state)
+
+#     return pose
+# end
+
+export unbond, bond
+
+
+function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
+    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
+    println("Unbonding $at1 and $at2")
+    isparent(at1, at2) && return _unbond(pose, at1, at2)
+    isparent(at2, at1) && return _unbond(pose, at2, at1)
+end
+
+function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
+    
     i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
     
     j = findfirst(at2, at1.bonds)
     j !== nothing && deleteat!(at1.bonds, j)
+    
+    # Detach from atom graph
+    #  Remove at2 from at1.children and set at2.parent to nothing
+    # This assumes at1 is parent of at2
+    popparent!(at2)
+
+    at1.container === at2.container && return pose
+
+    # Case this is an inter-residue connection, the downstream residue needs to
+    # be coupled with the origin
+            
+    state = pose.state
+
+    # Detach from residue graph
+    # This assumes ROOT is always on the side of the parent
+    # This assumes at1 is parent of at2
+    #  Remove at2 from at1.children and set at2.parent to nothing
+    #  Add at2 to origin.children and set at2.parent to origin
+    _origin = ProtoSyn.origin(at1)
+
+    #  Remove at2.container from at1.containter.children and set
+    # at2.container.parent to nothing
+    popparent!(at2.container)
+    setparent!(at2, _origin)
+    setparent!(at2.container, _origin.container)
+
+    at_s = state[at2]
+
+    # Preserve current placement (based on cartesian coordinates)
+    sync!(pose)
+    at_s.b = ProtoSyn.distance(at_s, state[_origin])
+    at_s.θ = ProtoSyn.angle(at_s, state[_origin], state[_origin.parent])
+    at_s.ϕ = ProtoSyn.dihedral(at_s, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+    ProtoSyn.request_i2c(state)
+
+    return pose
 end
 
+
 @inline function bond(at1::Atom, at2::Atom)
-    @assert segment(at1)===segment(at2) "can only bond atoms within the same segment"
+    @assert segment(at1) === segment(at2) "can only bond atoms within the same segment"
+    println("Bonding atoms $at1 - $at2")
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end
@@ -172,9 +308,13 @@ count_atoms(a::Atom) = 1
 #     top
 # end
 
+segment(at::Atom) = hascontainer(at) ? at.container.container : nothing # CHECK PLACEMENT OF FUNCTIONS ! (TODO)
+
 
 export ascendents
 ascendents(c::AbstractContainer, level::Int) = begin
+    # println("C: $c (Parent: $(c.parent))")
+    # level == 1 && println("\n")
     level > 1 ? (c.index, ascendents(c.parent, level-1)...) : (c.index,)
 end
 
@@ -206,27 +346,34 @@ c2i!(state::State{T}, top::Topology) where T = begin
     m   = MVector{3,T}(T(0), T(0), T(0))
     o   = MVector{3,T}(T(0), T(0), T(0))
     for atom in eachatom(top)
-        (i,j,k,l) = atom.ascendents
+        (i, j, k, l) = atom.ascendents
+        p = atom.parent
         istate = state[i]
         
         # bond
-        @. vij = state[j].t - istate.t
-        dij = sqrt(dot(vij,vij))
-        istate.b = dij
+        # @. vij = state[j].t - istate.t
+        # dij = sqrt(dot(vij,vij))
+        # istate.b = dij
+        istate.b = ProtoSyn.distance(state[j], istate)
 
         # angle
-        @. vjk = state[k].t - state[j].t
-        djk = sqrt(dot(vjk,vjk))
-        istate.θ = pi - acos(dot(vij,vjk) / (dij*djk))
+        # @. vjk = state[k].t - state[j].t
+        # djk = sqrt(dot(vjk,vjk))
+        # istate.θ = pi - acos(dot(vij,vjk) / (dij*djk))
+        istate.θ = ProtoSyn.angle(state[k], state[j], istate)
 
         # dihedral
-        @. vkl = state[l].t - state[k].t
-        @cross u n[u] vij[u] vjk[u]
-        @cross u m[u] vjk[u] vkl[u]
-        @cross u o[u] n[u] m[u]
-        x = dot(o,vjk)/sqrt(dot(vjk,vjk))
-        y = dot(n,m)
-        istate.ϕ = atan(x,y)
+        # @. vkl = state[l].t - state[k].t
+        # @cross u n[u] vij[u] vjk[u]
+        # @cross u m[u] vjk[u] vkl[u]
+        # @cross u o[u] n[u] m[u]
+        # x = dot(o, vjk) / sqrt(dot(vjk, vjk))
+        # y = dot(n, m)
+        # istate.ϕ = atan(x,y)
+        istate.ϕ = ProtoSyn.dihedral(state[l], state[k], state[j], istate)
+        if atom.container.index == 22
+            println("Atom $atom > Dihedral: $(rad2deg(istate.ϕ))")
+        end
     end
     state.c2i = false
     state
@@ -278,22 +425,22 @@ i2c!(state::State{T}, top::Topology) where T = begin
         x_3 =  b*sϕ*sθ
         
         # rotate to parent coord system
-        @nexprs 3 u -> vji[u] = Rj[u,1]*x_1 + Rj[u,2]*x_2 + Rj[u,3]*x_3
+        @nexprs 3 u -> vji[u] = Rj[u, 1]*x_1 + Rj[u, 2]*x_2 + Rj[u, 3]*x_3
         
         # UPDATE ROTATION MATRIX
         # @nexprs 3 u -> vjk_u = kstate.t[u] - jstate.t[u]
         @. vjk = kstate.t - jstate.t
         
         # column 1 (x)
-        @nexprs 3 u -> Ri[u,1] = vji[u]/b
+        @nexprs 3 u -> Ri[u, 1] = vji[u]/b
             
         # column 3 (z)
         @cross u n[u] vji[u] vjk[u]
         dn = sqrt(dot(n,n))
-        @nexprs 3 u -> Ri[u,3] = n[u]/dn
+        @nexprs 3 u -> Ri[u, 3] = n[u]/dn
     
         # column 2 (y)
-        @cross u Ri[u,2] Ri[u,3] Ri[u,1]
+        @cross u Ri[u, 2] Ri[u, 3] Ri[u, 1]
         
         # move to new position
         # @nexprs 3 u -> istate.t[u] = vji_u + jstate.t[u]
@@ -306,88 +453,142 @@ i2c!(state::State{T}, top::Topology) where T = begin
 end
 
 
-function _detach(c::AbstractContainer)
-    # 1. detach from container
-    hascontainer(c) && delete!(c.container, c)
+# function _detach(c::AbstractContainer)
+#     # 1. Detach from container
+#     # Remove c from c.container.items, set c.container size to -1 and set
+#     # c.container to nothing
+#     hascontainer(c) && delete!(c.container, c)
     
-    # 2. detach from graph
-    #  2.1. remove parent
-    # QUESTION
-    # The 'hasparent' test is already performed inside 'popparent!' function
-    hasparent(c) && popparent!(c)
+#     # 2. Detach from graph
+#     #  2.1. Remove c from parent.children and set c.parent to nothing
+#     hasparent(c) && popparent!(c)
     
-    #  2.2 remove children
-    while haschildren(c)
-        popchild!(c)
-    end
-    c
-end
+#     #  2.2 Remove children from c.children and set children.parent to nothing
+#     while haschildren(c)
+#         popchild!(c)
+#     end
+#     c
+# end
 
 
-Base.detach(r::Residue) = begin
-    # identify the origin of this residue before detachment,
-    # otherwise it will no longer be possible!
-    orig = origin(r)
+# Base.detach(r::Residue) = begin
 
-    _detach(r)
+#     # 1. Detach from container
+#     # Remove c from c.container.items, set c.container size to -1 and set
+#     # c.container to nothing
+#     hascontainer(r) && delete!(r.container, r)
 
-    # remove all inter-residue atom bonds
-    for atom in eachatom(r)
-        for i=length(atom.bonds):-1:1   # note the reverse loop
-            other = atom.bonds[i]
+#     # _detach(r)
 
-            # do nothing if the other atom is in this residue
-            in(other,r) && continue
+#     # Remove all inter-residue atom bonds
+#     for atom in eachatom(r)
+#         for i = length(atom.bonds):-1:1   # Note the reverse loop
+#             other = atom.bonds[i]
 
-            # remove inter-residue bonds
-            unbond(atom, other)
-
-            # detach from atom graph
-            # if atom === other.parent
-            if isparent(atom, other)
-                popparent!(other)
-            # elseif other === atom.parent
-            elseif isparent(other, atom)
-                popparent!(atom)
-            end
-        end
-
-        # remove connection to the root node
-        # QUESTION
-        # During '_detach' function, we do hasparent(c) && popparent!(c)
-        # Doesn't this popparent!(atom) already?
-        if orig!==nothing && isparent(orig, atom)
-            popparent!(atom)
-        end
-    end
-    r
-end
+#             in(other, r) && continue
+#             unbond(pose, atom, other)
+#         end
+#     end
+#     r
+# end
 
 
-# Base.pop!(top::Topology, state::State, res::Residue) = begin
-Base.pop!(pose::Pose{Topology}, res::Residue) = begin
-    #if state.id != top.id
-    #    error("mismatch between state and topology IDs")
-    #elseif isorphan(res)
-    #    error("unable to pop orphan residues from topology+state")
-    if res.container.container !== pose.graph
-        error("given residue does not belong to the provided topology")
+function Base.pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+    # Should:
+    # - Unset parents/children
+    # - Unbond neighbours
+    # - Remove from graph
+    # - Remove from state
+    # - Set new ascendents
+    # - Update the container itemsbyname
+
+    if atom.container.container.container !== pose.graph
+        error("Given Atom does not belong to the provided topology.")
     end
 
-    # detach residue from parents
-    detach(res)
+    # Save information to return 
+    popped_atom = Atom(atom.name, 1, 1, atom.symbol)
 
-    # remove node states from parent state and create
-    # a new state for this residue
-    st = splice!(pose.state, res[1].index:res[end].index)
+    # Save children and parent of this atom (will be removed in next step)
+    children    = copy(atom.children)
+    grandparent = atom.parent
+
+    # Unset parents/children and unbond neighbours
+    for i = length(atom.bonds):-1:1   # Note the reverse loop
+        other = atom.bonds[i]
+        unbond(pose, atom, other)
+    end
+
+    # Using saved children and parent, set all child.parent to be this
+    # atom.parent
+    for child in children
+        child.parent = grandparent
+    end
+
+    # Remove from graph
+    deleteat!(atom.container.items, findfirst(atom, atom.container.items))
+    atom.container.size -= 1
+
+    # Remove from state
+    popped_state = splice!(pose.state, atom.index)
+
+    # Reindex and set ascendents
     reindex(pose.graph)
-    
-    # new common ID
-    res.id = st.id = genid()
 
-    #return (res,st)
-    Pose(res,st)
+    # Update container 'itemsbyname'
+    pop!(atom.container.itemsbyname, atom.name)
+
+    # Set common ID
+    popped_atom.id = popped_state.id = genid()
+
+    return Pose(popped_atom, popped_state)
 end
+
+
+function Base.pop!(pose::Pose{Topology}, residue::Residue)
+
+    for atom in residue.items
+        pop!(pose, atom)
+    end
+end
+
+
+# Base.pop!(pose::Pose{Topology}, r::Residue) = begin
+
+#     println("Deleting residue $r")
+
+#     if r.container.container !== pose.graph
+#         error("given residue does not belong to the provided topology")
+#     end
+
+#     # detach residue from parents (bonds, parents/children)
+#     # hascontainer(r) && delete!(r.container, r)
+#     for atom in eachatom(r)
+#         for i = length(atom.bonds):-1:1   # Note the reverse loop
+#             other = atom.bonds[i]
+
+#             in(other, r) && continue
+#             Builder.unbond(pose, atom, other)
+#         end
+#     end
+
+#     # remove node states from parent state and create
+#     # a new state for this residue
+#     deleteat!(r.container.items, findfirst(r, r.container.items))
+#     r.container.size -= 1
+#     for child in origin(pose.graph).children
+#         child in r.items && popparent!(child) 
+#     end
+
+#     st = splice!(pose.state, r[1].index:r[end].index)
+#     reindex(pose.graph) # Also sets ascendents
+    
+#     # new common ID
+#     r.id = st.id = genid()
+
+#     #return (res, st)
+#     Pose(r, st)
+# end
 
 Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
 
@@ -472,9 +673,15 @@ Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
     Base.append!(pose.state, frag.state)
     
     # Make sure the fragment graph has the same origin of the new pose.
+    root_residue = root(frag.graph).container
     setparent!(
         root(frag.graph),
         origin(pose.graph)
+    )
+
+    setparent!(
+        root_residue,
+        origin(pose.graph).container
     )
 
     # Re-index the pose to account for the new segment/residue/atoms
@@ -721,18 +928,20 @@ end
 # end
 
 
-
-
 export setdihedral!
+@inline setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
+    # Sets dihedral so it becomes the value 'val' 
+    # println("Setting dihedral at atom $at to $(rad2deg(val)) (Ascendents: $(at.ascendents))")
+    s[at].Δϕ = val - s[at].ϕ
+    ProtoSyn.request_i2c(s)
+    s
+end
 
-# @inline setdihedral!(s::State{T}, r::Residue, atname::AbstractString, value::T) where T = begin
-#     at = r[atname]
-#     at !== nothing && setdihedral!(s, at, value)
-#     s
-# end
 
-@inline setdihedral!(s::State, at::Atom, val) = (s[at].Δϕ = val - s[at].ϕ; s) # Sets dihedral so it becomes the value 'val'
-# @inline setdihedralto!(s::State, at::Atom, val) = (s[at].Δϕ = val; s)
+export getdihedral!
+@inline getdihedral!(s::State, at::Atom) = begin
+    return s[at].ϕ + s[at].Δϕ
+end
 
 
 export setoffset!
@@ -769,6 +978,8 @@ end
 # end
 
 function join(r1::Residue, s1::String, r2::Residue, s2::String) # IMPORTANT
+    # println("R1: $r1")
+    # println("R2: $r2")
     hasparent(r2) && error("r2 is already connected")
     at1 = r1[s1]
     at2 = r2[s2]

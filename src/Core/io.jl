@@ -92,14 +92,16 @@ end
 
 load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
-    top = Topology("UNK", -1)
-    seg =  Segment("", -1)     # orphan segment
-    res =  Residue("", -1)     # orphan residue
+    top  = Topology("UNK", -1)
+    seg  =  Segment("", -1)     # orphan segment
+    res  =  Residue("", -1)     # orphan residue
+    # setparent!(res, ProtoSyn.origin(top).container)
+    # res.parent = ProtoSyn.origin(top).container
     
     seekstart(io)
     natoms = mapreduce(l->startswith(l, "ATOM")||startswith(l, "HETATM"), +, eachline(io); init=0)
     
-    id2atom = Dict{Int,Atom}()
+    id2atom = Dict{Int, Atom}()
     
     state = State{T}(natoms)
     
@@ -125,6 +127,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 
             if res.id != resid || res.name != resname
                 res = Residue!(seg, resname, resid)
+                setparent!(res, ProtoSyn.origin(top).container)
             end
 
             atsymbol = length(line)>77 ? string(strip(line[77:78])) : "?"
@@ -144,7 +147,8 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             idxs = map(s->parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
-                bond(pivot, id2atom[i])
+                other_atom = id2atom[i]
+                bond(pivot, other_atom)
             end
         end
     end
@@ -153,7 +157,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     # request conversion from cartesian to internal
     # request_c2i(state; all=true)
     
-    Pose(top,state)
+    Pose(top, state)
 end
 
 

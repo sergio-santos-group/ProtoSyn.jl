@@ -20,25 +20,25 @@ end
 
 
 #endregion prepend!
-Base.prepend!(container::AbstractContainer{T1}, item::T2) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
-    if !in(item, container)
-        container.items = push!([item], container.items...)
+# Base.insert!(container::AbstractContainer{T1}, index::Integer, item::T2) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
+#     if !in(item, container)
+#         insert!(container.items, index, item)
 
-        # The next line makes it so that a fragment can only be appended to 1
-        # pose, 1 time only.
-        item.container = container
+#         # The next line makes it so that a fragment can only be appended to 1
+#         # pose, 1 time only.
+#         item.container = container
 
-        # Update the container size to reflect the addition
-        container.size += 1
-    end
-    container
-end
+#         # Update the container size to reflect the addition
+#         container.size += 1
+#     end
+#     container
+# end
 
-Base.prepend!(container::AbstractContainer{T1}, items::Vector{T2}) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
-    for item in Iterators.reverse(items)
-        prepend!(container, item)
-    end
-end
+# Base.insert!(container::AbstractContainer{T1}, index::Integer, items::Vector{T2}) where {T1 <: AbstractContainer, T2 <: AbstractContainer} = begin
+#     for item in Iterators.reverse(items) # Note the reverse loop
+#         insert!(container, index, item)
+#     end
+# end
 
 #region push! ------------------------------------------------------------------
 
@@ -61,8 +61,8 @@ Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer
 end
 
 Base.push!(res::Residue, atm::Atom) = begin
+    res.itemsbyname[atm.name] = atm
     if !in(atm, res)
-        res.itemsbyname[atm.name] = atm
         _push!(res, atm)
     end
     res
@@ -90,11 +90,11 @@ end
 #region get --------------------------------------------------------------------
 
 
-Base.get(res::Residue, name::AbstractString, default=nothing) = begin
+Base.get(res::Residue, name::AbstractString, default = nothing) = begin
     get(res.itemsbyname, name, default)
 end
 
-Base.getindex(r::Residue, n::AbstractString) = get(r,n)
+Base.getindex(r::Residue, n::AbstractString) = get(r, n)
 Base.getindex(c::AbstractContainer, i::Int) = c.items[i]
 Base.getindex(c::AbstractContainer, i::Union{Int,AbstractString}...) = begin
     getindex(c.items[i[1]], i[2:end]...)
@@ -194,7 +194,7 @@ end
 
 Base.delete!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
     if in(item, container)
-        i = findfirst(x->x===item, container.items)
+        i = findfirst(x -> x === item, container.items)
         if i !== nothing
             deleteat!(container.items, i)
             item.container = nothing
@@ -226,7 +226,7 @@ export hasgraph
 # Question A: Does reindex work on indexes or on IDs ?
 
 export reindex
-# @inline reindex(c::AbstractContainer) = begin
+# @inline (c::AbstractContainer) = begin
 @inline reindex(t::Topology; set_ascendents = true) = begin
     # index = 0
     aid = rid = sid = 0

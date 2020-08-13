@@ -28,10 +28,10 @@ Base.show(io::IO,iter::ItemIterator{T,B}) where {T,B} =
 #region AtomIterator -----------------------------------------------------------
 
 export eachatom
-eachatom(c::T) where {T<:AbstractContainer} = ItemIterator{T,_ByAtom}(c, size(c))
+eachatom(c::T) where {T<:AbstractContainer} = ItemIterator{T, _ByAtom}(c, size(c))
 
 
-Base.iterate(iter::ItemIterator{Topology,_ByAtom}, (s,r,a)=(1,1,1)) = begin
+Base.iterate(iter::ItemIterator{Topology, _ByAtom}, (s, r, a)=(1, 1, 1)) = begin
     # if s > length(t.segments)
     #     return nothing
     # elseif r > length(t.segments[s].residues)

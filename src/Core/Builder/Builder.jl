@@ -112,6 +112,7 @@ end
 isop(lg::LGrammar, k) = haskey(lg.operators, k)
 isvar(lg::LGrammar, k) = haskey(lg.variables, k)
 
+
 function fragment(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat}
 
     state = State{T}()
@@ -196,6 +197,8 @@ macro seq_str(s); [string(c) for c in s]; end
 Closure
 """
 function opfactory(args)
+    # Note: residue_index is the index on the fragment/pose ('f2') used to
+    # actually connect to 'r1'
     return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1)
         # Index is of f2
         if typeof(f2) == Fragment
@@ -208,6 +211,7 @@ function opfactory(args)
         
         if haskey(args, "presets")
             for (atname, presets) in args["presets"]
+                # println(" Atom $(r2[atname])")
                 atomstate = state[r2[atname]]
                 for (key, value) in presets
                     setproperty!(atomstate, Symbol(key), value)
@@ -299,6 +303,23 @@ end
 lgfactory(template::Dict) = lgfactory(Float64, template)
 
 
+@inline function bond(pose::Pose{Topology}, at1::Atom, at2::Atom, grammar::Builder.LGrammar; op = "α")
+
+    @assert ProtoSyn.segment(at1) === ProtoSyn.segment(at2) "can only bond atoms within the same segment"
+
+    if at2.parent == ProtoSyn.origin(pose.graph)
+        popparent!(at2)
+        popparent!(at2.container)
+    end
+
+    grammar.operators[op](at1.container, pose, residue_index = at2.container.index)
+    reindex(pose.graph)
+    ProtoSyn.request_i2c(pose.state)
+
+    return pose
+end
+
+
 function fromfile(::Type{T}, filename::AbstractString, key::String) where T
     open(filename) do io
         @info "loading grammar from file $filename"
@@ -307,36 +328,94 @@ function fromfile(::Type{T}, filename::AbstractString, key::String) where T
     end
 end
 
+
 function append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
-    
+
     frag = Builder.fragment(grammar, derivation)
-    push!(residue.container, frag.graph.items...)
+
+    # Inserts the fragment residues in the Pose graph and sets residue.container
+    # println("Insert residues in position $(residue.index + 1)/$(length(residue.container.items))")
+    insert!(residue.container, residue.index + 1, frag.graph.items)
+
+    # Inserts the fragment atoms state in the pose.state
+    # println("Insert residues in position $(residue.items[end].index + 1)/$(length(pose.state.items)-3)")
     insert!(pose.state, residue.items[end].index + 1, frag.state)
-    grammar.operators[op](residue, frag)
-    reindex(pose.graph)
-    ProtoSyn.request_i2c(pose.state; all=true)
-end
 
+    # Sets:
+    # - Distance/angle/dihedrals in the fragment first residue
+    # - Parent/children in the newly bonded atoms
+    # - Parent/children in the newly bonded residues
+    # - Atom bonds in the newly bonded atoms
 
-
-function prepend_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
-    
-    frag = Builder.fragment(grammar, derivation)
-    prepend!(residue.container, frag.graph.items)
-    insert!(pose.state, residue.items[1].index, frag.state)
-
-    # The existing root is now connected to the new first residue (from frag)
-    setparent!(ProtoSyn.root(frag.graph), ProtoSyn.origin(pose.graph))
-    ProtoSyn.origin(pose.graph).children[1].parent = nothing
-    popfirst!(ProtoSyn.origin(pose.graph).children)
-    
-    # MUST DO RE INDEX HERE WITHOUT ASCENDENTS
     reindex(pose.graph, set_ascendents = false)
 
-    grammar.operators[op](frag.graph[end], pose, residue_index = 1 + length(frag.graph))
+    grammar.operators[op](residue, pose, residue_index = residue.index + 1)
+
+    # Reindex and define new ascendents
     reindex(pose.graph)
     ProtoSyn.request_i2c(pose.state; all=true)
 end
 
+
+function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α", connect_upstream = true)
+
+    residue_index = residue.index
+    frag = Builder.fragment(grammar, derivation)
+
+    insert!(residue.container, residue.index, frag.graph.items)
+    insert!(pose.state, residue.items[1].index, frag.state)
+
+    # Remove all references of the origin as the parent of any of its children
+    # and remove said children from origin.children
+    pose_origin = ProtoSyn.origin(pose.graph) # This is an Atom
+    parent_is_origin = residue.parent == pose_origin.container
+    if parent_is_origin
+        for child in pose_origin.children
+            child in residue.items && popparent!(child)
+        end
+        
+        # Add the first atom of the appendage as a child of origin AND set its
+        # parent as being the origin
+        _root = ProtoSyn.root(frag.graph)
+        setparent!(_root, pose_origin)
+        setparent!(_root.container, pose_origin.container)
+        popparent!(residue)
+    end
+
+    # Reindex to account for the inserted residues
+    reindex(pose.graph, set_ascendents = false)
+    grammar.operators[op](frag.graph[end], pose, residue_index = residue_index + length(frag.graph))
+
+
+    # Case we are inserting between two pre-existing residues (so far, the same
+    # operation will be used in both cases. Might be useful to differentiate
+    # between left and right operation.)
+    if connect_upstream
+        for child in pose_origin.children
+            child in residue.container[residue_index].items && popparent!(child)
+        end
+        popparent!(residue.container[residue_index])
+
+        grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
+    end
+    
+    # Reindex to set correct ascendents
+    reindex(pose.graph)
+    ProtoSyn.request_i2c(pose.state; all=true)
+end
+
+
+# function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+
+#     @assert length(derivation) == 1 "Derivation must have length = 1."
+#     residue_index = residue.index
+
+#     insert_residues!(pose, residue, grammar, derivation; op = op)
+#     # pop!(pose, residue.container[residue.index])
+
+
+
+#     # bond(pose, residue.container[residue_index], residue.container[residue_index + 1], grammar, op = op)
+# end
 
 end

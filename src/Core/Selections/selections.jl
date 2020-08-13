@@ -62,8 +62,8 @@ julia> ProtoSyn.gather(rn"ALA"(pose), pose.graph)
 """
 function gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}
     results = Vector{T}()
-    for item in iterator(T)(container)
-        if mask[item.index]
+    for (index, item) in enumerate(iterator(T)(container))
+        if mask[index]
             push!(results, item)
         end
     end

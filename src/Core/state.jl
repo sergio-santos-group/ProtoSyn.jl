@@ -36,12 +36,14 @@ AtomState{T}() where {T} = begin
 end
 
 Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
+    # println("  Setting $key to $val (From $(getfield(ns, key)))")
     if key == :Δϕ
         setfield!(ns, :changed, true)
         setfield!(ns, key, T(val))
     elseif key == :changed
         setfield!(ns, :changed, val)
     else
+        setfield!(ns, :changed, true)
         setfield!(ns, key, T(val))
     end
     ns
@@ -115,6 +117,13 @@ Base.splice!(s::State, range::UnitRange{Int}) = begin
     i = s.index_offset + range.start
     j = s.index_offset + range.stop
     s2 = State(splice!(s.items, i:j))
+    s.size -= s2.size
+    s2
+end
+
+Base.splice!(s::State, index::Int) = begin
+    _index = s.index_offset + index
+    s2 = State([splice!(s.items, _index)])
     s.size -= s2.size
     s2
 end
@@ -308,3 +317,34 @@ end
 #     end
 #     ns
 # end
+
+
+# --- MEASURE DISTANCE, ANGLE AND DIHEDRAL FROM CARTESIAN COORDINATES ----------
+using LinearAlgebra
+
+export distance
+function distance(at1::AtomState, at2::AtomState)
+    return norm(at1.t - at2.t)
+end
+
+export angle
+function angle(at1::AtomState, at2::AtomState, at3::AtomState)
+
+    v21 = at1.t - at2.t
+    v23 = at3.t - at2.t
+    return acos(dot(v21, v23) / (norm(v21) * norm(v23)))
+end
+
+
+export dihedral
+function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState)
+
+    b1 = at2.t - at1.t
+    b2 = at3.t - at2.t
+    b3 = at4.t - at3.t
+    n1 = cross(b1, b2)
+    n2 = cross(b2, b3)
+    x = dot(cross(n1, n2), b2) / sqrt(dot(b2, b2))
+    y = dot(n1, n2)
+    return atan(x, y)
+end

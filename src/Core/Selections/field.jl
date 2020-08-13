@@ -74,9 +74,9 @@ function select(sele::FieldSelection{Stateless, T}, container::AbstractContainer
     n_items = counter(T)(container)
     mask = Mask{T}(n_items)
 
-    for item in iterator(T)(container)
+    for (index, item) in enumerate(iterator(T)(container))
         if sele.op(sele.pattern, getproperty(item, sele.field))
-            mask[item.index] = true
+            mask[index] = true
         end
     end
     return mask
