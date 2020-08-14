@@ -8,6 +8,19 @@ export popchild!
 
 
 """
+    root(c::AbstractContainer)
+
+Return the first `Atom` in `AbstractContainer` `c` that has no parent.
+"""
+root(c::AbstractContainer) = begin
+    for atom in eachatom(c)
+        !hasparent(atom) && return atom
+    end
+    nothing
+end
+
+
+"""
     hasparent(c::AbstractDigraph) -> Bool
 
 Test whether the given AbstractDigraph `c` has a parent.
@@ -260,6 +273,28 @@ julia> bond(atom1, atom2)
     println("Bonding atoms $at1 - $at2")
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
+end
+
+
+"""
+    join(r1::Residue, s1::String, r2::Residue, s2::String)
+    
+Join atom named `s1` from residue `r1` with atom named `s2` from residue `r2`.
+Bond (add eachother to other.bonds field) and set parent/children of both the
+atoms and respective atom.container (residue).
+
+# Examples
+```jldoctest
+julia> join(r1, "C", r2, "N")
+```
+"""
+function join(r1::Residue, s1::String, r2::Residue, s2::String) # IMPORTANT
+    hasparent(r2) && error("r2 is already connected")
+    at1 = r1[s1]
+    at2 = r2[s2]
+    bond(at1, at2)          # at1 <-> at2
+    setparent!(at2, at1)    # at1 -> at2
+    setparent!(r2, r1)      # r1 -> r2
 end
 
 

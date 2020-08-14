@@ -164,3 +164,23 @@ function i2c!(state::State{T}, top::Topology) where T
     state.i2c = false
     state
 end
+
+export setoffset!
+
+"""
+    setoffset!(state::State{T}, at::Atom, default::Number) where T
+
+Rotate all sibling dihedrals of `at` so that the dihedral angle identified by
+`at` is equal to `default`.
+"""
+setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
+
+    if hasparent(at)
+        ϕ = state[at].ϕ - T(default)
+        for child in at.parent.children
+            state[child].ϕ -= ϕ
+        end
+    end
+    state.i2c = true
+    state
+end

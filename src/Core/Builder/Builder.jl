@@ -7,6 +7,9 @@ using ..ProtoSyn.Units: tonumber
 
 #region fragment ----------------------------------------------------------------
 
+isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
+
+
 """
     fragment([T=Float64], grammar::LGrammar, derivation) where {T <: AbstractFloat}
     
@@ -140,43 +143,107 @@ julia> seq"ABC"
 macro seq_str(s); [string(c) for c in s]; end
 
 
+"""
+    append!(pose::Pose{Topology}, frag::Fragment)
+
+Append a fragment as a new segment.
+Note: This function is called by the `build` function.
+"""
+Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
+
+    !isfragment(frag) && error("invalid fragment")
+    
+    # Merge the fragment graph (Segment) to the pose graph (Topology).
+    push!(pose.graph, frag.graph)
+
+    # Merge the fragment state to the pose state.
+    Base.append!(pose.state, frag.state)
+    
+    # Make sure the fragment graph has the same origin of the new pose.
+    root_residue = root(frag.graph).container
+    setparent!(root(frag.graph), origin(pose.graph))
+
+    setparent!(root_residue, origin(pose.graph).container)
+
+    # Re-index the pose to account for the new segment/residue/atoms
+    reindex(pose.graph)
+    pose
+end
+
+
+"""
+    append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+
+Based on the provided `grammar`, add the residue sequence from `derivation` to
+the given `pose`, appending it AFTER the given `residue`. This residue and the
+new fragment will be connected using operation `op` ("α" by default). Return the
+altered `pose`.
+
+# Examples
+```jldoctest
+julia> append_residues!(pose, pose.graph[1][1], reslib, seq"A")
+```
+"""
 function append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
 
+    # Build the fragment to append
     frag = Builder.fragment(grammar, derivation)
 
-    # Inserts the fragment residues in the Pose graph and sets residue.container
-    # println("Insert residues in position $(residue.index + 1)/$(length(residue.container.items))")
+    # Insert the fragment residues in the pose.graph and set
+    # frag_residue.container (of each residue in the fragment) to be the segment
+    # of the "parent" residue
     insert!(residue.container, residue.index + 1, frag.graph.items)
 
     # Inserts the fragment atoms state in the pose.state
-    # println("Insert residues in position $(residue.items[end].index + 1)/$(length(pose.state.items)-3)")
     insert!(pose.state, residue.items[end].index + 1, frag.state)
 
-    # Sets:
+    # Perform link operation. Requires correct indexes. Set ascendents is set to
+    # false because some residues are still orphan (would cause error/bug). Set:
     # - Distance/angle/dihedrals in the fragment first residue
     # - Parent/children in the newly bonded atoms
     # - Parent/children in the newly bonded residues
     # - Atom bonds in the newly bonded atoms
-
     reindex(pose.graph, set_ascendents = false)
-
     grammar.operators[op](residue, pose, residue_index = residue.index + 1)
 
-    # Reindex and define new ascendents
+    # Reindex to define new ascendents
     reindex(pose.graph)
+    
     ProtoSyn.request_i2c(pose.state; all=true)
+    return pose
 end
 
 
+"""
+    insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α", connect_upstream = true)
+
+Based on the provided `grammar`, add the residue sequence from `derivation` to
+the given `pose`, inserting it ON tHe POSITION of the given `residue`. This
+residue and the new fragment will be connected using operation `op` ("α" by
+default). only downstream of the insertion. If `connect_upstream` is set to true
+(is, by default), also connect to the upstream residues. Return the altered
+`pose`.
+
+# Examples
+```jldoctest
+julia> insert_residues!(pose, pose.graph[1][2], reslib, seq"A")
+```
+"""
 function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α", connect_upstream = true)
 
     residue_index = residue.index
     frag = Builder.fragment(grammar, derivation)
 
+    # Insert the fragment residues in the pose.graph and set
+    # frag_residue.container (of each residue in the fragment) to be the segment
+    # of the "parent" residue
     insert!(residue.container, residue.index, frag.graph.items)
+
+    # Inserts the fragment atoms state in the pose.state
     insert!(pose.state, residue.items[1].index, frag.state)
 
     # Remove all references of the origin as the parent of any of its children
+    # (if said children belong to the residue that is being displaced)
     # and remove said children from origin.children
     pose_origin = ProtoSyn.origin(pose.graph) # This is an Atom
     parent_is_origin = residue.parent == pose_origin.container
@@ -193,7 +260,12 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         popparent!(residue)
     end
 
-    # Reindex to account for the inserted residues
+    # Perform link operation. Requires correct indexes. Set ascendents is set to
+    # false because some residues are still orphan (would cause error/bug). Set:
+    # - Distance/angle/dihedrals in the fragment first residue
+    # - Parent/children in the newly bonded atoms
+    # - Parent/children in the newly bonded residues
+    # - Atom bonds in the newly bonded atoms
     reindex(pose.graph, set_ascendents = false)
     grammar.operators[op](frag.graph[end], pose, residue_index = residue_index + length(frag.graph))
 
@@ -212,21 +284,90 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     
     # Reindex to set correct ascendents
     reindex(pose.graph)
+    
     ProtoSyn.request_i2c(pose.state; all=true)
+    return pose
 end
 
 
-# function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+"""
+    pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
 
-#     @assert length(derivation) == 1 "Derivation must have length = 1."
-#     residue_index = residue.index
+Pop and return the desired `atom` from the given `pose`. In order to do this,
+perform the following actions:
+ - Unset parents/children
+ - Unbond neighbours
+ - Remove from graph
+ - Remove from state
+ - Set new ascendents
+ - Update the container itemsbyname
 
-#     insert_residues!(pose, residue, grammar, derivation; op = op)
-#     # pop!(pose, residue.container[residue.index])
+# Examples
+```jldoctest
+julia> pop!(pose, pose.graph[1][1][2])
+```
+"""
+function Base.pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+
+    if atom.container.container.container !== pose.graph
+        error("Given Atom does not belong to the provided topology.")
+    end
+
+    # Save information to return 
+    popped_atom = Atom(atom.name, 1, 1, atom.symbol)
+
+    # Save children and parent of this atom (will be removed in next step)
+    children    = copy(atom.children)
+    grandparent = atom.parent
+
+    # Unset parents/children and unbond neighbours
+    for i = length(atom.bonds):-1:1   # Note the reverse loop
+        other = atom.bonds[i]
+        unbond(pose, atom, other)
+    end
+
+    # Using saved children and parent, set all child.parent to be this
+    # atom.parent
+    for child in children
+        child.parent = grandparent
+    end
+
+    # Remove from graph
+    deleteat!(atom.container.items, findfirst(atom, atom.container.items))
+    atom.container.size -= 1
+
+    # Remove from state
+    popped_state = splice!(pose.state, atom.index)
+
+    # Reindex and set ascendents
+    reindex(pose.graph)
+
+    # Update container 'itemsbyname'
+    pop!(atom.container.itemsbyname, atom.name)
+
+    # Set common ID
+    popped_atom.id = popped_state.id = genid()
+
+    return Pose(popped_atom, popped_state)
+end
 
 
+export setdihedral!
 
-#     # bond(pose, residue.container[residue_index], residue.container[residue_index + 1], grammar, op = op)
-# end
+"""
+    setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat}
+
+Set the dihedral in `Atom` `at` of `State` `s` to be `val` (in radians)
+
+# Examples
+```jldoctest
+julia> setdihedral!(pose.state, pose.graph[1][1][end], π)
+```
+"""
+@inline setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
+    s[at].Δϕ = val - s[at].ϕ
+    ProtoSyn.request_i2c(s)
+    s
+end
 
 end

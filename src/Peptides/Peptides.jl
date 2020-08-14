@@ -283,19 +283,6 @@ function setdihedral!(pose::Pose{Topology}, residue::Residue, dihedral_type::Dih
 end
 
 
-function getdihedral(pose::Pose{Topology}, residue::Residue, dihedral_type::Dihedral.DihedralType)
-    # if dihedral_type.atom == Dihedral.psi.atom
-    #     println("CALLED")
-    #     length(residue.container.items) <= residue.index && return
-    #     residue = residue.container[residue.index + 1]
-    # end
-    println("Looking for dihedral $(dihedral_type.name) in atom $(dihedral_type.atom)-$(residue[dihedral_type.atom]) (ASCEDENTS: $(residue[dihedral_type.atom].ascendents))")
-    r = ProtoSyn.getdihedral!(pose.state, residue[dihedral_type.atom])
-    println("  $(rad2deg(r))")
-    r
-end
-
-
 function build(::Type{T}, grammar::LGrammar, derivation,
     ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T<:AbstractFloat}
 
