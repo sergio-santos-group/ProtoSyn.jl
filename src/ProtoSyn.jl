@@ -64,6 +64,7 @@ include("Core/Selections/selections.jl") # Makes use of iterators, must come aft
 
 
 #region SUBMODULES ------------------------------
+include("Core/Builder/grammar.jl")
 include("Core/Builder/Builder.jl")
 include("Peptides/Peptides.jl")
 
