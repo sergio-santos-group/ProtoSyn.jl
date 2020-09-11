@@ -5,103 +5,6 @@ using YAML
 using ..ProtoSyn
 using ..ProtoSyn.Units: tonumber
 
-#region fragment ----------------------------------------------------------------
-
-isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
-
-
-"""
-    fragment([T=Float64], grammar::LGrammar, derivation) where {T <: AbstractFloat}
-    
-Return a new fragment (`Pose` instance with just a single `Segment`) using the
-given `derivation` sequence on the provided `grammar` instructions. Note: A 
-fragment does not contain a `Topology` instance.
-
-# Examples
-```jldoctest
-julia> frag = fragment(Float64, reslib, seq"AAA")
-
-julia> frag = fragment(reslib, seq"AAA")
-```
-"""
-function fragment(::Type{T}, grammar::LGrammar, derivation) where {T <: AbstractFloat}
-
-    state = State{T}()
-    seg = Segment("UNK", 1)
-    seg.code = 'A'
-
-    stack = Fragment[]
-    opstack = Function[]
-    parent::Opt{Fragment} = nothing
-
-    for letter in derivation
-        if isop(grammar, letter)
-            op = getop(grammar, letter)
-            push!(opstack, op)
-        elseif letter == '['
-            push!(stack, parent)
-        elseif letter == ']'
-            parent = pop!(stack)
-        elseif isvar(grammar, letter)
-            frag = getvar(grammar, letter)
-            
-            frag2 = copy(frag)
-
-            push!(seg, frag2.graph.items...) # Appending the residues to the segment
-            append!(state, frag2.state)      # Merging the 2 states
-            if parent !== nothing
-                join = isempty(opstack) ? grammar.defop : pop!(opstack)
-                join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
-            end
-            parent = frag2
-        end
-    end
-    reindex(seg)
-    seg.id = state.id = ProtoSyn.genid()
-
-    return Pose(seg, state)
-end
-
-fragment(grammar::LGrammar, derivation) = fragment(Units.defaultFloat, grammar, derivation)
-
-
-"""
-    fragment(pose::Pose{Topology})
-    
-Return a fragment from a given Pose `pose`. The pose must have a single segment.
-
-# Examples
-```jldoctest
-julia> frag = fragment(pose)
-```
-"""
-function fragment(pose::Pose{Topology})
-    
-    length(pose.graph) != 1 && error("only topologies with a single segment can be turned into fragments")
-    
-    topology = pose.graph
-    segment = topology[1]
-    #(imin,imax) = extrema(map(at->at.index, eachatom(segment)))
-    #state = splice!(pose.state, imin:imax)
-    state = splice!(pose.state, 1:count_atoms(segment))
-    detach(segment)
-    segment.id = state.id = genid()
-    segment.name = topology.name
-
-    Pose(segment, state)
-end
-
-Base.detach(s::Segment) = begin
-    root = origin(s)
-    for at in root.children
-        isparent(root, at) && popparent!(at)
-    end
-    hascontainer(s) && delete!(s.container, s)
-end
-
-#endregion fragment
-
-
 """
     build([T=Float64,] grammar::LGrammar, derivation)
 
@@ -125,6 +28,8 @@ function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat
 end
 build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
 
+
+export @seq_str
 
 """
     @seq_str -> Vector{String}
@@ -237,7 +142,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Insert the fragment residues in the pose.graph and set
     # frag_residue.container (of each residue in the fragment) to be the segment
     # of the "parent" residue
-    insert!(residue.container, residue.index, frag.graph.items)
+    ProtoSyn.insert!(residue.container, residue.index, frag.graph.items)
 
     # Inserts the fragment atoms state in the pose.state
     insert!(pose.state, residue.items[1].index, frag.state)
@@ -279,6 +184,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         end
         popparent!(residue.container[residue_index])
 
+        println("Residue index: $residue_index")
         grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
     end
     
@@ -323,13 +229,14 @@ function Base.pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
     # Unset parents/children and unbond neighbours
     for i = length(atom.bonds):-1:1   # Note the reverse loop
         other = atom.bonds[i]
-        unbond(pose, atom, other)
+        ProtoSyn.unbond(pose, atom, other)
     end
 
     # Using saved children and parent, set all child.parent to be this
     # atom.parent
     for child in children
-        child.parent = grandparent
+        # child.parent = grandparent
+        child.parent = origin(pose.graph)
     end
 
     # Remove from graph
@@ -349,25 +256,6 @@ function Base.pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
     popped_atom.id = popped_state.id = genid()
 
     return Pose(popped_atom, popped_state)
-end
-
-
-export setdihedral!
-
-"""
-    setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat}
-
-Set the dihedral in `Atom` `at` of `State` `s` to be `val` (in radians)
-
-# Examples
-```jldoctest
-julia> setdihedral!(pose.state, pose.graph[1][1][end], π)
-```
-"""
-@inline setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
-    s[at].Δϕ = val - s[at].ϕ
-    ProtoSyn.request_i2c(s)
-    s
 end
 
 end

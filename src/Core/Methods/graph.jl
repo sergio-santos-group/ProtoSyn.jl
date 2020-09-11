@@ -5,6 +5,7 @@
 export hasparent, haschildren, isparent
 export setparent!, popparent!
 export popchild!
+export root
 
 
 """
@@ -95,12 +96,14 @@ end
 export hascontainer
 @inline hascontainer(c::AbstractContainer) = c.container !== nothing
 
+export origin
 @inline origin(t::Topology) = get(t.root, "OO")
 @inline origin(c::AbstractContainer) = hascontainer(c) ? origin(c.container) : nothing
 
 export hasgraph
 @inline hasgraph(t::Topology) = !isempty(origin(t).children)
 
+export genid
 @inline genid() = Int(rand(UInt16))
 
 
@@ -188,8 +191,6 @@ function reindex(s::Segment)
 end
 
 
-export unbond, bond
-
 """
     unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     
@@ -206,7 +207,6 @@ julia> unbond(pose, atom1, atom2)
 """
 function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
-    println("Unbonding $at1 and $at2")
     isparent(at1, at2) && return _unbond(pose, at1, at2)
     isparent(at2, at1) && return _unbond(pose, at2, at1)
 end
@@ -243,15 +243,21 @@ function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     popparent!(at2.container)
     setparent!(at2, _origin)
     setparent!(at2.container, _origin.container)
+    
+    # Reindex to set correct ascendents
+    reindex(pose.graph)
+
 
     at_s = state[at2]
 
     # Preserve current placement (based on cartesian coordinates)
-    sync!(pose)
-    at_s.b = ProtoSyn.distance(at_s, state[_origin])
-    at_s.θ = ProtoSyn.angle(at_s, state[_origin], state[_origin.parent])
-    at_s.ϕ = ProtoSyn.dihedral(at_s, state[_origin], state[_origin.parent], state[_origin.parent.parent])
-    ProtoSyn.request_i2c(state)
+    # sync!(pose)
+    # println("CALLED on $at2")
+    # at_s.b = ProtoSyn.distance(at_s, state[_origin])
+    # at_s.θ = ProtoSyn.angle(at_s, state[_origin], state[_origin.parent])
+    # at_s.ϕ = ProtoSyn.dihedral(at_s, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+
+    # ProtoSyn.request_i2c(state; all = true)
 
     return pose
 end
@@ -270,7 +276,6 @@ julia> bond(atom1, atom2)
 """
 @inline function bond(at1::Atom, at2::Atom)
     @assert segment(at1) === segment(at2) "can only bond atoms within the same segment"
-    println("Bonding atoms $at1 - $at2")
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end
@@ -356,3 +361,86 @@ count_residues(r::Residue) = 1
 count_atoms(c::AbstractContainer) = mapreduce(x -> count_atoms(x), +, c.items, init=0)
 count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
+
+
+# POP
+
+function Base.pop!(pose::Pose{Topology}, residue::Residue)
+
+    for atom in residue.items
+        pop!(pose, atom)
+    end
+end
+
+
+# Base.pop!(pose::Pose{Topology}, r::Residue) = begin
+
+#     println("Deleting residue $r")
+
+#     if r.container.container !== pose.graph
+#         error("given residue does not belong to the provided topology")
+#     end
+
+#     # detach residue from parents (bonds, parents/children)
+#     # hascontainer(r) && delete!(r.container, r)
+#     for atom in eachatom(r)
+#         for i = length(atom.bonds):-1:1   # Note the reverse loop
+#             other = atom.bonds[i]
+
+#             in(other, r) && continue
+#             Builder.unbond(pose, atom, other)
+#         end
+#     end
+
+#     # remove node states from parent state and create
+#     # a new state for this residue
+#     deleteat!(r.container.items, findfirst(r, r.container.items))
+#     r.container.size -= 1
+#     for child in origin(pose.graph).children
+#         child in r.items && popparent!(child) 
+#     end
+
+#     st = splice!(pose.state, r[1].index:r[end].index)
+#     reindex(pose.graph) # Also sets ascendents
+    
+#     # new common ID
+#     r.id = st.id = genid()
+
+#     #return (res, st)
+#     Pose(r, st)
+# end
+
+Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
+
+    if seg.container !== pose.graph
+        error("given residue does not belong to the provided topology")
+    end
+
+    # remove node states from parent state and create
+    # a new state for this segment
+    st = splice!(pose.state, seg[1][1].index:seg[end][end].index)
+    
+    pop!(pose.graph.items, seg)
+
+    reindex(pose.graph)
+    
+    # new common ID
+    seg.id = st.id = genid()
+    Pose(seg, st)
+end
+
+
+Base.pop!(top::Topology, seg::Segment) = begin
+    deleteat!(top.items, findall(x -> x == seg, top.items))
+    top.size -= 1
+end
+
+# Detach
+
+Base.detach(s::Segment) = begin
+    root = origin(s)
+    for at in root.children
+        isparent(root, at) && popparent!(at)
+    end
+    hascontainer(s) && delete!(s.container, s)
+end

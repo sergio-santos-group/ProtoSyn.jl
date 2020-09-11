@@ -35,7 +35,7 @@ and update the cartesian/internal coordinates accordingly. Return the altered
 julia> sync(pose.state, pose.graph)
 ```
 """
-function sync!(state::State, top::Topology)::Pose
+function sync!(state::State, top::Topology)::State
 
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
@@ -96,6 +96,77 @@ in the given `State`. Return the aletered `State` instance.
 julia> i2c!(pose.state, pose.graph)
 ```
 """
+# function i2c!(state::State{T}, top::Topology) where T
+    
+#     vjk = MVector{3,T}(0, 0, 0)
+#     vji = MVector{3,T}(0, 0, 0)
+#     n   = MVector{3,T}(0, 0, 0)
+    
+#     queue = Atom[]
+
+#     root = origin(top)
+#     root_changed = state[root].changed
+
+#     for child in root.children
+#         state[child].changed |= root_changed # Updates state[child].changed to "true" only if 'root_changed' is true.
+#         push!(queue, child)
+#     end
+    
+#     while !isempty(queue)
+#         atom = popfirst!(queue)
+#         (i, j, k) = atom.ascendents
+        
+#         istate = state[i]
+
+#         for child in atom.children
+#             # Updates state[child].changed to "true" only if 'istate.changed' is
+#             # true. (which is, if root_changed is true)
+#             state[child].changed |= istate.changed
+#             push!(queue, child)
+#         end
+#         !(istate.changed) && continue
+#         istate.changed = false
+        
+#         jstate = state[j]        
+#         kstate = state[k]        
+#         Ri = istate.r
+#         Rj = jstate.r
+        
+#         # local coord system
+#         b = istate.b # distance
+#         sθ, cθ = sincos(istate.θ)  # angle
+#         sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
+#         x_1 = -b*cθ
+#         x_2 =  b*cϕ*sθ
+#         x_3 =  b*sϕ*sθ
+        
+#         # rotate to parent coord system
+#         @nexprs 3 u -> vji[u] = Rj[u, 1]*x_1 + Rj[u, 2]*x_2 + Rj[u, 3]*x_3
+        
+#         # UPDATE ROTATION MATRIX
+#         # @nexprs 3 u -> vjk_u = kstate.t[u] - jstate.t[u]
+#         @. vjk = kstate.t - jstate.t
+        
+#         # column 1 (x)
+#         @nexprs 3 u -> Ri[u, 1] = vji[u]/b
+            
+#         # column 3 (z)
+#         @cross u n[u] vji[u] vjk[u]
+#         dn = sqrt(dot(n,n))
+#         @nexprs 3 u -> Ri[u, 3] = n[u]/dn
+    
+#         # column 2 (y)
+#         @cross u Ri[u, 2] Ri[u, 3] Ri[u, 1]
+        
+#         # move to new position
+#         @. istate.t = vji + jstate.t
+#     end
+
+#     state.i2c = false
+#     state
+# end
+
+
 function i2c!(state::State{T}, top::Topology) where T
     
     vjk = MVector{3,T}(0, 0, 0)
@@ -117,6 +188,7 @@ function i2c!(state::State{T}, top::Topology) where T
         (i, j, k) = atom.ascendents
         
         istate = state[i]
+
         for child in atom.children
             # Updates state[child].changed to "true" only if 'istate.changed' is
             # true. (which is, if root_changed is true)
@@ -133,7 +205,9 @@ function i2c!(state::State{T}, top::Topology) where T
         
         # local coord system
         b = istate.b # distance
+        # println("$atom > b: $b")
         sθ, cθ = sincos(istate.θ)  # angle
+        println("Atom $atom: (ϕ) $(rad2deg(istate.ϕ)) + (Δϕ) $(rad2deg(jstate.Δϕ)) = $(rad2deg(istate.ϕ + jstate.Δϕ))")
         sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
         x_1 = -b*cθ
         x_2 =  b*cϕ*sθ
@@ -165,6 +239,8 @@ function i2c!(state::State{T}, top::Topology) where T
     state
 end
 
+
+
 export setoffset!
 
 """
@@ -183,4 +259,43 @@ setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
     end
     state.i2c = true
     state
+end
+
+export setdihedral!, getdihedral
+
+"""
+    setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat}
+
+Set the dihedral in `Atom` `at` of `State` `s` to be `val` (in radians).
+
+# Examples
+```jldoctest
+julia> setdihedral!(pose.state, pose.graph[1][1][end], π)
+```
+"""
+@inline setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
+    at2 = at.ascendents[2]
+    s[at2].Δϕ += val - getdihedral(s, at)
+    ProtoSyn.request_i2c(s)
+    s
+end
+
+
+"""
+    getdihedral(s::State, at::Atom)
+
+Get the dihedral value for `Atom` `at` of `State` `s` (in radians).
+This value is the sum of the intrisic dihedral angle and the second ascendent
+Δϕ.
+
+# Examples
+```jldoctest
+julia> getdihedral(pose.state, pose.graph[1][1][end])
+3.1415926535897
+```
+"""
+@inline getdihedral(s::State, at::Atom) = begin
+    at2 = at.ascendents[2]
+    println("s[at].ϕ: $(rad2deg(s[at].ϕ)) | s[at2].Δϕ: $(rad2deg(s[at2].Δϕ))")
+    return s[at].ϕ + s[at2].Δϕ
 end

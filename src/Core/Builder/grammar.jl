@@ -106,6 +106,70 @@ isop(lg::LGrammar, k) = haskey(lg.operators, k)
 isvar(lg::LGrammar, k) = haskey(lg.variables, k)
 
 
+#region fragment ----------------------------------------------------------------
+
+export isfragment
+
+isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
+
+
+"""
+    fragment([T=Float64], grammar::LGrammar, derivation) where {T <: AbstractFloat}
+    
+Create and return a new fragment (`Pose` instance with just a single `Segment`)
+using the given `derivation` sequence on the provided `grammar` instructions.
+Note: A fragment does not contain a `Topology` instance.
+
+# Examples
+```jldoctest
+julia> frag = fragment(Float64, reslib, seq"AAA")
+
+julia> frag = fragment(reslib, seq"AAA")
+```
+"""
+function fragment(::Type{T}, grammar::LGrammar, derivation) where {T <: AbstractFloat}
+
+    state = State{T}()
+    seg = Segment("UNK", 1)
+    seg.code = 'A'
+
+    stack = Fragment[]
+    opstack = Function[]
+    parent::Opt{Fragment} = nothing
+
+    for letter in derivation
+        if isop(grammar, letter)
+            op = getop(grammar, letter)
+            push!(opstack, op)
+        elseif letter == '['
+            push!(stack, parent)
+        elseif letter == ']'
+            parent = pop!(stack)
+        elseif isvar(grammar, letter)
+            frag = getvar(grammar, letter)
+            
+            frag2 = copy(frag)
+
+            push!(seg, frag2.graph.items...) # Appending the residues to the segment
+            append!(state, frag2.state)      # Merging the 2 states
+            if parent !== nothing
+                join = isempty(opstack) ? grammar.defop : pop!(opstack)
+                join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
+            end
+            parent = frag2
+        end
+    end
+    reindex(seg)
+    seg.id = state.id = ProtoSyn.genid()
+
+    return Pose(seg, state)
+end
+
+fragment(grammar::LGrammar, derivation) = fragment(Units.defaultFloat, grammar, derivation)
+
+#endregion fragment
+
+
 """
     opfactory(args) -> Function
 
@@ -120,7 +184,7 @@ function opfactory(args)
     # Note: residue_index is the index on the fragment/pose ('f2') used to
     # actually connect to 'r1'
     return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1)
-        # Index is of f2
+        # residue_index is of f2
         if typeof(f2) == Fragment
             r2 = f2.graph[residue_index]
         else
@@ -137,7 +201,6 @@ function opfactory(args)
                 end
             end
         end
-        return
         
         if haskey(args, "offsets")
             for (atname, offset) in args["offsets"]
@@ -184,7 +247,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         filename = joinpath(ProtoSyn.resource_dir, name)
         @info "Loading variable '$key' from $filename"
         pose = ProtoSyn.load(T, filename)
-        grammar[key] = ProtoSyn.fragment(pose)
+        grammar[key] = fragment(pose)
     end
 
     ops = template["operators"]
@@ -207,7 +270,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         @info "Loading operator $opname"
         grammar[opname] = opfactory(opargs)
     end
-    grammar.defop = Builder.getop(grammar, template["defop"])
+    grammar.defop = getop(grammar, template["defop"])
 
     if haskey(template, "rules")
         for (key,rules) in template["rules"]

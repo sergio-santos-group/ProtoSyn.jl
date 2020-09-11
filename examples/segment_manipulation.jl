@@ -3,19 +3,60 @@ push!(LOAD_PATH, "../src")
 using ProtoSyn
 using ProtoSyn.Peptides
 using ProtoSyn.Builder
+using ProtoSyn.Units
 
 println("ProtoSyn loaded successfully.")
 
 # Example 1.
 # -> Create a new segment from an aminoacid string
 
+# Peptides.append_residues!(pose, pose.graph[1][end], res_lib, seq"GGG");
+# unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
+# sync!(pose);
+# println("Outside angle: $(pose.state[pose.graph[1][3]["N"]].ϕ) $(ProtoSyn.dihedral(pose.state[pose.graph[1][3]["N"]], pose.state[ProtoSyn.origin(pose.graph)], pose.state[ProtoSyn.origin(pose.graph).parent], pose.state[ProtoSyn.origin(pose.graph).parent.parent]))")
+# Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"LLL");
 # Peptides.mutate!(pose, pose.graph[1][2], res_lib, seq"L");
+# setss!(pose, SecondaryStructure[:helix], rid"2:end");
+
+# pose = Peptides.build(res_lib, seq"AAAAAAAAAA");
+# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°); # Bug: is measuring i-2 and setting i-1
+# io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+# pose = Peptides.load("../teste1.pdb");
+# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 180°); # Bug: is measuring i-2 and setting i-1
+# io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+
+# Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.phi, -60°)
+# Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.psi, -45°)
+# Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.omega, 180°)
+# Builder.setdihedral!(pose.state, pose.graph[1][3]["C"], 0°);
+# Peptides.setss!(pose, SecondaryStructure[:helix], rid"2:end");
+
 res_lib = grammar();
-pose = Peptides.build(res_lib, seq"AAAAA");
-# pose = Peptides.load("../2a3d.pdb");
-setdihedral!(pose.state, pose.graph[1][2]["CA"], deg2rad(0));
-Peptides.mutate!(pose, pose.graph[1][2], res_lib, seq"K");
-io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+pose = Peptides.build(res_lib, seq"AAAAAAAAAAAA");
+# residues = rid"1:end"(pose, gather = true)
+# for r in residues
+#     Peptides.setdihedral!(pose.state, r, Peptides.Dihedral.phi, -60°)
+#     Peptides.setdihedral!(pose.state, r, Peptides.Dihedral.psi,  -45°)
+#     Peptides.setdihedral!(pose.state, r, Peptides.Dihedral.omega, 180°)
+# end
+Peptides.setss!(pose, SecondaryStructure[:helix], rid"2:end");
+io = open("../teste111.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+
+pose = Peptides.load("../2a3d.pdb");
+Peptides.uncap!(pose, pose.graph[1][1]);
+io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"LLL");
+io = open("../teste3.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+# Peptides.unbond(pose, pose.graph[1][4], pose.graph[1][5]);
+# Peptides.setss!(pose, SecondaryStructure[:linear], pose.graph[1].items[1:4]);
+# Peptides.append_residues!(pose, pose.graph[1][4], res_lib, seq"LLL");
+
+# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°);
+# Peptides.setdihedral!(pose.state, pose.graph[1][3], Peptides.Dihedral.omega, 0°);
+# Builder.setdihedral!(pose.state, pose.graph[1][7]["CA"], 0°);
+# pop!(pose, pose.graph[1][9])
+
+
 
 
 
@@ -64,18 +105,18 @@ Peptides.insert_residues!(pose, pose.graph[1][6], res_lib, seq"G");
 # When prepending to a severed segment, since the new residues added will be
 # connected to the origin, there's no way for ProtoSyn to know where to place
 # the new residues, and therefore they will show overlapping the origin
-sync!(pose)
-println(pose.state[pose.graph[1][6]["N"]].b)
-first_res = pose.graph[1][1];
-Peptides.prepend_residues!(pose, first_res, res_lib, seq"GG", ss = SecondaryStructure[:linear], op = "α");
-println(pose.state[pose.graph[1][8]["N"]].b)
+# sync!(pose)
+# println(pose.state[pose.graph[1][6]["N"]].b)
+# first_res = pose.graph[1][1];
+# Peptides.prepend_residues!(pose, first_res, res_lib, seq"GG", ss = SecondaryStructure[:linear], op = "α");
+# println(pose.state[pose.graph[1][8]["N"]].b)
 
 # Note that, since residues 6 and 7 have been unbonded, residue 7's origin is
 # now the global topology origin. Therefore, if setting the phi angle on residue
 # 7, this will be performed in relation to the origin position, leading to major
 # changes in position. Therefore, when setting secondary structures, the
 # origin.children residues should not changed.
-setss!(pose, SecondaryStructure[:helix], include_origin_children = false);
+setss!(pose, SecondaryStructure[:helix]);
 
 
 first_res = pose.graph[1][1];

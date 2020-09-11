@@ -47,7 +47,7 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
         setfield!(ns, :changed, val)
     else
         setfield!(ns, :changed, true)
-        setfield!(ns, key, T(val))
+        setfield!(ns, key, val)
     end
     ns
 end
@@ -109,7 +109,7 @@ State(n::Int) = State{Units.defaultFloat}(n)
 State(::Type{T}, n::Int) where T = State{T}(n)
 
 State(items::Vector{AtomState{T}}) where T = begin
-    s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict(), nothing, false)
+    s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict())
 end
 
 State{T}() where T = State{T}(0)

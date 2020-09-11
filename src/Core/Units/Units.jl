@@ -5,7 +5,7 @@ const defaultFloat = Float64
 
 export °, Å, kJ, mol, rad, nm, m, J, tonumber
 
-const ° = deg2rad(1)
+const   ° = deg2rad(1)
 const   Å = 1
 const  kJ = 1
 const mol = 1

@@ -3,7 +3,7 @@ module Peptides
 using ..ProtoSyn
 using ..ProtoSyn.Builder
 
-export isproline, grammar, setss!
+export isproline, grammar
 
 
 # resource directory for this module
@@ -125,34 +125,29 @@ function/user to explicitly synchornize coordinates via [`sync!`](@ref). In
 certain cases it might be useful to not set the origin.children secondary
 structure. An example is when a Segment is severed via [`unbond`](@ref), in
 which case, updating the origin children will move one of the parts in an big
-arm movement. This can be controled with the flag 'include_origin_children'
-(true by default).
+arm movement.
 """
-function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue}; include_origin_children = true)
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
     state = container.state
     for r in residues
-        if !include_origin_children & any(x -> x in ProtoSyn.origin(r).children, r.items)
-            continue
-        end
-        setdihedral!(container, r, Dihedral.phi, ϕ)
-        setdihedral!(container, r, Dihedral.psi,  ψ)
-        setdihedral!(container, r, Dihedral.omega, ω)
+        setdihedral!(container.state, r, Dihedral.phi, ϕ)
+        setdihedral!(container.state, r, Dihedral.psi,  ψ)
+        setdihedral!(container.state, r, Dihedral.omega, ω)
     end
-    ProtoSyn.request_i2c(state)
 end
 
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}; include_origin_children = true) = begin
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}) = begin
     residues::Vector{Residue} = collect(eachresidue(container.graph))
-    setss!(container, (ϕ, ψ, ω), residues, include_origin_children = include_origin_children)
+    setss!(container, (ϕ, ψ, ω), residues)
 end
 
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection; include_origin_children = true) = begin
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = begin
     residues = ProtoSyn.PromoteSelection(sele, Residue, any)(container, gather = true)
-    setss!(container, (ϕ, ψ, ω), residues, include_origin_children = include_origin_children)
+    setss!(container, (ϕ, ψ, ω), residues)
 end
 
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue; include_origin_children = true) = begin
-    setss!(container, (ϕ, ψ, ω), [residue], include_origin_children = include_origin_children)
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = begin
+    setss!(container, (ϕ, ψ, ω), [residue])
 end
 
 
@@ -170,7 +165,6 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
 
     connected_to_origin = residue.parent == ProtoSyn.origin(pose.graph).container
-    connect_upstream = false
     if connected_to_origin
         state = pose.state
         N = state[residue["N"]] # This is the N atom state
@@ -178,12 +172,12 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
     else
         unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
-        connect_upstream = true
     end
     
     
     # println("Inserting new residues ...")
-    Builder.insert_residues!(pose, residue, grammar, derivation; op = op, connect_upstream = connect_upstream)
+    Builder.insert_residues!(pose, residue, grammar, derivation; op = op,
+        connect_upstream = !connected_to_origin)
 
     if connected_to_origin
         N = state[residue.container[i]["N"]]
@@ -201,21 +195,16 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
     frag = Builder.fragment(grammar, derivation)
-    measure_frag = Builder.fragment(grammar, vcat(derivation, derivation))
+    measure_frag = Builder.fragment(grammar, vcat(derivation, derivation)) # Actually 2 residues
 
     # Measure angle between Psi and CB_dihedral
-    frag_psi = measure_frag.state[measure_frag.graph[2][Dihedral.psi.atom]].ϕ
+    frag_psi = measure_frag.state[measure_frag.graph[2]["C"]].ϕ
     measure_frag_sidechain = (!an"CA$|N$|C$|H$|O$"r)(measure_frag, gather = true)
     vals = []
     for child in measure_frag.graph[1]["CA"].children
         if child in measure_frag_sidechain
             push!(vals, frag_psi - measure_frag.state[child].ϕ)
         end
-    end
-    # frag_CBϕ = measure_frag.state[measure_frag.graph[1]["CB"]].ϕ
-    # println("FRAG PSI: $(rad2deg(frag_psi))")
-    for item in vals
-        println("ITEM: $(rad2deg(item))")
     end
     
     # Remove old sidechain
@@ -238,7 +227,6 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 
         # Note: insert! already sets the residue.itemsbyname
         insert!(residue, poseCA_index + index, atom)
-        # residue.itemsbyname[atom.name] = atom
     end
 
     _start = frag_sidechain[1].index
@@ -250,9 +238,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     for name in fragCA_children_names
 
         ProtoSyn.bond(residue[name], poseCA)
-
         setparent!(residue[name], poseCA)
-
     end
     
     reindex(pose.graph)
@@ -261,11 +247,12 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # Measure angle between Psi and CB_dihedral
     pose_psi = pose.state[residue.container[residue.index + 1][Dihedral.psi.atom]].ϕ
     pose_sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
+
     index = 1
-    println(residue["CA"].children)
     for child in residue["CA"].children
         if child in pose_sidechain
-            pose.state[child].ϕ = (pose_psi + vals[index]) % 360
+            pose.state[child].ϕ = (pose_psi - vals[index]) % 360
+            # pose.state[child].ϕ = (vals[index]) % 360
             index += 1
         end
     end
@@ -277,17 +264,20 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 end
 
 
-function setdihedral!(pose::Pose{Topology}, residue::Residue, dihedral_type::Dihedral.DihedralType, value::T) where {T <: AbstractFloat}
-    ProtoSyn.setdihedral!(pose.state, residue[dihedral_type.atom], value)
-    pose
+function setdihedral!(s::State, residue::Residue, dihedral_type::Dihedral.DihedralType, value::T) where {T <: AbstractFloat}
+    if dihedral_type == Dihedral.psi
+        length(residue.children) == 0 && return s
+        residue = residue.children[1]
+    end
+    ProtoSyn.Builder.setdihedral!(s, residue[dihedral_type.atom], value)
+    s
 end
 
 
-function build(::Type{T}, grammar::LGrammar, derivation,
-    ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T<:AbstractFloat}
+function build(::Type{T}, grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T<:AbstractFloat}
 
     pose = Builder.build(T, grammar, derivation)
-    setss!(pose, ss, include_origin_children = false)
+    setss!(pose, ss)
     pose
 end
 build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(Float64, grammar, derivation, ss)
@@ -325,6 +315,68 @@ function load(filename::AbstractString)
     sync!(pose)
 
     pose
+end
+
+function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+
+    isparent(residue_1, residue_2) && return _unbond(pose, residue_1, residue_2)
+    isparent(residue_2, residue_1) && return _unbond(pose, residue_2, residue_1)
+
+end
+
+function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+
+    ProtoSyn.unbond(pose, residue_1["C"], residue_2["N"])
+    
+    # Set correct positioning
+    state = pose.state
+    _origin = ProtoSyn.origin(pose.graph)
+    sync!(pose)
+
+    at_N = state[residue_2["N"]]
+    at_N.b = ProtoSyn.distance(at_N, state[_origin])
+    at_N.θ = ProtoSyn.angle(at_N, state[_origin], state[_origin.parent])
+    at_N.ϕ = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+
+    for child in residue_2["N"].children
+        at_1 = state[child]
+        at_1.θ = ProtoSyn.angle(at_1, at_N, state[_origin])
+        at_1.ϕ = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
+
+        for grandchild in child.children
+            at_2 = state[grandchild]
+            at_2.ϕ = ProtoSyn.dihedral(at_2, at_1, at_N, state[_origin])
+        end
+    end
+
+    ProtoSyn.request_i2c(state, all = true)
+end
+
+
+function uncap!(pose::Pose, residue::Residue)
+
+    @assert length(residue["N"].children) > 2 "Residue $residue doesn't seem to be capped."
+
+    for atom in ProtoSyn.gather(an"H\d+"r(pose), residue)
+        pop!(pose, atom)
+    end
+
+    # b = 0.9795641888105121
+    # θ = 2.095336203538727
+    # ϕ = 0.0001555866587524742
+
+    H = Atom!(residue, "H", -3, -1, "H")
+    setparent!(H, residue["N"])
+    ProtoSyn.bond(residue["N"], H)
+
+    reindex(pose.graph)
+
+    insert!(pose.state, H.index, State(1))
+    pose.state[H].b = 0.9795641888105121
+    pose.state[H].θ = deg2rad(120)
+    pose.state[H].ϕ = deg2rad(180)
+
+    ProtoSyn.request_i2c(pose.state)
 end
 
 end

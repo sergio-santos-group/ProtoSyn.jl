@@ -30,14 +30,14 @@ baremodule Dihedral
         atom::String
     end
 
-    const phi   = DihedralType("phi", "C")
-    const ϕ     = DihedralType("phi", "C")
-
     const psi   = DihedralType("psi", "N")
     const ψ     = DihedralType("psi", "N")
-    
+
     const omega = DihedralType("omega", "CA")
     const ω     = DihedralType("omega", "CA")
+    
+    const phi   = DihedralType("phi", "C")
+    const ϕ     = DihedralType("phi", "C")
 end
 
 

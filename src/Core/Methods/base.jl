@@ -56,8 +56,8 @@ Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T 
     container
 end
 
-Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer} = begin
-    for item in Iterators.reverse(iterator(T)(items))
+Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T1}) where {T <: AbstractContainer, T1 <: AbstractContainer} = begin
+    for item in Iterators.reverse(items)
         insert!(container.items, index, item)
         item.container = container
         container.size += 1

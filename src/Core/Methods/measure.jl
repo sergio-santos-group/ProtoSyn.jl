@@ -5,8 +5,9 @@ export distance
 """
     distance(at1::AtomState, at2::AtomState)
     
-Calculates the disntace between the two `AtomState` instances, based on the
+Calculates the distance between the two `AtomState` instances, based on the
 cartesian coordinates. Note: Make sure the corresponding pose has been synced.
+Returns result in ???.
 
 # Examples
 ```jldoctest
@@ -37,5 +38,5 @@ function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState
     n2 = cross(b2, b3)
     x = dot(cross(n1, n2), b2) / sqrt(dot(b2, b2))
     y = dot(n1, n2)
-    return atan(x, y)
+    return atan(x, y) # in rad
 end
