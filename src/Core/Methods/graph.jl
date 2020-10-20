@@ -444,3 +444,24 @@ Base.detach(s::Segment) = begin
     end
     hascontainer(s) && delete!(s.container, s)
 end
+
+# --- MIGHT NEED A NEW PLACE
+
+export get_ani_species
+
+"""
+TO DO
+"""
+function get_ani_species(container::AbstractContainer)
+    
+    periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16)
+
+    species = Vector{Int64}()
+    for atom in eachatom(container)
+        push!(species, periodic_table[atom.symbol])
+    end
+
+    return species
+end
+
+get_ani_species(pose::Pose) = get_ani_species(pose.graph)

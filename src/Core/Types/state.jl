@@ -82,7 +82,7 @@ mutable struct State{T <: AbstractFloat}
     c2i::Bool           # flag to request cartesian to internal conversion
     index_offset::Int   # serves to offset the 3 initial root atoms
 
-    x::Opt{Matrix{T}}
+    x::Opt{ReadOnlyMatrix{T}}
     f::Opt{Matrix{T}}
     # f::Array{T,2}
     # v::Array{T,2}
@@ -101,16 +101,18 @@ State{T}(n::Int) where T = begin
     items[1].t[2] =  1.0
     items[2].t[1] = -1.0
 
-    State{T}(items, n, -1, false, false, 3, nothing, nothing, Dict())
+    State{T}(items, n, -1, false, false, 3, ReadOnlyMatrix(zeros(T, 3, n)), nothing, Dict())
 end
 
 State(n::Int) = State{Units.defaultFloat}(n)
 
 State(::Type{T}, n::Int) where T = State{T}(n)
 
-State(items::Vector{AtomState{T}}) where T = begin
-    s = State{T}(items, length(items), -1, false, false, 0, nothing, nothing, Dict())
+State(::Type{T}, items::Vector{AtomState{T}}) where T = begin
+    s = State{T}(items, length(items), -1, false, false, 0, ReadOnlyMatrix(zeros(T, 3, length(items))), nothing, Dict())
 end
+
+State(items::Vector{AtomState{T}}) where T = State(Units.defaultFloat, items)
 
 State{T}() where T = State{T}(0)
 
@@ -132,10 +134,10 @@ Base.lastindex(s::State) = s.size
 Base.eltype(::Type{State{T}}) where T = T
 Base.eltype(::State{T}) where T = T
 
-Base.splice!(s::State, range::UnitRange{Int}) = begin
+Base.splice!(s::State{T}, range::UnitRange{Int}) where {T <: AbstractFloat}= begin
     i = s.index_offset + range.start
     j = s.index_offset + range.stop
-    s2 = State(splice!(s.items, i:j))
+    s2 = State(T, splice!(s.items, i:j))
     s.size -= s2.size
     s2
 end
