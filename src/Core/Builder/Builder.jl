@@ -6,27 +6,27 @@ using ..ProtoSyn
 using ..ProtoSyn.Units: tonumber
 
 """
-    build([T=Float64,] grammar::LGrammar, derivation)
+    build(grammar::LGrammar{T}, derivation)
 
 Build a `Pose{Topology}` using the given `derivation` sequence on the provided
 `grammar` instructions.
 
 """
-function build(::Type{T}, grammar::LGrammar, derivation) where {T<:AbstractFloat}
+function build(grammar::LGrammar{T}, derivation) where {T<:AbstractFloat}
     top = Topology("UNK", 1)
     state = State{T}()
     state.id = top.id
     pose = Pose(top, state)
 
     if !isempty(derivation)
-        frag = fragment(T, grammar, derivation)
+        frag = fragment(grammar, derivation)
         append!(pose, frag) # Appending the fragment (which is a segment) to the Topology
         
         ProtoSyn.request_i2c(state; all=true)
     end
     pose
 end
-build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
+# build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
 
 
 export @seq_str

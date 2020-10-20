@@ -15,7 +15,7 @@ Base.show(io::IO, sr::StochasticRule) = begin
     println(io, sr.source, "(p=", sr.p, ") -> ", sr.production)
 end
 
-mutable struct LGrammar{K,V}
+mutable struct LGrammar{T <: AbstractFloat, K, V}
     rules::Dict{K, Vector{StochasticRule{K,V}}}
     variables::Dict{K, Fragment}
     operators::Dict{K, Function}
@@ -23,7 +23,7 @@ mutable struct LGrammar{K,V}
 end
 
 
-LGrammar{K,V}() where {K,V} = LGrammar(
+LGrammar{T, K, V}() where {T <: AbstractFloat, K, V} = LGrammar{T, K, V}(
     Dict{K, Vector{StochasticRule{K,V}}}(),
     Dict{K, Fragment}(),
     Dict{K, Function}(),
@@ -60,7 +60,7 @@ end
 
 hasrule(g::LGrammar, r) = haskey(g.rules, r)
 
-Base.push!(g::LGrammar{K,V}, r::StochasticRule{K,V}) where {K,V} = begin
+Base.push!(g::LGrammar{T, K, V}, r::StochasticRule{K,V}) where {T <: AbstractFloat, K, V} = begin
     push!(
         get!(g.rules, r.source, []),
         r
@@ -69,13 +69,13 @@ Base.push!(g::LGrammar{K,V}, r::StochasticRule{K,V}) where {K,V} = begin
 end
 
 
-Base.setindex!(g::LGrammar{K,V}, x::Fragment, key::K) where {K,V} = begin
+Base.setindex!(g::LGrammar{T, K, V}, x::Fragment, key::K) where {T <: AbstractFloat, K, V} = begin
     g.variables[key] = x
     g
 end
 
 
-Base.setindex!(g::LGrammar{K,V}, x::Function, key::K) where {K,V} = begin
+Base.setindex!(g::LGrammar{T, K, V}, x::Function, key::K) where {T <: AbstractFloat, K, V} = begin
     g.operators[key] = x
     g
 end
@@ -114,7 +114,7 @@ isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
 
 
 """
-    fragment([T=Float64], grammar::LGrammar, derivation) where {T <: AbstractFloat}
+    fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}
     
 Create and return a new fragment (`Pose` instance with just a single `Segment`)
 using the given `derivation` sequence on the provided `grammar` instructions.
@@ -122,12 +122,12 @@ Note: A fragment does not contain a `Topology` instance.
 
 # Examples
 ```jldoctest
-julia> frag = fragment(Float64, reslib, seq"AAA")
+julia> frag = fragment(reslib, seq"AAA")
 
 julia> frag = fragment(reslib, seq"AAA")
 ```
 """
-function fragment(::Type{T}, grammar::LGrammar, derivation) where {T <: AbstractFloat}
+function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}
 
     state = State{T}()
     seg = Segment("UNK", 1)
@@ -149,6 +149,7 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T <: Abstract
             frag = getvar(grammar, letter)
             
             frag2 = copy(frag)
+            # println("FRAG 2: $frag2")
 
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
@@ -165,7 +166,7 @@ function fragment(::Type{T}, grammar::LGrammar, derivation) where {T <: Abstract
     return Pose(seg, state)
 end
 
-fragment(grammar::LGrammar, derivation) = fragment(Units.defaultFloat, grammar, derivation)
+# fragment(grammar::LGrammar, derivation) = fragment(Units.defaultFloat, grammar, derivation)
 
 #endregion fragment
 
@@ -213,7 +214,7 @@ end
 
 
 """
-    lgfactory([T=Float64,] template::Dict) -> LGrammar{String,Vector{String}}
+    lgfactory([T=Float64,] template::Dict) -> LGrammar{T, String, Vector{String}}
 
 Create an `LGrammar` instance from the contencts of a `template` Dict (normally
 read from a grammar file).
@@ -240,7 +241,7 @@ amylose:
 ```
 """
 function lgfactory(::Type{T}, template::Dict) where T
-    grammar = LGrammar{String,Vector{String}}()
+    grammar = LGrammar{T, String, Vector{String}}()
 
     vars = template["variables"]
     for (key, name) in vars
@@ -255,7 +256,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         if haskey(opargs, "presets")
             for presets in values(opargs["presets"])
                 for (k, v) in presets
-                    presets[k] = tonumber(v)
+                    presets[k] = tonumber(T, v)
                 end
             end
         end
@@ -263,7 +264,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         if haskey(opargs, "offsets")
             offsets = opargs["offsets"]
             for (k,v) in offsets
-                offsets[k] = tonumber(v)
+                offsets[k] = tonumber(T, v)
             end
         end
 

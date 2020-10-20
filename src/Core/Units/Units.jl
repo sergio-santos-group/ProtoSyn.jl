@@ -15,7 +15,10 @@ const nm = 10Å
 const m = 1e10Å
 const J = kJ/1000
 
-tonumber(v::Number) = v
-tonumber(v::String) = eval(Meta.parse(v))
+tonumber(T::DataType, v::Number) = T(v)
+tonumber(v::Number)      = tonumber(defaultFloat, v)
+
+tonumber(T::DataType, v::String) = T(eval(Meta.parse(v)))
+tonumber(v::String)      = tonumber(defaultFloat, v)
 
 end

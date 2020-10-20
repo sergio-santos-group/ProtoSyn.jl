@@ -39,17 +39,10 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     for (index, pivot) in enumerate(yml["atoms"])
         atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
         s = state[index]
-        # if conv
-        #     s.θ = deg2rad(pivot["theta"])
-        #     s.ϕ = deg2rad(pivot["phi"])
-        # else
-        #     s.θ = pivot["theta"]
-        #     s.ϕ = pivot["phi"]
-        # end
-        # s.b = T(pivot["b"])
-        s.θ = tonumber(pivot["theta"])
-        s.ϕ = tonumber(pivot["phi"])
-        s.b = tonumber(pivot["b"])
+
+        s.θ = tonumber(T, pivot["theta"])
+        s.ϕ = tonumber(T, pivot["phi"])
+        s.b = tonumber(T, pivot["b"])
     end
 
     # add bonds
@@ -78,7 +71,6 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     request_i2c(state; all=true)
     top.id = state.id = genid()
     sync!(Pose(top, state))
-
 end
 
 # Base.read(::Type{T}, filename::AbstractString, ::Type{PDB}) where {T<:AbstractFloat} = begin
@@ -100,6 +92,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     seekstart(io)
     natoms = mapreduce(l->startswith(l, "ATOM")||startswith(l, "HETATM"), +, eachline(io); init=0)
+    x = zeros(T, 3, natoms)
     
     id2atom = Dict{Int, Atom}()
     
@@ -138,9 +131,13 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             id2atom[atid] = atom
             
             s = state[atmindex]
-            s.t[1] = parse(T, line[31:38])
-            s.t[2] = parse(T, line[39:46])
-            s.t[3] = parse(T, line[47:54])
+            xi = parse(T, line[31:38])
+            s.t[1] = xi
+            yi = parse(T, line[39:46])
+            s.t[2] = yi
+            zi = parse(T, line[47:54])
+            s.t[3] = zi
+            x[:, atmindex] = [xi, yi, zi]
             atmindex += 1
 
         elseif startswith(line, "CONECT")
@@ -152,6 +149,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             end
         end
     end
+    state.x = ReadOnlyMatrix(x)
     top.id = state.id = genid()
     
     # request conversion from cartesian to internal

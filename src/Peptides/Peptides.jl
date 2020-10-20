@@ -269,18 +269,19 @@ function setdihedral!(s::State, residue::Residue, dihedral_type::Dihedral.Dihedr
         length(residue.children) == 0 && return s
         residue = residue.children[1]
     end
-    ProtoSyn.Builder.setdihedral!(s, residue[dihedral_type.atom], value)
+    ProtoSyn.setdihedral!(s, residue[dihedral_type.atom], value)
     s
 end
 
 
-function build(::Type{T}, grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T<:AbstractFloat}
+function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
-    pose = Builder.build(T, grammar, derivation)
+    pose = Builder.build(grammar, derivation)
     setss!(pose, ss)
+    sync!(pose)
     pose
 end
-build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(Float64, grammar, derivation, ss)
+# build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(ProtoSyn.Units.defaultFloat, grammar, derivation, ss)
 
 
 function load(filename::AbstractString)
@@ -378,5 +379,33 @@ function uncap!(pose::Pose, residue::Residue)
 
     ProtoSyn.request_i2c(pose.state)
 end
+
+
+function rotate_dihedral!(s::State, residue::Residue, dihedral_type::Dihedral.DihedralType, value::T) where {T <: AbstractFloat}
+
+    if dihedral_type == Dihedral.psi
+        length(residue.children) == 0 && return s
+        residue = residue.children[1]
+    end
+    ProtoSyn.rotate_dihedral!(s, residue[dihedral_type.atom], value)
+    s
+end
+
+
+"""
+TO DO
+"""
+function get_sequence(container::ProtoSyn.AbstractContainer)::String
+
+    sequence = ""
+    for residue in eachresidue(container)
+        sequence *= three_2_one[residue.name]
+    end
+
+    return sequence
+end
+
+get_sequence(pose::Pose) = get_sequence(pose.graph)
+
 
 end

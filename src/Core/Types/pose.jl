@@ -10,10 +10,10 @@ interaction graph and the current state of the system represented.
 
 Return a Pose instance from a fragment, where the State is empty/blank.
 """
-struct Pose{T<:AbstractContainer}
+mutable struct Pose{T <: AbstractContainer}
     graph::T
     state::State
-    Pose(c::T, s::State) where {T<:AbstractContainer}= begin
+    Pose(c::T, s::State) where {T <: AbstractContainer}= begin
         c.id != s.id && error("unpairable container and state")
         new{T}(c, s)
     end
