@@ -49,7 +49,7 @@ if STEPWISE
     r13  = ProtoSyn.load("examples/r13.yml")
     r123 = ProtoSyn.load("examples/r123.yml")
 
-    grammar = LGrammar{Char,String}()
+    grammar = LGrammar{Char, String}()
 
     # add variables
     grammar['A'] = ProtoSyn.fragment(r13)

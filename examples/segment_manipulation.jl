@@ -9,6 +9,65 @@ println("ProtoSyn loaded successfully.")
 
 # Example 1.
 # -> Create a new segment from an aminoacid string
+T = Float64
+n_samples = 10
+res_lib = grammar(T);
+pose = Peptides.build(res_lib, seq"GG");
+
+verlet_list = ProtoSyn.Calculators.VerletList(pose.state.size);
+verlet_list.cutoff = 3.0;
+@time ProtoSyn.Calculators.update_simd!(verlet_list, pose);
+ProtoSyn.Calculators.serial(pose.state, verlet_list)
+# pose = Peptides.load("../2a3d.pdb");
+
+
+
+ProtoSyn.Calculators.cuda(pose.state);
+@time begin
+    for i in 1:n_samples
+        ProtoSyn.Calculators.cuda(pose.state);
+    end
+end
+
+verlet_list = ProtoSyn.Calculators.VerletList(pose.state.size);
+verlet_list.cutoff = 12.0; # In Angstrom (Å)
+@time ProtoSyn.Calculators.update_simd!(verlet_list, pose.state);
+@time ProtoSyn.Calculators.update_simd!(verlet_list, pose.state);
+
+ProtoSyn.Calculators.simd(pose.state, verlet_list);
+@time begin
+    for i in 1:n_samples
+        ProtoSyn.Calculators.simd(pose.state, verlet_list);
+    end
+end
+
+# @time ProtoSyn.Calculators.simd(pose.state, verlet_list, Vec{8, Float64});
+# @time ProtoSyn.Calculators.opa(pose.state, verlet_list);
+
+verlet_list = ProtoSyn.Calculators.VerletList(pose.state.size);
+verlet_list.cutoff = 12.0;
+@time ProtoSyn.Calculators.update_serial!(verlet_list, pose.state);
+@time ProtoSyn.Calculators.update_serial!(verlet_list, pose.state);
+
+ProtoSyn.Calculators.serial(pose.state, verlet_list);
+@time begin
+    for i in 1:n_samples
+        ProtoSyn.Calculators.serial(pose.state, verlet_list);
+    end
+end
+
+# ProtoSyn.Calculators.serial(pose.state)
+
+# julia> ProtoSyn.Calculators.naive(pose.state, Inf)
+# 7×7 Array{Float64,2}:
+#  0.0  1.00939  1.44898  2.08368  2.08368  2.44014  2.66707
+#  0.0  0.0      2.12288  2.83006  2.83006  2.51674  2.24842
+#  0.0  0.0      0.0      1.08987  1.08987  1.52233  2.39287
+#  0.0  0.0      0.0      0.0      1.78     2.14098  3.08794
+#  0.0  0.0      0.0      0.0      0.0      2.14098  3.08794
+#  0.0  0.0      0.0      0.0      0.0      0.0      1.22933
+#  0.0  0.0      0.0      0.0      0.0      0.0      0.0
+
 
 # Peptides.append_residues!(pose, pose.graph[1][end], res_lib, seq"GGG");
 # unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
@@ -31,8 +90,130 @@ println("ProtoSyn loaded successfully.")
 # Builder.setdihedral!(pose.state, pose.graph[1][3]["C"], 0°);
 # Peptides.setss!(pose, SecondaryStructure[:helix], rid"2:end");
 
-res_lib = grammar();
-pose = Peptides.build(res_lib, seq"AAAAAAAAAAAA");
+# pose = Peptides.load("../2a3d.pdb");
+
+using PyCall
+torch    = pyimport("torch")
+torchani = pyimport("torchani")
+
+if torch.cuda.is_available()
+    device = torch.device("cuda")
+else
+    device = torch.device("cpu")
+end
+
+model = torchani.models.ANI2x(periodic_table_index = true).to(device)
+
+function calc_ani_energy(pose::Pose, model)
+    c = get_cartesian_matrix(pose)
+    coordinates = torch.tensor([c], requires_grad = true, device = device).float()
+
+    s = get_ani_species(pose)
+    species = torch.tensor([s], device = device)
+
+    return float(model((species, coordinates)))
+end
+
+function model2(t::Tuple)
+
+    global model
+
+    m1 = model.species_converter(t)
+    m2 = model.aev_computer(m1)
+    m3 = get(model.neural_networks, 0)(m2)
+    # println(m3)
+    return m3[2].item()
+    # return model.energy_shifter(m3)
+end
+
+# ---
+
+function uncap(pose) # Pyrosetta version
+
+    ris = pyrosetta.rosetta.core.select.residue_selector.ResidueIndexSelector
+    cap_indexes = ""
+    for residue in pose.residues
+        if residue.is_terminus()
+            cap_indexes *= "$(residue.seqpos()),"
+        end
+    end
+    println(cap_indexes[1:(end-1)])
+    caps = ris(cap_indexes[1:(end-1)])
+
+    uncapper = pyrosetta.rosetta.protocols.simple_moves.ModifyVariantTypeMover()
+    uncapper.set_additional_type_to_remove("LOWER_TERMINUS_VARIANT")
+    uncapper.set_additional_type_to_remove("UPPER_TERMINUS_VARIANT")
+    uncapper.set_residue_selector(caps)
+    uncapper.set_update_polymer_bond_dependent_atoms(true)
+
+    uncapper.apply(pose)
+end
+
+
+pyrosetta = pyimport("pyrosetta")
+pyrosetta.init()
+
+pyrosetta_score_fn = pyrosetta.get_fa_scorefxn()
+
+function calc_pyrosetta_energy(pose::Pose)
+
+    global pyrosetta_score_fn
+    global pyrosetta
+
+    pyrosetta_pose = pyrosetta.pose_from_sequence(Peptides.get_sequence(pose))
+    # Set coords TO DO
+    return pyrosetta_score_fn(pyrosetta_pose)
+end
+
+# ---
+
+pose1 = Peptides.build(res_lib, seq"KKKKKKKKKKKKKKKKK");
+pose = Peptides.build(res_lib, seq"NNNNNNNNNNNNNNNNNN");
+pose = Peptides.load("../2a3d.pdb");
+
+n_steps = 1000
+t = 0.005
+print_every = 50
+step_size = 0.15
+
+e = calc_ani_energy(pose, model2)
+saved_state = copy(pose.state)
+accepted = 0
+
+io = open("../teste.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+
+for step in 1:n_steps
+    global e
+    global saved_state
+    global accepted
+    global print_every
+    global step_size
+    
+    r = rand(pose.graph.items[1].items)
+    phi_psi = rand([Peptides.Dihedral.phi, Peptides.Dihedral.psi])
+    val = randn() * step_size # in radians
+    Peptides.rotate_dihedral!(pose.state, r, phi_psi, val)
+    ne = calc_ani_energy(pose, model2)
+    n = rand()
+
+    if (ne < e) || (n < exp((e - ne)/ t))
+        e = ne
+        saved_state = copy(pose.state)
+        accepted += 1
+    else
+        pose.state = copy(saved_state)
+    end
+
+    if step % print_every == 0
+        @printf("Step: %4d | Energy: %10.3f | Acceptance Rate: %s\n", step, e, accepted/step) 
+        io = open("../teste.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+    end
+end
+
+calc_ani_energy(pose, model2)
+
+
+
 # residues = rid"1:end"(pose, gather = true)
 # for r in residues
 #     Peptides.setdihedral!(pose.state, r, Peptides.Dihedral.phi, -60°)

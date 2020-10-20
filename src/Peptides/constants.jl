@@ -6,7 +6,7 @@ const one_2_three = Dict{Char,String}(
     'E' => "GLU",
     'F' => "PHE",
     'G' => "GLY",
-    'H' => "HIE",
+    'H' => "HIS",
     'I' => "ILE",
     'K' => "LYS",
     'L' => "LEU",
@@ -22,7 +22,7 @@ const one_2_three = Dict{Char,String}(
     'Y' => "TYR",
 )
 
-const three_2_one = Dict{String,Char}(v=>k for (k,v) in one_2_three)
+const three_2_one = Dict{String, Char}(v=>k for (k,v) in one_2_three)
 
 baremodule Dihedral
     struct DihedralType
