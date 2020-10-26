@@ -22,50 +22,12 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
     include("Core/Builder/grammar.jl")
     include("Core/Builder/Builder.jl")
 end
-Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
-
-include("Core/base.jl")
-include("Core/selection2.jl")
-
-
-export Fragment
-const Fragment = Pose{Segment}
-
-export ResidueDB
-const ResidueDB = Dict{String, Fragment}
-
-include("Core/io.jl")           # <-- ATTENTION
-include("Core/iterators.jl")    # <-- ATTENTION
-include("Core/methods.jl")
-# include("Core/loaders.jl")
-
-
-
-#region SUBMODULES ------------------------------
-include("Core/Builder/Builder.jl")
-
-include("Peptides/Peptides.jl")
-include("Sugars/Sugars.jl")
-# include("Forcefields/Forcefields.jl")
-# include("Calculators/Calculators.jl")
-# include("Drivers/Drivers.jl")
-
-#endregion
-
-
-
-# include("nbdisplay.jl")
-# function __init__()
-#     if isdefined(Main, :IJulia) && Main.IJulia.inited
-#         println("Embedding javascript")
-#         embed_javascript()
-#     end
-# end
 
 @info "Loading Peptides"
 @time include("Peptides/Peptides.jl")
 
-# include("Sugars/Sugars.jl")
+@info "Loading Peptides"
+@time include("Peptides/Peptides.jl")
 
 @info "Loading Calculators"
 include("Calculators/Calculators.jl")
