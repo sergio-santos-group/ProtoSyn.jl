@@ -18,12 +18,19 @@ end
     VerletList(size::Int, capacity::Int, cutoff::Float64, offset::Vector{Int}, list::Vector{Int})
 
 Hold information regarding the neighbouring particles of each particle
-in the system.
+in the system. A Verlet list is comprised of two arrays: the `list`, containing
+the neighbouring atoms (j) of atom i, with sequential atoms divided by a `-1`
+entry; and the `offset` array, containing the positions in array `list` for each
+atom i. Neighbouring atoms are defined as having a distance bellow the defined
+`cutoff`.
 
     VerletList(size::Int)
     
-Creates a new Verlet list with infinite cutoff (holds) all atoms in the
-molecule.
+Creates a new Verlet list with infinite cutoff (holds all atoms in the
+molecule).
+
+# See also
+`update_serial!`, `update_simd!`
 
 # Examples
 ```jldoctest
@@ -60,15 +67,16 @@ end
 
 
 """
-    update_serial!(verlet_list::VerletList, coords::Matrix{T}) where {T <: AbstractFloat}
+    update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
 
-        Updates the Verlet list (using a serial approach) according to the
-        defined 'verlet_list.cutoff' and the given coordinates 'coords' (can be in
-        both AoS or SoA formats).
+Updates the Verlet list (using a serial SISD approach) according to the
+defined 'verlet_list.cutoff' and the given coordinates 'coords' (must be
+in AoS format).
 
-    Example:
-
-        update_serial!(vl, pose.state.x)
+# Examples
+```jldoctest
+julia> update_serial!(verlet_list, pose.state.x)
+```
 """
 function update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
     # coords must be in AoS format
@@ -125,6 +133,21 @@ function update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{Prot
 end
 
 
+export update_simd! 
+
+"""
+    update_simd!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing) where {T <: AbstractFloat}
+
+Updates the Verlet list (using a serial SISD approach) according to the defined
+'verlet_list.cutoff' and the given coordinates defined in `pose.state.x` (must
+be in AoS format). If a `selection` is given, only atoms included in that
+selection are considered when updating the `verlet_list`.
+
+# Examples
+```jldoctest
+julia> update_serial!(verlet_list, pose.state.x)
+```
+"""
 function update_simd!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
 
     @assert verlet_list.size == pose.state.size "incompatible sizes"

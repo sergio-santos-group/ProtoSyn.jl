@@ -15,6 +15,8 @@ const nm = 10Å
 const m = 1e10Å
 const J = kJ/1000
 
+export tonumber
+
 tonumber(T::DataType, v::Number) = T(v)
 tonumber(v::Number)      = tonumber(defaultFloat, v)
 

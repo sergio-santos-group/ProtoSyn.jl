@@ -23,6 +23,17 @@ exit(1)
 
 sync!(pose)
 
+# Try each one individually
+selection = @resname "ALA"
+# selection = @resname "ALA" | @resname "GLN"
+# selection = @resname "ALA" & @resname "GLN"
+# selection = (@resname "ALA" | @resname "GLN") & @resname "ALA"
+
+println(selection(pose.graph))
+exit(1)
+
+sync!(pose)
+
 selection = @resname "ALA"
 # selection = @resname "ALA" | @resname "GLN"
 # selection = @resname "ALA" & @resname "GLN"

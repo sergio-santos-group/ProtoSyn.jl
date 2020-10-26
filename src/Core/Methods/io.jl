@@ -12,7 +12,7 @@ end
 
 load(::Type{T}, filename::AbstractString, ::Type{K}) where {T,K} = begin
     pose = load(T, open(filename), K)
-    name,ext = splitext(basename(filename))
+    name, ext = splitext(basename(filename))
     pose.graph.name = name
     pose
 end
@@ -40,9 +40,9 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
         atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
         s = state[index]
 
-        s.θ = tonumber(T, pivot["theta"])
-        s.ϕ = tonumber(T, pivot["phi"])
-        s.b = tonumber(T, pivot["b"])
+        s.θ = ProtoSyn.Units.tonumber(T, pivot["theta"])
+        s.ϕ = ProtoSyn.Units.tonumber(T, pivot["phi"])
+        s.b = ProtoSyn.Units.tonumber(T, pivot["b"])
     end
 
     # add bonds

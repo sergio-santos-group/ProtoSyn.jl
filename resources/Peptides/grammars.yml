@@ -6,8 +6,8 @@ peptide:
   #  P:
   #    - {p: 1.0, production: [β,P]}
   variables:
-    A: Peptides/yml/ala.yml
     B: Peptides/yml/bkb.yml
+    A: Peptides/yml/ala.yml
     C: Peptides/yml/cys.yml
     D: Peptides/yml/asp.yml
     E: Peptides/yml/glu.yml

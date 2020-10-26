@@ -52,7 +52,7 @@ let
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
 
-    _model           = model
+    _model           = model2
     movable_residues = 20:27
     s                = get_ani_species(pose)
     species          = torch.tensor([s], device = device)
@@ -63,7 +63,7 @@ let
     print_every      = 100
     init_step_size   = 1.0
     accepted         = 0
-    e                = calc_energy(pose, _model)
+    e                = calc_energy(pose, _model)()
     init_e           = e
     be               = e
     results          = Dict(1 => e)
@@ -75,14 +75,14 @@ let
 
 
     # Loop algorithm
-    for start in 1:n_starts
-        for cycle in 1:n_cycles
+    @time for start in 1:n_starts
+        @time for cycle in 1:n_cycles
             # start_temp = - (((cycle - 1)^2 * init_temp) / (n_cycles^2)) + init_temp # quadratic
             start_temp = - (((cycle - 1) * init_temp) / n_cycles) + init_temp # linear
             # start_step_size = - (((cycle - 1)^2 * init_step_size) / (n_cycles^2)) + init_step_size # quadratic
             start_step_size = - (((cycle - 1) * init_step_size) / n_cycles) + init_step_size # linear
             
-            for step in 1:n_steps    
+            @time for step in 1:n_steps    
 
                 # temperature = - (((step - 1)^2 * start_temp) / (n_steps^2)) + start_temp # quadratic
                 temperature = - (((step - 1) * start_temp) / n_steps) + start_temp
@@ -93,7 +93,7 @@ let
                 phi_psi = rand([Peptides.Dihedral.phi, Peptides.Dihedral.psi])
                 val = randn() * π * step_size # in radians
                 Peptides.rotate_dihedral!(pose.state, r, phi_psi, val)
-                ne = calc_energy(pose, _model)
+                ne = calc_energy(pose, _model)()
                 n = rand()
 
                 if (ne < e) || (n < exp((e - ne)/ temperature))

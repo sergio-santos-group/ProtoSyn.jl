@@ -1,9 +1,27 @@
 push!(LOAD_PATH, "../src")
 
 using ProtoSyn
+using ProtoSyn.Calculators
 using ProtoSyn.Peptides
 using ProtoSyn.Builder
 using ProtoSyn.Units
+
+res_lib = grammar(Float64);
+pose = Peptides.build(res_lib, seq"GGGGGGGGGGGGGGGGGGGG");
+
+# results = Dict{String, Vector{Float64}}()
+for aminoacid in ["A", "R", "N", "D", "C", "E", "Q", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+    pose = Peptides.build(res_lib, [aminoacid])
+
+    results = "$aminoacid"
+    results *= @sprintf(" %10.5f", ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(pose))
+    for i in 0:7
+        results *= @sprintf(" %10.5f", ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose, i))
+    end
+
+    println(results)
+end
+
 
 println("ProtoSyn loaded successfully.")
 
@@ -19,8 +37,6 @@ verlet_list.cutoff = 3.0;
 @time ProtoSyn.Calculators.update_simd!(verlet_list, pose);
 ProtoSyn.Calculators.serial(pose.state, verlet_list)
 # pose = Peptides.load("../2a3d.pdb");
-
-
 
 ProtoSyn.Calculators.cuda(pose.state);
 @time begin
@@ -84,8 +100,8 @@ end
 # Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 180°); # Bug: is measuring i-2 and setting i-1
 # io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 
-# Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.phi, -60°)
-# Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.psi, -45°)
+# Peptides.setdihedral!(pose.state, pose.graph[1][23], Peptides.Dihedral.phi, -60°)
+# Peptides.setdihedral!(pose.state, pose.graph[1][23], Peptides.Dihedral.psi, 150°)
 # Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.omega, 180°)
 # Builder.setdihedral!(pose.state, pose.graph[1][3]["C"], 0°);
 # Peptides.setss!(pose, SecondaryStructure[:helix], rid"2:end");

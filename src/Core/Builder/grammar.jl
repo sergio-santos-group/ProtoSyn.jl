@@ -256,7 +256,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         if haskey(opargs, "presets")
             for presets in values(opargs["presets"])
                 for (k, v) in presets
-                    presets[k] = tonumber(T, v)
+                    presets[k] = ProtoSyn.Units.tonumber(T, v)
                 end
             end
         end
@@ -264,7 +264,7 @@ function lgfactory(::Type{T}, template::Dict) where T
         if haskey(opargs, "offsets")
             offsets = opargs["offsets"]
             for (k,v) in offsets
-                offsets[k] = tonumber(T, v)
+                offsets[k] = ProtoSyn.Units.tonumber(T, v)
             end
         end
 

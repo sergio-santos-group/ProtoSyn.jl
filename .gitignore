@@ -4,6 +4,7 @@
 *.DS_STORE
 *.zip
 *.txt
+*.pdb
 
 docs/build/
 .vscode/

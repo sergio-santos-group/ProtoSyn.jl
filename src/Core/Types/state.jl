@@ -86,7 +86,7 @@ mutable struct State{T <: AbstractFloat}
     f::Opt{Matrix{T}}
     # f::Array{T,2}
     # v::Array{T,2}
-    e::Dict{Symbol,T}
+    e::Dict{Symbol, T}
 end
 
 State{T}(n::Int) where T = begin

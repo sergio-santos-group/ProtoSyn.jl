@@ -49,3 +49,49 @@ const SecondaryStructure = Dict{Symbol, NTuple{3, Number}}(
     :linear             => map(deg2rad, ( 180.0, 180.0, 180.0)),
     :helix              => map(deg2rad, ( -60.0, -45.0, 180.0))
 )
+
+const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ALA" =>  1.8,
+    "CYS" =>  2.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "PHE" =>  2.8,
+    "GLY" => -0.4,
+    "HIS" => -3.2,
+    "ILE" =>  4.5,
+    "LYS" => -3.9,
+    "LEU" =>  3.8,
+    "MET" =>  1.9,
+    "ASN" => -3.5,
+    "PRO" => -1.6,
+    "GLN" => -3.5,
+    "ARG" => -4.5,
+    "SER" => -0.8,
+    "THR" => -0.7,
+    "VAL" =>  4.2,
+    "TRP" => -0.9,
+    "TYR" => -1.3
+)
+
+const doolitle_hydrophobicity_mod = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" =>  6.5,
+    "VAL" =>  6.2,
+    "LEU" =>  5.8,
+    "PHE" =>  4.8,
+    "CYS" =>  4.5,
+    "MET" =>  3.9,
+    "ALA" =>  3.8,
+    "GLY" => -0.4,
+    "THR" => -0.7,
+    "SER" => -0.8,
+    "TRP" => -0.9,
+    "TYR" => -1.3,
+    "PRO" => -1.6,
+    "HIS" => -3.2,
+    "ASN" => -3.5,
+    "GLN" => -3.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "LYS" => -3.9,
+    "ARG" => -4.5
+)
