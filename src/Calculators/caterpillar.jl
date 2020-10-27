@@ -1,7 +1,7 @@
 module Caterpillar
 
     using ProtoSyn
-    using ProtoSyn.Calculators: EnergyFunctionComponent, distance_matrix_cuda
+    using ProtoSyn.Calculators: EnergyFunctionComponent
     using CUDA
 
     """
@@ -36,7 +36,7 @@ module Caterpillar
 
     """
     """
-    function calc_solvation_energy_cuda(pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
         # coords must be in AoS format
         
         s = (an"CA")(pose, gather = true)
@@ -82,9 +82,9 @@ module Caterpillar
 
     """
     """
-    function calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(::Type{ProtoSyn.SISD_0}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
             
-        dm       = distance_matrix_cuda(pose, an"CA")
+        dm       = distance_matrix(pose, an"CA")
         residues = collect(eachresidue(pose.graph))
         esol = T(0)
 
@@ -105,6 +105,10 @@ module Caterpillar
         end
 
         return esol
+    end
+
+    calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat} = begin
+        calc_solvation_energy(ProtoSyn.acceleration, pose; Ω, rmax, sc)
     end
 
     solvation_energy = EnergyFunctionComponent("Caterpillar_Solvation", calc_solvation_energy)

@@ -1,6 +1,6 @@
 module TorchANI
 
-    using ProtoSyn: Pose, get_ani_species, get_cartesian_matrix
+    using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
     using PyCall
 
@@ -9,8 +9,14 @@ module TorchANI
     const device   = PyNULL()
     const _model   = PyNULL()
 
+    # --- SINGLE MODEL
 
-    function calc_torchani_model(pose::Pose; model_index::Int = 3)
+    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; model_index::Int = 3)
+        println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
+        return 0.0
+    end
+
+    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose; model_index::Int = 3)
         
         c           = get_cartesian_matrix(pose)
         coordinates = torch.tensor([c], requires_grad = true, device = device).float()
@@ -23,8 +29,19 @@ module TorchANI
         return get(_model.neural_networks, model_index)(m2)[2].item()
     end
 
+    calc_torchani_model(pose::Pose; model_index::Int = 3) = begin
+        calc_torchani_model(ProtoSyn.acceleration, pose; model_index = model_index)
+    end
 
-    function calc_torchani_ensemble(pose::Pose)
+    # --- ENSEMBLE
+
+
+    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose)
+        println("ERROR: 'calc_torchani_ensemble' requires CUDA_2 acceleration.")
+        return 0.0
+    end
+
+    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose)
         
         c           = get_cartesian_matrix(pose)
         coordinates = torch.tensor([c], requires_grad = true, device = device).float()
@@ -36,6 +53,11 @@ module TorchANI
         m2 = _model.aev_computer(m1)
         return _model.neural_networks(m2)[2].item()
     end
+
+    calc_torchani_ensemble(pose::Pose) = begin
+        calc_torchani_ensemble(ProtoSyn.acceleration, pose)
+    end
+
 
 
     function __init__()

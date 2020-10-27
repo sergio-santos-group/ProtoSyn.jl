@@ -78,7 +78,7 @@ in AoS format).
 julia> update_serial!(verlet_list, pose.state.x)
 ```
 """
-function update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
     # coords must be in AoS format
     
     @assert verlet_list.size == pose.state.size "incompatible sizes"
@@ -133,22 +133,7 @@ function update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{Prot
 end
 
 
-export update_simd! 
-
-"""
-    update_simd!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing) where {T <: AbstractFloat}
-
-Updates the Verlet list (using a serial SISD approach) according to the defined
-'verlet_list.cutoff' and the given coordinates defined in `pose.state.x` (must
-be in AoS format). If a `selection` is given, only atoms included in that
-selection are considered when updating the `verlet_list`.
-
-# Examples
-```jldoctest
-julia> update_serial!(verlet_list, pose.state.x)
-```
-"""
-function update_simd!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
 
     @assert verlet_list.size == pose.state.size "incompatible sizes"
 
