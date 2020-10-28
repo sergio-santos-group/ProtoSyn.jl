@@ -6,15 +6,6 @@ using Base.Cartesian
 @time begin
     include("verlet_list.jl")
     include("distance_matrix.jl")
-    
-    # include("serial.jl")
-
-    # @info " | Loading SIMD"
-    # using SIMD
-    # include("simd.jl")
-
-    # @info " | Loading CUDA"
-    # include("cuda.jl")
 
     # Load energy function components
     struct EnergyFunctionComponent

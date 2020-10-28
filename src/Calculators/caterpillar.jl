@@ -1,10 +1,13 @@
 module Caterpillar
 
     using ProtoSyn
-    using ProtoSyn.Calculators: EnergyFunctionComponent
+    using ProtoSyn.Calculators: EnergyFunctionComponent, full_distance_matrix
     using CUDA
 
     """
+        calc_solvation_energy_kernel(coords::CuDeviceArray{T}, Ωi::CuDeviceMatrix{T}, n::Int, rmax::T, sc::T) where {T <: AbstractFloat}
+
+    Kernel for CUDA_2 acceleration of `calc_solvation_energy` function.
     """
     function calc_solvation_energy_kernel(coords::CuDeviceArray{T}, Ωi::CuDeviceMatrix{T}, n::Int, rmax::T, sc::T) where {T <: AbstractFloat}
         # Note: coords must be in AoS format
@@ -35,6 +38,21 @@ module Caterpillar
 
 
     """
+        Calculators.calc_solvation_energy([::A], pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {A, T <: AbstractFloat}
+        
+    Calculate the pose solvation energy according to the Caterpillar model. The
+    model can be fine-tuned: `Ω` defines the minimum number of Cɑ-Cɑ contacts to
+    consider a residue 'burried'; `rmax` defines the minimum distance between
+    Cɑ's for a contact to be considered (in Angstrom Å); `sc` defines the 'slope
+    control' (a higher value defines more sharply when to consider a contact).
+    The optional `A` parameter defines the acceleration mode used (SISD_0,
+    SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration mode
+    will be used.
+
+    # Examples
+    ```jldoctest
+    julia> Calculators.calc_solvation_energy(pose)
+    ```
     """
     function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
         # coords must be in AoS format
@@ -46,7 +64,6 @@ module Caterpillar
             coords[:, i] = pose.state[atom].t
         end
 
-        # _size   = trunc(Int64, length(coords)/3)
         _coords = CuArray(coords)
         
         # Define the configuration
@@ -80,11 +97,9 @@ module Caterpillar
     end
 
 
-    """
-    """
-    function calc_solvation_energy(::Type{ProtoSyn.SISD_0}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
             
-        dm       = distance_matrix(pose, an"CA")
+        dm       = full_distance_matrix(A, pose, an"CA")
         residues = collect(eachresidue(pose.graph))
         esol = T(0)
 

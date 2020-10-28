@@ -11,6 +11,23 @@ module TorchANI
 
     # --- SINGLE MODEL
 
+    """
+        Calculators.calc_torchani_model([::A], pose::Pose; model_index::Int = 3) where {A}
+        
+    Calculate the pose energy according to a single TorchANI model neural
+    network. The model can be defined using `model_index` (from model 1 to 8,
+    default is 3). The optional `A` parameter defines the acceleration mode used
+    (only CUDA_2 is available). If left undefined the default
+    ProtoSyn.acceleration mode will be used.
+
+    #See also:
+    `calc_torchani_ensemble`
+
+    # Examples
+    ```jldoctest
+    julia> Calculators.calc_torchani_model(pose)
+    ```
+    """
     function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; model_index::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
         return 0.0
@@ -35,7 +52,22 @@ module TorchANI
 
     # --- ENSEMBLE
 
+    """
+        Calculators.calc_torchani_ensemble([::A], pose::Pose) where {A}
+    
+    Calculate the pose energy according to the whole TorchANI neural
+    network ensemble. The optional `A` parameter defines the acceleration mode
+    used (only CUDA_2 is available). If left undefined the default
+    ProtoSyn.acceleration mode will be used.
 
+    #See also:
+    `calc_torchani_model`
+
+    # Examples
+    ```jldoctest
+    julia> Calculators.calc_torchani_ensemble(pose)
+    ```
+    """
     function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose)
         println("ERROR: 'calc_torchani_ensemble' requires CUDA_2 acceleration.")
         return 0.0
@@ -57,7 +89,6 @@ module TorchANI
     calc_torchani_ensemble(pose::Pose) = begin
         calc_torchani_ensemble(ProtoSyn.acceleration, pose)
     end
-
 
 
     function __init__()

@@ -5,50 +5,52 @@ using SIMD
 # ------------- SISD -----------------------------------------------------------
 
 """
-    Calculators.distance_matrix_serial(coords::Matrix{T}) where {T <: AbstractFloat}
-    Calculators.distance_matrix_serial(state::State{T}) where {T <: AbstractFloat}
-    Calculators.distance_matrix_serial(pose::Pose)
-
+    Calculators.distance_matrix([::A], coords::Matrix{T}) where {A, T <: AbstractFloat}
+    Calculators.distance_matrix([::A], state::State{T}) where {A, T <: AbstractFloat}
+    Calculators.distance_matrix([::A], pose::Pose) where {A}
+    
 Return a distance matrix with the distance of all pairs of coordinates in
-`coords` (this should be a Matrix{T} in AoS format), in the CPU using SISD
-architecture. Instead of a Matrix{T} `coords`, a `State` or `Pose` can be
-provided, in which case the coordinates considered are all the existent in the
-State or Pose.state, respectively.
-
-    Calculators.distance_matrix_serial(pose::Pose, selection::ProtoSyn.AbstractSelection)
+`coords` (this should be a Matrix{T} in AoS format) above the triangular matrix.
+Instead of a Matrix{T} `coords`, a `State` or `Pose` can be provided, in which
+case the coordinates considered are all the existent in the State or Pose.state,
+respectively. The optional `A` parameter defines the acceleration mode used
+(SISD_0, SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration
+mode will be used.
+    
+    Calculators.distance_matrix([::A], pose::Pose, selection::ProtoSyn.AbstractSelection)
 
 Return a distance matrix with the distance of all pairs of atoms in the Pose
-`pose` who are included in the given `selection`, in the CPU using SISD
-architecture.
+`pose` who are included in the given `selection` and above the triangular
+matrix. The optional `A` parameter defines the acceleration mode used (SISD_0,
+SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration mode will
+be used.
 
-    Calculators.distance_matrix_serial(coords::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat}
-    Calculators.distance_matrix_serial(state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat}
-    Calculators.distance_matrix_serial(pose::Pose, verlet_list::VerletList)
+    Calculators.distance_matrix([::A], coords::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat}
+    Calculators.distance_matrix([::A], state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat}
+    Calculators.distance_matrix([::A], pose::Pose, verlet_list::VerletList)
 
 Return a distance matrix with the distance of all pairs of coordinates in the
-`VerletList` `verlet_list`, in the CPU using SISD architecture. Check `VerletList` for 
-a more in-depth look at how Verlet lists work. Instead of a Matrix{T} `coords`,
-a `State` or `Pose` can be provided, in which case the coordinates considered
-are existent in the State or Pose.state, respectively. _Note:_ Selections can
-still be applied when using Verlet lists, but need to be applied when updating
-the lists themselves. Check `VerletList` for a more in-depth look at how Verlet
-lists work.
-
-# See also
-
-`distance_matrix_simd`, `distance_matrix_cuda`
+`VerletList` `verlet_list`. Instead of a Matrix{T} `coords`, a `State` or `Pose`
+can be provided, in which case the coordinates considered are existent in the
+State or Pose.state, respectively. _Note:_ Selections can still be applied when
+using Verlet lists, but need to be applied when updating the lists themselves.
+Check `VerletList` for a more in-depth look at how Verlet lists work. The
+optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1). If
+left undefined the default ProtoSyn.acceleration mode will be used. _Note:_
+Using `VerletList`, CUDA_2 acceleration mode is not available. If the default
+ProtoSyn.acceleration is set to CUDA_2, SIMD_1 will be used instead.
 
 # Examples
 ```jldoctest
-julia> Calculators.distance_matrix_serial(pose.state.x)
+julia> Calculators.distance_matrix(pose.state.x)
 N×N CUDA.CuArray{Float64,2}:
     ...
 
-julia> Calculators.distance_matrix_serial(pose, an"CA")
+julia> Calculators.distance_matrix(pose, an"CA")
 N×N CUDA.CuArray{Float64,2}:
     ...
 
-julia> Calculators.distance_matrix_serial(pose, verlet_list)
+julia> Calculators.distance_matrix(pose, verlet_list)
 N×N CUDA.CuArray{Float64,2}:
     ...
 ```
@@ -71,7 +73,7 @@ function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}) where {T <:
     return distance_matrix
 end
 
-distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = distance_matrix_serial(ProtoSyn.SISD_0, pose.state.x)
+distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = distance_matrix(ProtoSyn.SISD_0, pose.state.x)
 distance_matrix(::Type{ProtoSyn.SISD_0}, state::State{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.SISD_0, state.x)
 end
@@ -84,7 +86,7 @@ distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, selection::ProtoSyn.Abstrac
         coords[:, i] = pose.state[atom].t
     end
 
-    return distance_matrix_serial(ProtoSyn.SISD_0, coords)
+    return distance_matrix(ProtoSyn.SISD_0, coords)
 end
 
 
@@ -131,6 +133,64 @@ end
 
 distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, verlet_list::VerletList) = begin
     distance_matrix(ProtoSyn.SISD_0, pose.state.x, verlet_list)
+end
+
+
+"""
+    Calculators.full_distance_matrix([::A], coords::Matrix{T}) where {A, T <: AbstractFloat}
+    
+Return a distance matrix with the distance of *all* pairs of coordinates in
+`coords` (this should be a Matrix{T} in AoS format).
+The optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1 or
+CUDA_2). If left undefined the default ProtoSyn.acceleration mode will be used.
+
+# Examples
+```jldoctest
+julia> Calculators.distance_matrix(pose.state.x)
+N×N CUDA.CuArray{Float64,2}:
+    ...
+
+julia> Calculators.distance_matrix(pose, an"CA")
+N×N CUDA.CuArray{Float64,2}:
+    ...
+
+julia> Calculators.distance_matrix(pose, verlet_list)
+N×N CUDA.CuArray{Float64,2}:
+    ...
+```
+"""
+function full_distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}) where {T <: AbstractFloat}
+    # coords must be in AoS format
+
+    natoms = size(coords)[2]
+    distance_matrix = zeros(natoms, natoms)
+
+    for i in 1:natoms
+
+        for j in 1:natoms
+            rij = coords[:, j] - coords[:, i]
+            d = sqrt(sum(rij.*rij))
+            distance_matrix[i, j] = d
+        end
+    end
+    
+    return distance_matrix
+end
+
+full_distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = full_distance_matrix(ProtoSyn.SISD_0, pose.state.x)
+full_distance_matrix(::Type{ProtoSyn.SISD_0}, state::State{T}) where {T <: AbstractFloat} = begin
+    full_distance_matrix(ProtoSyn.SISD_0, state.x)
+end
+
+full_distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
+
+    s = selection(pose, gather = true)
+    coords = zeros(eltype(pose.state), 3, length(s))
+    for (i, atom) in enumerate(s)
+        coords[:, i] = pose.state[atom].t
+    end
+
+    return full_distance_matrix(ProtoSyn.SISD_0, coords)
 end
 
 # ------------- SIMD -----------------------------------------------------------
@@ -235,9 +295,65 @@ distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose, verlet_list::VerletList) = 
     distance_matrix(ProtoSyn.SIMD_1, pose.state.x[:], verlet_list)
 end
 
+
+function full_distance_matrix(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}) where {T <: AbstractFloat}
+    # coords must be in AoS format
+
+    natoms          = trunc(Int64, length(coords)/3)
+    distance_matrix = zeros(natoms, natoms)
+    remaining_mask  = Vec{4, T}((1, 1, 1, 0))
+
+    # For the coords we need to add an extra 0, because the last coord will
+    # be loaded in a 4-wide vector for SIMD calculation. The last value is
+    # then ignored.
+    _coords = push!(copy(coords), T(0))
+
+    @inbounds for i = 1:natoms
+
+        # Atom number to atom position conversion
+        _i = i << 2 - (2 + i)
+        vi = vload(Vec{4, T}, _coords, _i) # Load XYZ (consecutive)
+
+        @inbounds for j = 1:natoms
+            
+            # Atom number to atom position conversion
+            _j = j << 2 - (2 + j)
+
+            # Calculate distance, while ignoring the last value in the
+            # 4-wide SIMD vector
+            rij = (vload(Vec{4, T}, _coords, _j) - vi) * remaining_mask   # xi1, yi1, zi1, ?i1
+            distance_matrix[i, j] = sqrt(sum(rij*rij))
+        end # for j
+    end # for i
+
+    return distance_matrix
+end
+
+full_distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose) = full_distance_matrix(ProtoSyn.SIMD_1, pose.state.x[:])
+full_distance_matrix(::Type{ProtoSyn.SIMD_1}, state::State{T}) where {T <: AbstractFloat} = begin
+    full_distance_matrix(ProtoSyn.SIMD_1, state.x[:])
+end
+
+
+full_distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
+
+    s = selection(pose, gather = true)
+    coords = zeros(eltype(pose.state), 3, length(s))
+    for (i, atom) in enumerate(s)
+        coords[:, i] = pose.state[atom].t
+    end
+
+    return full_distance_matrix(ProtoSyn.SIMD_1, coords[:])
+end
+
 # ------------- CUDA -----------------------------------------------------------
 
 
+"""
+    distance_matrix_kernel(coords::CuDeviceArray{T}, distance_matrix::CuDeviceMatrix{T}, n::Int) where {T <: AbstractFloat}
+
+Kernel for CUDA_2 acceleration of `distance_matrix` calculation.
+"""
 function distance_matrix_kernel(coords::CuDeviceArray{T}, distance_matrix::CuDeviceMatrix{T}, n::Int) where {T <: AbstractFloat}
     # Note: coords must be in AoS format
 
@@ -305,6 +421,10 @@ end
 
 distance_matrix(::Type{ProtoSyn.CUDA_2}, state::State{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.CUDA_2, state.x[:])
+end
+
+function full_distance_matrix(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}) where {T <: AbstractFloat}
+    distance_matrix(ProtoSyn.CUDA_2, coords)
 end
 
 # ------------- DYNAMIC---------------------------------------------------------

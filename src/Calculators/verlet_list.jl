@@ -67,15 +67,21 @@ end
 
 
 """
-    update_serial!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+    update!([::Type{ProtoSyn.SISD_0}], verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+    update!([::Type{ProtoSyn.SIMD_1}], verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
 
-Updates the Verlet list (using a serial SISD approach) according to the
+Updates the Verlet list (using a SISD or SIMD approach) according to the
 defined 'verlet_list.cutoff' and the given coordinates 'coords' (must be
-in AoS format).
+in AoS format). If SISD or SIMD acceletarion is not given, the default
+ProtoSyn.acceleration is employed.
 
 # Examples
 ```jldoctest
 julia> update_serial!(verlet_list, pose.state.x)
+    ...
+
+julia> update_serial!(verlet_list, pose.state.x, an"CA")
+    ...
 ```
 """
 function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
