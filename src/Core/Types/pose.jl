@@ -52,8 +52,6 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
 end
 Pose(frag::Fragment) = Pose(Float64, frag)
 
-Base.copy(p::Pose) = Pose(copy(p.graph),copy(p.state))
-
 
 export fragment
 

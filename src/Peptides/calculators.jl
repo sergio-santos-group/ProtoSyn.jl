@@ -1,4 +1,6 @@
-module Caterpillar
+module Calculators
+
+    module Caterpillar
 
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent, full_distance_matrix
@@ -38,7 +40,7 @@ module Caterpillar
 
 
     """
-        Calculators.calc_solvation_energy([::A], pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {A, T <: AbstractFloat}
+        Calculators.calc_solvation_energy([::A], pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {A, T <: AbstractFloat}
         
     Calculate the pose solvation energy according to the Caterpillar model. The
     model can be fine-tuned: `Ω` defines the minimum number of Cɑ-Cɑ contacts to
@@ -54,7 +56,7 @@ module Caterpillar
     julia> Calculators.calc_solvation_energy(pose)
     ```
     """
-    function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 24.0, sc::T = 5.0) where {T <: AbstractFloat}
         # coords must be in AoS format
         
         s = (an"CA")(pose, gather = true)
@@ -82,7 +84,7 @@ module Caterpillar
         for i in 1:size(results)[1]
             Ωi = sum(results[:, i])
 
-            dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod[residues[i].name]
+            dhi = ProtoSyn.Peptides.doolitle_hydrophobicity[residues[i].name]
 
             if Ωi > Ω
                 esol_i = T(0)
@@ -97,7 +99,7 @@ module Caterpillar
     end
 
 
-    function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {T <: AbstractFloat}
             
         dm       = full_distance_matrix(A, pose, an"CA")
         residues = collect(eachresidue(pose.graph))
@@ -108,7 +110,7 @@ module Caterpillar
             for j in 1:size(dm)[2]
                 Ωi += 1 - (1 / (1 + exp(sc * (rmax - dm[i, j]))))
             end
-            dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod[residues[i].name]
+            dhi = ProtoSyn.Peptides.doolitle_hydrophobicity[residues[i].name]
 
             if Ωi > Ω
                 esol_i = T(0)
@@ -122,9 +124,11 @@ module Caterpillar
         return esol
     end
 
-    calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 6.0, sc::T = 5.0) where {T <: AbstractFloat} = begin
+    calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {T <: AbstractFloat} = begin
         calc_solvation_energy(ProtoSyn.acceleration, pose; Ω, rmax, sc)
     end
 
     solvation_energy = EnergyFunctionComponent("Caterpillar_Solvation", calc_solvation_energy)
+    end
+
 end

@@ -1,3 +1,4 @@
+export AbstractSelection
 abstract type AbstractSelection end
 
 abstract type AbstractStateMode end

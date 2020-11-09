@@ -77,10 +77,10 @@ ProtoSyn.acceleration is employed.
 
 # Examples
 ```jldoctest
-julia> update_serial!(verlet_list, pose.state.x)
+julia> update!(verlet_list, pose.state.x)
     ...
 
-julia> update_serial!(verlet_list, pose.state.x, an"CA")
+julia> update!(verlet_list, pose.state.x, an"CA")
     ...
 ```
 """

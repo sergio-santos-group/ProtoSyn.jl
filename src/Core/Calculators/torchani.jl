@@ -28,12 +28,12 @@ module TorchANI
     julia> Calculators.calc_torchani_model(pose)
     ```
     """
-    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; model_index::Int = 3)
+    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
         return 0.0
     end
 
-    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose; model_index::Int = 3)
+    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
         
         c           = get_cartesian_matrix(pose)
         coordinates = torch.tensor([c], requires_grad = true, device = device).float()
@@ -43,11 +43,17 @@ module TorchANI
         
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
-        return get(_model.neural_networks, model_index)(m2)[2].item()
+        m3 = get(_model.neural_networks, model_index)(m2)[2]
+        if update_forces
+            f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
+            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy())
+        else
+            return m3.item(), nothing
+        end
     end
 
-    calc_torchani_model(pose::Pose; model_index::Int = 3) = begin
-        calc_torchani_model(ProtoSyn.acceleration, pose; model_index = model_index)
+    calc_torchani_model(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
+        calc_torchani_model(ProtoSyn.acceleration, pose, update_forces = update_forces, model_index = model_index)
     end
 
     # --- ENSEMBLE
@@ -68,12 +74,12 @@ module TorchANI
     julia> Calculators.calc_torchani_ensemble(pose)
     ```
     """
-    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose)
+    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool)
         println("ERROR: 'calc_torchani_ensemble' requires CUDA_2 acceleration.")
         return 0.0
     end
 
-    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose)
+    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false)
         
         c           = get_cartesian_matrix(pose)
         coordinates = torch.tensor([c], requires_grad = true, device = device).float()
@@ -83,11 +89,16 @@ module TorchANI
 
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
-        return _model.neural_networks(m2)[2].item()
+        m3 = _model.neural_networks(m2)[2]
+        if update_forces
+            return m3.item(), torch.autograd.grad(m3.sum(), coordinates)[1][1].cpu().numpy()
+        else
+            return m3.item(), nothing
+        end
     end
 
-    calc_torchani_ensemble(pose::Pose) = begin
-        calc_torchani_ensemble(ProtoSyn.acceleration, pose)
+    calc_torchani_ensemble(pose::Pose; update_forces::Bool = false) = begin
+        calc_torchani_ensemble(ProtoSyn.acceleration, pose, update_forces = update_forces)
     end
 
 

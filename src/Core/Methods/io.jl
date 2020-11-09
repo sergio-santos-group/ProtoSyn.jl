@@ -149,7 +149,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             end
         end
     end
-    state.x = ReadOnlyMatrix(x)
+    state.x = x
     top.id = state.id = genid()
     
     # request conversion from cartesian to internal
@@ -164,8 +164,6 @@ write(io::IO, top::AbstractContainer, state::State) = begin
     println(io, "MODEL")
     for atom in eachatom(top)
         sti = state[atom.index]
-        # println("$atom - $(sti.t)")
-        # s = @sprintf("ATOM %6d %4s %-4sA %3d    %8.3f%8.3f%8.3f%24s",
         s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
             atom.index, atom.name,
             atom.container.name, atom.container.container.code,

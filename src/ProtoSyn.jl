@@ -38,11 +38,11 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
     include("Core/XMLRPC/XMLRPC.jl")
     include("Core/Units/Units.jl")
     include("Core/Methods/macros.jl")
-    include("Core/Types/common.jl")
     include("Core/Types/graph.jl")
     include("Core/Types/state.jl")
     include("Core/Types/pose.jl")
     include("Core/Methods/graph.jl")
+    include("Core/Methods/measure.jl")
     include("Core/Methods/state.jl")
     include("Core/Methods/base.jl")
     include("Core/Methods/io.jl")
@@ -52,11 +52,21 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
     include("Core/Builder/Builder.jl")
 end
 
+@info "Loading Calculators"
+include("Core/Calculators/Calculators.jl")
+
 @info "Loading Peptides"
 @time include("Peptides/Peptides.jl")
 
-@info "Loading Calculators"
-include("Calculators/Calculators.jl")
+@info "Loading Mutators"
+include("Core/Mutators/Mutators.jl")
+
+@info "Loading Drivers"
+include("Drivers/Drivers.jl")
+
+@info "Loading Common"
+include("Common/Common.jl")
+
 
 @info "ProtoSyn loaded successfully!"
 end # module

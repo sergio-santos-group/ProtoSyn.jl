@@ -7,7 +7,72 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 
 res_lib = grammar(Float64);
-pose = Peptides.build(res_lib, seq"GGGGGGGGGGGGGGGGGGGG");
+pose = Peptides.build(res_lib, seq"GGG");
+sync!(pose)
+pose.state[1].t += [1.0, 3.0, 4.0]
+
+p_mut = 1/(ProtoSyn.count_residues(pose.graph) * 3)
+dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.2, an"C$|N$|CA$"r)
+
+energy_function = ProtoSyn.Common.get_default_energy_function()
+energy_function(pose, update_forces = true)
+
+function callback(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
+    println(driver_state.step)
+    io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+end
+
+mc = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator, 100, 0.1)
+
+mc(callback, pose)
+
+using Printf
+
+begin
+    pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAY");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
+
+    energy_function(pose)
+    best = copy(pose)
+
+    function callback(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
+        global best
+        if pose.state.e[:Total] < best.state.e[:Total]
+            best = copy(pose)
+        end
+        if driver_state.step % 50 == 0
+            @printf("%5d | Energy: %10.5f | Best Energy: %10.5f | Acceptance Ratio: %10.5f\n", driver_state.step, pose.state.e[:Total], best.state.e[:Total], driver_state.acceptance_count / driver_state.step)
+            io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+        end
+    end
+
+    p_mut = 1/(ProtoSyn.count_residues(pose.graph) * 3)
+    dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, 1/21, 0.5, an"C$|N$|CA$"r & rid"20:27")
+    
+    io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+    for temp in [0.01, 0.008, 0.005, 0.003, 0.001, 0.0005, 0.0001, 0.00001]
+        println(" Temperature: $temp")
+        mc = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator, 2000, temp)
+        mc(callback, pose)
+        pose = copy(best)
+    end
+
+    sd = ProtoSyn.Drivers.SteepestDescent(energy_function, 100, 0.001)
+    sd(callback, pose)
+end
+
+
+io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+mask = an"C$|N$|CA$"r(pose)
+for i in 1:100
+    dihedral_mutator(pose, mask)
+    sync!(pose)
+    io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+end
+
+f = Calculators.get_energy_function()
+f(original)
 
 # results = Dict{String, Vector{Float64}}()
 for aminoacid in ["A", "R", "N", "D", "C", "E", "Q", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]

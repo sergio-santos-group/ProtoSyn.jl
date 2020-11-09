@@ -120,64 +120,88 @@ end
 
 #region copy -------------------------------------------------------------------
 
-@inline Base.copy(a::Atom) = begin
-    Atom(a.name, a.id, a.index, a.symbol)
+@inline Base.copy(a0::Atom) = begin
+    return Atom(a0.name, a0.id, a0.index, a0.symbol)
 end
 
-@inline Base.copy(r::Residue) = begin
-    byatom = eachatom(r)
+
+@inline Base.copy(r0::Residue) = begin
+    byatom = eachatom(r0)
     
-    # create residue and copy atoms
-    r1 = Residue(r.name, r.id)
-    for at in byatom
-        push!(r1, copy(at))
+    # Create residue (Automatically updates residue.index)
+    r1 = Residue(r0.name, r0.id)
+
+    # Populate residue with atoms
+    # (Automatically updates residue.size, residue.items, residue.itemsbyname)
+    # (Automatically updates atom.container)
+    for at0 in byatom # Looping "old" residue
+        push!(r1, copy(at0))
     end
     
-    for at in byatom
-        # add intra-residue bonds
-        at1 = get(r1, at.name)
-        for other in at.bonds
-            in(other,r) && push!(at1.bonds, get(r1, other.name))
+    for at0 in byatom # Looping "old" residue
+        # Build intra-residue bonds
+        at1 = get(r1, at0.name) # Uses residue.itemsbyname
+        for other0 in at0.bonds
+            in(other0, r0) && push!(at1.bonds, get(r1, other0.name))
         end
         
-        # build atom graph
-        if hasparent(at)
-            in(at, r) && setparent!(at1, r1[at.parent.name])
+        # Build intra-residue graph (set parents and children)
+        if hasparent(at0)
+            in(at0.parent, r0) && setparent!(at1, r1[at0.parent.name])
         end
     end
-    r1
+
+    return r1
 end
 
-Base.copy(s::Segment) = begin
-    old2new = IdDict{AbstractContainer,AbstractContainer}()
-    s1 = Segment(s.name, s.id)
-    root = origin(s)
+
+Base.copy(s0::Segment) = begin
+    s1 = Segment(s0.name, s0.id)
+    old2new = IdDict{AbstractContainer, AbstractContainer}()
+    root = origin(s0)
 
     # copy residues and atoms
-    for r in eachresidue(s)
-        r1 = Residue!(s1, r.name, r.id)
-        old2new[r] = r1
-        for at in eachatom(r)
-            old2new[at] = Atom!(r1, at.name, at.id, at.index, at.symbol)
+    for r0 in eachresidue(s0)
+        r1 = Residue!(s1, r0.name, r0.id)
+        old2new[r0] = r1
+        for at0 in eachatom(r0)
+            old2new[at0] = Atom!(r1, at0.name, at0.id, at0.index, at0.symbol)
+            r1.items[end].ascendents = at0.ascendents
         end
     end
 
     # deal with atom graph and bonds
-    for at in eachatom(s)
-        at1 = old2new[at]
-        hasparent(at) && !isparent(root, at) && setparent!(at1, old2new[at.parent])
-        for other in at.bonds
-            push!(at1.bonds, old2new[other])
+    for at0 in eachatom(s0)
+        at1 = old2new[at0]
+        if hasparent(at0) && !isparent(root, at0)
+            setparent!(at1, old2new[at0.parent])
+        end
+        for other0 in at0.bonds
+            push!(at1.bonds, old2new[other0])
         end
     end
 
     # deal with residue graph
-    for r in eachresidue(s)
-        hasparent(r) && setparent!(old2new[r], old2new[r.parent])
+    for r0 in eachresidue(s0)
+        hasparent(r0) && r0.parent != root.container && setparent!(old2new[r0], old2new[r0.parent])
     end
 
-    s1
+    return s1
 end
+
+Base.copy(t0::Topology) = begin
+    t1 = Topology(t0.name, t0.id)
+    for s0 in eachsegment(t0)
+        s1 = copy(s0)
+        push!(t1, s1)
+        setparent!(s1[1], t1.root)
+        setparent!(s1[1][1], origin(t1))
+    end
+
+    return t1
+end
+
+Base.copy(p::Pose) = Pose(copy(p.graph), copy(p.state))
 
 #endregion copy
 

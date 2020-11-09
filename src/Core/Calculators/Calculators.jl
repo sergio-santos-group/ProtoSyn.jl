@@ -17,8 +17,8 @@ using Base.Cartesian
     @info " | Loading TorchANI"
     include("torchani.jl")
 
-    @info " | Loading Caterpillar Model"
-    include("caterpillar.jl")
+    # @info " | Loading Caterpillar Model"
+    # include("caterpillar.jl")
 
     @info " | Loading Energy Function"
     include("energy_function.jl")

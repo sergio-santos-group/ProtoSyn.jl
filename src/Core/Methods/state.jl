@@ -1,6 +1,6 @@
 # This file should contain functions that work on the system State, such as 
 # functions that deal with internal/cartesian coordinate syncs, among others.
-
+using LinearAlgebra
 
 export sync!
 
@@ -102,8 +102,6 @@ function i2c!(state::State{T}, top::Topology) where T
     vji = MVector{3, T}(0, 0, 0)
     n   = MVector{3, T}(0, 0, 0)
     xi  = MVector{3, T}(0.0, 0.0, 0.0)
-
-    state_x = zeros(T, 3, state.size)
     
     queue = Atom[]
 
@@ -163,13 +161,15 @@ function i2c!(state::State{T}, top::Topology) where T
         
         # move to new position
         @. xi = vji + jstate.t
-        @. istate.t = xi
+        # println(istate)
+        istate.t = xi
+        # println(istate)
 
-        @. state_x[1:3, i] = xi # ADDED BECAUSE OF DISTANCE MATRIX CALCULATION
+        # @. state.x[1:3, i] = xi
     end
 
-    state.x = ReadOnlyMatrix(state_x)
     state.i2c = false
+    state.c2i = false
     state
 end
 
@@ -236,11 +236,9 @@ end
 export get_cartesian_matrix
 function get_cartesian_matrix(::Type{T}, pose::Pose) where {T <: AbstractFloat}
 
-    sync!(pose)
-
     matrix = Vector{Vector{T}}()
-    for atom in eachatom(pose.graph)
-        push!(matrix, convert(Vector{T}, pose.state[atom].t))
+    for atom_state in pose.state
+        push!(matrix, atom_state.t)
     end
 
     return matrix
