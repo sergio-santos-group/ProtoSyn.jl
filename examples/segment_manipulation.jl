@@ -9,6 +9,7 @@ using ProtoSyn.Units
 res_lib = grammar(Float64);
 
 pose = Peptides.build(res_lib, seq"QQQ");
+rl = Peptides.Rotamers.load_dunbrack(ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 Peptides.Rotamers.apply!(pose.state, rl["GLN"][-180.0, -180.0][1], pose.graph[1][2])
 io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);

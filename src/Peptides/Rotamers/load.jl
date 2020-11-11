@@ -27,8 +27,8 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             end
 
             #  c) Gather probability and create the Rotamer
-            probability = parse(T, elem[9])
-            rotamer = Rotamer(name, probability, chis)
+            weight  = parse(T, elem[9])
+            rotamer = Rotamer(name, chis)
 
             # Gather the location to append this rotamer to, in the rotamers
             # matrix
@@ -38,10 +38,10 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
         
             # Append to the found location. If necessary, initiate a new vector
             try
-                push!(rl.rotamers[phi_index, psi_index], rotamer)
-            catch LoadError
-                rl.rotamers[phi_index, psi_index] = Vector{Rotamer}()
-                push!(rl.rotamers[phi_index, psi_index], rotamer)
+                push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
+            catch UndefRefError
+                rl.rotamer_stacks[phi_index, psi_index] = RotamerStack(T)
+                push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
             end
         end
     end
@@ -88,7 +88,7 @@ function create_residue_library_matrices(::Type{T}, filename::String) where {T <
                 phis = collect(phi_lower_bound:phi_step:phi_upper_bound)
                 psis = collect(psi_lower_bound:psi_step:psi_upper_bound)
                 n_phis, n_psis = length(phis), length(psis)
-                rotamers = Matrix{Vector{Rotamer}}(undef, n_phis, n_psis)
+                rotamers = Matrix{RotamerStack}(undef, n_phis, n_psis)
                 matrices[name] = BBD_RotamerLibrary(name, phis, psis, rotamers)
             end
         end
