@@ -7,7 +7,12 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 
 res_lib = grammar(Float64);
-pose = Peptides.build(res_lib, seq"GGG");
+
+pose = Peptides.build(res_lib, seq"QQQ");
+io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+Peptides.Rotamers.apply!(pose.state, rl["GLN"][-180.0, -180.0][1], pose.graph[1][2])
+io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+
 sync!(pose)
 pose.state[1].t += [1.0, 3.0, 4.0]
 
@@ -16,6 +21,8 @@ dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.2, an"C$|N$
 
 energy_function = ProtoSyn.Common.get_default_energy_function()
 energy_function(pose, update_forces = true)
+
+io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 
 function callback(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
     println(driver_state.step)

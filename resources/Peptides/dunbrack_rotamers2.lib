@@ -1,0 +1,78 @@
+# ALL COMMENT LINES START WITH "# ", PLEASE IGNORE THESE LINES WHEN PARSING
+# 
+# Backbone-dependent rotamer library, April, 2011
+# Copyright (c) 2007-2010
+# Maxim V. Shapovalov and Roland L. Dunbrack Jr.
+# Fox Chase Cancer Center
+# Philadelphia, PA, USA
+# 
+# Identification code	196875718
+# Library computation date	19-Jul-2010 18:42:38
+# Library production date	23-Apr-2011 00:55:36
+# 
+# Residue types in the library	{ARG, ASN, ASP, CYS, GLN, GLU, HIS, ILE, LEU, LYS, MET, PHE, PRO, SER, THR, TRP, TYR, VAL}
+# Residue type representations	{CYS -> CYS, PRO -> PRO}
+# 
+# 
+# Backbone-dependent rotamer library with regular rotamers
+# 
+# phi interval, deg	[-180.0, 180.0]
+# phi step, deg	10.0
+# psi interval, deg	[-180.0, 180.0]
+# psi step, deg	10.0
+# 
+# Residue type	ARG
+# Input data taken from	ARG
+# 
+# Rotamer probability precision	0.000001
+# Library.writeAbsZeroProbRotamers	0
+# Library.writeNonAbsZeroProbRotamersButWhichStillOutputAsZeroBecauseOfOutputPrecision	1
+# Library.ProbSorted	1
+# 
+# Number of chi angles (degrees of freedom)	4
+# Number of chi angles treated as discrete	5
+# Number of bins for each discrete chi angle	[3, 3, 3, 3, 1]
+# Number of rotamers for discrete chi angles	81
+# Number of chi angles treated as continuous	-1
+# 
+# TotalDatapointsNum	34910
+# 
+# T  Phi  Psi  Count    r1 r2 r3 r4 Probabil  chi1Val chi2Val chi3Val chi4Val   chi1Sig chi2Sig chi3Sig chi4Sig
+# 
+ARG  -180 -180    10     1  2  2  1  0.249730    62.5   176.9   176.6    85.7       6.9    11.1    10.5     9.9
+ARG  -180 -180    10     1  2  2  2  0.154574    64.7  -177.9  -179.4   179.0       8.4    10.7    10.3    21.0
+ARG  -180 -180    10     2  1  1  3  0.000109  -169.1    72.4    70.8  -107.5      13.9     7.7    16.3     7.3
+ARG  -180 -180    10     2  1  3  1  0.000000  -179.9    81.7   -70.3   111.4      13.6    11.0     6.5     9.8
+ARG  -180 -170     5     1  2  2  1  0.247662    62.8   177.0   176.6    85.7       7.0    11.1    10.5     9.9
+ARG  -180 -170     5     1  2  2  2  0.155477    64.7  -177.9  -179.0   179.8       8.4    10.7    10.3    20.6
+ARG  -180 -170     5     1  2  2  3  0.119188    63.5  -175.1  -175.7   -86.5       8.4    13.4    11.2    11.4
+ARG  -180 -170     5     2  1  3  3  0.000000  -178.7    83.2   -78.9   -92.1       8.8    14.8    17.0    14.6
+ARG  -180 -160     2     1  2  2  1  0.217062    63.1   177.2   176.6    85.7       7.2    11.2    10.5    10.0
+ARG  -180 -160     2     1  2  2  2  0.155027    64.7  -177.8  -179.0  -179.6       8.3    10.7    11.0    20.4
+ARG  -180 -160     2     1  2  2  3  0.115640    63.7  -175.3  -175.8   -86.7       8.5    13.3    11.2    11.5
+ARG  -180 -160     2     1  2  3  2  0.115192    62.9   179.1   -67.6   171.8       9.1    17.3     9.6    20.1
+ARG  -170 -180    10     1  2  2  1  0.249730    62.5   176.9   176.6    85.7       6.9    11.1    10.5     9.9
+ARG  -170 -180    10     1  2  2  2  0.154574    64.7  -177.9  -179.4   179.0       8.4    10.7    10.3    21.0
+ARG  -170 -180    10     2  1  1  3  0.000109  -169.1    72.4    70.8  -107.5      13.9     7.7    16.3     7.3
+ARG  -170 -180    10     2  1  3  1  0.000000  -179.9    81.7   -70.3   111.4      13.6    11.0     6.5     9.8
+ARG  -170 -170     5     1  2  2  1  0.247662    62.8   177.0   176.6    85.7       7.0    11.1    10.5     9.9
+ARG  -170 -170     5     1  2  2  2  0.155477    64.7  -177.9  -179.0   179.8       8.4    10.7    10.3    20.6
+ARG  -170 -170     5     1  2  2  3  0.119188    63.5  -175.1  -175.7   -86.5       8.4    13.4    11.2    11.4
+ARG  -170 -170     5     2  1  3  3  0.000000  -178.7    83.2   -78.9   -92.1       8.8    14.8    17.0    14.6
+ARG  -170 -160     2     1  2  2  1  0.217062    63.1   177.2   176.6    85.7       7.2    11.2    10.5    10.0
+ARG  -170 -160     2     1  2  2  2  0.155027    64.7  -177.8  -179.0  -179.6       8.3    10.7    11.0    20.4
+ARG  -170 -160     2     1  2  2  3  0.115640    63.7  -175.3  -175.8   -86.7       8.5    13.3    11.2    11.5
+ARG  -170 -160     2     1  2  3  2  0.115192    62.9   179.1   -67.6   171.8       9.1    17.3     9.6    20.1
+ARG  -170 -180    10     1  2  2  1  0.249730    62.5   176.9   176.6    85.7       6.9    11.1    10.5     9.9
+ARG  -170 -180    10     1  2  2  2  0.154574    64.7  -177.9  -179.4   179.0       8.4    10.7    10.3    21.0
+ARG  -160 -180    10     2  1  1  3  0.000109  -169.1    72.4    70.8  -107.5      13.9     7.7    16.3     7.3
+ARG  -160 -180    10     2  1  3  1  0.000000  -179.9    81.7   -70.3   111.4      13.6    11.0     6.5     9.8
+ARG  -160 -170     5     1  2  2  1  0.247662    62.8   177.0   176.6    85.7       7.0    11.1    10.5     9.9
+ARG  -160 -170     5     1  2  2  2  0.155477    64.7  -177.9  -179.0   179.8       8.4    10.7    10.3    20.6
+ARG  -160 -170     5     1  2  2  3  0.119188    63.5  -175.1  -175.7   -86.5       8.4    13.4    11.2    11.4
+ARG  -160 -170     5     2  1  3  3  0.000000  -178.7    83.2   -78.9   -92.1       8.8    14.8    17.0    14.6
+ARG  -160 -160     2     1  2  2  1  0.217062    63.1   177.2   176.6    85.7       7.2    11.2    10.5    10.0
+ARG  -160 -160     2     1  2  2  2  0.155027    64.7  -177.8  -179.0  -179.6       8.3    10.7    11.0    20.4
+ARG  -160 -160     2     1  2  2  3  0.115640    63.7  -175.3  -175.8   -86.7       8.5    13.3    11.2    11.5
+ARG  -160 -160     2     1  2  3  2  0.115192    62.9   179.1   -67.6   171.8       9.1    17.3     9.6    20.1
+ALA  -180 -160     2     1  2  3  2  0.115192    62.9   179.1   -67.6   171.8       9.1    17.3     9.6    20.1

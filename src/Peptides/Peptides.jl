@@ -14,7 +14,8 @@ end
 
 
 include("constants.jl")
-include("calculators.jl")
+# include("calculators.jl")
+include("Rotamers/Rotamers.jl")
 
 
 """
@@ -131,9 +132,9 @@ arm movement.
 function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
     state = container.state
     for r in residues
-        setdihedral!(container.state, r, Dihedral.phi, ϕ)
-        setdihedral!(container.state, r, Dihedral.psi,  ψ)
-        setdihedral!(container.state, r, Dihedral.omega, ω)
+        Builder.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        Builder.setdihedral!(container.state, Dihedral.psi(r),  ψ)
+        Builder.setdihedral!(container.state, Dihedral.omega(r), ω)
     end
 end
 
@@ -262,16 +263,6 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     residue.name = one_2_three[derivation[1][1]]
 
     return pose
-end
-
-
-function setdihedral!(s::State, residue::Residue, dihedral_type::Dihedral.DihedralType, value::T) where {T <: AbstractFloat}
-    if dihedral_type == Dihedral.psi
-        length(residue.children) == 0 && return s
-        residue = residue.children[1]
-    end
-    ProtoSyn.setdihedral!(s, residue[dihedral_type.atom], value)
-    s
 end
 
 
