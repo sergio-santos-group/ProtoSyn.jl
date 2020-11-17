@@ -1,31 +1,34 @@
 using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn.Mutators: AbstractMutator
 
-Base.@kwdef mutable struct MonteCarloState <: DriverState
+Base.@kwdef mutable struct MonteCarloState{T <: AbstractFloat} <: DriverState
     step::Int        = 0
     converged::Bool  = false
     completed::Bool  = false
     stalled::Bool    = false
     acceptance_count = 0
+    temperature::T   = 0.0
 end
 
 
-mutable struct MonteCarlo{T<:AbstractFloat} <: Driver
+mutable struct MonteCarlo <: Driver
     eval!::Union{Function, EnergyFunction}
     sample!::Union{Function, AbstractMutator, Driver}
     callback::Opt{Callback}
     max_steps::Int
-    temperature::T
+    temperature::Function
 end
 
 
-function (driver::MonteCarlo{T})(pose::Pose) where {T}
+function (driver::MonteCarlo)(pose::Pose)
     
-    driver_state = MonteCarloState()
+    T = eltype(pose.state)
+    driver_state = MonteCarloState{T}()
+    driver_state.temperature = driver.temperature(0)
     
     previous_state  = copy(pose)
     previous_energy = driver.eval!(pose, update_forces = false)
-    driver.callback !== nothing && driver.callback.event(pose, driver_state)
+    driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
             
@@ -34,7 +37,8 @@ function (driver::MonteCarlo{T})(pose::Pose) where {T}
         energy = driver.eval!(pose, update_forces = false)
         
         n = rand()
-        m = exp((-(energy - previous_energy)) / driver.temperature)
+        driver_state.temperature = driver.temperature(driver_state.step)
+        m = exp((-(energy - previous_energy)) / driver_state.temperature)
         if (energy < previous_energy) || (n < m)
             previous_energy = energy
             previous_state = copy(pose)
@@ -44,7 +48,7 @@ function (driver::MonteCarlo{T})(pose::Pose) where {T}
         end
 
         driver_state.step += 1
-        driver.callback !== nothing && driver.callback.event(pose, driver_state) 
+        driver.callback !== nothing && driver.callback(pose, driver_state) 
     end
     
     driver_state.completed = true

@@ -14,7 +14,7 @@ include("blitz.jl")
 include("sd.jl")
 
 # molecular dynamics
-#include("thermostats.jl")
+include("thermostats.jl")
 #include("md.jl")
 
 include("monte_carlo.jl")

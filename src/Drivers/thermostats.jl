@@ -23,3 +23,22 @@ end
     @. state.velocs *= λ
     state
 end
+
+
+function get_constant_temperature(init_temp::T) where {T <: AbstractFloat}
+    return function constant_temperature(step::Int)
+        return init_temp
+    end
+end
+
+function get_linear_quench(init_temp::T, n_steps::Int) where {T <: AbstractFloat}
+    return function linear_quench(step::Int)
+        return -((step * init_temp)/n_steps) + init_temp
+    end
+end
+
+function get_sigmoid_quench(init_temp::T, quench_rate::T, min_temp::T) where {T <: AbstractFloat}
+    return function sigmoid_quench(step::Int)
+        return ((1/(1+(exp(step/(quench_rate+(quench_rate/10))))))*2*init_temp-init_temp)+init_temp
+    end
+end

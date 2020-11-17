@@ -5,7 +5,7 @@ mutable struct EnergyFunction{T <: AbstractFloat}
 end
 
 EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction{T}(components, Int16(100))
+    return EnergyFunction{T}(components, Int16(50))
 end
 
 

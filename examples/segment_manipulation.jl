@@ -23,25 +23,27 @@ energy_function(pose)
 
 selection = rid"21:26" & an"C$|N$|CA$"r
 p_mut = 1/(ProtoSyn.length(selection(pose, gather = true)))
-dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 1.0, selection)
+dihedral_mutator1 = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.5, selection)
+dihedral_mutator2 = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.1, selection)
 
-rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rl, 2, 1)
+rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rl, 3, 1)
 
-compound_driver = ProtoSyn.Drivers.CompoundDriver([dihedral_mutator, rotamer_blitz])
+compound_driver = ProtoSyn.Drivers.CompoundDriver([dihedral_mutator2, rotamer_blitz])
 
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
-    if driver_state.step % 100 == 0
-        @printf("%5d %10.4f %5.2f %%\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100)
-        io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
-    end
+    @printf("STEP %-5d E= %-10.4f AR= %-5.2f%% T= -%7.5f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
+    io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
 end
 
-mc_callback = ProtoSyn.Drivers.Callback(callback_function)
-monte_carlo = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator, mc_callback, 2000, 0.01)
+mc_callback1  = ProtoSyn.Drivers.Callback(callback_function, 100)
+mc_callback2  = ProtoSyn.Drivers.Callback(callback_function, 10)
+monte_carlo1 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback1, 100, ProtoSyn.Drivers.get_sigmoid_quench(0.1, 500.0, 0.01))
+monte_carlo2 = ProtoSyn.Drivers.MonteCarlo(energy_function, compound_driver, mc_callback2, 200, ProtoSyn.Drivers.get_constant_temperature(0.005))
 
 # pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
-monte_carlo(pose)
+monte_carlo1(pose)
+monte_carlo2(pose)
 
 rm = Peptides.Mutators.RotamerMutator(rl, 1.0, -1, an"CA")
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
