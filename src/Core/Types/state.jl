@@ -176,7 +176,7 @@ State(::Type{T}, items::Vector{AtomState{T}}) where T = begin
     return state
 end
 
-State(items::Vector{AtomState{T}}) where T = State(Units.defaultFloat, items)
+State(items::Vector{AtomState{T}}) where T = State(T, items)
 
 State{T}() where T = State{T}(0)
 
@@ -245,7 +245,27 @@ Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
 end
 
 
-Base.copy(s::State{T}) where T = deepcopy(s)
+# Base.copy(s::State{T}) where T = deepcopy(s)
+
+Base.copy(s::State{T}) where T = begin
+    ns = State(T, s.size)
+    # Update item.t also updates the parent.x matrix
+    for (index, atomstate) in enumerate(s)
+        ns[index].t = copy(atomstate.t)
+        ns[index].r = copy(atomstate.r)
+        ns[index].b = atomstate.b
+        ns[index].θ = atomstate.θ
+        ns[index].ϕ = atomstate.ϕ
+        ns[index].Δϕ = atomstate.Δϕ
+        ns[index].changed = atomstate.changed
+    end
+    ns.id = s.id
+    ns.i2c = s.i2c
+    ns.c2i = s.c2i
+    ns.f = copy(s.f)
+    ns.e = copy(s.e)
+    ns
+end
 
 request_c2i(s::State; all=false) = (s.c2i = true; s)
 
