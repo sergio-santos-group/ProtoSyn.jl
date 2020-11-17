@@ -55,7 +55,7 @@ module Dihedral
         @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom.name), which was not found"
         @assert length(residue[chi_atom].children) > 0 "At least one children atom of $(residue[chi_atom]) needs to exist (0 found)."
         
-        return residue[chi_atom].children[1]
+        return residue[chi_atom].children[end]
     end
 
     (chi1::Chi1)(residue::Residue) = get_chi(residue, 1)

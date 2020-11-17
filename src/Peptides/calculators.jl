@@ -48,7 +48,7 @@ module Calculators
     Cɑ's for a contact to be considered (in Angstrom Å); `sc` defines the 'slope
     control' (a higher value defines more sharply when to consider a contact).
     The optional `A` parameter defines the acceleration mode used (SISD_0,
-    SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration mode
+    SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode
     will be used.
 
     # Examples
@@ -125,7 +125,7 @@ module Calculators
     end
 
     calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {T <: AbstractFloat} = begin
-        calc_solvation_energy(ProtoSyn.acceleration, pose; Ω, rmax, sc)
+        calc_solvation_energy(ProtoSyn.acceleration.active, pose; Ω, rmax, sc)
     end
 
     solvation_energy = EnergyFunctionComponent("Caterpillar_Solvation", calc_solvation_energy)

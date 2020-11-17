@@ -14,7 +14,7 @@ Return a distance matrix with the distance of all pairs of coordinates in
 Instead of a Matrix{T} `coords`, a `State` or `Pose` can be provided, in which
 case the coordinates considered are all the existent in the State or Pose.state,
 respectively. The optional `A` parameter defines the acceleration mode used
-(SISD_0, SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration
+(SISD_0, SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration.active
 mode will be used.
     
     Calculators.distance_matrix([::A], pose::Pose, selection::ProtoSyn.AbstractSelection)
@@ -22,7 +22,7 @@ mode will be used.
 Return a distance matrix with the distance of all pairs of atoms in the Pose
 `pose` who are included in the given `selection` and above the triangular
 matrix. The optional `A` parameter defines the acceleration mode used (SISD_0,
-SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration mode will
+SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode will
 be used.
 
     Calculators.distance_matrix([::A], coords::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat}
@@ -36,9 +36,9 @@ State or Pose.state, respectively. _Note:_ Selections can still be applied when
 using Verlet lists, but need to be applied when updating the lists themselves.
 Check `VerletList` for a more in-depth look at how Verlet lists work. The
 optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1). If
-left undefined the default ProtoSyn.acceleration mode will be used. _Note:_
+left undefined the default ProtoSyn.acceleration.active mode will be used. _Note:_
 Using `VerletList`, CUDA_2 acceleration mode is not available. If the default
-ProtoSyn.acceleration is set to CUDA_2, SIMD_1 will be used instead.
+ProtoSyn.acceleration.active is set to CUDA_2, SIMD_1 will be used instead.
 
 # Examples
 ```jldoctest
@@ -142,7 +142,7 @@ end
 Return a distance matrix with the distance of *all* pairs of coordinates in
 `coords` (this should be a Matrix{T} in AoS format).
 The optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1 or
-CUDA_2). If left undefined the default ProtoSyn.acceleration mode will be used.
+CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode will be used.
 
 # Examples
 ```jldoctest
@@ -430,41 +430,41 @@ end
 # ------------- DYNAMIC---------------------------------------------------------
 
 function distance_matrix(coords::Vector{T}) where {T <: AbstractFloat}
-    distance_matrix(ProtoSyn.acceleration, coords)
+    distance_matrix(ProtoSyn.acceleration.active, coords)
 end
 
 distance_matrix(pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
-    distance_matrix(ProtoSyn.acceleration, pose, selection)
+    distance_matrix(ProtoSyn.acceleration.active, pose, selection)
 end
 
 distance_matrix(pose::Pose) = begin
-    distance_matrix(ProtoSyn.acceleration, pose)
+    distance_matrix(ProtoSyn.acceleration.active, pose)
 end
 
 distance_matrix(state::State{T}) where {T <: AbstractFloat} = begin
-    distance_matrix(ProtoSyn.acceleration, state)
+    distance_matrix(ProtoSyn.acceleration.active, state)
 end
 
 distance_matrix(state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat} = begin
-    if ProtoSyn.acceleration == Type{ProtoSyn.CUDA_2}
+    if ProtoSyn.acceleration.active == Type{ProtoSyn.CUDA_2}
         distance_matrix(ProtoSyn.SIMD_1, state.x, verlet_list)
     else
-        distance_matrix(ProtoSyn.acceleration, state.x, verlet_list)
+        distance_matrix(ProtoSyn.acceleration.active, state.x, verlet_list)
     end
 end
 
 distance_matrix(pose::Pose, verlet_list::VerletList) = begin
-    if ProtoSyn.acceleration == Type{ProtoSyn.CUDA_2}
+    if ProtoSyn.acceleration.active == Type{ProtoSyn.CUDA_2}
         distance_matrix(ProtoSyn.SIMD_1, pose, verlet_list)
     else
-        distance_matrix(ProtoSyn.acceleration, pose, verlet_list)
+        distance_matrix(ProtoSyn.acceleration.active, pose, verlet_list)
     end
 end
 
 distance_matrix(coords::Vector{T}, verlet_list::VerletList) where {T <: AbstractFloat} = begin
-    if ProtoSyn.acceleration == Type{ProtoSyn.CUDA_2}
+    if ProtoSyn.acceleration.active == Type{ProtoSyn.CUDA_2}
         distance_matrix(ProtoSyn.SIMD_1, coords, verlet_list)
     else
-        distance_matrix(ProtoSyn.acceleration, coords, verlet_list)
+        distance_matrix(ProtoSyn.acceleration.active, coords, verlet_list)
     end
 end

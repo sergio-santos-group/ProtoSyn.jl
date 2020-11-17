@@ -5,14 +5,51 @@ using ProtoSyn.Calculators
 using ProtoSyn.Peptides
 using ProtoSyn.Builder
 using ProtoSyn.Units
+using Printf
 
-res_lib = grammar(Float64);
+T = Float32
 
-pose = Peptides.build(res_lib, seq"QQQ");
-rl = Peptides.Rotamers.load_dunbrack(ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
+res_lib = grammar(T);
+# pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
+
+pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAY");
+Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
+Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
+
+rl = Peptides.Rotamers.load_dunbrack(T, ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
+
+energy_function = ProtoSyn.Common.get_default_energy_function()
+energy_function(pose)
+
+selection = rid"21:26" & an"C$|N$|CA$"r
+p_mut = 1/(ProtoSyn.length(selection(pose, gather = true)))
+dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 1.0, selection)
+
+rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rl, 2, 1)
+
+compound_driver = ProtoSyn.Drivers.CompoundDriver([dihedral_mutator, rotamer_blitz])
+
+function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
+    if driver_state.step % 100 == 0
+        @printf("%5d %10.4f %5.2f %%\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100)
+        io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+    end
+end
+
+mc_callback = ProtoSyn.Drivers.Callback(callback_function)
+monte_carlo = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator, mc_callback, 2000, 0.01)
+
+# pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
-Peptides.Rotamers.apply!(pose.state, rl["GLN"][-180.0, -180.0][1], pose.graph[1][2])
+monte_carlo(pose)
+
+rm = Peptides.Mutators.RotamerMutator(rl, 1.0, -1, an"CA")
+io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
+rm(pose)
 io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+
+
+# Peptides.Rotamers.apply!(pose.state, rl["GLN"][-180.0, -180.0][1], pose.graph[1][2])
 
 sync!(pose)
 pose.state[1].t += [1.0, 3.0, 4.0]

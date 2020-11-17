@@ -7,6 +7,9 @@ abstract type Driver end
 
 #abstract type AbstractSampler end
 
+include("callback.jl")
+include("blitz.jl")
+
 # steepest descent
 include("sd.jl")
 
@@ -14,8 +17,8 @@ include("sd.jl")
 #include("thermostats.jl")
 #include("md.jl")
 
-include("mc2.jl")
-
+include("monte_carlo.jl")
+include("compound.jl")
 #(driver::IDriver)(s::State)  = driver(nothing, s)
 
 

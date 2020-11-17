@@ -1,6 +1,11 @@
 mutable struct EnergyFunction{T <: AbstractFloat}
 
     components::Dict{EnergyFunctionComponent, T}
+    clean_cache_every::Int16
+end
+
+EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
+    return EnergyFunction{T}(components, Int16(100))
 end
 
 
@@ -16,6 +21,12 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = fal
                 for atom_index in 1:pose.state.size
                     pose.state.f[:, atom_index] += forces[atom_index, :]
                 end
+            end
+
+            component.cached_n_calls += 1
+            if component.cached_n_calls % energy_function.clean_cache_every == 0
+                GC.gc(false)
+                component.cached_n_calls = 0
             end
         end
     end

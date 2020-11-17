@@ -18,7 +18,7 @@ module TorchANI
     network. The model can be defined using `model_index` (from model 1 to 8,
     default is 3). The optional `A` parameter defines the acceleration mode used
     (only CUDA_2 is available). If left undefined the default
-    ProtoSyn.acceleration mode will be used.
+    ProtoSyn.acceleration.active mode will be used.
 
     #See also:
     `calc_torchani_ensemble`
@@ -53,7 +53,7 @@ module TorchANI
     end
 
     calc_torchani_model(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
-        calc_torchani_model(ProtoSyn.acceleration, pose, update_forces = update_forces, model_index = model_index)
+        calc_torchani_model(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model_index = model_index)
     end
 
     # --- ENSEMBLE
@@ -64,7 +64,7 @@ module TorchANI
     Calculate the pose energy according to the whole TorchANI neural
     network ensemble. The optional `A` parameter defines the acceleration mode
     used (only CUDA_2 is available). If left undefined the default
-    ProtoSyn.acceleration mode will be used.
+    ProtoSyn.acceleration.active mode will be used.
 
     #See also:
     `calc_torchani_model`
@@ -98,7 +98,7 @@ module TorchANI
     end
 
     calc_torchani_ensemble(pose::Pose; update_forces::Bool = false) = begin
-        calc_torchani_ensemble(ProtoSyn.acceleration, pose, update_forces = update_forces)
+        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces = update_forces)
     end
 
 

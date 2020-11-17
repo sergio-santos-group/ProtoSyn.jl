@@ -73,7 +73,7 @@ end
 Updates the Verlet list (using a SISD or SIMD approach) according to the
 defined 'verlet_list.cutoff' and the given coordinates 'coords' (must be
 in AoS format). If SISD or SIMD acceletarion is not given, the default
-ProtoSyn.acceleration is employed.
+ProtoSyn.acceleration.active is employed.
 
 # Examples
 ```jldoctest
