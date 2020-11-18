@@ -158,7 +158,7 @@ function append_residues!(pose::Pose{Topology}, residue::Residue,
     ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
     Builder.append_residues!(pose, residue, grammar, derivation; op = op)
-    residues = residue.container.items[end-length(derivation)+1:end]
+    residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
     setss!(pose, ss, residues)
 end
 
@@ -173,7 +173,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         i = residue.index       # This is the residue index
         (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
     else
-        unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
+        ProtoSyn.unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
     end
     
     
@@ -192,69 +192,95 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
 end
 
 
-function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α")
+function remove_sidechains(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+    _selection = !an"CA$|N$|C$|H$|O$"r
+    if selection !== nothing
+        _selection = _selection & selection
+    end
+    sidechain = _selection(pose, gather = true)
+    for atom in sidechain
+        ProtoSyn.pop_atom!(pose, atom)
+    end
+
+    return pose
+end
+
+
+function add_sidechains(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+    if selection !== nothing
+        residues = selection(pose, gather = true)
+    else
+        residues = collect(eachresidue(pose.graph))
+    end
+    for residue in residues
+        derivation = [string(Peptides.three_2_one[residue.name])]
+        Peptides.mutate!(pose, residue, grammar, derivation)
+    end
+
+    return pose
+end
+
+
+function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
 
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
-    frag = Builder.fragment(grammar, derivation)
-    measure_frag = Builder.fragment(grammar, vcat(derivation, derivation)) # Actually 2 residues
+    sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
 
-    # Measure angle between Psi and CB_dihedral
-    frag_psi = measure_frag.state[measure_frag.graph[2]["C"]].ϕ
-    measure_frag_sidechain = (!an"CA$|N$|C$|H$|O$"r)(measure_frag, gather = true)
-    vals = []
-    for child in measure_frag.graph[1]["CA"].children
-        if child in measure_frag_sidechain
-            push!(vals, frag_psi - measure_frag.state[child].ϕ)
-        end
+    same_aminoacid = string(Peptides.three_2_one[residue.name]) == derivation[1]
+    if same_aminoacid && length(sidechain) > 0
+        println("No mutation required, residue already has sidechain of the requested type.")
+        return pose
     end
+
+    frag = Builder.fragment(grammar, derivation)
     
     # Remove old sidechain
-    sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
     for atom in sidechain
-        pop!(pose, atom)
+        ProtoSyn.pop_atom!(pose, atom)
     end
-
+    
     # Insert new sidechain
     frag_sidechain = (!an"CA$|N$|C$|H$|O$"r)(frag, gather = true)
     poseCA = residue["CA"]
+    
+    # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
+    # the index in the whole pose
     poseCA_index = findfirst(x -> x === poseCA, residue.items)
-        
-    fragCA_children_names = []
+    
+    vals = []
     for (index, atom) in enumerate(frag_sidechain)
+        parent_is_CA = false
         if atom.parent.name == "CA"
-            push!(fragCA_children_names, atom.name)
-            ProtoSyn.unbond(pose, atom, atom.parent)
+            parent_is_CA = true
+            push!(vals, ProtoSyn.getdihedral(frag.state, atom))
+            ProtoSyn.unbond(frag, atom, atom.parent)
         end
 
+        # Insert into the graph
         # Note: insert! already sets the residue.itemsbyname
         insert!(residue, poseCA_index + index, atom)
+
+        # Since now atom is already in the graph, we can bond and add parents
+        if parent_is_CA
+            ProtoSyn.bond(atom, poseCA)
+            setparent!(atom, poseCA)
+        end
     end
 
     _start = frag_sidechain[1].index
     _end   = frag_sidechain[end].index
     insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
     
-    fragCA = frag.graph[1]["CA"]
-    index  = 1
-    for name in fragCA_children_names
-
-        ProtoSyn.bond(residue[name], poseCA)
-        setparent!(residue[name], poseCA)
-    end
-    
     reindex(pose.graph)
     
-    # Fix positions (after reindex - requires correct ascendents ?)
-    # Measure angle between Psi and CB_dihedral
-    pose_psi = pose.state[residue.container[residue.index + 1][Dihedral.psi.atom]].ϕ
+    # Fix positions (after reindex - requires correct ascendents)
     pose_sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
-
-    index = 1
+    Δϕ             = pose.state[residue["CA"]].Δϕ
+    index          = 1
     for child in residue["CA"].children
         if child in pose_sidechain
-            pose.state[child].ϕ = (pose_psi - vals[index]) % 360
-            # pose.state[child].ϕ = (vals[index]) % 360
+            pose.state[child].ϕ = vals[index] - Δϕ
             index += 1
         end
     end
@@ -265,6 +291,18 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     return pose
 end
 
+function pop_residue!(pose::Pose{Topology}, residue::Residue)
+
+    # 1) Since we are calling Peptides, we know that we should unbond this
+    # residue and the next (children)
+    for child in residue.children
+        Peptides.unbond(pose, residue, child) # Order is important
+    end
+
+    # 2) Now we can safelly pop the residue, while maintaining the positions of
+    # downstream residues
+    ProtoSyn.pop_residue!(pose, residue)
+end
 
 function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
@@ -329,16 +367,19 @@ function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
     at_N = state[residue_2["N"]]
     at_N.b = ProtoSyn.distance(at_N, state[_origin])
     at_N.θ = ProtoSyn.angle(at_N, state[_origin], state[_origin.parent])
-    at_N.ϕ = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+    v = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+    at_N.ϕ += v - ProtoSyn.getdihedral(state, residue_2["N"])
 
     for child in residue_2["N"].children
         at_1 = state[child]
         at_1.θ = ProtoSyn.angle(at_1, at_N, state[_origin])
-        at_1.ϕ = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
+        v = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
+        at_1.ϕ += v - ProtoSyn.getdihedral(state, child)
 
         for grandchild in child.children
             at_2 = state[grandchild]
-            at_2.ϕ = ProtoSyn.dihedral(at_2, at_1, at_N, state[_origin])
+            v = ProtoSyn.dihedral(at_2, at_1, at_N, state[_origin])
+            at_2.ϕ += v - ProtoSyn.getdihedral(state, grandchild)
         end
     end
 

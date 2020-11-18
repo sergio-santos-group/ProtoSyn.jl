@@ -5,24 +5,6 @@ using LinearAlgebra
 export sync!
 
 """
-    sync!(pose::Pose)
-    
-Check whether the given `Pose` instance has either i2c or c2i flag set to true
-and update the cartesian/internal coordinates accordingly. Return the altered
-`Pose` instance.
-
-
-# Examples
-```jldoctest
-julia> sync(pose)
-```
-"""
-function sync!(pose::Pose)::Pose
-    sync!(pose.state, pose.graph)
-    pose
-end
-
-"""
     sync!(state::State, top::Topology)
     
 Check whether the given `State` instance has either i2c or c2i flag set to true

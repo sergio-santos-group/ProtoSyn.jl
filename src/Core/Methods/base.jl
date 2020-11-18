@@ -201,6 +201,26 @@ Base.copy(t0::Topology) = begin
     return t1
 end
 
+Base.copy(s::State{T}) where T = begin
+    ns = State(T, s.size)
+    # Update item.t also updates the parent.x matrix
+    for (index, atomstate) in enumerate(s)
+        ns[index].t = copy(atomstate.t)
+        ns[index].r = copy(atomstate.r)
+        ns[index].b = atomstate.b
+        ns[index].θ = atomstate.θ
+        ns[index].ϕ = atomstate.ϕ
+        ns[index].Δϕ = atomstate.Δϕ
+        ns[index].changed = atomstate.changed
+    end
+    ns.id = s.id
+    ns.i2c = s.i2c
+    ns.c2i = s.c2i
+    ns.f = copy(s.f)
+    ns.e = copy(s.e)
+    ns
+end
+
 Base.copy(p::Pose) = Pose(copy(p.graph), copy(p.state))
 
 #endregion copy

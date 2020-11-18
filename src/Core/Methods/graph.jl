@@ -365,50 +365,84 @@ count_atoms(a::Atom) = 1
 
 # POP
 
-function Base.pop!(pose::Pose{Topology}, residue::Residue)
+"""
+    pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
 
-    for atom in residue.items
-        pop!(pose, atom)
+Pop and return the desired `atom` from the given `pose`. In order to do this,
+perform the following actions:
+ - Unset parents/children
+ - Unbond neighbours
+ - Remove from graph
+ - Remove from state
+ - Set new ascendents
+ - Update the container itemsbyname
+
+# Examples
+```jldoctest
+julia> pop!(pose, pose.graph[1][1][2])
+```
+"""
+function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+
+    if atom.container.container.container !== pose.graph
+        error("Given Atom does not belong to the provided topology.")
     end
+
+    # Save information to return 
+    popped_atom = Atom(atom.name, 1, 1, atom.symbol)
+
+    # Save children and parent of this atom (will be removed in next step)
+    children    = copy(atom.children)
+    grandparent = atom.parent
+
+    # Unset parents/children and unbond neighbours
+    for i = length(atom.bonds):-1:1   # Note the reverse loop
+        other = atom.bonds[i]
+        ProtoSyn.unbond(pose, atom, other)
+    end
+
+    # Using saved children and parent, set all child.parent to be this
+    # atom.parent
+    for child in children
+        # child.parent = grandparent
+        child.parent = origin(pose.graph)
+    end
+
+    # Remove from graph
+    deleteat!(atom.container.items, findfirst(atom, atom.container.items))
+    atom.container.size -= 1
+
+    # Remove from state
+    popped_state = splice!(pose.state, atom.index)
+
+    # Reindex and set ascendents
+    reindex(pose.graph)
+
+    # Update container 'itemsbyname'
+    pop!(atom.container.itemsbyname, atom.name)
+
+    # Set common ID
+    popped_atom.id = popped_state.id = genid()
+
+    return Pose(popped_atom, popped_state)
 end
 
+function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
-# Base.pop!(pose::Pose{Topology}, r::Residue) = begin
+    if residue.container.container !== pose.graph
+        error("Given Residue does not belong to the provided topology.")
+    end
 
-#     println("Deleting residue $r")
+    # Remove internal atoms. Notice the inverse loop. Also removes atom-level
+    # parenthood and bonds
+    for atom in reverse(residue.items)
+        pop_atom!(pose, atom)
+    end
 
-#     if r.container.container !== pose.graph
-#         error("given residue does not belong to the provided topology")
-#     end
-
-#     # detach residue from parents (bonds, parents/children)
-#     # hascontainer(r) && delete!(r.container, r)
-#     for atom in eachatom(r)
-#         for i = length(atom.bonds):-1:1   # Note the reverse loop
-#             other = atom.bonds[i]
-
-#             in(other, r) && continue
-#             Builder.unbond(pose, atom, other)
-#         end
-#     end
-
-#     # remove node states from parent state and create
-#     # a new state for this residue
-#     deleteat!(r.container.items, findfirst(r, r.container.items))
-#     r.container.size -= 1
-#     for child in origin(pose.graph).children
-#         child in r.items && popparent!(child) 
-#     end
-
-#     st = splice!(pose.state, r[1].index:r[end].index)
-#     reindex(pose.graph) # Also sets ascendents
-    
-#     # new common ID
-#     r.id = st.id = genid()
-
-#     #return (res, st)
-#     Pose(r, st)
-# end
+    # Remove from container.items
+    deleteat!(residue.container.items, findfirst(residue, residue.container.items))
+    residue.container.size -= 1
+end
 
 Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
 

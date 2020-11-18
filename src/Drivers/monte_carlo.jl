@@ -43,14 +43,23 @@ function (driver::MonteCarlo)(pose::Pose)
             previous_energy = energy
             previous_state = copy(pose)
             driver_state.acceptance_count += 1
+            println("Accepted:\n Current E: $(pose.state.e[:Total])\n Saved: $(previous_state.state.e[:Total])")
         else
-            pose = copy(previous_state)
+            e = pose.state.e[:Total]
+            ProtoSyn.recoverfrom!(pose, previous_state)
+            println("Not accepted:\n Was: $e\n Current: $(pose.state.e[:Total]) ($(previous_state.state.e[:Total]))")
         end
 
         driver_state.step += 1
-        driver.callback !== nothing && driver.callback(pose, driver_state) 
+        driver.callback !== nothing && driver.callback(pose, driver_state)
+        println("Here: $(pose.state.e[:Total])")
+        println("ID: $(pose.state.id)")
     end
-    
+
     driver_state.completed = true
     driver_state
+    println("FINAL saved: $(pose.state.e[:Total])")
+    println("FINAL eval : $(driver.eval!(pose))")
+    println("ID: $(pose.state.id)")
+    return pose
 end

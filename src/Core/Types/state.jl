@@ -170,6 +170,7 @@ State(::Type{T}, items::Vector{AtomState{T}}) where T = begin
     for (index, item) in enumerate(state.items)
         item.parent = state
         item.index  = index
+        item.t      = item.t # Force update of state.x
     end
     state.x.parent = state
 
@@ -239,32 +240,10 @@ Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
     for i = 0:s2.size-1
         insert!(s1.items, index+i, s2[i+1])
     end
-    # FIX STATE.FORCES (INSERT ZEROS)
+    s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
+    # TO DO :: FIX STATE.FORCES (INSERT ZEROS)
     s1.size += s2.size
     s1
-end
-
-
-# Base.copy(s::State{T}) where T = deepcopy(s)
-
-Base.copy(s::State{T}) where T = begin
-    ns = State(T, s.size)
-    # Update item.t also updates the parent.x matrix
-    for (index, atomstate) in enumerate(s)
-        ns[index].t = copy(atomstate.t)
-        ns[index].r = copy(atomstate.r)
-        ns[index].b = atomstate.b
-        ns[index].θ = atomstate.θ
-        ns[index].ϕ = atomstate.ϕ
-        ns[index].Δϕ = atomstate.Δϕ
-        ns[index].changed = atomstate.changed
-    end
-    ns.id = s.id
-    ns.i2c = s.i2c
-    ns.c2i = s.c2i
-    ns.f = copy(s.f)
-    ns.e = copy(s.e)
-    ns
 end
 
 request_c2i(s::State; all=false) = (s.c2i = true; s)

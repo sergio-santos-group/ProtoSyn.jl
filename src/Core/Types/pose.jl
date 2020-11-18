@@ -14,7 +14,7 @@ mutable struct Pose{T <: AbstractContainer}
     graph::T
     state::State
     Pose(c::T, s::State) where {T <: AbstractContainer}= begin
-        c.id != s.id && error("unpairable container and state")
+        c.id != s.id && error("unpairable container (ID: $(c.id)) and state (ID: $(s.id))")
         new{T}(c, s)
     end
 end

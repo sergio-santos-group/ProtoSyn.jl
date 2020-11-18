@@ -7,10 +7,11 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
-T = Float32
+T = Float64
 
 res_lib = grammar(T);
-# pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
+pose = Peptides.build(res_lib, seq"QQQ");
+remove_sidechains!(pose)
 
 pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAY");
 Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
@@ -32,17 +33,18 @@ compound_driver = ProtoSyn.Drivers.CompoundDriver([dihedral_mutator2, rotamer_bl
 
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
     @printf("STEP %-5d E= %-10.4f AR= %-5.2f%% T= -%7.5f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
-    io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
+    # io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
 end
 
-mc_callback1  = ProtoSyn.Drivers.Callback(callback_function, 100)
-mc_callback2  = ProtoSyn.Drivers.Callback(callback_function, 10)
-monte_carlo1 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback1, 100, ProtoSyn.Drivers.get_sigmoid_quench(0.1, 500.0, 0.01))
-monte_carlo2 = ProtoSyn.Drivers.MonteCarlo(energy_function, compound_driver, mc_callback2, 200, ProtoSyn.Drivers.get_constant_temperature(0.005))
+mc_callback1  = ProtoSyn.Drivers.Callback(callback_function, 10)
+mc_callback2  = ProtoSyn.Drivers.Callback(callback_function, 1)
+monte_carlo1 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback1, 10, ProtoSyn.Drivers.get_sigmoid_quench(0.1, 500.0, 0.01))
+monte_carlo2 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback2, 20, ProtoSyn.Drivers.get_sigmoid_quench(0.1, 500.0, 0.01))
+# monte_carlo2 = ProtoSyn.Drivers.MonteCarlo(energy_function, compound_driver, mc_callback2, 200, ProtoSyn.Drivers.get_constant_temperature(0.005))
 
 # pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
-monte_carlo1(pose)
+pose = monte_carlo1(pose)
 monte_carlo2(pose)
 
 rm = Peptides.Mutators.RotamerMutator(rl, 1.0, -1, an"CA")
