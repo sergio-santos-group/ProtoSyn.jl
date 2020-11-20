@@ -6,6 +6,7 @@ Note: This function is called by the `build` function.
 """
 Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
 
+    println(frag, " ", isfragment(frag))
     !isfragment(frag) && error("invalid fragment")
     
     # Merge the fragment graph (Segment) to the pose graph (Topology).

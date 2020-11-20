@@ -56,7 +56,7 @@ module Calculators
     julia> Calculators.calc_solvation_energy(pose)
     ```
     """
-    function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 24.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 24, rmax::T = 24.0, sc::T = 5.0, update_forces::Bool = false) where {T <: AbstractFloat}
         # coords must be in AoS format
         
         s = (an"CA")(pose, gather = true)
@@ -95,11 +95,11 @@ module Calculators
             e_sol += esol_i
         end
         
-        return e_sol
+        return e_sol, nothing
     end
 
 
-    function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {T <: AbstractFloat}
+    function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0, update_forces::Bool = false) where {T <: AbstractFloat}
             
         dm       = full_distance_matrix(A, pose, an"CA")
         residues = collect(eachresidue(pose.graph))
@@ -121,11 +121,11 @@ module Calculators
             esol += esol_i
         end
 
-        return esol
+        return esol, nothing
     end
 
-    calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {T <: AbstractFloat} = begin
-        calc_solvation_energy(ProtoSyn.acceleration.active, pose; Ω, rmax, sc)
+    calc_solvation_energy(pose::Pose; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0, update_forces::Bool = false) where {T <: AbstractFloat} = begin
+        return calc_solvation_energy(ProtoSyn.acceleration.active, pose; Ω, rmax, sc, update_forces)
     end
 
     solvation_energy = EnergyFunctionComponent("Caterpillar_Solvation", calc_solvation_energy)

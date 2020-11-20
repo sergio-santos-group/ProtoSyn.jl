@@ -41,15 +41,17 @@ Return a Pose instance from a Fragment, where the State is empty/blank.
 const Fragment = Pose{Segment}
 
 Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
-    top = Topology(frag.graph.name, 1)
+    frag2 = copy(frag)
+    top = Topology(frag2.graph.name, 1)
     state = State{T}()
     state.id = top.id
     pose = Pose(top, state)
-    Base.append!(pose, frag)
+    Base.append!(pose, frag2)
 
     ProtoSyn.request_i2c(state; all=true)
     return pose
 end
+# Pose(::Type{T}, frag::Fragment)
 Pose(frag::Fragment) = Pose(Float64, frag)
 
 
@@ -75,6 +77,7 @@ function fragment(pose::Pose{Topology})
     detach(segment)
     segment.id = state.id = genid()
     segment.name = topology.name
+    segment.container = nothing
 
     Pose(segment, state)
 end

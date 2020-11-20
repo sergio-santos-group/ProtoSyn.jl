@@ -14,7 +14,7 @@ end
 
 
 include("constants.jl")
-# include("calculators.jl")
+include("calculators.jl")
 include("Rotamers/Rotamers.jl")
 
 
@@ -132,7 +132,11 @@ arm movement.
 function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
     state = container.state
     for r in residues
-        Builder.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        if r.name == "PRO" # Proline phi is always restricted to -60°
+            Builder.setdihedral!(container.state, Dihedral.phi(r), -1.047197551)
+        else
+            Builder.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        end
         Builder.setdihedral!(container.state, Dihedral.psi(r),  ψ)
         Builder.setdihedral!(container.state, Dihedral.omega(r), ω)
     end
@@ -192,7 +196,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
 end
 
 
-function remove_sidechains(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
     _selection = !an"CA$|N$|C$|H$|O$"r
     if selection !== nothing
         _selection = _selection & selection
@@ -206,7 +210,7 @@ function remove_sidechains(pose::Pose{Topology}, selection::Opt{AbstractSelectio
 end
 
 
-function add_sidechains(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
     if selection !== nothing
         residues = selection(pose, gather = true)
     else

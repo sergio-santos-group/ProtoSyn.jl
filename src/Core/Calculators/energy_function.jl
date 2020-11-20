@@ -39,6 +39,6 @@ end
 function Base.show(io::IO, efc::EnergyFunction)
     println(io, "Energy Function Components:")
     for (index, (component, ɑ)) in enumerate(efc.components)
-        print(io, "  $index) $(component.name) | ɑ: $(ɑ)")
+        print(io, "  $index) $(component.name) | ɑ: $(ɑ)\n")
     end
 end

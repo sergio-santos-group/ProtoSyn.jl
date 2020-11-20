@@ -33,8 +33,8 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             # Gather the location to append this rotamer to, in the rotamers
             # matrix
             rl = matrices[name]
-            phi_index = first(searchsorted(rl.phis, deg2rad(parse(T, elem[2]))))
-            psi_index = first(searchsorted(rl.psis, deg2rad(parse(T, elem[3]))))
+            phi_index = findnearest(rl.phis, deg2rad(parse(T, elem[2])))
+            psi_index = findnearest(rl.psis, deg2rad(parse(T, elem[3])))
         
             # Append to the found location. If necessary, initiate a new vector
             try

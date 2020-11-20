@@ -209,6 +209,13 @@ function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
     isparent(at1, at2) && return _unbond(pose, at1, at2)
     isparent(at2, at1) && return _unbond(pose, at2, at1)
+    # The two atoms might be bonded but not have a parenthood relationship, in
+    # which case we just remove eachother from the bond list and return the pose
+    i = findfirst(at1, at2.bonds)
+    i !== nothing && deleteat!(at2.bonds, i)
+    j = findfirst(at2, at1.bonds)
+    j !== nothing && deleteat!(at1.bonds, j)
+    return pose
 end
 
 function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose

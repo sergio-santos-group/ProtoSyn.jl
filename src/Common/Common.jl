@@ -9,8 +9,8 @@ module Common
     export get_default_energy_function
     get_default_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
         return Calculators.EnergyFunction(Dict(
-            Calculators.TorchANI.torchani_model => T(1.0)
-            # Peptides.Calculators.Caterpillar.solvation_energy => T(0.01)
+            Calculators.TorchANI.torchani_model => T(1.0),
+            Peptides.Calculators.Caterpillar.solvation_energy => T(0.01)
         ))
     end
 

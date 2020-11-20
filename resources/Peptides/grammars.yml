@@ -38,6 +38,5 @@ peptide:
       offsets:
         CA: 0
         C:  0
-        # O:  180°
-        O: 0
+        O:  0
   defop: α

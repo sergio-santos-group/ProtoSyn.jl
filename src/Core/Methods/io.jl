@@ -149,7 +149,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             end
         end
     end
-    state.x = x
+    state.x = StateMatrix(state, x)
     top.id = state.id = genid()
     
     # request conversion from cartesian to internal
