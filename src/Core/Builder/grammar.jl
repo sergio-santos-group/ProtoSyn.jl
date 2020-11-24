@@ -149,7 +149,6 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             frag = getvar(grammar, letter)
             
             frag2 = copy(frag)
-            println("FRAG 2: $frag2")
 
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
@@ -194,10 +193,8 @@ function opfactory(args)
         ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state
         
-        println(r2.items)
         if haskey(args, "presets")
             for (atname, presets) in args["presets"]
-                println("Looking for atname $atname")
                 !(atname in r2) && continue # Proline has no H
                 atomstate = state[r2[atname]]
                 for (key, value) in presets

@@ -186,7 +186,6 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         end
         popparent!(residue.container[residue_index])
 
-        println("Residue index: $residue_index")
         grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
     end
     

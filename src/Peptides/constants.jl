@@ -7,6 +7,7 @@ const one_2_three = Dict{Char,String}(
     'F' => "PHE",
     'G' => "GLY",
     'H' => "HIS",
+    'H' => "HIE",
     'I' => "ILE",
     'K' => "LYS",
     'L' => "LEU",
@@ -38,7 +39,13 @@ module Dihedral
     struct Omega <: DihedralType end; const omega = Omega()
 
     (phi::Phi)(residue::Residue)     = residue["C"]
-    (psi::Psi)(residue::Residue)     = residue["N"]
+    (psi::Psi)(residue::Residue)     = begin
+        if length(residue.children) == 0 
+            @warn "Residue $residue has no psi angle"
+            return nothing
+        end
+        residue.children[1]["N"]
+    end
     (omega::Omega)(residue::Residue) = residue["CA"]
 
     # --- Chi dihedral angles
@@ -77,6 +84,7 @@ module Dihedral
         "PHE" => ["CB", "CG"],
         "GLY" => [],
         "HIS" => ["CB", "CG"],
+        "HIE" => ["CB", "CG"],
         "ILE" => ["CB", "CG1"],
         "LYS" => ["CB", "CG", "CD", "CE"],
         "LEU" => ["CB", "CG"],
@@ -111,6 +119,7 @@ const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
     "PHE" =>  2.8,
     "GLY" => -0.4,
     "HIS" => -3.2,
+    "HIE" => -3.2,
     "ILE" =>  4.5,
     "LYS" => -3.9,
     "LEU" =>  3.8,
@@ -141,6 +150,7 @@ const doolitle_hydrophobicity_mod = Dict{String, ProtoSyn.Units.defaultFloat}(
     "TYR" => -1.3,
     "PRO" => -1.6,
     "HIS" => -3.2,
+    "HIE" => -3.2,
     "ASN" => -3.5,
     "GLN" => -3.5,
     "ASP" => -3.5,

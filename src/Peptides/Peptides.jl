@@ -131,29 +131,40 @@ arm movement.
 """
 function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
     state = container.state
+    T = eltype(state)
     for r in residues
-        if r.name == "PRO" # Proline phi is always restricted to -60°
-            Builder.setdihedral!(container.state, Dihedral.phi(r), -1.047197551)
-        else
-            Builder.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        if r.name == "PRO"
+            # Proline is restricted to TRANS conformation
+            # This conformation is most abundant (~95%) in globular proteins.
+            # https://pubs.acs.org/doi/10.1021/jacs.0c02263
+            # PHI: -75° | PSI: 145° | OMEGA: 180°
+            ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), T(-1.308997))
+            # Last residues of chain might not have a psi angle.
+            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  T(2.5307274))
+            ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), T(3.1415927))
+            continue
         end
-        Builder.setdihedral!(container.state, Dihedral.psi(r),  ψ)
-        Builder.setdihedral!(container.state, Dihedral.omega(r), ω)
+        ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        # Last residues of chain might not have a psi angle.
+        Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  ψ)
+        ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), ω)
     end
+
+    return container
 end
 
 setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}) = begin
     residues::Vector{Residue} = collect(eachresidue(container.graph))
-    setss!(container, (ϕ, ψ, ω), residues)
+    Peptides.setss!(container, (ϕ, ψ, ω), residues)
 end
 
 setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = begin
     residues = ProtoSyn.PromoteSelection(sele, Residue, any)(container, gather = true)
-    setss!(container, (ϕ, ψ, ω), residues)
+    Peptides.setss!(container, (ϕ, ψ, ω), residues)
 end
 
 setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = begin
-    setss!(container, (ϕ, ψ, ω), [residue])
+    Peptides.setss!(container, (ϕ, ψ, ω), [residue])
 end
 
 
@@ -197,7 +208,7 @@ end
 
 
 function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
-    _selection = !an"CA$|N$|C$|H$|O$"r
+    _selection = !(an"CA$|N$|C$|H$|O$"r | rn"PRO")
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -311,7 +322,7 @@ end
 function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
     pose = Builder.build(grammar, derivation)
-    setss!(pose, ss)
+    Peptides.setss!(pose, ss)
     sync!(pose)
     pose
 end

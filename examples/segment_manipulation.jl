@@ -12,11 +12,12 @@ T = Float64
 res_lib = grammar(T);
 
 begin
-    pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN");
+    # pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN");
+    pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAY");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
-    Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
-    Peptides.remove_sidechains!(pose)
+    # Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
+    # Peptides.remove_sidechains!(pose)
 end
 
 # rl = Peptides.Rotamers.load_dunbrack(T, ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
@@ -24,10 +25,15 @@ end
 energy_function = ProtoSyn.Common.get_default_energy_function()
 energy_function(pose)
 
-selection = rid"21:26" & an"C$|N$|CA$"r
-p_mut = 1/(ProtoSyn.length(selection(pose, gather = true)))
+selection = (rid"21:26" | rid"45:49") & an"C$|N$"r
+p_mut = 1/(length(selection(pose, gather = true)))
 dihedral_mutator1 = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.5, selection)
-dihedral_mutator2 = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.1, selection)
+
+selection = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
+selection = an"CA" & !rn"PRO"
+n = count(selection(pose))
+p_mut = 2/(n*(n-1))
+crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(randn, p_mut, 2.0, selection)
 
 rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rl, 3, 1)
 
@@ -38,14 +44,16 @@ function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverStat
     io = open("../teste1.pdb", "a"); ProtoSyn.write(io, pose); close(io);
 end
 
-mc_callback1  = ProtoSyn.Drivers.Callback(callback_function, 100)
-monte_carlo1 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback1, 2000, ProtoSyn.Drivers.get_sigmoid_quench(0.1, 500.0, 0.01))
+mc_callback1  = ProtoSyn.Drivers.Callback(callback_function, 500)
+monte_carlo1 = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator1, mc_callback1, 100000, ProtoSyn.Drivers.get_linear_quench(0.1, 100000))
 # monte_carlo2 = ProtoSyn.Drivers.MonteCarlo(energy_function, compound_driver, mc_callback2, 200, ProtoSyn.Drivers.get_constant_temperature(0.005))
 
 # pose = Peptides.build(res_lib, seq"QQQQQQQQQQQQQQQQQQQQQQ");
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 monte_carlo1(pose);
-monte_carlo2(pose)
+# monte_carlo2(pose)
+
+# ----
 
 rm = Peptides.Mutators.RotamerMutator(rl, 1.0, -1, an"CA")
 io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
