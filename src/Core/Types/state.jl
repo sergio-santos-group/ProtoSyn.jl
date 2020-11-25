@@ -85,6 +85,7 @@ Base.getindex(x::StateMatrix{T}, i::UnitRange{<: Real}, j::Int) where {T <: Abst
 Base.getindex(x::StateMatrix{T}, j::Int, i::Colon) where {T <: AbstractFloat} = x.coords[j, i]
 Base.getindex(x::StateMatrix{T}, i::Colon, j::Int) where {T <: AbstractFloat} = x.coords[i, j]
 Base.getindex(x::StateMatrix{T}, i::Colon, j::UnitRange{<: Real}) where {T <: AbstractFloat} = x.coords[i, j]
+Base.getindex(x::ProtoSyn.StateMatrix{T}, i::Colon) where {T <: AbstractFloat} = x.coords[i]
 
 function Base.show(io::IO, sm::StateMatrix{T}) where {T <: AbstractFloat}
     println(io, "StateMatrix{$T}:")

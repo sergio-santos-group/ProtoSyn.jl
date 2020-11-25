@@ -329,9 +329,9 @@ end
 # build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(ProtoSyn.Units.defaultFloat, grammar, derivation, ss)
 
 
-function load(filename::AbstractString)
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
-    pose = ProtoSyn.load(Float64, filename)
+    pose = ProtoSyn.load(T, filename)
 
     for segment in eachsegment(pose.graph)
         setparent!(segment[1][1], ProtoSyn.origin(pose.graph))
@@ -343,10 +343,40 @@ function load(filename::AbstractString)
         end
     end
 
-    n_atoms = ProtoSyn.count_atoms(pose.graph)
+    if bonds_by_distance
+        dm        = ProtoSyn.Calculators.distance_matrix(pose)
+        threshold = T(0.1)
+    end
+
+    atoms   = collect(eachatom(pose.graph))
+    n_atoms = length(atoms)
     visited = ProtoSyn.Mask{Atom}(n_atoms)
-    for atom_i in eachatom(pose.graph)
+    for (i, atom_i) in enumerate(atoms)
         visited[atom_i.index] = true
+        if bonds_by_distance
+            for (j, atom_j) in enumerate(atoms)
+                i == j && continue
+                atom_j = atoms[j]
+                # println("Checking atom $i and $j")
+                atom_j in atom_i.bonds && begin
+                    # println("Atom j $j already in atom i $i bonds")
+                    continue
+                end
+                putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
+                !(putative_bond in keys(Peptides.bond_lengths)) && begin
+                    # println("Bond $putative_bond between atoms $i and $j can't exist.")
+                    continue
+                end
+                d = Peptides.bond_lengths[putative_bond]
+                d += d * T(threshold)
+                if dm[i, j] < d
+                    # println("Found bond between atom $i and $j")
+                    push!(atom_i.bonds, atom_j)
+                else
+                    # println("Distance $(dm[i, j]) too large for bond $putative_bond (max: $d)")
+                end
+            end
+        end
         for atom_j in atom_i.bonds
             if visited[atom_j.index]
                 atom_i.parent = atom_j
@@ -355,12 +385,17 @@ function load(filename::AbstractString)
             end
         end
     end
+    # return pose
 
     reindex(pose.graph)
     ProtoSyn.request_c2i(pose.state)
     sync!(pose)
 
     pose
+end
+
+load(filename::AbstractString; bonds_by_distance::Bool = false) = begin
+    Peptides.load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance)
 end
 
 function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)

@@ -91,7 +91,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     # res.parent = ProtoSyn.origin(top).container
     
     seekstart(io)
-    natoms = mapreduce(l->startswith(l, "ATOM")||startswith(l, "HETATM"), +, eachline(io); init=0)
+    natoms = mapreduce(l->startswith(l, "ATOM")|| startswith(l, "HETATM"), +, eachline(io); init=0)
     x = zeros(T, 3, natoms)
     
     id2atom = Dict{Int, Atom}()
@@ -141,7 +141,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             atmindex += 1
 
         elseif startswith(line, "CONECT")
-            idxs = map(s->parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
+            idxs = map(s -> parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
                 other_atom = id2atom[i]
