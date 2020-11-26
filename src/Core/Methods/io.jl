@@ -141,7 +141,9 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             atmindex += 1
 
         elseif startswith(line, "CONECT")
-            idxs = map(s -> parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
+            # println("$line | $(length(line))")
+            # idxs = map(s -> parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
+            idxs = map(s -> parse(Int, s), split(line)[2:end])
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
                 other_atom = id2atom[i]

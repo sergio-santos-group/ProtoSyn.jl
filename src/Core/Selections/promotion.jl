@@ -24,17 +24,6 @@ PromoteSelection{ProtoSyn.Stateless}(true, any, FieldSelection{ProtoSyn.Stateles
 julia> sele = PromoteSelection(all, rn"ALA", Atom)
 PromoteSelection{ProtoSyn.Stateless}(true, all, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name), Atom)
 ```
-
-# Short Syntax
-```jldoctest
-julia> all(rn"ALA", Segment)
-PromoteSelection{ProtoSyn.Stateless}(true, any, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name), Segment)
-
-julia> any(an"CA", Residue)
-PromoteSelection{ProtoSyn.Stateless}(true, any, FieldSelection{ProtoSyn.Stateless,Atom}(false, r"CA", :name), Residue)
-
-julia> cast(rn"ALA", Atom)
-PromoteSelection{ProtoSyn.Stateless}(true, all, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name), Atom)
 ```
 
 ## Note

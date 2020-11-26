@@ -7,6 +7,12 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
+pose = Peptides.load("../mdC.pdb")
+
+trb_mutator = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 0.2, rn"CBZ")
+rrb_mutator = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, 0.2, nothing, rn"CBZ")
+compound_mutator = ProtoSyn.Drivers.CompoundDriver([trb_mutator, rrb_mutator])
+
 T = Float64
 
 res_lib = grammar(T);

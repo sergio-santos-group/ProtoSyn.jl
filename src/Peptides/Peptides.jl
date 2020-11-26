@@ -1,5 +1,6 @@
 module Peptides
 
+# using CUDA
 using ..ProtoSyn
 using ..ProtoSyn.Builder
 
@@ -329,6 +330,68 @@ end
 # build(grammar::LGrammar, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) = build(ProtoSyn.Units.defaultFloat, grammar, derivation, ss)
 
 
+# """
+# TO DO
+# """
+# function bonds_by_distance_kernel(dm::CuDeviceMatrix{T}, bonds::CuDeviceMatrix{T}, n::Int, species::CuDeviceArray{Char}, query_bond_type::CuDeviceArray{Char}, query_bond_length::T) where {T <: AbstractFloat}
+#     # Note: coords must be in AoS format
+
+#     i = ((blockIdx().y - 1) * blockDim().y) + threadIdx().y
+#     j = ((blockIdx().x - 1) * blockDim().x) + threadIdx().x
+    
+#     if i <= n && j <= n && i != j
+
+#         # _i = i << 2 - (2 + i)
+#         # _j = j << 2 - (2 + j)
+#         if (species[i] == query_bond_type[1] && species[j] == query_bond_type[2]) || (species[i] == query_bond_type[2] && species[j] == query_bond_type[1])
+
+#             if dm[i, j] < query_bond_length
+#                 bonds[i, j] = j
+#             end
+#         end
+#     end
+
+#     return
+# end
+
+# function bonds_by_distance!(dm::CuMatrix{T}, atoms::Vector{Atom}) where {T <: AbstractFloat}
+#     # coords must be in AoS format
+    
+#     _size = last(size(dm))
+#     _species = CuVector{Char}([atom.symbol[1] for atom in atoms])
+    
+#     # Define the configuration
+#     n_threads     = min(_size, 32)
+#     threads       = (n_threads, n_threads)
+#     n_blocks      = ceil(Int, _size / n_threads)
+#     blocks        = (n_blocks, n_blocks)
+    
+#     results = CuArray(zeros(T, _size, _size))
+
+#     # println("   Size: $_size")
+#     # println("Threads: $threads")
+#     # println(" Blocks: $blocks")
+#     # return 
+    
+#     for (bond_type, query_bond_length) in ProtoSyn.Peptides.bond_lengths
+#         query_bond_type = CuVector{Char}(collect.(bond_type))
+
+#         @time @cuda blocks = blocks threads = threads bonds_by_distance_kernel(dm, results, _size, _species, query_bond_type, T(query_bond_length))
+        
+#         @time for i in 1:_size
+#             println(i)
+#             atom_i = atoms[i]
+#             for j in 1:_size
+#                 if results[i, j] != 0
+#                     ProtoSyn.bond(atom_i, atoms[convert(Int, results[i, j])])
+#                 end
+#             end
+#         end
+#     end
+
+#     return nothing
+# end
+
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
     pose = ProtoSyn.load(T, filename)
@@ -344,7 +407,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     end
 
     if bonds_by_distance
-        dm        = ProtoSyn.Calculators.distance_matrix(pose)
+        dm        = ProtoSyn.Calculators.full_distance_matrix(pose)
         threshold = T(0.1)
     end
 
@@ -357,24 +420,12 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             for (j, atom_j) in enumerate(atoms)
                 i == j && continue
                 atom_j = atoms[j]
-                # println("Checking atom $i and $j")
-                atom_j in atom_i.bonds && begin
-                    # println("Atom j $j already in atom i $i bonds")
-                    continue
-                end
+                atom_j in atom_i.bonds && continue
                 putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
-                !(putative_bond in keys(Peptides.bond_lengths)) && begin
-                    # println("Bond $putative_bond between atoms $i and $j can't exist.")
-                    continue
-                end
+                !(putative_bond in keys(Peptides.bond_lengths)) && continue
                 d = Peptides.bond_lengths[putative_bond]
-                d += d * T(threshold)
-                if dm[i, j] < d
-                    # println("Found bond between atom $i and $j")
-                    push!(atom_i.bonds, atom_j)
-                else
-                    # println("Distance $(dm[i, j]) too large for bond $putative_bond (max: $d)")
-                end
+                d += d * threshold
+                dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
             end
         end
         for atom_j in atom_i.bonds
@@ -385,7 +436,6 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             end
         end
     end
-    # return pose
 
     reindex(pose.graph)
     ProtoSyn.request_c2i(pose.state)

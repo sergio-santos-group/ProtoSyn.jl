@@ -86,6 +86,7 @@ Base.getindex(x::StateMatrix{T}, j::Int, i::Colon) where {T <: AbstractFloat} = 
 Base.getindex(x::StateMatrix{T}, i::Colon, j::Int) where {T <: AbstractFloat} = x.coords[i, j]
 Base.getindex(x::StateMatrix{T}, i::Colon, j::UnitRange{<: Real}) where {T <: AbstractFloat} = x.coords[i, j]
 Base.getindex(x::ProtoSyn.StateMatrix{T}, i::Colon) where {T <: AbstractFloat} = x.coords[i]
+Base.getindex(x::ProtoSyn.StateMatrix{T}, i::Colon, j::Array{Int64,1}) where {T <: AbstractFloat} = x.coords[i, j]
 
 function Base.show(io::IO, sm::StateMatrix{T}) where {T <: AbstractFloat}
     println(io, "StateMatrix{$T}:")
@@ -100,7 +101,7 @@ function update_state_matrix(x::StateMatrix{T}, val, i::Colon, j::Int; update_it
     end
 end
 
-function update_state_matrix(x::StateMatrix{T}, vals, i::Colon, j::UnitRange{<: Real}; update_items = true) where {T <: AbstractFloat}
+function update_state_matrix(x::StateMatrix{T}, vals, i::Colon, j::Union{UnitRange{<: Real}, Array{<: Real, 1}}; update_items = true) where {T <: AbstractFloat}
     setindex!(x.coords, vals, i, j)
     if update_items && x.parent !== nothing
         for (value_index, state_index) in enumerate(j)
@@ -113,9 +114,10 @@ Base.setindex!(x::StateMatrix{T}, val::Vector{T}, i::Colon, j::Int) where {T <: 
     update_state_matrix(x, val, i, j)
 end
 
-Base.setindex!(x::StateMatrix{T}, vals::Matrix{T}, i::Colon, j::UnitRange{<: Real}) where {T <: AbstractFloat} = begin
+Base.setindex!(x::StateMatrix{T}, vals::Matrix{T}, i::Colon, j::Union{UnitRange{<: Real}, Array{<: Real,1}}) where {T <: AbstractFloat} = begin
     update_state_matrix(x, vals, i, j)
 end
+
 
 
 #region State ------------------------------------------------------------------

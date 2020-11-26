@@ -423,13 +423,17 @@ distance_matrix(::Type{ProtoSyn.CUDA_2}, state::State{T}) where {T <: AbstractFl
     distance_matrix(ProtoSyn.CUDA_2, state.x[:])
 end
 
-function full_distance_matrix(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}) where {T <: AbstractFloat}
+full_distance_matrix(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.CUDA_2, coords)
+end
+
+full_distance_matrix(::Type{ProtoSyn.CUDA_2}, pose::Pose) = begin
+    distance_matrix(ProtoSyn.CUDA_2, pose.state.x[:])
 end
 
 # ------------- DYNAMIC---------------------------------------------------------
 
-function distance_matrix(coords::Vector{T}) where {T <: AbstractFloat}
+distance_matrix(coords::Vector{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.acceleration.active, coords)
 end
 
@@ -467,4 +471,8 @@ distance_matrix(coords::Vector{T}, verlet_list::VerletList) where {T <: Abstract
     else
         distance_matrix(ProtoSyn.acceleration.active, coords, verlet_list)
     end
+end
+
+full_distance_matrix(pose::Pose) = begin
+    full_distance_matrix(ProtoSyn.acceleration.active, pose)
 end
