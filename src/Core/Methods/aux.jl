@@ -27,6 +27,7 @@ rand_vector_in_sphere() = rand_vector_in_sphere(ProtoSyn.Units.defaultFloat)
     rotation_matrix_from_axis_angle(axis::Vector{T}, angle::T) where {T <: AbstractFloat}
 
 Return a rotation matrix based on the provided axis and angle (in radians).
+
 # Examples
 ```julia-repl
 julia rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
@@ -42,4 +43,24 @@ function rotation_matrix_from_axis_angle(axis::Vector{T}, angle::T) where {T <: 
     return [1-2*q2*q2-2*q3*q3   2*q1*q2-2*q0*q3   2*q1*q3+2*q0*q2;
             2*q2*q1+2*q0*q3   1-2*q3*q3-2*q1*q1   2*q2*q3-2*q0*q1;
             2*q3*q1-2*q0*q2     2*q3*q2+2*q0*q1 1-2*q1*q1-2*q2*q2]
+end
+
+"""
+    unit_circle(value::T) where {T <: AbstractFloat}
+
+Maps an angle value (in radians) from ]-∞, +∞[ to [0, 2π] range. Returns value
+in radians.
+
+# Examples
+```julia-repl
+julia unit_circle(-2pi)
+0.0
+
+julia> ProtoSyn.unit_circle(-(3/2)pi)
+1.5707963267948966
+```
+"""
+function unit_circle(value::T) where {T <: AbstractFloat}
+    r = deg2rad((value > 0 ? value : (2*pi + value)) * 360 / (2*pi))
+    return mod(r, 2*pi)
 end

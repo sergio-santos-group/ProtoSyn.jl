@@ -236,10 +236,6 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
     return pose
 end
 
-function unit_circle(value::T) where {T <: AbstractFloat}
-    r = deg2rad((value > 0 ? value : (2*pi + value)) * 360 / (2*pi))
-    return mod(r, 2*pi)
-end
 
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
 
@@ -276,13 +272,13 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # the template fragment. This value could, in a later version of ProtoSyn,
     # be parametrized somewhere.
     _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
-    ϕ  = unit_circle(_ϕ)
+    ϕ  = ProtoSyn.unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
         parent_is_CA = false
         if atom.parent.name == "CA"
             parent_is_CA = true
             _atom_dihedral = ProtoSyn.getdihedral(frag.state, atom)
-            atom_dihedral  = unit_circle(_atom_dihedral)
+            atom_dihedral  = ProtoSyn.unit_circle(_atom_dihedral)
             objective_change = atom_dihedral - ϕ
             push!(objective_changes, objective_change)
             ProtoSyn.unbond(frag, atom, atom.parent)
@@ -310,11 +306,11 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
     _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    ϕ  = unit_circle(_ϕ)
+    ϕ  = ProtoSyn.unit_circle(_ϕ)
     for child in residue["CA"].children
         if child in pose_sidechain
             objective = ϕ + objective_changes[index]
-            pose.state[child].ϕ = unit_circle(objective - Δϕ)
+            pose.state[child].ϕ = ProtoSyn.unit_circle(objective - Δϕ)
             index += 1
         end
     end
