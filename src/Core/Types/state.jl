@@ -1,5 +1,6 @@
 using LinearAlgebra: I
 using StaticArrays
+using Printf
 
 #region AtomState --------------------------------------------------------------
 
@@ -64,8 +65,9 @@ end
 function Base.show(io::IO, as::AtomState{T}) where {T <: AbstractFloat}
     println(io, "AtomState{$T}:")
     println(io, " Index: $(as.index)")
-    println(io, " T: $(as.t)")
-    println(io, " b: $(as.b) | θ: $(as.θ) | ϕ: $(as.ϕ) | Δϕ: $(as.Δϕ)")
+    @printf(io, " T: [%.3f, %.3f, %.3f]\n", as.t[1], as.t[2], as.t[3])
+    # @printf(io, " b: $(as.b) | θ: $(as.θ) rad ($(deg2rad(as.θ))°) | ϕ: $(as.ϕ) | Δϕ: $(as.Δϕ)")
+    @printf(io, " b: %5.3f Å | θ: %6.3f rad (%7.2f°) | ϕ: %6.3f rad (%7.2f°) | Δϕ: %6.3f rad (%7.2f°)\n", as.b, as.θ, rad2deg(as.θ), as.ϕ, rad2deg(as.ϕ), as.Δϕ, rad2deg(as.Δϕ))
     println(io, " Changed: $(as.changed)")
 end
 

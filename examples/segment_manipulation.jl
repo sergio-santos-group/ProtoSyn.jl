@@ -13,9 +13,10 @@ trb_mutator = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector
 rrb_mutator = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, 0.2, nothing, rn"CBZ")
 compound_mutator = ProtoSyn.Drivers.CompoundDriver([trb_mutator, rrb_mutator])
 
-T = Float64
 
+T = Float64
 res_lib = grammar(T);
+design_mutator = Peptides.Mutators.DesignMutator(1.0, res_lib, (10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO"))
 
 begin
     # pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN");

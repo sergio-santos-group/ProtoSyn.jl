@@ -1,43 +1,37 @@
+using StatsBase
+
 mutable struct DesignMutator <: AbstractMutator
     p_mut::AbstractFloat
+    grammar::LGrammar
     selection::Opt{AbstractSelection}
 end
 
 
 function (design_mutator::DesignMutator)(pose::Pose)
     if design_mutator.selection === nothing
-        mask = TrueSelection{Atom}()(pose)
+        residues = collect(eachatom(pose.graph))
     else
-        mask = design_mutator.selection(pose)
+        sele  = design_mutator.selection
+        residues = ProtoSyn.promote(sele, Residue)(pose, gather = true)
     end
 
-    design_mutator(pose, mask)
+    design_mutator(pose, residues)
 end
 
-function (design_mutator::RotamerMutator)(pose::Pose, mask::ProtoSyn.Mask{Atom})
-    for (index, atom) in enumerate(eachatom(pose.graph))
-        if mask[index] && rand() < design_mutator.p_mut
+function (design_mutator::DesignMutator)(pose::Pose, residues::Vector{Residue})
+    for residue in residues
+        if rand() < design_mutator.p_mut
 
-            # 1) Get the residue name
-            residue = atom.container
-            name = residue.name
-
-            # 2) Get the residue phi & psi
-            phi = getdihedral(pose.state, Dihedral.phi(residue))
-            psi = getdihedral(pose.state, Dihedral.phi(residue))
-
-            # 3) Sample with correct name, phi & psi
-            design_stack = nothing
-            try
-                design_stack = design_mutator.design_library[name][phi, psi]
-            catch KeyError
-                continue
+            # 1) Get different aminoacid
+            cr_name = Peptides.three_2_one[residue.name]
+            nr_name = cr_name
+            while nr_name == cr_name
+                nr_name = sample(Peptides.available_aminoacids)
             end
-            rotamer = Rotamers.sample(design_stack, design_mutator.n_first)
 
-            # 4) Apply sampled rotamer
-            Rotamers.apply!(pose.state, rotamer, residue)
-            ProtoSyn.request_i2c(pose.state, all = true)
+            # 2) Perform mutation (already requests i2c)
+            derivation = [string(nr_name)]
+            Peptides.mutate!(pose, residue, design_mutator.grammar, derivation)
         end
     end
 end

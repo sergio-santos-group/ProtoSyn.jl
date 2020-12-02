@@ -12,26 +12,27 @@ end
 
 function (rotamer_mutator::RotamerMutator)(pose::Pose)
     if rotamer_mutator.selection === nothing
-        mask = TrueSelection{Atom}()(pose)
+        atoms = collect(eachatom(pose.graph))
     else
-        mask = rotamer_mutator.selection(pose)
+        sele = rotamer_mutator.selection
+        atoms = ProtoSyn.promote(sele, Atom)(pose, gather = true)
     end
 
-    rotamer_mutator(pose, mask)
+    rotamer_mutator(pose, atoms)
 end
 
 
-function (rotamer_mutator::RotamerMutator)(pose::Pose, mask::ProtoSyn.Mask{Atom})
-    for (index, atom) in enumerate(eachatom(pose.graph))
-        if mask[index] && rand() < rotamer_mutator.p_mut
+function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
+    for atom in atoms
+        if rand() < rotamer_mutator.p_mut
 
             # 1) Get the residue name
             residue = atom.container
-            name = residue.name
+            name    = residue.name
 
             # 2) Get the residue phi & psi
             phi = getdihedral(pose.state, Dihedral.phi(residue))
-            psi = getdihedral(pose.state, Dihedral.phi(residue))
+            psi = getdihedral(pose.state, Dihedral.psi(residue))
 
             # 3) Sample with correct name, phi & psi
             rotamer_stack = nothing

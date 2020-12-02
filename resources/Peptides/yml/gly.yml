@@ -1,9 +1,9 @@
 name: GLY
 code: G
 atoms:
-  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
-  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
+  - {name:   N, id:   1, symbol:  N, b:   1.200000, theta:   2.094395, phi:   3.141593}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   0.000000}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.094395, phi:   3.141593}
   - {name: HA1, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
   - {name: HA2, id:   5, symbol:  H, b:   1.089872, theta:   1.911157, phi:   1.047759}
   - {name:   C, id:   6, symbol:  C, b:   1.522326, theta:   1.926721, phi:   3.141593}

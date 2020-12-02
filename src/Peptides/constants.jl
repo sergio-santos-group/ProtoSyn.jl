@@ -178,3 +178,5 @@ bond_lengths = Dict{String, ProtoSyn.Units.defaultFloat}(
     "SC" => 1.82,
     "HS" => 1.34
 )
+
+available_aminoacids = ['M', 'K', 'P', 'Q', 'I', 'H', 'E', 'W', 'S', 'T', 'C', 'D', 'A', 'L', 'Y', 'V', 'R', 'G', 'F', 'N']

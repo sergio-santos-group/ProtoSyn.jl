@@ -130,7 +130,7 @@ structure. An example is when a Segment is severed via [`unbond`](@ref), in
 which case, updating the origin children will move one of the parts in an big
 arm movement.
 """
-function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residues::Vector{Residue})
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}, residues::Vector{Residue})
     state = container.state
     T = eltype(state)
     for r in residues
@@ -236,6 +236,10 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
     return pose
 end
 
+function unit_circle(value::T) where {T <: AbstractFloat}
+    r = deg2rad((value > 0 ? value : (2*pi + value)) * 360 / (2*pi))
+    return mod(r, 2*pi)
+end
 
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
 
@@ -264,12 +268,23 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # the index in the whole pose
     poseCA_index = findfirst(x -> x === poseCA, residue.items)
     
-    vals = []
+    objective_changes = []
+    # The ϕ is the Phi of the fragment, reduced to be in [0, 360] degrees range.
+    # All CA child atom's dihedrals will be placed in relationship (relative) to
+    # the corresponding residue Phi dihedral.
+    # Here we are measuring the default difference between those two angles in
+    # the template fragment. This value could, in a later version of ProtoSyn,
+    # be parametrized somewhere.
+    _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
+    ϕ  = unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
         parent_is_CA = false
         if atom.parent.name == "CA"
             parent_is_CA = true
-            push!(vals, ProtoSyn.getdihedral(frag.state, atom))
+            _atom_dihedral = ProtoSyn.getdihedral(frag.state, atom)
+            atom_dihedral  = unit_circle(_atom_dihedral)
+            objective_change = atom_dihedral - ϕ
+            push!(objective_changes, objective_change)
             ProtoSyn.unbond(frag, atom, atom.parent)
         end
 
@@ -289,20 +304,23 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
     
     reindex(pose.graph)
-    
-    # Fix positions (after reindex - requires correct ascendents)
+
+    # Fix CA children positions
     pose_sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
+    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    ϕ  = unit_circle(_ϕ)
     for child in residue["CA"].children
         if child in pose_sidechain
-            pose.state[child].ϕ = vals[index] - Δϕ
+            objective = ϕ + objective_changes[index]
+            pose.state[child].ϕ = unit_circle(objective - Δϕ)
             index += 1
         end
     end
     
+    residue.name = Peptides.one_2_three[derivation[1][1]]
     ProtoSyn.request_i2c(pose.state)
-    residue.name = one_2_three[derivation[1][1]]
 
     return pose
 end
