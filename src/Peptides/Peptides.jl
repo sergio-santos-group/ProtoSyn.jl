@@ -236,6 +236,37 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
     return pose
 end
 
+function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
+
+    # 1) Insert new residue in position R, shifting all downstream residues + 1
+    # The inserted residue backbone dihedrals should match the secondary
+    # structure pre-existent in the pose
+    phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
+    omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
+    old_r_pos = findfirst(residue, residue.container.items)
+    Peptides.insert_residues!(pose, residue, grammar, derivation,
+        ss = (phi, psi, omega), op = op)
+    new_residue = residue.container.items[old_r_pos]
+
+    # 2) Remove old residue (now in position R + 1)
+    old_r_pos += 1
+    Peptides.pop_residue!(pose, residue.container.items[old_r_pos])
+
+    # 3) Remove downstream residue parents (now in position R + 1, since we
+    # deleted the R + 1 old residue)
+    downstream_r_pos = old_r_pos
+    new_residue.container.items[downstream_r_pos].parent = nothing
+    new_residue.container.items[downstream_r_pos]["N"].parent = nothing
+
+    # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
+    # position, based on the peptidic bond
+    grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+
+    # 5) Re-set ascedents
+    ProtoSyn.reindex(pose.graph)
+    return pose
+end
 
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
 
@@ -247,6 +278,10 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     if same_aminoacid && length(sidechain) > 0
         println("No mutation required, residue already has sidechain of the requested type.")
         return pose
+    end
+
+    if derivation[1] == "P"
+        return Peptides.force_mutate!(pose, residue, grammar, derivation)
     end
 
     frag = Builder.fragment(grammar, derivation)
