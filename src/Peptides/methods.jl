@@ -1,394 +1,350 @@
-using LinearAlgebra: norm, cross
-using ..ProtoSyn
-
-@doc """
-reset aminoacids orientation such that the N is at the origin,
-the N-C vector lays along the x-axis and the N-CA-C atoms are
-on the xy plane.
 """
-function reset!(aminoacids::Dict{String, Residue})
-    
-    rmat = zeros(3,3)
-    
-    # for aa in values(aminoacids)
-    for name in keys(three_2_one)
-        
-        aa = get(aminoacids, name, nothing)
-        (aa===nothing) && continue
-        
-        # gather coordinates into a single matrix
-        xyz = Array(hcat(([at.x,at.y,at.z] for at in aa.atoms)...)')
+    setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number})
 
-        # identify backbone atoms. The residue will be aligned
-        # such that the N and C atoms lay along the x-axis and the
-        # N, CA, and C atoms in the xy plane
-        idN  = findfirst(a->a.name=="N",  aa.atoms)
-        idCA = findfirst(a->a.name=="CA", aa.atoms)
-        idC  = findfirst(a->a.name=="C",  aa.atoms)
-        
-        # shift coordinates so that atom N is at origin
-        xyz .-= xyz[idN, :]'
-        
-        # align the N->C vector along x-axis
-        theta = acos(xyz[idC,1] / norm(xyz[idC,:]))
-        axis = cross([1.0, 0.0, 0.0], xyz[idC,:])
-        rotmat!(rmat, axis, -theta)
-        xyz = xyz * rmat'
-        
-        # put the N->CA vector on the xy-plane
-        v = xyz[idCA,:]
-        theta = sign(v[3])*acos(v[2] / sqrt(v[2]^2 + v[3]^2))
-        rotmat!(rmat, [1.0, 0.0, 0.0], -theta)
-        xyz = xyz * rmat'
-
-        # update residue coordinates
-        for i =1:length(aa.atoms)
-            aa.atoms[i].x = xyz[i,1]
-            aa.atoms[i].y = xyz[i,2]
-            aa.atoms[i].z = xyz[i,3]
-        end
-    end
-
-    aminoacids
-end
-
-# function peptidelink(lr1::LinkedResidue, lr2::LinkedResidue)
-    
-#     # the peptide bond is C[n]->N[n+1]. If either the
-#     # C or the N is not found, then a peptide bond
-#     # cannot be made.
-
-#     # the peptide bond can be made either via
-#     # C(lr1)->N(lr2) or C(lr2)->N(lr1) because
-#     # the order by which both residues are given
-#     # might not reflect their ordering within the
-#     # chain. Hence, both alternatives are possible.
-#     # Nevertheless, the input ordering is first
-#     # tried and, only if not possible to form a bond,
-#     # will the second alternative be tried.
-#     atC = get(lr1, "C", nothing)
-#     atC == nothing && return
-#     idC = atC.id
-    
-#     atN = get(lr2, "N", nothing)
-#     atN == nothing && return
-#     idN = atN.id
-
-#     # both indices have been found. We now check
-#     # if both accept an additional bond. These are the
-#     # intra residue bonds each atom has:
-#     degC = length(lr1.source.bonds[idC])
-#     degN = length(lr2.source.bonds[idN])
-
-#     # now we update for possible additional
-#     # inter residue bonds
-#     degC += count(l->l.residue1 === lr1 && haskey(idC, l.bonds), lr1.links)
-#     degC > 2 && return
-
-#     degN += count(l->l.residue2 === lr1 && haskey(idN, l.bonds), lr2.links)
-#     degN > 2 && return
-
-#     Link(lr1, lr2, ConnectGraph(idC => [idN]))
-# end
-
-
-@doc """
-brute force peptide link.
-A new link C->N is always created if atoms named "C" and "N" exist
-in residues lr1 and lr2, respectively.
+Set the `ϕ`, `ψ` and `ω` backbone angles of all residues in the given `pose`.
+This function is usefull for setting the secondary structure of a pose. This
+function acts on the internal coordinates and does not update cartesian
+coordinates, although a request for conversion is made. It is up to the calling
+function/user to explicitly synchornize coordinates via [`sync!`](@ref). In
+certain cases it might be useful to not set the origin.children secondary
+structure. An example is when a Segment is severed via [`unbond`](@ref), in
+which case, updating the origin children will move one of the parts in an big
+arm movement.
 """
-function peptidebond(lr1::LinkedResidue, lr2::LinkedResidue)
-    if (atC = get(lr1, "C", nothing)) === nothing ||
-       (atN = get(lr2, "N", nothing)) === nothing
-       return nothing
-    end
-    Link(lr1, lr2, ConnectGraph(atC.id => [atN.id]))
-end
-
-
-
-function build(::Type{T}, letters::String, aminoacids::ResidueLib) where {T}
-    build(T, [one_2_three[letter] for letter in letters], aminoacids)
-end
-
-build(letters::String, aminoacids::ResidueLib) = build(Float64, letters, aminoacids)
-
-build(sequence::Vector{String}, aminoacids::ResidueLib) = build(Float64, sequence, aminoacids)
-
-function build(::Type{T}, sequence::Vector{String}, aminoacids::ResidueLib) where {T}
-    
-    # reset aminoacid orientation
-    reset!(aminoacids)
-
-    # instantiate a new molecule bearing the requested aminoacids
-    mol = Molecule(
-        name="peptide",
-        residues = [
-            LinkedResidue(id=id, source=aminoacids[name])
-            for (id,name) in enumerate(sequence)
-        ]
-    )
-    
-
-    # generate links for all consecutively bonded residues
-    for n = 1:length(sequence)-1
-        # get a pair of consecutive l-residues (aminoacids)
-        # and attempt at linking them. if successfull,
-        # add that link to the molecule.
-        link = ProtoSyn.bind(peptidebond, mol.residues[n], mol.residues[n+1], mol)
-        
-        # push this link (if viable) to the molecule (maybe this should
-        # be done by the core bind function?)
-        # link!==nothing && push!(mol, link)
-        
-    end
-
-    
-    # update molecule (this steps also determines the
-    # size of the molecule)
-    ProtoSyn.update!(mol)
-
-    # instantiate a state for the recently created molecule
-    # and set up coordinates accordingly. Some of the magic numbers
-    # below are required to ensure that the C-N bond length is
-    # ca. 1.34 Å and the CA-C-N(i+1) and C(n-1)-N-CA angles
-    # around 120 degrees.
-    state = State{T}(mol.size)
-    for (n, lr) in enumerate(mol.residues)
-        # the amount to move along the x axis
-        δx = 3.670*(n-1)
-        # δx = 0.3670*(n-1)
-        # rotation factor for odd residues (rotation
-        # of π about the x-axis)
-        f = (-1)^n
-        for i=1:length(lr)
-            atom = lr.source.atoms[i]
-            i += lr.offset
-            state.coords[i,1] = atom.x + δx
-            state.coords[i,2] = f*(atom.y - 0.28)
-            # state.coords[i,2] = f*(atom.y - 0.028)
-            state.coords[i,3] = f*atom.z
+function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}, residues::Vector{Residue})
+    state = container.state
+    T = eltype(state)
+    for r in residues
+        if r.name == "PRO"
+            # Proline is restricted to TRANS conformation
+            # This conformation is most abundant (~95%) in globular proteins.
+            # https://pubs.acs.org/doi/10.1021/jacs.0c02263
+            # PHI: -75° | PSI: 145° | OMEGA: 180°
+            ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), T(-1.308997))
+            # Last residues of chain might not have a psi angle.
+            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  T(2.5307274))
+            ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), T(3.1415927))
+            continue
         end
+        ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), ϕ)
+        # Last residues of chain might not have a psi angle.
+        Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  ψ)
+        ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), ω)
     end
 
-    # return molecule & state
-    mol, state
+    return container
+end
+
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}) = begin
+    residues::Vector{Residue} = collect(eachresidue(container.graph))
+    Peptides.setss!(container, (ϕ, ψ, ω), residues)
+end
+
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = begin
+    residues = ProtoSyn.PromoteSelection(sele, Residue, any)(container, gather = true)
+    Peptides.setss!(container, (ϕ, ψ, ω), residues)
+end
+
+setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = begin
+    Peptides.setss!(container, (ϕ, ψ, ω), [residue])
 end
 
 
-function setss!(state::State, mol::Molecule, rng::UnitRange{Int}, conf::Symbol)
-    
-    if conf == :antiparallel_sheet
-        ϕ, ψ = deg2rad(-139.0), deg2rad(135.0)
-    elseif conf == :parallel_sheet
-        ϕ, ψ = deg2rad(-119.0), deg2rad(113.0)
-    elseif conf == :helix
-        ϕ, ψ = deg2rad(-60.0), deg2rad(-45.0)
+"""
+    append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+
+Based on the provided `grammar`, add the residue sequence from `derivation` to
+the given `pose`, appending it AFTER the given `residue`. This residue and the
+new fragment will be connected using operation `op` ("α" by default). Set the
+secondary structure of the added residue to match the given `ss` (linear, by
+default). Return the altered `pose`.
+
+# Examples
+```jldoctest
+julia> append_residues!(pose, pose.graph[1][1], reslib, seq"A")
+```
+"""
+function append_residues!(pose::Pose{Topology}, residue::Residue,
+    grammar::LGrammar, derivation;
+    ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+
+    Builder.append_residues!(pose, residue, grammar, derivation; op = op)
+    residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
+    setss!(pose, ss, residues)
+    return pose
+end
+
+
+"""
+    insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+
+Based on the provided `grammar`, add the residue sequence from `derivation` to
+the given `pose`, inserting it ON THE POSITION of the given `residue` (the
+`residue` gets shifted downstream). The first downstream residue and the new
+fragment will be connected using operation `op` ("α" by default). Upstream
+residues are also connected using this operation if they are not origin. Set the
+secondary structure of the added residue to match the given `ss` (linear, by
+default). Return the altered `pose`.
+
+# Examples
+```jldoctest
+julia> insert_residues!(pose, pose.graph[1][2], reslib, seq"A")
+```
+"""
+function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
+    ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+
+    connected_to_origin = residue.parent == ProtoSyn.origin(pose.graph).container
+    if connected_to_origin
+        state = pose.state
+        N = state[residue["N"]] # This is the N atom state
+        i = residue.index       # This is the residue index
+        (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
     else
-        return state
+        ProtoSyn.unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
+    end
+    
+    Builder.insert_residues!(pose, residue, grammar, derivation; op = op,
+        connect_upstream = !connected_to_origin)
+
+    if connected_to_origin
+        N = state[residue.container[i]["N"]]
+        (N.b, N.θ, N.ϕ) = (b, θ, ϕ)
+        ProtoSyn.request_i2c(state; all = true)
     end
 
-    ProtoSyn.set!(state, mol, rng, ("-C","N","CA","C"), ϕ)
-    ProtoSyn.set!(state, mol, rng, ("N","CA","C","+N"), ψ)
-    state
+    residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
+    setss!(pose, ss, residues)
 end
 
 
+"""
+    force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
 
-# function finddihedrals(mol::Molecule;
-#     backbone::Bool=true, sidechain::Bool=true)
+Mutate the given `pose` at `residue`, changing it's aminoacid to be
+`derivation`, as given by the template at `grammar`. This function changes the
+whole residue (backbone included). By default, the user should use `mutate!`
+instead of this function, except for uncommon aminoacids.
 
-#     # if this molecule is not coherent (not yet updated
-#     # after creation of modification) or no bonded table
-#     # exists, then return nothing! 
-#     if !mol.coherent || (mol.bonds === nothing)
-#         return nothing
-#     end
+# Examples
+```jldoctest
+julia> Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+```
+"""
+function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
 
-#     # container for all dihedrals
-#     dihedrals = Vector{Dihedral}()
+    # 1) Insert new residue in position R, shifting all downstream residues + 1
+    # The inserted residue backbone dihedrals should match the secondary
+    # structure pre-existent in the pose
+    phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
+    omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
+    old_r_pos = findfirst(residue, residue.container.items)
+    Peptides.insert_residues!(pose, residue, grammar, derivation,
+        ss = (phi, psi, omega), op = op)
+    new_residue = residue.container.items[old_r_pos]
 
-#     # names of all atoms
-#     atnames = map(at->at.name, ProtoSyn.iterbyatom(mol))
+    # 2) Remove old residue (now in position R + 1)
+    old_r_pos += 1
+    Peptides.pop_residue!(pose, residue.container.items[old_r_pos])
 
-#     # auxilliary function that finds the first occurrence
-#     # of an atom named "name2" in the list of all atoms
-#     # bonded to "pivot". If found, it assigns "dtype" to the
-#     # generated dihedral.
-#     function findpair(i2::Int, s1::String, s3::String, s4::String, dtype::DihedralTypes.Type)
-#         # i1--i2--i3--i4
-#         i1 = findfirst(n-> atnames[n] == s1, mol.bonds[i2])
-#         i1 === nothing && return
-        
-#         i3 = findfirst(n-> atnames[n]==s3, mol.bonds[i2])
-#         i3 === nothing && return
-#         i3 = mol.bonds[i2][i3]
-        
-#         i4 = findfirst(n-> atnames[n]==s4, mol.bonds[i3])
-#         i4 === nothing && return 
-        
-#         push!(dihedrals,
-#             Dihedral(
-#                 a0=mol.bonds[i2][i1],
-#                 a1=i2,
-#                 a2=i3,
-#                 a3=mol.bonds[i3][i4],
-#                 start=i3,
-#                 type=dtype)
-#         )
-#     end
+    # 3) Remove downstream residue parents (now in position R + 1, since we
+    # deleted the R + 1 old residue)
+    downstream_r_pos = old_r_pos
+    new_residue.container.items[downstream_r_pos].parent = nothing
+    new_residue.container.items[downstream_r_pos]["N"].parent = nothing
 
+    # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
+    # position, based on the peptidic bond
+    grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
 
-#     for (id1, atom) in enumerate(ProtoSyn.iterbyatom(mol))    
-        
-#         if backbone
-#             if atom.name=="N"
-#                 #  ϕ  (phi)
-#                 findpair(id1, "C", "CA", "C", DihedralTypes.phi)
-#             elseif atom.name=="C"
-#                 #  ω  (omega)
-#                 findpair(id1, "CA", "N", "CA",  DihedralTypes.omega)
-#             elseif atom.name=="CA"
-#                 #  ψ  (psi)
-#                 findpair(id1, "N", "C", "N",  DihedralTypes.psi)
-#             end
-#         end
-
-#         if sidechain
-#             if atom.name=="CA"
-#                 # χ1  (chi1)
-#                 findpair(id1, "N", "CB", "CG", DihedralTypes.chi1)
-#             elseif atom.name=="CB"
-#                 # χ2  (chi2)
-#                 findpair(id1, "CA", "CG", "CD", DihedralTypes.chi2)
-#             elseif atom.name=="CG"
-#                 # χ3  (chi3)
-#                 findpair(id1, "CB", "CD", "CE", DihedralTypes.chi3)
-#             elseif atom.name=="CD"
-#                 # χ4  (chi4)
-#                 findpair(id1, "CG" ,"CE", "CZ", DihedralTypes.chi4)
-#             elseif atom.name=="CE"
-#                 # χ5  (chi5)
-#                 findpair(id1, "CD", "CZ", "CH", DihedralTypes.chi5)
-#             end
-#         end
-
-#     end
-
-#     dihedrals
-
-# end
-
-function finddihedrals(mol::Molecule; backbone::Bool=true, sidechain::Bool=true)
-
-    # if this molecule is not coherent (not yet updated
-    # after creation of modification) or no bonded table
-    # exists, then return nothing!
-    if !isvalid(mol) || (mol.bonds === nothing)
-        return nothing
-    end
-
-    # container for all dihedrals
-    dihedrals = Vector{Dihedral}()
-    
-    # callback function for ProtoSyn.cproduct:
-    #  it takes a 4-tuple of indices, instantiates a new
-    #  dihedral ofthe given type and add it to the container
-    apply(i::Vector{Int}, t::DihedralTypes.Type) = push!(dihedrals, Dihedral(i..., t))
-    
-    # temporary array for storing atom indices
-    ar = zeros(Int, 4)
-    
-    for res in mol.residues
-        if backbone
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.phi),   res, ("-C", "N","CA",  "C"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.psi),   res, ( "N","CA", "C", "+N"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.omega), res, ("CA", "C","+N","+CA"), 0, ar)
-        end
-        if sidechain
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.chi1), res, ( "N", "CA", "CB", "CG"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.chi2), res, ("CA", "CB", "CG", "CD"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.chi3), res, ("CB", "CG", "CD", "CE"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.chi4), res, ("CG", "CD", "CE", "CZ"), 0, ar)
-            ProtoSyn.cproduct(j->apply(j, DihedralTypes.chi5), res, ("CD", "CE", "CZ", "CH"), 0, ar)
-        end
-    end
-
-    dihedrals
-
+    # 5) Re-set ascedents
+    ProtoSyn.reindex(pose.graph)
+    return pose
 end
 
 
-function findcrankshafts(mol)
+"""
+    mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
+
+Mutate the given `pose` at `residue`, changing it's aminoacid to be
+`derivation`, as given by the template at `grammar`. This function changes the
+sidechain only (± 7x faster than `force_mutate!`). When mutating to Proline,
+falls back to `force_mutate!`.
+
+# Examples
+```jldoctest
+julia> Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+```
+"""
+function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
+
+    @assert length(derivation) == 1 "Derivation must have length = 1."
     
-    # pointer to connectivity graph
-    graph = mol.bonds
+    sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
+
+    same_aminoacid = string(Peptides.three_2_one[residue.name]) == derivation[1]
+    if same_aminoacid && length(sidechain) > 0
+        println("No mutation required, residue already has sidechain of the requested type.")
+        return pose
+    end
+
+    if derivation[1] == "P"
+        return Peptides.force_mutate!(pose, residue, grammar, derivation)
+    end
+
+    frag = Builder.fragment(grammar, derivation)
     
-    visited = falses(mol.size)
+    # Remove old sidechain
+    for atom in sidechain
+        ProtoSyn.pop_atom!(pose, atom)
+    end
     
-    # id-to-name map, restricted to backbone atoms
-    atnames = Dict(
-        i => atom.name
-        for (i,atom) in enumerate(ProtoSyn.iterbyatom(mol))
-        if atom.name ∈ ("N", "CA", "C")
-    )
+    # Insert new sidechain
+    frag_sidechain = (!an"CA$|N$|C$|H$|O$"r)(frag, gather = true)
+    poseCA = residue["CA"]
     
-    # mark all atoms in flagged residues as true.
-    # This implies that all flagged atoms wil not be
-    # able to define a crankshaft.
-    flagged = falses(mol.size)
-    for lr in mol.residues
-        if lr.flag
-            for atom in lr.source.atoms
-                flagged[lr.offset+atom.id] = true
-            end
+    # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
+    # the index in the whole pose
+    poseCA_index = findfirst(x -> x === poseCA, residue.items)
+    
+    objective_changes = []
+    # The ϕ is the Phi of the fragment, reduced to be in [0, 360] degrees range.
+    # All CA child atom's dihedrals will be placed in relationship (relative) to
+    # the corresponding residue Phi dihedral.
+    # Here we are measuring the default difference between those two angles in
+    # the template fragment. This value could, in a later version of ProtoSyn,
+    # be parametrized somewhere.
+    _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
+    ϕ  = ProtoSyn.unit_circle(_ϕ)
+    for (index, atom) in enumerate(frag_sidechain)
+        parent_is_CA = false
+        if atom.parent.name == "CA"
+            parent_is_CA = true
+            _atom_dihedral = ProtoSyn.getdihedral(frag.state, atom)
+            atom_dihedral  = ProtoSyn.unit_circle(_atom_dihedral)
+            objective_change = atom_dihedral - ϕ
+            push!(objective_changes, objective_change)
+            ProtoSyn.unbond(frag, atom, atom.parent)
+        end
+
+        # Insert into the graph
+        # Note: insert! already sets the residue.itemsbyname
+        insert!(residue, poseCA_index + index, atom)
+
+        # Since now atom is already in the graph, we can bond and add parents
+        if parent_is_CA
+            ProtoSyn.bond(atom, poseCA)
+            setparent!(atom, poseCA)
         end
     end
 
-    crankshafts = AxisRotatableBlock[]
+    _start = frag_sidechain[1].index
+    _end   = frag_sidechain[end].index
+    insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
+    
+    reindex(pose.graph)
 
-    function traverse(pivot::Int, cur::Int, prev::Int)
-        # is this a CA atom and not the pivot? if so
-        # this constitutes as possible crankshaft pair and
-        # one only has to identify the ordering because we
-        # assume that travel direction is restricted
-        # to CA->C->N->(...)->N->CA.
-        # Because peptides are linear chains, and the full
-        # traversal is restricted to the backbone atoms, then
-        # the last CA atom has to be reached through "N".
-        # If not, we simply reverse pair ordering.
-        if !flagged[cur] && (cur > pivot) && (atnames[cur] == "CA")
-            if atnames[prev] != "N"
-                cur, pivot = pivot, cur
-            end
-            
-            # identify the ID of the first atom for future traversal
-            idC = findfirst(i->get(atnames, i, nothing) == "C", graph[pivot])
-            if idC !== nothing
-                push!(
-                    crankshafts,
-                    AxisRotatableBlock(pivot,cur,graph[pivot][idC])
-                )
-            end
-        end
-
-        # mark the current index as visited
-        # and do the traversal
-        visited[cur] = true
-        for i in graph[cur]
-            !visited[i] && haskey(atnames,i) && traverse(pivot, i, cur)
-        end
-        visited[cur] = false
-    end
-
-
-    # find all candidates
-    for i in keys(atnames)
-        if atnames[i] == "CA" && !flagged[i]
-            traverse(i, i, i)
+    # Fix CA children positions
+    pose_sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
+    Δϕ             = pose.state[residue["CA"]].Δϕ
+    index          = 1
+    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    ϕ  = ProtoSyn.unit_circle(_ϕ)
+    for child in residue["CA"].children
+        if child in pose_sidechain
+            objective = ϕ + objective_changes[index]
+            pose.state[child].ϕ = ProtoSyn.unit_circle(objective - Δϕ)
+            index += 1
         end
     end
+    
+    residue.name = Peptides.one_2_three[derivation[1][1]]
+    ProtoSyn.request_i2c(pose.state)
 
-    return crankshafts
+    return pose
+end
 
+
+"""
+    pop_residue!(pose::Pose{Topology}, residue::Residue)
+
+Delete `residue` from the given `pose`. Removes parenthood (at residue and atom
+level), removes bonds, reindexes ascedents and sets position and parenthood to
+origin of downstream residues.
+
+# Examples
+```jldoctest
+julia> Peptides.pop_residue!(pose, pose.graph[1][3])
+```
+"""
+function pop_residue!(pose::Pose{Topology}, residue::Residue)
+
+    # 1) Since we are calling Peptides, we know that we should unbond this
+    # residue and the next (children)
+    for child in residue.children
+        Peptides.unbond(pose, residue, child) # Order is important
+    end
+
+    # 2) Now we can safelly pop the residue, while maintaining the positions of
+    # downstream residues
+    ProtoSyn.pop_residue!(pose, residue)
+end
+
+
+"""
+    remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+
+Removes the sidechain atoms of the given `pose`. If a `selection` is given, only
+the atom of that selection are considered for possible removal.
+
+# Examples
+```jldoctest
+julia> Peptides.remove_sidechains!(pose)
+
+julia> Peptides.remove_sidechains!(pose, rn"ALA")
+```
+"""
+function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+    _selection = !(an"CA$|N$|C$|H$|O$"r | rn"PRO")
+    if selection !== nothing
+        _selection = _selection & selection
+    end
+    sidechain = _selection(pose, gather = true)
+    for atom in sidechain
+        ProtoSyn.pop_atom!(pose, atom)
+    end
+
+    return pose
+end
+
+
+"""
+    add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+
+Add the sidechain atoms to the given `pose`, based on the templates of
+`grammar`. If a `selection` is given, only the residues of that selection
+(promoted to `Residue` instances, using the default aggregator function) are
+considered for sidechain addition. The addition is performed using `mutate!`
+function.
+
+# Examples
+```jldoctest
+julia> Peptides.add_sidechains!(pose)
+
+julia> Peptides.add_sidechains!(pose, rn"ALA")
+```
+"""
+function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+    if selection !== nothing
+        residues = selection(pose, gather = true)
+    else
+        residues = collect(eachresidue(pose.graph))
+    end
+    for residue in residues
+        derivation = [string(Peptides.three_2_one[residue.name])]
+        Peptides.mutate!(pose, residue, grammar, derivation)
+    end
+
+    return pose
 end

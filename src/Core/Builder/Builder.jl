@@ -126,10 +126,10 @@ end
 
 Based on the provided `grammar`, add the residue sequence from `derivation` to
 the given `pose`, inserting it ON THE POSITION of the given `residue` (the
-`residue` get shifted downstream). This residue and the new fragment will be
-connected using operation `op` ("α" by default). only downstream of the~
-insertion. If `connect_upstream` is set to true (is, by default), also connect
-to the upstream residues. Return the altered `pose`.
+`residue` gets shifted downstream). The first downstream residue and the new
+fragment will be connected using operation `op` ("α" by default). If
+`connect_upstream` is set to true (is, by default), also connect to the upstream
+residues. Return the altered `pose`.
 
 # Examples
 ```jldoctest
