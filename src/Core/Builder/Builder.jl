@@ -28,7 +28,6 @@ function build(grammar::LGrammar{T}, derivation) where {T<:AbstractFloat}
     end
     pose
 end
-# build(grammar::LGrammar, derivation) = build(Float64, grammar, derivation)
 
 
 export @seq_str
@@ -48,34 +47,6 @@ julia> seq"ABC"
 ```
 """
 macro seq_str(s); [string(c) for c in s]; end
-
-
-# """
-#     append!(pose::Pose{Topology}, frag::Fragment)
-
-# Append a fragment as a new segment.
-# Note: This function is called by the `build` function.
-# """
-# Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
-
-#     !isfragment(frag) && error("invalid fragment")
-    
-#     # Merge the fragment graph (Segment) to the pose graph (Topology).
-#     push!(pose.graph, frag.graph)
-
-#     # Merge the fragment state to the pose state.
-#     Base.append!(pose.state, frag.state)
-    
-#     # Make sure the fragment graph has the same origin of the new pose.
-#     root_residue = root(frag.graph).container
-#     setparent!(root(frag.graph), origin(pose.graph))
-
-#     setparent!(root_residue, origin(pose.graph).container)
-
-#     # Re-index the pose to account for the new segment/residue/atoms
-#     reindex(pose.graph)
-#     pose
-# end
 
 
 """
@@ -197,66 +168,95 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
 end
 
 
-# """
-#     pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+"""
+    pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
 
-# Pop and return the desired `atom` from the given `pose`. In order to do this,
-# perform the following actions:
-#  - Unset parents/children
-#  - Unbond neighbours
-#  - Remove from graph
-#  - Remove from state
-#  - Set new ascendents
-#  - Update the container itemsbyname
+Pop and return the desired `atom` from the given `pose`. In order to do this,
+perform the following actions:
+ - Unset parents/children
+ - Unbond neighbours
+ - Remove from graph
+ - Remove from state
+ - Set new ascendents
+ - Update the container itemsbyname
 
-# # Examples
-# ```jldoctest
-# julia> pop!(pose, pose.graph[1][1][2])
-# ```
-# """
-# function Base.pop!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+# Examples
+```jldoctest
+julia> pop!(pose, pose.graph[1][1][2])
+```
+"""
+function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
 
-#     if atom.container.container.container !== pose.graph
-#         error("Given Atom does not belong to the provided topology.")
-#     end
+    if atom.container.container.container !== pose.graph
+        error("Given Atom does not belong to the provided topology.")
+    end
 
-#     # Save information to return 
-#     popped_atom = Atom(atom.name, 1, 1, atom.symbol)
+    # Save information to return 
+    popped_atom = Atom(atom.name, 1, 1, atom.symbol)
 
-#     # Save children and parent of this atom (will be removed in next step)
-#     children    = copy(atom.children)
-#     grandparent = atom.parent
+    # Save children and parent of this atom (will be removed in next step)
+    children    = copy(atom.children)
+    grandparent = atom.parent
 
-#     # Unset parents/children and unbond neighbours
-#     for i = length(atom.bonds):-1:1   # Note the reverse loop
-#         other = atom.bonds[i]
-#         ProtoSyn.unbond(pose, atom, other)
-#     end
+    # Unset parents/children and unbond neighbours
+    for i = length(atom.bonds):-1:1   # Note the reverse loop
+        other = atom.bonds[i]
+        ProtoSyn.unbond(pose, atom, other)
+    end
 
-#     # Using saved children and parent, set all child.parent to be this
-#     # atom.parent
-#     for child in children
-#         # child.parent = grandparent
-#         child.parent = origin(pose.graph)
-#     end
+    # Using saved children and parent, set all child.parent to be this
+    # atom.parent
+    for child in children
+        # child.parent = grandparent
+        child.parent = origin(pose.graph)
+    end
 
-#     # Remove from graph
-#     deleteat!(atom.container.items, findfirst(atom, atom.container.items))
-#     atom.container.size -= 1
+    # Remove from graph
+    deleteat!(atom.container.items, findfirst(atom, atom.container.items))
+    atom.container.size -= 1
 
-#     # Remove from state
-#     popped_state = splice!(pose.state, atom.index)
+    # Remove from state
+    popped_state = splice!(pose.state, atom.index)
 
-#     # Reindex and set ascendents
-#     reindex(pose.graph)
+    # Reindex and set ascendents
+    reindex(pose.graph)
 
-#     # Update container 'itemsbyname'
-#     pop!(atom.container.itemsbyname, atom.name)
+    # Update container 'itemsbyname'
+    pop!(atom.container.itemsbyname, atom.name)
 
-#     # Set common ID
-#     popped_atom.id = popped_state.id = genid()
+    # Set common ID
+    popped_atom.id = popped_state.id = genid()
 
-#     return Pose(popped_atom, popped_state)
-# end
+    return Pose(popped_atom, popped_state)
+end
+
+
+"""
+    pop_residue!(pose::Pose{Topology}, residue::Residue)
+
+Pop and return the desired `residue` from the given `pose`. This is peformed by
+popping each atom of the residue individually.
+
+# Examples
+```jldoctest
+julia> pop_residue!(pose, pose.graph[1][1])
+```
+"""
+function pop_residue!(pose::Pose{Topology}, residue::Residue)
+
+    if residue.container.container !== pose.graph
+        error("Given Residue does not belong to the provided topology.")
+    end
+
+    # Remove internal atoms. Notice the inverse loop. Also removes atom-level
+    # parenthood and bonds
+    for atom in reverse(residue.items)
+        pop_atom!(pose, atom)
+    end
+
+    # Remove from container.items
+    deleteat!(residue.container.items, findfirst(residue, residue.container.items))
+    residue.container.size -= 1
+end
 
 end

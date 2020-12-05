@@ -348,3 +348,61 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
 
     return pose
 end
+
+
+"""
+    unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+
+Unbond the two provided residues. In order to do this, perform the following
+steps, as in ProtoSyn.unbond:
+ - Unset parents/children
+ - Unbond neighbours
+ - Remove from graph
+ - Remove from state
+ - Set new ascendents
+ - Update the container itemsbyname
+Furthermore, since the peptidic nature is known:
+ - Set correct positioning of downstream residues
+
+# Examples
+```jldoctest
+julia> unbond(pose, pose.graph[1][2])
+```
+"""
+function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+
+    isparent(residue_1, residue_2) && return _unbond(pose, residue_1, residue_2)
+    isparent(residue_2, residue_1) && return _unbond(pose, residue_2, residue_1)
+
+end
+
+function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+
+    ProtoSyn.unbond(pose, residue_1["C"], residue_2["N"])
+    
+    # Set correct positioning
+    state = pose.state
+    _origin = ProtoSyn.origin(pose.graph)
+    sync!(pose)
+
+    at_N = state[residue_2["N"]]
+    at_N.b = ProtoSyn.distance(at_N, state[_origin])
+    at_N.θ = ProtoSyn.angle(at_N, state[_origin], state[_origin.parent])
+    v = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
+    at_N.ϕ += v - ProtoSyn.getdihedral(state, residue_2["N"])
+
+    for child in residue_2["N"].children
+        at_1 = state[child]
+        at_1.θ = ProtoSyn.angle(at_1, at_N, state[_origin])
+        v = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
+        at_1.ϕ += v - ProtoSyn.getdihedral(state, child)
+
+        for grandchild in child.children
+            at_2 = state[grandchild]
+            v = ProtoSyn.dihedral(at_2, at_1, at_N, state[_origin])
+            at_2.ϕ += v - ProtoSyn.getdihedral(state, grandchild)
+        end
+    end
+
+    ProtoSyn.request_i2c(state, all = true)
+end

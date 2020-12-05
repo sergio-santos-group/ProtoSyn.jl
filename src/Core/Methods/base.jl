@@ -258,3 +258,43 @@ end
 @inline Base.findfirst(x::T, c::AbstractContainer{T}) where T = findfirst(x, c.items)
 
 #endregion Others
+
+#region pop! -------------------------------------------------------------------
+
+Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
+
+    if seg.container !== pose.graph
+        error("given residue does not belong to the provided topology")
+    end
+
+    # remove node states from parent state and create
+    # a new state for this segment
+    st = splice!(pose.state, seg[1][1].index:seg[end][end].index)
+    
+    pop!(pose.graph.items, seg)
+
+    reindex(pose.graph)
+    
+    # new common ID
+    seg.id = st.id = genid()
+    Pose(seg, st)
+end
+
+Base.pop!(top::Topology, seg::Segment) = begin
+    deleteat!(top.items, findall(x -> x == seg, top.items))
+    top.size -= 1
+end
+
+#endregion pop!
+
+#region detach -----------------------------------------------------------------
+
+Base.detach(s::Segment) = begin
+    root = origin(s)
+    for at in root.children
+        isparent(root, at) && popparent!(at)
+    end
+    hascontainer(s) && delete!(s.container, s)
+end
+
+#endregion detach

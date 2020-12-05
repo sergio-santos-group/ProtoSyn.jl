@@ -52,6 +52,7 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
 @time begin
     include("Core/XMLRPC/XMLRPC.jl")
     include("Core/Units/Units.jl")
+    include("Core/Methods/constants.jl")
     include("Core/Methods/macros.jl")
     include("Core/Types/graph.jl")
     include("Core/Types/state.jl")

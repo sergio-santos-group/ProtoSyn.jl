@@ -4,24 +4,75 @@ using YAML
 const PDB = Val{1}
 const YML = Val{2}
 
-function load(::Type{T}, filename::AbstractString) where {T<:AbstractFloat}
-    endswith(filename, ".pdb") && return load(T, filename, PDB)
-    endswith(filename, ".yml") && return load(T, filename, YML)
-    error("Unable to load '$filename': unsupported file type")
+"""
+    load([::Type{T}], filename::AbstractString) where {T <: AbstractFloat}
+
+Load the given `filename` into a pose, parametrized by T. If this is not
+provided, the default ProtoSyn.Units.defaultFloat is used. The file format is
+infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
+set to true (false, by default), the CONECT records will be complemented with
+bonds infered by distance. The threshold distances for each pair of atoms is
+defined in ProtoSyn.bond_lengths.
+*NOTE:* This function does not infer any data of parenthood or ascedence. To
+calculate that information, specific implementations of this function are
+provided in other modules (such as `Peptides.load`).
+
+# Examples
+```julia-repl
+julia> ProtoSyn.load("1ctf.pdb")
+...
+```
+"""
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
+    if endswith(filename, ".pdb") 
+        return load(T, filename, PDB, bonds_by_distance = bonds_by_distance)
+    elseif endswith(filename, ".yml")
+        return load(T, filename, YML, bonds_by_distance = bonds_by_distance)
+    else
+        error("Unable to load '$filename': unsupported file type")
+    end
 end
 
-load(::Type{T}, filename::AbstractString, ::Type{K}) where {T,K} = begin
+load(filename::AbstractString; bonds_by_distance = false) = begin
+    load(Float64, filename, bonds_by_distance = bonds_by_distance)
+end
+
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T, K} = begin
+    
     pose = load(T, open(filename), K)
     name, ext = splitext(basename(filename))
     pose.graph.name = name
+
+    if bonds_by_distance
+        dm        = ProtoSyn.Calculators.full_distance_matrix(pose)
+        threshold = T(0.1)
+    end
+
+    atoms   = collect(eachatom(pose.graph))
+    n_atoms = length(atoms)
+    visited = ProtoSyn.Mask{Atom}(n_atoms)
+    for (i, atom_i) in enumerate(atoms)
+        if bonds_by_distance
+            for (j, atom_j) in enumerate(atoms)
+                i == j && continue
+                atom_j = atoms[j]
+                atom_j in atom_i.bonds && continue
+                putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
+                !(putative_bond in keys(bond_lengths)) && continue
+                d = bond_lengths[putative_bond]
+                d += d * threshold
+                dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
+            end
+        end
+    end
+
+    ProtoSyn.request_c2i(pose.state)
     pose
 end
 
-load(filename::AbstractString) = load(Float64, filename)
-load(filename::AbstractString, ::Type{K}) where K = load(Float64, filename, K)
-
-#tonumber(v::Number) = v
-#tonumber(v::String) = eval(Meta.parse(v))
+load(filename::AbstractString, ::Type{K}; bonds_by_distance = false) where K = begin
+    load(Float64, filename, K, bonds_by_distance = bonds_by_distance)
+end
 
 load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     
@@ -33,8 +84,6 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     seg = Segment!(top, top.name, 1)
     res = Residue!(seg, top.name, 1)
     
-    #conv = haskey(yml, "unit") && yml["unit"]=="degrees"
-
     # add atoms
     for (index, pivot) in enumerate(yml["atoms"])
         atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
@@ -73,22 +122,11 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     sync!(Pose(top, state))
 end
 
-# Base.read(::Type{T}, filename::AbstractString, ::Type{PDB}) where {T<:AbstractFloat} = begin
-#     pose = open(filename) do fin
-#         read(T, fin, PDB)
-#     end
-#     pose.graph.name = basename(filename)
-#     pose
-# end
-# Base.read(filename::AbstractString, ::Type{PDB}) = read(Float64, filename, PDB)
-
 load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     top  = Topology("UNK", -1)
     seg  =  Segment("", -1)     # orphan segment
     res  =  Residue("", -1)     # orphan residue
-    # setparent!(res, ProtoSyn.origin(top).container)
-    # res.parent = ProtoSyn.origin(top).container
     
     seekstart(io)
     natoms = mapreduce(l->startswith(l, "ATOM")|| startswith(l, "HETATM"), +, eachline(io); init=0)
@@ -141,8 +179,6 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
             atmindex += 1
 
         elseif startswith(line, "CONECT")
-            # println("$line | $(length(line))")
-            # idxs = map(s -> parse(Int, s), [line[n:n+4] for n=7:5:length(line)])
             idxs = map(s -> parse(Int, s), split(line)[2:end])
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
@@ -155,13 +191,10 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     top.id = state.id = genid()
     
     # request conversion from cartesian to internal
-    # request_c2i(state; all=true)
-    
     Pose(top, state)
 end
 
-
-write(io::IO, top::AbstractContainer, state::State) = begin
+write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}) = begin
     
     println(io, "MODEL")
     for atom in eachatom(top)
@@ -181,11 +214,6 @@ write(io::IO, top::AbstractContainer, state::State) = begin
        println(io,"")
     end
     println(io, "ENDMDL")
-end
-
-write(io::IOStream, pose::Pose) = begin
-    sync!(pose)
-    write(io, pose.graph, pose.state)
 end
 
 write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
@@ -221,5 +249,48 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
 
 end
 
-write(io::IO, p::Pose, ::Type{T}) where T = write(io, p.graph, p.state, T)
-# write(io::IO, p::Pose, ::Type{T}) where T = write(io, p.graph, p.state, T)
+"""
+    ProtoSyn.write(pose::Pose, filename::String)
+
+Write to file the given `pose`. The structure format is infered from the
+`filename` extension (Supported: .pdb, .yml).
+
+# Examples
+```julia-repl
+julia> ProtoSyn.write(pose, "1ctf_modified.pdb")
+```
+"""
+function write(pose::Pose, filename::String)
+    io = open(filename, "w")
+    if endswith(filename, ".pdb") 
+        write(io, pose.graph, pose.state, PDB)
+    elseif endswith(filename, ".yml")
+        write(io, pose.graph, pose.state, YML)
+    else
+        error("Unable to write to '$filename': unsupported file type")
+    end
+    close(io)
+end
+
+"""
+    ProtoSyn.append(pose::Pose, filename::String)
+
+Append to file the given `pose` (as a new frame). The structure format is
+infered from the `filename` extension (Supported: .pdb, .yml).
+
+# Examples
+```julia-repl
+julia> ProtoSyn.append(pose, "1ctf_modified.pdb")
+```
+"""
+function append(pose::Pose, filename::String)
+    io = open(filename, "a")
+    if endswith(filename, ".pdb") 
+        write(io, pose.graph, pose.state, PDB)
+    elseif endswith(filename, ".yml")
+        write(io, pose.graph, pose.state, YML)
+    else
+        error("Unable to write to '$filename': unsupported file type")
+    end
+    close(io)
+end
