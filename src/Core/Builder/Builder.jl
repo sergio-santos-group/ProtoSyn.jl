@@ -110,6 +110,7 @@ julia> insert_residues!(pose, pose.graph[1][2], reslib, seq"A")
 function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α", connect_upstream = true)
 
     residue_index = residue.index
+    ϕN = pose.state[residue["N"]].ϕ
     frag = Builder.fragment(grammar, derivation)
 
     # Insert the fragment residues in the pose.graph and set
@@ -147,7 +148,6 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     reindex(pose.graph, set_ascendents = false)
     grammar.operators[op](frag.graph[end], pose, residue_index = residue_index + length(frag.graph))
 
-
     # Case we are inserting between two pre-existing residues (so far, the same
     # operation will be used in both cases. Might be useful to differentiate
     # between left and right operation.)
@@ -159,7 +159,8 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
 
         grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
     end
-    
+    pose.state[residue.parent["N"]].ϕ = ϕN
+
     # Reindex to set correct ascendents
     reindex(pose.graph)
     

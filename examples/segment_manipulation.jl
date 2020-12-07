@@ -7,7 +7,6 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
-pose = Peptides.load("../mdC.pdb")
 
 trb_mutator = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 0.2, rn"CBZ")
 rrb_mutator = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, 0.2, nothing, rn"CBZ")
@@ -16,7 +15,24 @@ compound_mutator = ProtoSyn.Drivers.CompoundDriver([trb_mutator, rrb_mutator])
 
 T = Float64
 res_lib = grammar(T);
-design_mutator = Peptides.Mutators.DesignMutator(1.0, res_lib, (10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO"))
+
+begin
+    pose = Peptides.build(res_lib, seq"GGG")
+    ProtoSyn.write(pose, "../teste1.pdb")
+    Peptides.mutate!(pose, pose.graph[1][1], res_lib, seq"Y")
+    ProtoSyn.append(pose, "../teste1.pdb", model = 2)
+end
+
+# io = open("../selection.pdb", "w"); ProtoSyn.print_selection(io, pose, ((10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO"))(pose)); close(io)
+
+pose = Peptides.load("../mdC.pdb")
+ProtoSyn.write(pose, "../teste1.pdb")
+design_mutator = Peptides.Mutators.DesignMutator(1.0, res_lib, ((10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO")))
+filter!(aa -> aa != 'P', design_mutator.searchable_aminoacids) # Remove proline from searchable aminoacids
+for i in 2:6
+    design_mutator(pose)
+    ProtoSyn.append(pose, "../teste1.pdb")
+end
 
 begin
     # pose = Peptides.build(res_lib, seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN");

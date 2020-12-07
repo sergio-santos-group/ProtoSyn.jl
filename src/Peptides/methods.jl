@@ -113,8 +113,8 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         ProtoSyn.request_i2c(state; all = true)
     end
 
-    residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
-    setss!(pose, ss, residues)
+    # residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
+    setss!(pose, ss, residue.parent)
 end
 
 
@@ -170,7 +170,9 @@ end
 Mutate the given `pose` at `residue`, changing it's aminoacid to be
 `derivation`, as given by the template at `grammar`. This function changes the
 sidechain only (± 7x faster than `force_mutate!`). When mutating to Proline,
-falls back to `force_mutate!`.
+falls back to `force_mutate!`. *Note:* sidechains are selected based on the atom
+name (backbone atoms must be named N, H, CA, C and O, exclusively. Non backbone
+atoms should have other names, such as H1, H2, etc.)
 
 # Examples
 ```jldoctest
@@ -181,7 +183,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
-    sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
+    sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
 
     same_aminoacid = string(Peptides.three_2_one[residue.name]) == derivation[1]
     if same_aminoacid && length(sidechain) > 0
@@ -197,11 +199,11 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     
     # Remove old sidechain
     for atom in sidechain
-        ProtoSyn.pop_atom!(pose, atom)
+        Builder.pop_atom!(pose, atom)
     end
     
     # Insert new sidechain
-    frag_sidechain = (!an"CA$|N$|C$|H$|O$"r)(frag, gather = true)
+    frag_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(frag, gather = true)
     poseCA = residue["CA"]
     
     # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
@@ -288,7 +290,7 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
     # 2) Now we can safelly pop the residue, while maintaining the positions of
     # downstream residues
-    ProtoSyn.pop_residue!(pose, residue)
+    Builder.pop_residue!(pose, residue)
 end
 
 

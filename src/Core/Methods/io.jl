@@ -194,9 +194,9 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     Pose(top, state)
 end
 
-write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}) = begin
+write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1) = begin
     
-    println(io, "MODEL")
+    @printf(io, "MODEL %8d\n", model)
     for atom in eachatom(top)
         sti = state[atom.index]
         s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
@@ -261,6 +261,7 @@ julia> ProtoSyn.write(pose, "1ctf_modified.pdb")
 ```
 """
 function write(pose::Pose, filename::String)
+    sync!(pose)
     io = open(filename, "w")
     if endswith(filename, ".pdb") 
         write(io, pose.graph, pose.state, PDB)
@@ -283,10 +284,11 @@ infered from the `filename` extension (Supported: .pdb, .yml).
 julia> ProtoSyn.append(pose, "1ctf_modified.pdb")
 ```
 """
-function append(pose::Pose, filename::String)
+function append(pose::Pose, filename::String; model::Int = 1)
+    sync!(pose)
     io = open(filename, "a")
-    if endswith(filename, ".pdb") 
-        write(io, pose.graph, pose.state, PDB)
+    if endswith(filename, ".pdb")
+        write(io, pose.graph, pose.state, PDB, model = model)
     elseif endswith(filename, ".yml")
         write(io, pose.graph, pose.state, YML)
     else

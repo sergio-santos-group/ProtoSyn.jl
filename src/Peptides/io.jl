@@ -48,7 +48,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     ProtoSyn.request_c2i(pose.state)
     sync!(pose)
 
-    pose
+    return pose
 end
 
 load(filename::AbstractString; bonds_by_distance::Bool = false) = begin
