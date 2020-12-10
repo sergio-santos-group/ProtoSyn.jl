@@ -153,7 +153,11 @@ function get_sequence(container::ProtoSyn.AbstractContainer)::String
 
     sequence = ""
     for residue in eachresidue(container)
-        sequence *= three_2_one[residue.name]
+        try
+            sequence *= three_2_one[residue.name]
+        catch KeyError
+            sequence *= '?'
+        end
     end
 
     return sequence

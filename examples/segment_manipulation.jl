@@ -23,7 +23,7 @@ begin
     ProtoSyn.append(pose, "../teste1.pdb", model = 2)
 end
 
-# io = open("../selection.pdb", "w"); ProtoSyn.print_selection(io, pose, ((10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO"))(pose)); close(io)
+io = open("../selection.pdb", "w"); ProtoSyn.print_selection(io, pose, ((10.0:rn"CBZ") & !(rn"CBZ" | rn"PRO"))(pose)); close(io)
 
 pose = Peptides.load("../mdC.pdb")
 ProtoSyn.write(pose, "../teste1.pdb")

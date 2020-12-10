@@ -99,4 +99,10 @@ function create_residue_library_matrices(::Type{T}, filename::String) where {T <
     return matrices
 end
 
-load_dunbrack(filename::String) = load_dunbrack(ProtoSyn.Units.defaultFloat, filename)
+load_dunbrack(filename::String) = begin
+    load_dunbrack(ProtoSyn.Units.defaultFloat, filename)
+end
+load_dunbrack(::Type{T}) where {T <: AbstractFloat} = begin
+    load_dunbrack(T, ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
+end
+load_dunbrack() = load_dunbrack(ProtoSyn.Units.defaultFloat)

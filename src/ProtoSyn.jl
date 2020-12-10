@@ -1,5 +1,7 @@
 module ProtoSyn
 
+# Main ProtoSyn Module
+
 # __precompile__(true)
 
 @info "Loading required packages"
