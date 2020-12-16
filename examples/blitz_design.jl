@@ -3,6 +3,10 @@
 # residues and then do a blitz rotamer search on the residues surrouding the
 # chance, stabilizing it.
 
+using Dates
+
+start_time = now()
+
 using ProtoSyn
 using ProtoSyn.Peptides
 using Printf
@@ -15,7 +19,7 @@ res_lib = grammar(T)
 rot_lib = Peptides.Rotamers.load_dunbrack(T)
 
 # 3) Load the initial pose
-pose = Peptides.load("examples/data/mdC.pdb")
+pose = Peptides.load("data/mdC.pdb")
 
 # 5) Load the default energy function
 energy_function = ProtoSyn.Common.get_default_energy_function()
@@ -66,15 +70,28 @@ function callback(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
 end
 
 mc_callback = ProtoSyn.Drivers.Callback(callback, 5)
+n_steps = 1000
 monte_carlo = ProtoSyn.Drivers.MonteCarlo(
     energy_function,
     my_custom_sampler!,
-    mc_callback,
-    100,
-    ProtoSyn.Drivers.get_linear_quench(0.1, 100)
+    nothing,
+    n_steps,
+    ProtoSyn.Drivers.get_linear_quench(0.1, n_steps)
 )
 
-ProtoSyn.write(pose, "../blitz_design.pdb")
+# ProtoSyn.write(pose, "../blitz_design.pdb")
 
 # 8) Run the simulation
-monte_carlo(pose)
+N = 20
+for i in 1:N
+    pose = Peptides.load("data/mdC.pdb")
+    monte_carlo(pose)
+    if i == 1
+        ProtoSyn.write(pose, "blitz_design.pdb")
+    else
+        ProtoSyn.append(pose, "blitz_design.pdb", model = i)
+    end
+end
+
+elapsed_time = Dates.canonicalize(Dates.CompoundPeriod(now() - start_time))
+println("| All tasks completed in $elapsed_time.\n")

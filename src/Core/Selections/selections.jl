@@ -97,7 +97,9 @@ end
 # state_mode_type(::PolarSelection{M, T}) where {M, T} = M
 
 export print_selection
-function print_selection(io::IOStream, pose::Pose{Topology}, mask::Mask{T}) where {T <: AbstractContainer}
+function print_selection(pose::Pose{Topology}, mask::Mask{T}, filename::String) where {T <: AbstractContainer}
+
+    io = open(filename, "w")
 
     if selection_type(mask) != Atom
         mask  = promote(mask, Atom, pose.graph)
@@ -126,4 +128,5 @@ function print_selection(io::IOStream, pose::Pose{Topology}, mask::Mask{T}) wher
        Base.write(io,"\n")
     end
     Base.write(io, "ENDMDL")
+    close(io)
 end

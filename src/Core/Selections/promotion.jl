@@ -2,35 +2,25 @@ export PromoteSelection
 # Note: PromoteSelection is a BRANCH selection.
 
 """
-    PromoteSelection{M} <: AbstractSelection
+    PromoteSelection(sele::AbstractSelection, ::Type{T}, op::Function) where {T <: AbstractContainer}
 
-A `PromoteSelection` takes an input selection `sele` and outputs the same result in a different
-mask type, depending on the operation `op` requested. This is, in essence, the same
-as calculating the `Mask` of a given `AbstractSelection` and then using the function `promote`
-to cast the result to the desired `Mask` type (Ex: `promote(mask, Type, container, f = all)`)
-
-    PromoteSelection(op::Function, sele::AbstractSelection, ::Type{T}) where {M <: AbstractStateMode, T <: AbstractContainer}
-    
+A `PromoteSelection` takes an input selection `sele` and outputs the same result
+in a different mask type, depending on the operation `op` requested. This is, in
+essence, the same as calculating the `Mask` of a given `AbstractSelection` and
+then using the function `promote` to cast the result to the desired `Mask` type
+(Ex: `ProtoSyn.promote(mask, Type, container, f = op)`).  
 The state mode of `PromoteSelection` `M` is set to the state mode of `sele`.
 
 # Examples
 ```jldoctest
-julia> sele = PromoteSelection(all, rn"ALA", Segment)
-PromoteSelection{ProtoSyn.Stateless}(true, any, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name), Segment)
-
-julia> sele = PromoteSelection(any, an"CA", Residue)
-PromoteSelection{ProtoSyn.Stateless}(true, any, FieldSelection{ProtoSyn.Stateless,Atom}(false, r"CA", :name), Residue)
-
-julia> sele = PromoteSelection(all, rn"ALA", Atom)
-PromoteSelection{ProtoSyn.Stateless}(true, all, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name), Atom)
+julia> sele = PromoteSelection(rn"ALA", Segment, all)
+PromoteSelection{ProtoSyn.Stateless}(FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), Segment, all)
 ```
 ```
 
 ## Note
 
-When using `any` or `all`, only upwards promotions are possible (Ex: `Atom` to
-`Residue`). Similarly, when using `cast` only downwards promotions are possible
-(Ex: `Residue` to `Atom`).
+Operation `op`is only employed in upwards promotions (Ex: `Atom` to `Residue`).
 """
 mutable struct PromoteSelection{M} <: AbstractSelection
     sele::AbstractSelection

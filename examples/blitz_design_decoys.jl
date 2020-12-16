@@ -8,10 +8,14 @@
 # More information regarding parallel computing in Julia environments can be
 # found at https://docs.julialang.org/en/v1/manual/distributed-computing/
 
+using Dates
+
+start_time = now()
+
 using Distributed
 
 # Define the number of workers we want to make available to ProtoSyn
-n_workers = 2
+n_workers = 4
 addprocs(n_workers)
 
 # It's necessary to load the ProtoSyn package in all workers. Therefore, this
@@ -44,7 +48,7 @@ addprocs(n_workers)
     # garbage collection frequency. However, this process can be costly (in
     # terms of time), and so a controlled equilibrium in this parameter should
     # always be a concern in parallel computing applications.
-    GC_frequency = round(Int16, 50/4)
+    GC_frequency = round(Int16, 50/8)
     energy_function = Calculators.EnergyFunction(
         Dict{Calculators.EnergyFunctionComponent, T}(
             Calculators.TorchANI.torchani_model => T(1.0)),
@@ -72,18 +76,20 @@ addprocs(n_workers)
         rotamer_blitz.selection = blitz_selection
         rotamer_blitz(pose)
     end
-    
+
     function callback(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
         @printf("STEP %-5d E= %-10.4f AR= %-5.2f%% T= -%7.5f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
     end
-
+    
     mc_callback = ProtoSyn.Drivers.Callback(callback, 5)
+
+    n_steps = 1000
     monte_carlo = ProtoSyn.Drivers.MonteCarlo(
         energy_function,
         my_custom_sampler!,
         mc_callback,
-        20,
-        ProtoSyn.Drivers.get_linear_quench(0.1, 20)
+        n_steps,
+        ProtoSyn.Drivers.get_linear_quench(0.1, n_steps)
     )
 
     # Consume the job queue until exhausted
@@ -103,7 +109,7 @@ end
 # from the queue, until no more jobs are available. Since the workers can be in
 # a remote machine, a RemoteChannel is employed, rather than a simple Channel.
 # Set the number of replicas
-N = 4
+N = 20
 
 # Create a job queue with N job cards. A job card is simply an Int16, could be
 # anything. The objetive is to take job_cards from the queue until the requested
@@ -142,4 +148,8 @@ for index in 2:length(results)
     ProtoSyn.append(results[index], "blitz_design_decoys.pdb", model = index)
 end
 
-println("All tasks completed.")
+elapsed_time = Dates.canonicalize(Dates.CompoundPeriod(now() - start_time))
+println("| All tasks completed in $elapsed_time.\n")
+
+# Note: In a benchmark test, the same simulation with 1000 steps and 20 replicas
+# took 26 minutes in sequential mode, but only 11 minutes in parallel.

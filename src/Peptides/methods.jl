@@ -314,7 +314,7 @@ function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelecti
     end
     sidechain = _selection(pose, gather = true)
     for atom in sidechain
-        ProtoSyn.pop_atom!(pose, atom)
+        Builder.pop_atom!(pose, atom)
     end
 
     return pose

@@ -172,7 +172,7 @@ State{T}(n::Int) where T = begin
     items[1].t[2] =  1.0
     items[2].t[1] = -1.0
 
-    state = State{T}(items, n, -1, false, false, 3, StateMatrix(zeros(T, 3, n)), zeros(T, 3, n), Dict())
+    state = State{T}(items, n, -1, false, false, 3, StateMatrix(zeros(T, 3, n)), zeros(T, 3, n), Dict(:Total => Inf))
     for (index, item) in enumerate(state)
         item.parent = state
         item.index  = index
@@ -185,7 +185,7 @@ end
 State(n::Int) = State{Units.defaultFloat}(n)
 State(::Type{T}, n::Int) where T = State{T}(n)
 State(::Type{T}, items::Vector{AtomState{T}}) where T = begin
-    state = State{T}(items, length(items), -1, false, false, 0, StateMatrix(zeros(T, 3, length(items))), zeros(T, 3, length(items)), Dict())
+    state = State{T}(items, length(items), -1, false, false, 0, StateMatrix(zeros(T, 3, length(items))), zeros(T, 3, length(items)), Dict(:Total => Inf))
     for (index, item) in enumerate(state.items)
         item.parent = state
         item.index  = index
@@ -255,11 +255,12 @@ Base.append!(s1::State{T}, s2::State{T}) where T = begin
 end
 
 Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
+    # Note: state.x.coords don't include the 3 origin atoms.
+    s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
     index += s1.index_offset
     for i = 0:s2.size-1
         insert!(s1.items, index+i, s2[i+1])
     end
-    s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
     # TO DO :: FIX STATE.FORCES (INSERT ZEROS)
     s1.size += s2.size
     s1

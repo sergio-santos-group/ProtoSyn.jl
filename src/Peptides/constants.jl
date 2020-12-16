@@ -128,8 +128,8 @@ end
 export SecondaryStructure
 #                                           phi,   psi, omega
 const SecondaryStructure = Dict{Symbol, NTuple{3, Number}}(
-    :antiparallel_sheet => map(deg2rad, (-139.0, 135.0, 180.0)),
-    :parallel_sheet     => map(deg2rad, (-119.0, 113.0, 180.0)),
+    :antiparallel_sheet => map(deg2rad, (-130.0, 145.0, 180.0)),
+    :parallel_sheet     => map(deg2rad, (-110.0, 120.0, 180.0)),
     :linear             => map(deg2rad, ( 180.0, 180.0, 180.0)),
     :helix              => map(deg2rad, ( -60.0, -45.0, 180.0))
 )
