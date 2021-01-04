@@ -2,6 +2,7 @@ using ProtoSyn: State, setdihedral!, Residue
 using ProtoSyn.Peptides.Dihedral: DihedralType
 using Random
 using StatsBase
+using Printf
 
 abstract type RotamerLibrary end
 
@@ -11,13 +12,17 @@ mutable struct Rotamer{T <: AbstractFloat}
 end
 
 function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}
+    print(io, "Rotamer{$T}: $(as_string(r))")
+end
+
+function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
     chis = ""
     for index in 1:length(r.chis)
         name = "chi$index"
         value, sd = r.chis[getfield(ProtoSyn.Peptides.Dihedral, Symbol(name))]
-        chis *= " | $(titlecase(name)): ($(rad2deg(value))° ± $(rad2deg(sd)))"
+        chis *= @sprintf " | %s: %7.1f° ± %4.1f" titlecase(name) rad2deg(value) rad2deg(sd)
     end
-    print(io, "Rotamer{$T}: $(r.name)$chis")
+    return "$(r.name)$chis"
 end
 
 # ---
@@ -32,6 +37,16 @@ RotamerStack(::Type{T}) where {T <: AbstractFloat} = begin
 end
 
 RotamerStack() = RotamerStack(ProtoSyn.Units.defaultFloat)
+
+function Base.show(io::IO, r::RotamerStack)
+    println(io, "\n+"*repeat("-", 104)*"+")
+    @printf(io, "| %-5s | %10s | %-80s |\n", "Index", "Probability", "Rotamer description")
+    println(io, "+"*repeat("-", 104)*"+")
+    for (index, rotamer) in enumerate(r.rotamers)
+        @printf(io, "| %-5d | %10.2f%% | %-80s |\n", index, r.weights[index]*100, as_string(rotamer))
+    end
+    println(io, "+"*repeat("-", 104)*"+")
+end
 
 # ---
 

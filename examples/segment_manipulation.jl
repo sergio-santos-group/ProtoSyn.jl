@@ -7,6 +7,22 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
+T        = Float64
+res_lib  = Peptides.grammar(T)
+sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
+begin
+    pose = Peptides.build(res_lib, sequence);
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
+end
+
+selection          = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
+n                  = count(selection(pose))
+p_mut              = 2/(n*(n-1))
+crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
+    randn, p_mut, 2.0, selection, an"^C$|^O$"r)
+
 
 trb_mutator = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 0.2, rn"CBZ")
 rrb_mutator = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, 0.2, nothing, rn"CBZ")
@@ -17,7 +33,7 @@ T = Float64
 res_lib = grammar(T);
 
 begin
-    pose = Peptides.build(res_lib, seq"GGG")
+    pose = Peptides.build(res_lib, seq"KKK")
     ProtoSyn.write(pose, "../teste1.pdb")
     Peptides.mutate!(pose, pose.graph[1][1], res_lib, seq"Y")
     ProtoSyn.append(pose, "../teste1.pdb", model = 2)
@@ -52,8 +68,8 @@ selection = (rid"21:26" | rid"45:49") & an"C$|N$"r
 p_mut = 1/(length(selection(pose, gather = true)))
 dihedral_mutator1 = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.5, selection)
 
-selection = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
 selection = an"CA" & !rn"PRO"
+selection = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
 n = count(selection(pose))
 p_mut = 2/(n*(n-1))
 crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(randn, p_mut, 2.0, selection)

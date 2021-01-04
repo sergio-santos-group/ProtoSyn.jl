@@ -248,7 +248,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     reindex(pose.graph)
 
     # Fix CA children positions
-    pose_sidechain = (!an"CA$|N$|C$|H$|O$"r)(residue, gather = true)
+    pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
     _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
@@ -308,7 +308,7 @@ julia> Peptides.remove_sidechains!(pose, rn"ALA")
 ```
 """
 function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
-    _selection = !(an"CA$|N$|C$|H$|O$"r | rn"PRO")
+    _selection = !(an"^CA$|^N$|^C$|^H$|^O$"r | rn"PRO")
     if selection !== nothing
         _selection = _selection & selection
     end

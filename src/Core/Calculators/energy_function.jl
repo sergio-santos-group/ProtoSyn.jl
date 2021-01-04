@@ -1,3 +1,5 @@
+using Printf
+
 mutable struct EnergyFunction{T <: AbstractFloat}
 
     components::Dict{EnergyFunctionComponent, T}
@@ -5,7 +7,7 @@ mutable struct EnergyFunction{T <: AbstractFloat}
 end
 
 EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction{T}(components, Int16(50))
+    return EnergyFunction{T}(components, Int16(20))
 end
 
 
@@ -37,8 +39,11 @@ end
 
 
 function Base.show(io::IO, efc::EnergyFunction)
-    println(io, "Energy Function Components:")
+    println(io, "\n+"*repeat("-", 58)*"+")
+    @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (ɑ)")
+    println(io, "+"*repeat("-", 58)*"+")
     for (index, (component, ɑ)) in enumerate(efc.components)
-        print(io, "  $index) $(component.name) | ɑ: $(ɑ)\n")
+        @printf(io, "| %-5d | %-35s | %-10.2f |\n", index, component.name, ɑ)
     end
+    println(io, "+"*repeat("-", 58)*"+")
 end
