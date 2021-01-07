@@ -16,6 +16,7 @@ include("serial.jl")
 include("unary.jl")
 include("true.jl")
 include("distance.jl")
+include("random.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------
