@@ -7,7 +7,7 @@ Base.@kwdef mutable struct MonteCarloState{T <: AbstractFloat} <: DriverState
     completed::Bool  = false
     stalled::Bool    = false
     acceptance_count = 0
-    temperature::T   = 0.0
+    temperature::T   = T(0.0)
 end
 
 

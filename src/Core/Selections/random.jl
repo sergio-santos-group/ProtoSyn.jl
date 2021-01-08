@@ -44,16 +44,12 @@ function select(sele::RandomSelection{Stateless, T}, container::AbstractContaine
     else
         n_items = counter(T)(container)
         mask = Mask{T}(n_items)
-        _selector = sele.sele(container)
+        # _selector = sele.sele(container)
+        _selector = promote(sele.sele, T)(container)
         mask[rand(findall(_selector.content))] = true
         return mask
     end
 end
-
-# --- Short Syntax -------------------------------------------------------------
-export @ran_str
-macro ran_str(p, flags...); RandomSelection{Atom}(FieldSelection{Atom}(p, :name; is_regex = parse_flags(flags))); end
-
 
 # ------------------------------------------------------------------------------
 export RandomRangeSelection

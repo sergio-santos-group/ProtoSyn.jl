@@ -10,12 +10,27 @@ using Printf
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
+pose     = Peptides.build(res_lib, sequence);
+sd       = ProtoSyn.Drivers.SteepestDescent(energy_function, nothing, 1000, 0.001, 0.1)
+ProtoSyn.write(pose, "../teste1.pdb")
+sd(pose)
+ProtoSyn.append(pose, "../teste1.pdb")
+
 begin
     pose = Peptides.build(res_lib, sequence);
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
 end
+
+brm = Peptides.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, 0.2, [rid"27:44"])
+# rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, rid"27:44")
+ProtoSyn.write(pose, "../teste1.pdb")
+for i in 1:100
+    brm(pose)
+    ProtoSyn.append(pose, "../teste1.pdb")
+end
+
 
 selection          = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
 n                  = count(selection(pose))

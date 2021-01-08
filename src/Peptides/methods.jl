@@ -375,7 +375,6 @@ function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
 
     isparent(residue_1, residue_2) && return _unbond(pose, residue_1, residue_2)
     isparent(residue_2, residue_1) && return _unbond(pose, residue_2, residue_1)
-
 end
 
 function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)

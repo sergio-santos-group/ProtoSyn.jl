@@ -78,11 +78,11 @@ include("Core/Calculators/Calculators.jl")
 @info "Loading Mutators"
 include("Core/Mutators/Mutators.jl")
 
-@info "Loading Peptides"
-@time include("Peptides/Peptides.jl")
-
 @info "Loading Drivers"
 include("Drivers/Drivers.jl")
+
+@info "Loading Peptides"
+@time include("Peptides/Peptides.jl")
 
 @info "Loading Common"
 include("Common/Common.jl")

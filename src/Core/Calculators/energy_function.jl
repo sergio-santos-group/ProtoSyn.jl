@@ -19,7 +19,7 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = fal
             e_comp = ɑ * energy
             pose.state.e[Symbol(component.name)] = e_comp
             e += e_comp
-            if update_forces
+            if update_forces & !(forces === nothing)
                 for atom_index in 1:pose.state.size
                     pose.state.f[:, atom_index] += forces[atom_index, :]
                 end

@@ -2,6 +2,7 @@ using Random
 using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn: AbstractSelection, getdihedral, promote
 using ProtoSyn.Peptides: Rotamers, Dihedral
+using ProtoSyn.Drivers: Driver, DriverState
 
 Base.@kwdef mutable struct RotamerBlitzState <: DriverState
     step::Int        = 0
