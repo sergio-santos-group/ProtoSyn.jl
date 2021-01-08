@@ -151,7 +151,25 @@ ProtoSyn.print_selection(pose, selection(pose), "selection.pdb")
 
 # ------------------------------------------------------------------------------
 # (G) True Selections
-# Finally, it can sometimes be helpful to have a selection/mask with all Atom, 
-# Residues, etc instances set to true.
+# It can sometimes be helpful to have a selection/mask with all Atom, Residues,
+# etc instances set to true.
 selection = TrueSelection{Atom}()
 selection = TrueSelection{Residue}()
+
+# ------------------------------------------------------------------------------
+# (H) Random Selections
+# Random selections select a random Atom, Residue, etc from a container.
+selection = RandomSelection{Residue}()
+ProtoSyn.print_selection(pose, selection(pose), "selection.pdb")
+
+# Alternatively, random selections can also take another selection from which to
+# sample a random Atom, Residue, etc. In this example, we will select a random
+# atom from an Alanine residue. 
+selection = RandomSelection{Atom}(rn"ALA")
+ProtoSyn.print_selection(pose, selection(pose), "selection.pdb")
+
+# Another type of random selection is the RandomRangeSelection. This selects two
+# random Atoms, Residues, etc from the given container and selects all instances
+# between the two (based on the ID).
+selection = RandomRangeSelection{Residue}()
+ProtoSyn.print_selection(pose, selection(pose), "selection.pdb")
