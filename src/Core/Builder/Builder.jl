@@ -221,6 +221,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
 
     # Reindex and set ascendents
     reindex(pose.graph)
+    reindex(pose.state)
 
     # Update container 'itemsbyname'
     pop!(atom.container.itemsbyname, atom.name)

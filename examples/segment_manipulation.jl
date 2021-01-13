@@ -10,7 +10,15 @@ using Printf
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
-pose     = Peptides.build(res_lib, sequence);
+begin
+    pose     = Peptides.build(res_lib, sequence);
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
+    Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
+    Peptides.remove_sidechains!(pose)
+    ProtoSyn.setdihedral!(pose.state, Peptides.Dihedral.psi(pose.graph[1][49]), 0°)
+end
+# pose     = Peptides.build(res_lib, sequence);
 
 selection          = (rid"45" | rid"60") & an"CA"
 crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(

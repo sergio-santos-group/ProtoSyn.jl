@@ -313,7 +313,7 @@ function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelecti
         _selection = _selection & selection
     end
     sidechain = _selection(pose, gather = true)
-    for atom in sidechain
+    for atom in reverse(sidechain) # Note the reverse loop
         Builder.pop_atom!(pose, atom)
     end
 

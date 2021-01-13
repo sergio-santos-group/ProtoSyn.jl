@@ -247,3 +247,9 @@ julia> rotate_dihedral!(pose.state, pose.graph[1][1][end], π)
     ProtoSyn.request_i2c(s)
     s
 end
+
+function reindex(s::State)
+    for (index, atomstate) in enumerate(s.items[4:end])
+        atomstate.index = index
+    end
+end

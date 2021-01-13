@@ -228,9 +228,13 @@ Base.eltype(::Type{State{T}}) where T = T
 Base.eltype(::State{T}) where T = T
 
 Base.splice!(s::State{T}, range::UnitRange{Int}) where {T <: AbstractFloat}= begin
+    # Both range ends are included in the spliced region
     i = s.index_offset + range.start
     j = s.index_offset + range.stop
     s2 = State(T, splice!(s.items, i:j))
+    downstream = s.x.coords[:, 1:(range.start-1)]
+    upstream   = s.x.coords[:, (range.stop+1):end]
+    s.x.coords = hcat(downstream, upstream)
     s.size -= s2.size
     s2
 end
@@ -238,6 +242,7 @@ end
 Base.splice!(s::State, index::Int) = begin
     _index = s.index_offset + index
     s2 = State([splice!(s.items, _index)])
+    s.x.coords = hcat(s.x.coords[:, 1:(index-1)], s.x.coords[:, (index+1):end])
     s.size -= s2.size
     s2
 end
