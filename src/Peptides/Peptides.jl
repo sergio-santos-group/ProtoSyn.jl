@@ -1,3 +1,9 @@
+@doc """
+    Peptides
+
+The Peptides modules introduces `Calculators`, `Mutators` and `Drivers` (among
+other methods) specific for proteins and peptides.
+"""
 module Peptides
 
 using ..ProtoSyn

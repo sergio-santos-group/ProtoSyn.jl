@@ -117,7 +117,6 @@ macro pymol(ex...)
         proxy = getfield($(@__MODULE__), :ServerProxy)($host,$port)
         if val isa State
             proxy.load_coordset(val.coords, $(esc(obj)), 0)
-        # elseif val isa Tuple{Topology,State}
         elseif val isa Pose
             io = IOBuffer()
             write(io, val.graph, val.state)

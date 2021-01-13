@@ -369,3 +369,32 @@ count_residues(r::Residue) = 1
 count_atoms(c::AbstractContainer) = mapreduce(x -> count_atoms(x), +, c.items, init=0)
 count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
+
+# TRAVEL GRAPH
+export travel_graph
+
+"""
+"""
+function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
+    atoms = Vector{Atom}([start])
+    stack = Vector{Atom}(copy(start.children))
+
+    while length(stack) > 0
+        atom_i = pop!(stack)
+        if atom_i != stop
+            stack = vcat(stack, copy(atom_i.children))
+        end
+        push!(atoms, atom_i)
+    end
+
+    return atoms
+end
+
+export ids
+function ids(atoms::Vector{Atom})::Vector{Int}
+    idxs = Vector{Int}()
+    for atom in atoms
+        push!(idxs, atom.id)
+    end
+    return idxs
+end

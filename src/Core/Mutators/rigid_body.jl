@@ -1,5 +1,3 @@
-using Statistics
-
 mutable struct TranslationRigidBodyMutator <: AbstractMutator
     translation_vector_sampler::Function # should return a Vector{Float}
     step_size::AbstractFloat
@@ -36,11 +34,11 @@ end
 mutable struct RotationRigidBodyMutator{T <: AbstractFloat} <: AbstractMutator
     axis_sampler::Function # should return a Vector{Float}
     angle_sampler::Function # should return a Float
+    pivot_sampler::Function # receives a pose and a vector of selected
+    # atom indexes and should return a Vector{Float}.
     step_size::T
-    rotation_pivot::Opt{Vector{T}} # if nothing, will use COM
     selection::Opt{AbstractSelection}
 end
-
 
 function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
     axis  = rigid_body_mutator.axis_sampler()
@@ -48,12 +46,7 @@ function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
     rmat  = ProtoSyn.rotation_matrix_from_axis_angle(axis, angle)
     mask  = ProtoSyn.promote(rigid_body_mutator.selection, Atom)(pose)
     idxs  = findall(mask.content)
-    if rigid_body_mutator.rotation_pivot == nothing
-        pivot = mean(pose.state.x[:, idxs], dims = 2)
-    else
-        pivot = rigid_body_mutator.rotation_pivot
-    end
+    pivot = rigid_body_mutator.pivot_sampler(pose, idxs)
     pose.state.x[:, idxs] = (rmat * (pose.state.x[:, idxs] .- pivot)) .+ pivot
-
     ProtoSyn.request_c2i(pose.state)
 end

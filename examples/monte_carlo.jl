@@ -3,16 +3,22 @@
 # example, we will try to predict the folded state of a sequence of aminoacids
 # belonging to the 2A3D peptide from PDB.
 
+using Random
+
 using ProtoSyn
 using ProtoSyn.Builder
 using ProtoSyn.Peptides
 using Printf
+
+
 
 # 1) Load the residue library and build the peptide in a linear conformation
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
 begin
+    seed = rand(1:1000000)
+    Random.seed!(seed)
     pose     = Peptides.build(res_lib, sequence);
 
     # Secondary structure prediction increases the degrees of freedom or a
@@ -26,12 +32,13 @@ begin
 
     # For this stage, we won't be optimizing sidechain packaging. In order to
     # decrease the likelihood of steric clashes, we can't remove the sidechains
-    # Peptides.remove_sidechains!(pose)
+    Peptides.remove_sidechains!(pose)
+    ProtoSyn.setdihedral!(pose.state, Peptides.Dihedral.psi(pose.graph[1][49]), 0°)
 end
 
 # 2) Load default energy function
-energy_function = ProtoSyn.Common.get_default_energy_function()
-energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.02
+energy_function = ProtoSyn.Common.default_energy_function()
+energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.05
 # energy_function = ProtoSyn.Calculators.EnergyFunction(Dict(
 #     ProtoSyn.Calculators.TorchANI.torchani_model => T(1.0)), Int16(2))
 
@@ -91,10 +98,10 @@ callback    = ProtoSyn.Drivers.Callback(callback_function, 1000)
 n_steps     = 100_000
 monte_carlo = ProtoSyn.Drivers.MonteCarlo(
     energy_function,
-    dihedral_mutator,
+    compound_driver,
     callback,
     n_steps,
-    ProtoSyn.Drivers.get_linear_quench(0.075, n_steps))
+    ProtoSyn.Drivers.get_linear_quench(0.5, n_steps))
     # ProtoSyn.Drivers.get_constant_temperature(0.008))
 
 # 5) Launch a simulation replica
@@ -102,3 +109,4 @@ begin
     ProtoSyn.write(pose, "monte_carlo.pdb")
     monte_carlo(pose)
 end
+println("\nRandom seed: $seed")

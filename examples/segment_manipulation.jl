@@ -11,10 +11,23 @@ T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
 pose     = Peptides.build(res_lib, sequence);
-sd       = ProtoSyn.Drivers.SteepestDescent(energy_function, nothing, 1000, 0.001, 0.1)
+
+selection          = (rid"45" | rid"60") & an"CA"
+crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
+    randn, 1.0, 0.5, selection, an"^C$|^O$"r)
+
+ProtoSyn.write(pose, "monte_carlo.pdb")
+crankshaft_mutator(pose)
+ProtoSyn.append(pose, "monte_carlo.pdb")
+
+e_fcn    = ProtoSyn.Common.default_energy_function()
+e_fcn.components[Calculators.Restraints.bond_distance_restraint] = 0.05
+cb       = ProtoSyn.Common.default_energy_step_frame_callback(100, "../teste1.pdb")
+sd       = ProtoSyn.Drivers.SteepestDescent(e_fcn, cb, 3000, 0.001, 0.1)
+brm      = ProtoSyn.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, 0.2, [rid"27:44"], sd)
 ProtoSyn.write(pose, "../teste1.pdb")
-sd(pose)
-ProtoSyn.append(pose, "../teste1.pdb")
+@time brm(pose)
+# ProtoSyn.append(pose, "../teste1.pdb")
 
 begin
     pose = Peptides.build(res_lib, sequence);
@@ -23,7 +36,6 @@ begin
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
 end
 
-brm = Peptides.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, 0.2, [rid"27:44"])
 # rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, rid"27:44")
 ProtoSyn.write(pose, "../teste1.pdb")
 for i in 1:100

@@ -203,7 +203,7 @@ end
 
 Base.copy(s::State{T}) where T = begin
     ns = State(T, s.size)
-    # Update item.t also updates the parent.x matrix
+    # Updating item.t also updates the parent.x matrix
     for (index, atomstate) in enumerate(s)
         ns[index].t = copy(atomstate.t)
         ns[index].r = copy(atomstate.r)

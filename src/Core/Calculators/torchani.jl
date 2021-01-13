@@ -67,7 +67,7 @@ module TorchANI
         m3 = get(_model.neural_networks, model_index)(m2)[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
-            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy())
+            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()')
         else
             return m3.item(), nothing
         end

@@ -75,6 +75,9 @@ end
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
 
+abstract type DriverState end
+abstract type Driver end
+
 @info "Loading Mutators"
 include("Core/Mutators/Mutators.jl")
 

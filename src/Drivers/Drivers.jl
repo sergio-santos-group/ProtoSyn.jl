@@ -1,9 +1,7 @@
 module Drivers
 
 using ProtoSyn
-
-abstract type DriverState end
-abstract type Driver end
+using ProtoSyn: DriverState, Driver
 
 include("callback.jl")
 include("steepest_descent.jl")

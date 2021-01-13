@@ -1,5 +1,5 @@
 mutable struct DihedralMutator <: AbstractMutator
-    angle_sampler::Function # shoudl return a float in radians
+    angle_sampler::Function # Should return a float in radians
     p_mut::AbstractFloat
     step_size::AbstractFloat
     selection::Opt{AbstractSelection}

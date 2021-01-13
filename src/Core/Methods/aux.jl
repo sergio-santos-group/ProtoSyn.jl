@@ -1,3 +1,5 @@
+using Statistics
+
 """
     rand_vector_in_sphere(::Type{T}) where {T <: AbstractFloat}
 
@@ -23,6 +25,7 @@ end
 
 rand_vector_in_sphere() = rand_vector_in_sphere(ProtoSyn.Units.defaultFloat)
 
+
 """
     rotation_matrix_from_axis_angle(axis::Vector{T}, angle::T) where {T <: AbstractFloat}
 
@@ -45,6 +48,7 @@ function rotation_matrix_from_axis_angle(axis::Vector{T}, angle::T) where {T <: 
             2*q3*q1-2*q0*q2     2*q3*q2+2*q0*q1 1-2*q1*q1-2*q2*q2]
 end
 
+
 """
     unit_circle(value::T) where {T <: AbstractFloat}
 
@@ -63,4 +67,15 @@ julia> ProtoSyn.unit_circle(-(3/2)pi)
 function unit_circle(value::T) where {T <: AbstractFloat}
     r = deg2rad((value > 0 ? value : (2*pi + value)) * 360 / (2*pi))
     return mod(r, 2*pi)
+end
+
+
+"""
+"""
+function center_of_mass(pose::Pose, idxs::Vector{Int})
+    return mean(pose.state.x[:, idxs], dims = 2)
+end
+
+function random_atom(pose::Pose, idxs::Vector{Int})
+    return pose.state.x[:, rand(idxs)]
 end

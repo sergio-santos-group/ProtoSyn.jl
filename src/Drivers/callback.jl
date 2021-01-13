@@ -1,5 +1,5 @@
 mutable struct Callback
-    event::Function
+    event::Function # Receives a pose and a DriverState
     frequency::Int
 end
 

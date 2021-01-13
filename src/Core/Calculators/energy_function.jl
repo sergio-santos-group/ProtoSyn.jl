@@ -21,7 +21,7 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = fal
             e += e_comp
             if update_forces & !(forces === nothing)
                 for atom_index in 1:pose.state.size
-                    pose.state.f[:, atom_index] += forces[atom_index, :]
+                    pose.state.f[:, atom_index] += forces[:, atom_index] .* ɑ
                 end
             end
 
