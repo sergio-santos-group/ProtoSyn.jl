@@ -92,16 +92,19 @@ include("Common/Common.jl")
 
 function version()
     header = """
-.____            _       ____              
-|  _ \\ _ __ ___ | |_ ___/ ___| _   _ _ __  
-| |_) | '__/ _ \\| __/ _ \\___ \\| | | | '_ \\ 
-|  __/| | | (_) | || (_) |__) | |_| | | | |
-|_|   |_|  \\___/ \\__\\___/____/ \\__, |_| |_|
-                                 |___/       
+.      ____            _       ____              
+      |  _ \\ _ __ ___ | |_ ___/ ___| _   _ _ __  
+      | |_) | '__/ _ \\| __/ _ \\___ \\| | | | '_ \\ 
+      |  __/| | | (_) | || (_) |__) | |_| | | | |
+      |_|   |_|  \\___/ \\__\\___/____/ \\__, |_| |_|
+                                 |__/       
     """
-    println(header)
-    @printf("%s\n", "-"^40)
-    @printf(" ProtoSyn version: %.2f", ProtoSyn._version)
+    println("\n", header)
+    @printf("      %s\n\n", "-"^45)
+    @printf(" Version      : %4.2f\n", ProtoSyn._version)
+    println(" License      : GNU-GPL-3")
+    println(" Developed by : José Pereira (jose.manuel.pereira@ua.pt)")
+    println("                Sérgio Santos")
 end
 
 version()

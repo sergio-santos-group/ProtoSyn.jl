@@ -7,7 +7,7 @@
 
 ## Installation
 
-A description will go here!
+A description will go here! SOON (tm)
 
 ## Documentation
 
