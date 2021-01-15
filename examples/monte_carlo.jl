@@ -29,6 +29,8 @@ begin
     Peptides.remove_sidechains!(pose)
 end
 
+ProtoSyn.write(pose, "monte_carlo.pdb")
+
 # 2) Load default energy function
 # After loading the energy function we can change the relative weight of each
 # component
@@ -45,7 +47,7 @@ energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 
 # section will be maintained). For the DihedralMutator, only the C and N atoms
 # of the backbone will be selected (these control the Phi and Psi angles).
 selection          = (rid"21:26" | rid"45:49") & an"C$|N$"r
-p_mut              = 1/(length(selection(pose, gather = true)))
+p_mut              = 1/(count(selection(pose)))
 dihedral_mutator   = ProtoSyn.Mutators.DihedralMutator(
     randn, p_mut, 1.0, selection)
 
@@ -56,15 +58,16 @@ dihedral_mutator   = ProtoSyn.Mutators.DihedralMutator(
 # minimize this, the step_size of this mutator should be relatively small.
 selection          = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
 n                  = count(selection(pose))
-p_mut              = 2/(n*(n-1))
+p_mut              = 1/(n*(n-1))
+p_mut = 0
 crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
-    randn, p_mut, 0.5, selection, an"^C$|^O$"r)
+    randn, p_mut, 0.1, selection, an"^C$|^O$"r)
 
 # The two defined Mutators can now be combined in a CompoundDriver. This is
 # simply an auxiliary object that iterates and calls any Function, Mutator or
 # Driver in its body.
 compound_driver = ProtoSyn.Drivers.CompoundDriver(
-    [dihedral_mutator, crankshaft_mutator])
+    [crankshaft_mutator, dihedral_mutator])
 
 # 4) Define the Monte Carlo Driver
 # A Driver is a more complex piece of code that is able to direct the flow of
@@ -84,7 +87,7 @@ compound_driver = ProtoSyn.Drivers.CompoundDriver(
 # 1000 steps. The simulation should run for 100 000 steps.
 
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
-    @printf("STEP %-5d | E= %-10.4f | AR= %-5.1f%%  | T= %-7.4f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
+    @printf("STEP %-6d | E= %-10.4f | AR= %-5.1f%%  | T= %-7.4f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
     driver_state.step == 0 && return
     ProtoSyn.append(pose, "monte_carlo.pdb", model = driver_state.step)
 end

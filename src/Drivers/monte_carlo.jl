@@ -56,3 +56,15 @@ function (driver::MonteCarlo)(pose::Pose)
     driver_state
     return pose
 end
+
+function Base.show(io::IO, drv::MonteCarlo)
+    println(" Monte Carlo Driver")
+    println("\nEnergy function : $(drv.eval!)")
+    println("\nSampler :")
+    println("$(drv.sample!)")
+    println("$(drv.callback)")
+    println(" Temperature:")
+    println("$(drv.temperature)")
+    println("\n Settings:")
+    println("  Max steps: $(drv.max_steps)")
+end
