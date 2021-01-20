@@ -7,13 +7,18 @@ using ProtoSyn
 using ProtoSyn.Builder
 using ProtoSyn.Peptides
 using Printf
+using Random
 
 # 1) Load the residue library and build the peptide in a linear conformation
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
+
 begin
-    pose     = Peptides.build(res_lib, sequence);
+    seed = rand(1:1000000)
+    # Random.seed!(seed)
+    Random.seed!(940843) # This seed returns a 10.7 angstrom approximation
+    pose = Peptides.build(res_lib, sequence);
 
     # Secondary structure prediction increases the degrees of freedom or a
     # problem, by having more dihedral angles to predict. For this example, we
@@ -35,7 +40,7 @@ ProtoSyn.write(pose, "monte_carlo.pdb")
 # After loading the energy function we can change the relative weight of each
 # component
 energy_function = ProtoSyn.Common.default_energy_function()
-energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.05
+energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.2
 
 # 3) Define the Mutators
 # A Mutator is a piece of code responsible for performing a given conformational
@@ -49,7 +54,7 @@ energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 
 selection          = (rid"21:26" | rid"45:49") & an"C$|N$"r
 p_mut              = 1/(count(selection(pose)))
 dihedral_mutator   = ProtoSyn.Mutators.DihedralMutator(
-    randn, p_mut, 1.0, selection)
+    randn, p_mut, 0.5, selection)
 
 # For the CrankshaftMutator, only the CA atoms should be considered as rotation
 # points. Furthermore, Proline residues should not be considered, given the
@@ -58,10 +63,10 @@ dihedral_mutator   = ProtoSyn.Mutators.DihedralMutator(
 # minimize this, the step_size of this mutator should be relatively small.
 selection          = (rid"21:26" | rid"45:49") & an"CA" & !rn"PRO"
 n                  = count(selection(pose))
-p_mut              = 1/(n*(n-1))
-p_mut = 0
+p_mut              = 0.5/(n*(n-1))
+# p_mut = 0
 crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
-    randn, p_mut, 0.1, selection, an"^C$|^O$"r)
+    randn, p_mut, 0.05, selection, !(an"^CA$|^N$|^C$|^H$|^O$"r))
 
 # The two defined Mutators can now be combined in a CompoundDriver. This is
 # simply an auxiliary object that iterates and calls any Function, Mutator or
@@ -79,7 +84,7 @@ compound_driver = ProtoSyn.Drivers.CompoundDriver(
 # also needs a temperature function. These can be set by the user, but ProtoSyn
 # makes available a set of pre-defined "thermostats" that control the
 # temperature in some specific way. For this example, we will use a temperature
-# quenching thermostat, starting at T = 0.5. Furthermore, optionally, a driver
+# quenching thermostat, starting at T = 0.4. Furthermore, optionally, a driver
 # can receive a Callback function. This is called every step of the simulation
 # and returns information to the user, such as the status of the pose or of the
 # driver itself. For this example, we will use that information to save a
@@ -89,11 +94,11 @@ compound_driver = ProtoSyn.Drivers.CompoundDriver(
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
     @printf("STEP %-6d | E= %-10.4f | AR= %-5.1f%%  | T= %-7.4f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)
     driver_state.step == 0 && return
-    ProtoSyn.append(pose, "monte_carlo.pdb", model = driver_state.step)
+    ProtoSyn.append(pose, "monte_carlo.pdb")
 end
 
 callback    = ProtoSyn.Drivers.Callback(callback_function, 1000)
-n_steps     = 100_000
+n_steps     = 10_000
 monte_carlo = ProtoSyn.Drivers.MonteCarlo(
     energy_function,
     compound_driver,
@@ -106,3 +111,4 @@ begin
     ProtoSyn.write(pose, "monte_carlo.pdb")
     monte_carlo(pose)
 end
+println("Seed: $seed")

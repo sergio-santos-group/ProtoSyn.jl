@@ -59,6 +59,7 @@ function c2i!(state::State{T}, top::Topology) where T
 
         # Dihedral
         istate.ϕ = ProtoSyn.dihedral(state[l], kstate, jstate, istate)
+        istate.Δϕ = 0
     end
 
     state.c2i = false

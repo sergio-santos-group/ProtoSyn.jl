@@ -1,0 +1,29 @@
+ILSRR run data
+BASE -37.65549066187921
+OUTER STEP 0      | E= -47.8030   | AR= NaN  %  | T= 0.1000 
+ INNER STEP 0      | E= -47.8030   | AR= NaN  %  | T= 0.1000 
+ INNER STEP 1000   | E= -61.8342   | AR= 16.4 %  | T= 0.0900 
+ INNER STEP 2000   | E= -62.0315   | AR= 14.8 %  | T= 0.0800 
+ INNER STEP 3000   | E= -63.8161   | AR= 13.7 %  | T= 0.0700 
+ INNER STEP 4000   | E= -65.5425   | AR= 13.0 %  | T= 0.0600 
+ INNER STEP 5000   | E= -66.1572   | AR= 13.0 %  | T= 0.0500 
+ INNER STEP 6000   | E= -66.9453   | AR= 12.8 %  | T= 0.0400 
+ INNER STEP 7000   | E= -67.1984   | AR= 12.9 %  | T= 0.0300 
+ INNER STEP 8000   | E= -67.6249   | AR= 12.8 %  | T= 0.0200 
+ INNER STEP 9000   | E= -67.8622   | AR= 12.6 %  | T= 0.0100 
+ INNER STEP 10000  | E= -68.1522   | AR= 12.4 %  | T= 0.0000 
+OUTER STEP 1      | E= -68.1522   | AR= 100.0%  | T= 0.1000 
+ INNER STEP 0      | E= -64.7887   | AR= NaN  %  | T= 0.1000 
+ INNER STEP 1000   | E= -67.2464   | AR= 13.5 %  | T= 0.0900 
+ INNER STEP 2000   | E= -67.8092   | AR= 13.5 %  | T= 0.0800 
+ INNER STEP 3000   | E= -68.5288   | AR= 12.8 %  | T= 0.0700 
+ INNER STEP 4000   | E= -68.8867   | AR= 12.8 %  | T= 0.0600 
+ INNER STEP 5000   | E= -69.1134   | AR= 12.8 %  | T= 0.0500 
+ INNER STEP 6000   | E= -69.3778   | AR= 12.5 %  | T= 0.0400 
+ INNER STEP 7000   | E= -69.5866   | AR= 12.3 %  | T= 0.0300 
+ INNER STEP 8000   | E= -69.6965   | AR= 12.3 %  | T= 0.0200 
+ INNER STEP 9000   | E= -70.0079   | AR= 12.1 %  | T= 0.0100 
+ INNER STEP 10000  | E= -70.0926   | AR= 12.1 %  | T= 0.0000 
+OUTER STEP 2      | E= -70.0926   | AR= 100.0%  | T= 0.0990 
+ INNER STEP 0      | E= -53.7650   | AR= NaN  %  | T= 0.1000 
+ INNER STEP 1000   | E= -62.8999   | AR= 15.2 %  | T= 0.0900 

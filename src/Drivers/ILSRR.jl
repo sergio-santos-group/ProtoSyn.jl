@@ -1,7 +1,7 @@
 using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn.Mutators: AbstractMutator
 
-Base.@kwdef mutable struct MonteCarloState{T <: AbstractFloat} <: DriverState
+Base.@kwdef mutable struct ILSRRState{T <: AbstractFloat} <: DriverState
     step::Int        = 0
     converged::Bool  = false
     completed::Bool  = false
@@ -11,19 +11,20 @@ Base.@kwdef mutable struct MonteCarloState{T <: AbstractFloat} <: DriverState
 end
 
 
-mutable struct MonteCarlo <: Driver
+mutable struct ILSRR <: Driver
     eval!::Union{Function, EnergyFunction}
-    sample!::Union{Function, AbstractMutator, Driver}
+    jump!::Union{Function, AbstractMutator, Driver}
+    inner_driver!::Driver
     callback::Opt{Callback}
     max_steps::Int
-    temperature::Function
+    temperature::Function # Takes step, returns temperature at step
 end
 
 
-function (driver::MonteCarlo)(pose::Pose)
+function (driver::ILSRR)(pose::Pose)
     
     T = eltype(pose.state)
-    driver_state = MonteCarloState{T}()
+    driver_state = ILSRRState{T}()
     driver_state.temperature = driver.temperature(0)
     
     previous_state  = copy(pose)
@@ -32,7 +33,7 @@ function (driver::MonteCarlo)(pose::Pose)
     
     while driver_state.step < driver.max_steps
             
-        driver.sample!(pose)
+        driver.inner_driver!(pose)
         sync!(pose)
         energy = driver.eval!(pose, update_forces = false)
         
@@ -50,17 +51,24 @@ function (driver::MonteCarlo)(pose::Pose)
 
         driver_state.step += 1
         driver.callback !== nothing && driver.callback(pose, driver_state)
+
+        # Jump
+        driver.jump!(pose)
     end
 
     driver_state.completed = true
     return pose
 end
 
-function Base.show(io::IO, drv::MonteCarlo)
-    println(" Monte Carlo Driver")
+function Base.show(io::IO, drv::ILSRR)
+    println(" ILSRR Driver")
     println("\nEnergy function : $(drv.eval!)")
-    println("\nSampler :")
-    println("$(drv.sample!)")
+    println("\nJump :")
+    println("$(drv.jump!)")
+    println("\n+----------------------------------------------------------+")
+    println("\nInner driver :")
+    println("$(drv.inner_driver!)")
+    println("\n+----------------------------------------------------------+\n")
     println("$(drv.callback)")
     println(" Temperature:")
     println("$(drv.temperature)")

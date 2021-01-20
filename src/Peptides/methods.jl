@@ -23,6 +23,7 @@ function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}, residues::Vect
             ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), T(-1.308997))
             # Last residues of chain might not have a psi angle.
             Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  T(2.5307274))
+            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  ψ)
             ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), T(3.1415927))
             continue
         end
