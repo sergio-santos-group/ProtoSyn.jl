@@ -16,8 +16,15 @@ begin
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
     Peptides.remove_sidechains!(pose)
-    ProtoSyn.setdihedral!(pose.state, Peptides.Dihedral.psi(pose.graph[1][49]), 0°)
 end
+
+pose = ProtoSyn.load("../2a3d.pdb")
+ProtoSyn.write(pose, "teste.pdb")
+
+energy_function = ProtoSyn.Common.default_energy_function()
+cm_restraints   = Peptides.Calculators.Restraints.load_contact_map("contact_map_example.txt")
+energy_function.components[cm_restraints] = 1.0
+
 # pose     = Peptides.build(res_lib, sequence);
 
 selection          = (rid"45" | rid"60") & an"CA"

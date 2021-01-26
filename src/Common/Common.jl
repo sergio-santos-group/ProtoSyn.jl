@@ -23,8 +23,10 @@ module Common
     +----------------------------------------------------------+
     | Index | Component name                      | Weight (ɑ) |
     +----------------------------------------------------------+
-    | 1     | Caterpillar_Solvation               | 0.01       |
-    | 2     | TorchANI_ML_Model                   | 1.00       |
+    | 1     | Caterpillar_Solvation               | 0.010      |
+    | 2     | TorchANI_ML_Model                   | 1.000      |
+    | 3     | Bond_Distance_Restraint             | 1.000      |
+    | 4     | Clash_Restraint                     | 100.000    |
     +----------------------------------------------------------+
     **Note:** If no Type{T} is provided, will use ProtoSyn.Units.defaultFloat;
 
@@ -38,7 +40,8 @@ module Common
         return Calculators.EnergyFunction(Dict(
             Calculators.TorchANI.torchani_model => T(1.0),
             Peptides.Calculators.Caterpillar.solvation_energy => T(0.01),
-            Calculators.Restraints.bond_distance_restraint => T(0.05)
+            Calculators.Restraints.bond_distance_restraint => T(1.0),
+            ProtoSyn.Calculators.Restraints.clash_restraint => T(100.0)
         ))
     end
 

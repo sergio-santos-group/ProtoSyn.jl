@@ -1,0 +1,17 @@
+  BASE STEP 0      | E(total)= 1.2120     | AR= 0.0  %  | T= 0.0000  | E(ani)= 0.2122     | E(sol)= -0.2592    | E(cmp)= 1.2590     | E(cls)= 0.0000    
+ INNER STEP 0      | E(total)= 9.0673     | AR= NaN  %  | T= 0.1000  | E(ani)= 0.3284     | E(sol)= 4.4102     | E(cmp)= 4.3287     | E(cls)= 0.0000    
+ INNER STEP 1000   | E(total)= -0.2066    | AR= 45.3 %  | T= 0.0933  | E(ani)= 0.7048     | E(sol)= -2.3557    | E(cmp)= 1.4444     | E(cls)= 0.0000    
+ INNER STEP 2000   | E(total)= -0.5085    | AR= 42.4 %  | T= 0.0867  | E(ani)= 0.7594     | E(sol)= -2.7898    | E(cmp)= 1.5219     | E(cls)= 0.0000    
+ INNER STEP 3000   | E(total)= -0.4378    | AR= 41.9 %  | T= 0.0800  | E(ani)= 0.8354     | E(sol)= -2.7089    | E(cmp)= 1.4358     | E(cls)= 0.0000    
+ INNER STEP 4000   | E(total)= -0.7129    | AR= 41.9 %  | T= 0.0733  | E(ani)= 0.7613     | E(sol)= -2.9301    | E(cmp)= 1.4559     | E(cls)= 0.0000    
+ INNER STEP 5000   | E(total)= -0.5628    | AR= 41.5 %  | T= 0.0667  | E(ani)= 0.7598     | E(sol)= -2.7809    | E(cmp)= 1.4583     | E(cls)= 0.0000    
+ INNER STEP 6000   | E(total)= -0.6578    | AR= 41.0 %  | T= 0.0600  | E(ani)= 0.7307     | E(sol)= -2.8365    | E(cmp)= 1.4480     | E(cls)= 0.0000    
+ INNER STEP 7000   | E(total)= -0.8067    | AR= 40.4 %  | T= 0.0533  | E(ani)= 0.7380     | E(sol)= -2.9008    | E(cmp)= 1.3560     | E(cls)= 0.0000    
+ INNER STEP 8000   | E(total)= -0.6721    | AR= 40.1 %  | T= 0.0467  | E(ani)= 0.6516     | E(sol)= -2.6220    | E(cmp)= 1.2984     | E(cls)= 0.0000    
+ INNER STEP 9000   | E(total)= -0.8831    | AR= 40.0 %  | T= 0.0400  | E(ani)= 0.6435     | E(sol)= -2.9485    | E(cmp)= 1.4219     | E(cls)= 0.0000    
+ INNER STEP 10000  | E(total)= -1.0001    | AR= 39.8 %  | T= 0.0333  | E(ani)= 0.6511     | E(sol)= -3.0321    | E(cmp)= 1.3809     | E(cls)= 0.0000    
+ INNER STEP 11000  | E(total)= -1.2436    | AR= 39.4 %  | T= 0.0267  | E(ani)= 0.6379     | E(sol)= -3.1217    | E(cmp)= 1.2403     | E(cls)= 0.0000    
+ INNER STEP 12000  | E(total)= -1.2010    | AR= 39.2 %  | T= 0.0200  | E(ani)= 0.6548     | E(sol)= -3.1027    | E(cmp)= 1.2469     | E(cls)= 0.0000    
+ INNER STEP 13000  | E(total)= -1.2127    | AR= 38.9 %  | T= 0.0133  | E(ani)= 0.6768     | E(sol)= -3.1397    | E(cmp)= 1.2502     | E(cls)= 0.0000    
+ INNER STEP 14000  | E(total)= -1.3106    | AR= 38.5 %  | T= 0.0067  | E(ani)= 0.6783     | E(sol)= -3.2188    | E(cmp)= 1.2299     | E(cls)= 0.0000    
+ INNER STEP 15000  | E(total)= -1.3839    | AR= 38.2 %  | T= 0.0000  | E(ani)= 0.6347     | E(sol)= -3.2506    | E(cmp)= 1.2320     | E(cls)= 0.0000    

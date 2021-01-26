@@ -1,29 +1,12 @@
-ILSRR run data
-BASE -37.65549066187921
-OUTER STEP 0      | E= -47.8030   | AR= NaN  %  | T= 0.1000 
- INNER STEP 0      | E= -47.8030   | AR= NaN  %  | T= 0.1000 
- INNER STEP 1000   | E= -61.8342   | AR= 16.4 %  | T= 0.0900 
- INNER STEP 2000   | E= -62.0315   | AR= 14.8 %  | T= 0.0800 
- INNER STEP 3000   | E= -63.8161   | AR= 13.7 %  | T= 0.0700 
- INNER STEP 4000   | E= -65.5425   | AR= 13.0 %  | T= 0.0600 
- INNER STEP 5000   | E= -66.1572   | AR= 13.0 %  | T= 0.0500 
- INNER STEP 6000   | E= -66.9453   | AR= 12.8 %  | T= 0.0400 
- INNER STEP 7000   | E= -67.1984   | AR= 12.9 %  | T= 0.0300 
- INNER STEP 8000   | E= -67.6249   | AR= 12.8 %  | T= 0.0200 
- INNER STEP 9000   | E= -67.8622   | AR= 12.6 %  | T= 0.0100 
- INNER STEP 10000  | E= -68.1522   | AR= 12.4 %  | T= 0.0000 
-OUTER STEP 1      | E= -68.1522   | AR= 100.0%  | T= 0.1000 
- INNER STEP 0      | E= -64.7887   | AR= NaN  %  | T= 0.1000 
- INNER STEP 1000   | E= -67.2464   | AR= 13.5 %  | T= 0.0900 
- INNER STEP 2000   | E= -67.8092   | AR= 13.5 %  | T= 0.0800 
- INNER STEP 3000   | E= -68.5288   | AR= 12.8 %  | T= 0.0700 
- INNER STEP 4000   | E= -68.8867   | AR= 12.8 %  | T= 0.0600 
- INNER STEP 5000   | E= -69.1134   | AR= 12.8 %  | T= 0.0500 
- INNER STEP 6000   | E= -69.3778   | AR= 12.5 %  | T= 0.0400 
- INNER STEP 7000   | E= -69.5866   | AR= 12.3 %  | T= 0.0300 
- INNER STEP 8000   | E= -69.6965   | AR= 12.3 %  | T= 0.0200 
- INNER STEP 9000   | E= -70.0079   | AR= 12.1 %  | T= 0.0100 
- INNER STEP 10000  | E= -70.0926   | AR= 12.1 %  | T= 0.0000 
-OUTER STEP 2      | E= -70.0926   | AR= 100.0%  | T= 0.0990 
- INNER STEP 0      | E= -53.7650   | AR= NaN  %  | T= 0.1000 
- INNER STEP 1000   | E= -62.8999   | AR= 15.2 %  | T= 0.0900 
+ BASE STEP 0      | E(total)= 5.5351     | AR= 0.0  %  | T= 0.0000  | E(ani)= 3.1129     | E(sol)= -0.0986    | E(cmp)= 2.5209    
+ INNER STEP 0      | E(total)= 11.1909    | AR= NaN  %  | T= 0.3000  | E(ani)= 0.3284     | E(sol)= 2.2051     | E(cmp)= 8.6574     | E(cls)= 0.0000    
+ INNER STEP 1000   | E(total)= 4.0674     | AR= 46.2 %  | T= 0.2700  | E(ani)= 1.0954     | E(sol)= -0.6744    | E(cmp)= 3.5393     | E(cls)= 0.1070    
+ INNER STEP 2000   | E(total)= 4.1508     | AR= 42.9 %  | T= 0.2400  | E(ani)= 1.0965     | E(sol)= -0.2335    | E(cmp)= 3.0797     | E(cls)= 0.2081    
+ INNER STEP 3000   | E(total)= 3.5459     | AR= 42.6 %  | T= 0.2100  | E(ani)= 1.0901     | E(sol)= -0.8267    | E(cmp)= 3.0744     | E(cls)= 0.2081    
+ INNER STEP 4000   | E(total)= 3.1800     | AR= 42.8 %  | T= 0.1800  | E(ani)= 1.3247     | E(sol)= -0.8856    | E(cmp)= 2.7409     | E(cls)= 0.0000    
+ INNER STEP 5000   | E(total)= 2.9307     | AR= 42.6 %  | T= 0.1500  | E(ani)= 1.2155     | E(sol)= -0.8652    | E(cmp)= 2.5804     | E(cls)= 0.0000    
+ INNER STEP 6000   | E(total)= 3.0966     | AR= 42.4 %  | T= 0.1200  | E(ani)= 1.4775     | E(sol)= -0.6959    | E(cmp)= 2.2762     | E(cls)= 0.0387    
+ INNER STEP 7000   | E(total)= 2.7806     | AR= 41.5 %  | T= 0.0900  | E(ani)= 1.0236     | E(sol)= -0.9063    | E(cmp)= 2.6634     | E(cls)= 0.0000    
+ INNER STEP 8000   | E(total)= 2.6873     | AR= 40.8 %  | T= 0.0600  | E(ani)= 0.9708     | E(sol)= -0.9921    | E(cmp)= 2.7086     | E(cls)= 0.0000    
+ INNER STEP 9000   | E(total)= 2.5525     | AR= 40.1 %  | T= 0.0300  | E(ani)= 0.9794     | E(sol)= -0.9685    | E(cmp)= 2.4988     | E(cls)= 0.0429    
+ INNER STEP 10000  | E(total)= 2.3276     | AR= 39.5 %  | T= 0.0000  | E(ani)= 1.0234     | E(sol)= -1.1234    | E(cmp)= 2.3847     | E(cls)= 0.0429    

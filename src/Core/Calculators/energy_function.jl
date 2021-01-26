@@ -6,8 +6,16 @@ mutable struct EnergyFunction{T <: AbstractFloat}
     clean_cache_every::Int16
 end
 
+EnergyFunction() = begin
+    return EnergyFunction(ProtoSyn.Units.defaultFloat)
+end
+
+EnergyFunction(::Type{T}) where {T <: AbstractFloat} = begin
+    return EnergyFunction(Dict{EnergyFunctionComponent, T}())
+end
+
 EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction{T}(components, Int16(20))
+    return EnergyFunction{T}(components, ProtoSyn.Units.defaultCleanCacheEvery)
 end
 
 
@@ -43,7 +51,25 @@ function Base.show(io::IO, efc::EnergyFunction)
     @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (ɑ)")
     println(io, "+"*repeat("-", 58)*"+")
     for (index, (component, ɑ)) in enumerate(efc.components)
-        @printf(io, "| %-5d | %-35s | %-10.2f |\n", index, component.name, ɑ)
+        @printf(io, "| %-5d | %-35s | %-10.3f |\n", index, component.name, ɑ)
     end
     println(io, "+"*repeat("-", 58)*"+")
+end
+
+function Base.copy(ef::EnergyFunction)
+    nef = EnergyFunction()
+    nef.clean_cache_every = ef.clean_cache_every
+    for (component, α) in ef.components
+        nef.components[component] = α
+    end
+    return nef
+end
+
+function component_by_name(ef::EnergyFunction, component_name::String)
+    for (component, α) in ef.components
+        if component.name == component_name
+            return component
+        end
+    end
+    return nothing
 end

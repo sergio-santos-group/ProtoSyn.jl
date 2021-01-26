@@ -393,11 +393,6 @@ function distance_matrix(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}) where {T <:
     blocks        = (n_blocks, n_blocks)
     
     results = CuArray(zeros(T, _size, _size))
-
-    # println("   Size: $_size")
-    # println("Threads: $threads")
-    # println(" Blocks: $blocks")
-    # return 
     
     @cuda blocks = blocks threads = threads distance_matrix_kernel(_coords, results, _size)
     

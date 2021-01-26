@@ -6,7 +6,7 @@ Contains restraint energy components, such as `bond_distance_restraint`.
 module Restraints
 
     using ProtoSyn
-    using ProtoSyn.Calculators: EnergyFunctionComponent
+    using ProtoSyn.Calculators: EnergyFunctionComponent, distance_matrix
 
     function calc_bond_distance_restraint(::Any, pose::Pose; update_forces::Bool = false)
 
@@ -44,49 +44,24 @@ module Restraints
 
     # --------------------------------------------------------------------------
 
-    function get_calc_distance_restraint(contact_map::Dict{Tuple{Int, Int}, T}) where {T <: AbstractFloat}
-        return function calc_distance_restraint(pose::Pose; update_forces::Bool = false)
-            
-            x0 = 8.0 # in Angstrom
-            e  = 0.0
-            f  = zeros(size(pose.state.f))
+    using LinearAlgebra
 
-            for ((r1, r2), α) in contact_map
-                a1 = pose.graph[1][r1]["CA"]
-                a2 = pose.graph[1][r2]["CA"]
-                d = ProtoSyn.distance(pose.state[a1], pose.state[a2])
-
-                if d > x0
-                    e += (d - x0) * α
-                    if update_forces
-                        v = collect(pose.state[a2].t .- pose.state[a1].t) .* α
-                        f[:, a1.id] -= v
-                        f[:, a2.id] += v
-                    end
-                end
-            end
-
-            return e, f
-        end
+    function calc_clash_energy(A::Type{M}, pose::Pose; rmin::T = 3.0, update_forces::Bool = false) where {M <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+        # coords must be in AoS format
+        # This version doesn't calculate forces (too slow)
+        
+        dm1 = Matrix(distance_matrix(A, pose, an"CA"))
+        dm2 = map((rij) -> (rij >= rmin ? 0.0 : - rij + rmin), dm1)
+        dm3 = tril(dm2, -1)
+        
+        return sum(dm3), nothing
     end
 
-    function load_contact_map(pose::Pose, filename::String)
+    calc_clash_energy(pose::Pose; rmin::T = 3.0, update_forces::Bool = false) where {T <: AbstractFloat}= begin
+        calc_clash_energy(ProtoSyn.acceleration.active, pose; rmin = rmin, update_forces = update_forces)
+    end
 
-        T = eltype(pose.state)
-        contact_map = Dict{Tuple{Int, Int}, T}()
-
-        open(filename, "r") do map_file
-            for line in eachline(map_file)
-                elems = split(line)
-                length(elems[1]) > 4 && continue
-                elems[1] == "END" && continue
-                α = parse(T, elems[5])
-                contact_map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
-            end
-        end
-
-        calc_distance_restraint = get_calc_distance_restraint(contact_map)
-
-        EnergyFunctionComponent("Distance_Restraint", calc_distance_restraint)
+    clash_restraint = begin
+        EnergyFunctionComponent("Clash_Restraint", calc_clash_energy)
     end
 end
