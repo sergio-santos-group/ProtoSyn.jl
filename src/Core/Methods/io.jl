@@ -34,6 +34,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 end
 
 load(filename::AbstractString; bonds_by_distance = false) = begin
+    @info "Consider using Peptides.load when dealing with peptide chains."
     load(Float64, filename, bonds_by_distance = bonds_by_distance)
 end
 
@@ -46,13 +47,9 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
     if bonds_by_distance
         dm        = ProtoSyn.Calculators.full_distance_matrix(pose)
         threshold = T(0.1)
-    end
 
-    atoms   = collect(eachatom(pose.graph))
-    n_atoms = length(atoms)
-    visited = ProtoSyn.Mask{Atom}(n_atoms)
-    for (i, atom_i) in enumerate(atoms)
-        if bonds_by_distance
+        atoms   = collect(eachatom(pose.graph))
+        for (i, atom_i) in enumerate(atoms)
             for (j, atom_j) in enumerate(atoms)
                 i == j && continue
                 atom_j = atoms[j]
@@ -67,6 +64,8 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
     end
 
     ProtoSyn.request_c2i(pose.state)
+    # println()
+    # sync!(pose)
     pose
 end
 

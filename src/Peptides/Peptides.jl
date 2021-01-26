@@ -16,7 +16,7 @@ const resource_dir = let
 end
 
 include("constants.jl")
-include("calculators.jl")
+include("Calculators/Calculators.jl")
 include("Rotamers/Rotamers.jl")
 
 export grammar
