@@ -40,3 +40,19 @@ function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState
     y = dot(n1, n2)
     return atan(x, y) # in rad
 end
+
+export rmsd
+
+"""
+"""
+function rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)
+    p1 = pose1.state.x.coords[:, selection(pose1).content]
+    p2 = pose2.state.x.coords[:, selection(pose2).content]
+    d = p1 .- p2
+    return sqrt(sum(d.*d)/size(d)[2])
+end
+
+function rmsd(pose1::Pose, pose2::Pose)
+    d = pose1.state.x.coords .- pose2.state.x.coords
+    return sqrt(sum(d.*d)/size(d)[2])
+end

@@ -18,7 +18,7 @@ sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRD
 # random sampling simulation
 begin
     seed = rand(1:1000000)
-    # seed = 679176
+    # seed = 103148
     Random.seed!(seed)
     pose = Peptides.build(res_lib, sequence);
 
@@ -53,7 +53,8 @@ begin
     energy_function = ProtoSyn.Common.default_energy_function()
 
     cm_restraints   = Peptides.Calculators.Restraints.load_contact_map("contact_map_example.txt")
-    energy_function.components[cm_restraints] = 0.001
+    energy_function.components[ProtoSyn.Peptides.Calculators.Caterpillar.solvation_energy] = 0.001
+    energy_function.components[cm_restraints] = 0.0001
 
     # 3) Define the Mutators
     # A Mutator is a piece of code responsible for performing a given conformational
@@ -122,7 +123,7 @@ begin
         compound_driver,
         callback,
         n_steps,
-        ProtoSyn.Drivers.get_linear_quench(0.1, n_steps))
+        ProtoSyn.Drivers.get_linear_quench(0.01, n_steps))
 
     # 5) Define the steepest descent driver
     # In this example, we can relax the initial structure to conform to the

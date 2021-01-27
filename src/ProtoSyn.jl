@@ -66,6 +66,7 @@ include("Core/Methods/io.jl")
 include("Core/Methods/iterators.jl")
 include("Core/Selections/selections.jl")
 include("Core/Methods/aux.jl")
+include("Core/Methods/align.jl")
 include("Core/Builder/grammar.jl")
 include("Core/Builder/Builder.jl")
 

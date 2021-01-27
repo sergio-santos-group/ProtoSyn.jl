@@ -7,6 +7,22 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
+pose1 = Peptides.load("../2a3d.pdb")
+pose2 = Peptides.load("../2a3d.pdb")
+# rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 10.0)
+# trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 10.0)
+# rrbm(pose2)
+# trbm(pose2)
+ProtoSyn.write(pose1, "../pose1.pdb")
+ProtoSyn.write(pose2, "../pose2.pdb")
+ProtoSyn.setdihedral!(pose2.state, Peptides.Dihedral.phi(pose2.graph[1][22]), deg2rad(76))
+sync!(pose2)
+ProtoSyn.align!(pose2, pose1, an"CA")
+ProtoSyn.append(pose1, "../pose1.pdb")
+ProtoSyn.append(pose2, "../pose2.pdb")
+
+ProtoSyn.rmsd(pose2, pose1, an"CA")
+
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"

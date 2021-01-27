@@ -120,7 +120,9 @@ Base.setindex!(x::StateMatrix{T}, vals::Matrix{T}, i::Colon, j::Union{UnitRange{
     update_state_matrix(x, vals, i, j)
 end
 
-
+Base.lastindex(x::StateMatrix{T}, i::Int64) where {T <: AbstractFloat} = begin
+    return size(x.coords)[2]
+end
 
 #region State ------------------------------------------------------------------
 
