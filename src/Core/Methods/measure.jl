@@ -7,11 +7,11 @@ export distance
     
 Calculates the distance between the two `AtomState` instances, based on the
 cartesian coordinates. Note: Make sure the corresponding pose has been synced.
-Returns result in ???.
+Returns result in Angstrom (Å).
 
 # Examples
 ```jldoctest
-julia> d = distance(pose.state[1], pose.state[2])
+julia> d = ProtoSyn.distance(pose.state[1], pose.state[2])
 1.004
 ```
 """
@@ -20,6 +20,20 @@ function distance(at1::AtomState, at2::AtomState)
 end
 
 export angle
+
+"""
+    angle(at1::AtomState, at2::AtomState, at3::AtomState)
+    
+Calculates the angle between the three `AtomState` instances, based on the
+cartesian coordinates. Note: Make sure the corresponding pose has been synced.
+Returns result in radians.
+
+# Examples
+```jldoctest
+julia> a = ProtoSyn.angle(pose.state[1], pose.state[2], pose.state[3])
+1.9225977187139336
+```
+"""
 function angle(at1::AtomState, at2::AtomState, at3::AtomState)
 
     v21 = at1.t - at2.t
@@ -29,6 +43,20 @@ end
 
 
 export dihedral
+
+"""
+    dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState)
+    
+Calculates the dihedral angle between the four `AtomState` instances, based on
+the cartesian coordinates. Note: Make sure the corresponding pose has been
+synced. Returns result in radians.
+
+# Examples
+```jldoctest
+julia> a = ProtoSyn.dihedral(pose.state[1], pose.state[2], pose.state[3], pose.state[4])
+0.4930512314732711
+```
+"""
 function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState)
 
     b1 = at2.t - at1.t
@@ -44,10 +72,27 @@ end
 export rmsd
 
 """
+    rmsd(pose1::Pose, pose2::Pose)
+    rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)
+    
+Calculates the RMSD value between 2 `Pose` instances, based on the cartesian
+coordinates. Note: Make sure the poses have been synced. If an
+`AbstractSelection` is provided, calculate the RMSD values of only the selected
+subset of atoms. Returns result in Angstrom (Å). 
+
+# Examples
+```jldoctest
+julia> a = ProtoSyn.rmsd(pose1, pose2)
+5.441139694078181
+
+julia> a = ProtoSyn.rmsd(pose1, pose2, an"CA")
+4.2278726943222384
+```
 """
 function rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)
-    p1 = pose1.state.x.coords[:, selection(pose1).content]
-    p2 = pose2.state.x.coords[:, selection(pose2).content]
+    sele = promote(selection, Atom)
+    p1 = pose1.state.x.coords[:, sele(pose1).content]
+    p2 = pose2.state.x.coords[:, sele(pose2).content]
     d = p1 .- p2
     return sqrt(sum(d.*d)/size(d)[2])
 end
