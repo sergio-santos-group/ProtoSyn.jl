@@ -82,7 +82,7 @@ function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 2
     for i in 1:size(results)[1]
         Ωi = sum(results[:, i])
 
-        dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod[residues[i].name]
+        dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7[residues[i].name]
 
         if Ωi > Ω
             esol_i = T(0)
@@ -108,7 +108,7 @@ function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIM
         for j in 1:size(dm)[2]
             Ωi += 1 - (1 / (1 + exp(sc * (rmax - dm[i, j]))))
         end
-        dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod[residues[i].name]
+        dhi = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7[residues[i].name]
 
         if Ωi > Ω
             esol_i = T(0)
