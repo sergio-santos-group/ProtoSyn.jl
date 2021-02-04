@@ -31,7 +31,7 @@ function (rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Ve
     ProtoSyn.request_c2i(pose.state)
 end
 
-# ---
+# ------------------------------------------------------------------------------
 # Rotation Rigid Body
 
 mutable struct RotationRigidBodyMutator{T <: AbstractFloat} <: AbstractMutator
