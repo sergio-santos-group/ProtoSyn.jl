@@ -7,7 +7,7 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
-pose1 = Peptides.load("../2a3d.pdb")
+pose = Peptides.load("../2a3d.pdb")
 pose2 = Peptides.load("../2a3d.pdb")
 # rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 10.0)
 # trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 10.0)
@@ -55,7 +55,7 @@ e_fcn    = ProtoSyn.Common.default_energy_function()
 e_fcn.components[Calculators.Restraints.bond_distance_restraint] = 0.05
 cb       = ProtoSyn.Common.default_energy_step_frame_callback(100, "../teste1.pdb")
 sd       = ProtoSyn.Drivers.SteepestDescent(e_fcn, cb, 3000, 0.001, 0.1)
-brm      = ProtoSyn.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, 0.2, [rid"27:44"], sd)
+brm      = ProtoSyn.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, 0.2, [rid"1:20", rid"27:44", rid"50:end"], sd)
 ProtoSyn.write(pose, "../teste1.pdb")
 @time brm(pose)
 # ProtoSyn.append(pose, "../teste1.pdb")
