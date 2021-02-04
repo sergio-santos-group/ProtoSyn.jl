@@ -7,10 +7,11 @@ export align!
     align!(mobile::Pose, target::Pose)
     align!(mobile::Pose, target::Pose, selection::ProtoSyn.AbstractSelection)
     
-Applies a rotation + translation movement on the mobile Pose in order to align
-to the target Pose. If a selection is provided, only the subset of selected
-Atoms will be considered to calculate the necessary rotation + translation
-movement (minimizing the RMSD). Sets `mobile.state.c2i` to `true`.
+Application of the Kabsch algorithm. Applies a rotation + translation movement
+on the mobile Pose in order to align to the target Pose. If a selection is
+provided, only the subset of selected Atoms will be considered to calculate the
+necessary rotation + translation movement (minimizing the RMSD). Sets
+`mobile.state.c2i` to `true`.
 
 # Examples
 ```jldoctest

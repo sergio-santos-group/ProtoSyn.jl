@@ -10,4 +10,5 @@ docs/build/
 .vscode/
 .ipynb_checkpoints/
 *.zip
-
+*.png
+*.dat
