@@ -59,6 +59,10 @@ function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose; Ω::Int = 2
     
     s = (an"CA")(pose, gather = true)
     _size = length(s)
+    if _size == 0
+        @warn "No CA atoms found in the pose: current solvation energy model is unusable."
+        return 0.0, nothing
+    end
     coords = zeros(eltype(pose.state), 3, _size)
     for (i, atom) in enumerate(s)
         coords[:, i] = pose.state[atom].t

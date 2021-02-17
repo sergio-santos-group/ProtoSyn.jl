@@ -50,8 +50,11 @@ module Restraints
         # coords must be in AoS format
         # This version doesn't calculate forces (too slow)
         
-        dm1 = Matrix(distance_matrix(A, pose, an"CA"))
-        dm2 = map((rij) -> (rij >= rmin ? 0.0 : - rij + rmin), dm1)
+        dm1 = distance_matrix(A, pose, an"CA")
+        if dm1 === nothing # No CA atoms were found
+            return 0.0, nothing
+        end
+        dm2 = map((rij) -> (rij >= rmin ? 0.0 : - rij + rmin), Matrix(dm1))
         dm3 = tril(dm2, -1)
         
         return sum(dm3), nothing
