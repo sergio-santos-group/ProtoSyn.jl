@@ -11,11 +11,6 @@ mutable struct EnergyFunctionComponent
 
     name::String
     calc::Function
-    cached_n_calls::Int16
-end
-
-EnergyFunctionComponent(name::String, calc::Function) = begin
-    return EnergyFunctionComponent(name, calc, Int16(0))
 end
 
 @info " | Loading TorchANI"

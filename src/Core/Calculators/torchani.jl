@@ -1,5 +1,7 @@
 module TorchANI
 
+    # NOTE: `server` is a reserved variable in this module.
+
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
     using PyCall
@@ -8,6 +10,19 @@ module TorchANI
     const torchani = PyNULL()
     const device   = PyNULL()
     const _model   = PyNULL()
+
+    function __init__()
+        copy!(torch, pyimport("torch"))
+        copy!(torchani, pyimport("torchani"))
+
+        if torch.cuda.is_available()
+            copy!(device, torch.device("cuda"))
+        else
+            copy!(device, torch.device("cpu"))
+        end
+        
+        copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
+    end
 
     # --- AUX
 
@@ -33,31 +48,33 @@ module TorchANI
     # --- SINGLE MODEL
 
     """
-        Calculators.calc_torchani_model([::A], pose::Pose; model_index::Int = 3) where {A}
+        Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model_index::Int = 3) where {A}
         
     Calculate the pose energy according to a single TorchANI model neural
     network. The model can be defined using `model_index` (from model 1 to 8,
     default is 3). The optional `A` parameter defines the acceleration mode used
     (only CUDA_2 is available). If left undefined the default
-    ProtoSyn.acceleration.active mode will be used.
+    ProtoSyn.acceleration.active mode will be used. If `update_forces` is set to
+    true (false, by default), return the calculated forces on each atom as well.
 
-    #See also:
-    `calc_torchani_ensemble`
+    # See also:
+    `calc_torchani_ensemble` `calc_torchani_model_xmlrpc`
 
     # Examples
     ```jldoctest
     julia> Calculators.calc_torchani_model(pose)
+    (...)
     ```
     """
     function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
-        return 0.0
+        return 0.0, nothing
     end
 
     function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
         
-        c           = get_cartesian_matrix(pose)
-        coordinates = torch.tensor([c], requires_grad = true, device = device).float()
+        # c           = get_cartesian_matrix(pose)
+        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
@@ -71,6 +88,7 @@ module TorchANI
         else
             return m3.item(), nothing
         end
+        return nothing, nothing
     end
 
     calc_torchani_model(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
@@ -103,7 +121,7 @@ module TorchANI
     function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false)
         
         c           = get_cartesian_matrix(pose)
-        coordinates = torch.tensor([c], requires_grad = true, device = device).float()
+        coordinates = torch.tensor([c], requires_grad = true, device = device).float() # Update this?
         
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
@@ -122,20 +140,8 @@ module TorchANI
         calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces = update_forces)
     end
 
-
-    function __init__()
-        copy!(torch, pyimport("torch"))
-        copy!(torchani, pyimport("torchani"))
-
-        if torch.cuda.is_available()
-            copy!(device, torch.device("cuda"))
-        else
-            copy!(device, torch.device("cpu"))
-        end
-        
-        copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
-    end
-
     torchani_model    = EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model)
     torchani_ensemble = EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble)
+
+    include("torchani_xmlrpc.jl")
 end

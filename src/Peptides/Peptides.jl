@@ -60,10 +60,10 @@ end
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
     pose = ProtoSyn.load(T, filename)
-
+    
     for segment in eachsegment(pose.graph)
         setparent!(segment[1][1], ProtoSyn.origin(pose.graph))
-
+        
         n_residues = ProtoSyn.count_residues(segment)
         for residue_index in 2:n_residues
             popparent!(segment[residue_index])
@@ -101,7 +101,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             end
         end
     end
-
+    
     reindex(pose.graph)
     ProtoSyn.request_c2i(pose.state)
     sync!(pose)
@@ -144,18 +144,18 @@ end
 
 
 """
-    get_sequence(container::ProtoSyn.AbstractContainer)::String
+    sequence(container::ProtoSyn.AbstractContainer)::String
 
 Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
 as a string.
 
 # Examples
 ```julia-repl
-julia> get_sequence(pose)
+julia> sequence(pose)
 "AAGASTASSE"
 ```
 """
-function get_sequence(container::ProtoSyn.AbstractContainer)::String
+function sequence(container::ProtoSyn.AbstractContainer)::String
 
     sequence = ""
     for residue in eachresidue(container)
@@ -169,7 +169,7 @@ function get_sequence(container::ProtoSyn.AbstractContainer)::String
     return sequence
 end
 
-get_sequence(pose::Pose) = get_sequence(pose.graph)
+sequence(pose::Pose) = sequence(pose.graph)
 
 
 include("methods.jl")

@@ -4,6 +4,7 @@ mutable struct EnergyFunction{T <: AbstractFloat}
 
     components::Dict{EnergyFunctionComponent, T}
     clean_cache_every::Int16
+    cache::Int16
 end
 
 EnergyFunction() = begin
@@ -15,28 +16,41 @@ EnergyFunction(::Type{T}) where {T <: AbstractFloat} = begin
 end
 
 EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction{T}(components, ProtoSyn.Units.defaultCleanCacheEvery)
+    return EnergyFunction{T}(components, ProtoSyn.Units.defaultCleanCacheEvery, Int16(0))
 end
 
 
 function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = false)
     e = 0.0
+    performed_calc = false
     for (component, ɑ) in energy_function.components
         if ɑ > 0.0
             energy, forces = component.calc(pose, update_forces = update_forces)
-            e_comp = ɑ * energy
+            performed_calc = true
+            e_comp         = ɑ * energy
             pose.state.e[Symbol(component.name)] = e_comp
             e += e_comp
+
             if update_forces & !(forces === nothing)
                 for atom_index in 1:pose.state.size
                     pose.state.f[:, atom_index] += forces[:, atom_index] .* ɑ
                 end
             end
+        end
+    end
 
-            component.cached_n_calls += 1
-            if component.cached_n_calls % energy_function.clean_cache_every == 0
+    # Perform memory allocation clean-up and maintenance
+    if performed_calc
+        energy_function.cache += 1
+        if energy_function.cache % energy_function.clean_cache_every == 0
+            GC.gc(false)
+            energy_function.cache = 0
+        else
+            alloc = ProtoSyn.gpu_allocation()
+            if alloc > ProtoSyn.Units.max_gpu_allocation
                 GC.gc(false)
-                component.cached_n_calls = 0
+                energy_function.clean_cache_every = energy_function.cache
+                energy_function.cache = 0
             end
         end
     end

@@ -216,18 +216,18 @@ julia> getdihedral(pose.state, pose.graph[1][1][end])
     return s[at].ϕ + s[at2].Δϕ
 end
 
-export get_cartesian_matrix
-function get_cartesian_matrix(::Type{T}, pose::Pose) where {T <: AbstractFloat}
+# export get_cartesian_matrix
+# function get_cartesian_matrix(::Type{T}, pose::Pose) where {T <: AbstractFloat}
 
-    matrix = Vector{Vector{T}}()
-    for atom_state in pose.state
-        push!(matrix, atom_state.t)
-    end
+#     matrix = Vector{Vector{T}}()
+#     for atom_state in pose.state
+#         push!(matrix, atom_state.t)
+#     end
 
-    return matrix
-end
+#     return matrix
+# end
 
-get_cartesian_matrix(pose::Pose) = get_cartesian_matrix(Units.defaultFloat, pose)
+# get_cartesian_matrix(pose::Pose) = get_cartesian_matrix(Units.defaultFloat, pose)
 
 
 export rotate_dihedral!

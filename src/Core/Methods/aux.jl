@@ -76,6 +76,7 @@ function center_of_mass(pose::Pose, idxs::Vector{Int})
     return mean(pose.state.x[:, idxs], dims = 2)
 end
 
-function random_atom(pose::Pose, idxs::Vector{Int})
-    return pose.state.x[:, rand(idxs)]
+function gpu_allocation()
+    mem = (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
+    return ProtoSyn.Units.defaultFloat(mem)
 end

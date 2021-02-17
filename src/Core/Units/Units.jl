@@ -2,7 +2,9 @@ module Units
 
 # When necessary, defaults all calls to Float64
 const defaultFloat = Float64
-const defaultCleanCacheEvery = Int16(20)
+const defaultCleanCacheEvery = Int16(10000)
+const max_gpu_allocation = defaultFloat(0.5)
+const defaultTorchANIport = 50000
 
 export °, Å, kJ, mol, rad, nm, m, J, tonumber
 
