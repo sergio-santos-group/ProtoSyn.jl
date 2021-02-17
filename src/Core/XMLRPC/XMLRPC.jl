@@ -2,25 +2,36 @@ module XMLRPC
 
 using HTTP
 
-export ServerProxy
+export ClientProxy
 
 """
-    ServerProxy(host::String, port::Int)
+    ClientProxy(host::String, port::Int)
 
-Instantiate a server proxy listening on `host`and  `port`. This
-object is meant to act as a proxy to a remote service implementing
-the XML/RPC protocol, and was designed to work with PyMOL.
+Instantiate a client proxy listening on `host`and  `port`. This object is meant
+to act as a proxy to a remote service implementing the XML/RPC protocol, and was
+designed to work with Python and PyMOL. For more detailed information, please
+read:
+
+https://blog.papercut.com/write-xml-rpc-clients/
+
+https://wiki.python.org/moin/XmlRpc
+
+# Examples
+```jldoctest
+julia> ProtoSyn.XMLRPC.ClientProxy("http://localhost", 50000)
+ProtoSyn.XMLRPC.ClientProxy("http://localhost", 50000, "http://localhost:50000")
+```
 """
-struct ServerProxy
+struct ClientProxy
     host::String
     port::Int
     url::String
-    ServerProxy(host::String, port::Int) = begin
+    ClientProxy(host::String, port::Int) = begin
         p = new(host, port, "$host:$port")
     end
-end
+end # struct
 
-Base.getproperty(p::ServerProxy, k::Symbol) = begin
+Base.getproperty(p::ClientProxy, k::Symbol) = begin
     if k in (:host, :port, :url)
         return getfield(p, k)
     end
@@ -86,22 +97,4 @@ end
 
 xml(x) = xml(stdout, x)
 
-# proxy = ServerProxy("http://localhost", 9123)
-
-# # proxy.ola("eu")
-# # proxy.adeus("tu",1,[2,4,5])
-# # proxy.adeus("tu",1,Dict(10=>20))
-# println("HOST: ", proxy.host)
-# println("PORT: ", proxy.port)
-# println("URL: ", proxy.url)
-# # proxy.delete("all")
-# # proxy.fetch("1ctf")
-# # proxy.show("lines", "1ctf")
-
-# xml(stdout, Array(reshape(1:12,3,4)'))
-
-# https://blog.papercut.com/write-xml-rpc-clients/
-# https://wiki.python.org/moin/XmlRpc
-
-
-end
+end # module

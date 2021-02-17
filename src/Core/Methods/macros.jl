@@ -77,7 +77,7 @@ macro fieldcopy!(dst::Symbol, src::Symbol, components::QuoteNode...)
     esc(ex)
 end
 
-using .XMLRPC: ServerProxy
+using .XMLRPC: ClientProxy
 
 # macro pymol(ex, obj=nothing, host="localhost", port=9123)
 const proxy_defaults = Dict{Symbol,Any}(
@@ -114,7 +114,7 @@ macro pymol(ex...)
     end
     return quote
         local val = $(esc(body))
-        proxy = getfield($(@__MODULE__), :ServerProxy)($host,$port)
+        proxy = getfield($(@__MODULE__), :ClientProxy)($host,$port)
         if val isa State
             proxy.load_coordset(val.coords, $(esc(obj)), 0)
         elseif val isa Pose
@@ -147,4 +147,14 @@ macro setproperties(kwargs...)
     esc(ex)
 end
 
-# println(@macroexpand @setproperties state b=1.2 θ = deg2rad(120) ϕ=0)
+export @isdefined
+macro isdefined(var)
+    quote
+        try
+            local _ = $(esc(var))
+            true
+        catch err
+            isa(err, UndefVarError) ? false : rethrow(err)
+        end
+    end
+end
