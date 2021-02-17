@@ -86,8 +86,12 @@ include("Drivers/Drivers.jl")
 @info "Loading Peptides"
 include("Peptides/Peptides.jl")
 
+@info "Loading Materials"
+include("Materials/Materials.jl")
+
 @info "Loading Common"
 include("Common/Common.jl")
+
 
 
 @info "ProtoSyn loaded successfully!"
@@ -99,7 +103,7 @@ function version()
       | |_) | '__/ _ \\| __/ _ \\___ \\| | | | '_ \\ 
       |  __/| | | (_) | || (_) |__) | |_| | | | |
       |_|   |_|  \\___/ \\__\\___/____/ \\__, |_| |_|
-                                        |__/       
+                                       |_/       
     """
     println("\n", header)
     @printf("      %s\n\n", "-"^45)
