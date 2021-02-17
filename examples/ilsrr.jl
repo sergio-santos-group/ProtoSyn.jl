@@ -26,12 +26,10 @@ end
 
 begin
     energy_function = ProtoSyn.Common.default_energy_function()
-    energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.005
-    energy_function.components[ProtoSyn.Calculators.Restraints.bond_distance_restraint] = 1.0
-    energy_function.components[ProtoSyn.Calculators.Restraints.clash_restraint] = 10.0
+    energy_function.components[Peptides.Calculators.Caterpillar.solvation_energy] = 0.01
 
     cm_restraints   = Peptides.Calculators.Restraints.load_contact_map("contact_map_example.txt")
-    energy_function.components[cm_restraints] = 0.002
+    energy_function.components[cm_restraints] = 0.001
 
     sd_energy_function = copy(energy_function)
     sd_energy_function.components[cm_restraints] = 0.0
@@ -126,7 +124,7 @@ begin
     steepest_descent(pose)
     ProtoSyn.append(pose, "ilsrr.pdb")
     ProtoSyn.write(pose, "ilsrr_best.pdb")
-    # outer_ILSRR(pose)
-    inner_monte_carlo(pose)
+    outer_ILSRR(pose)
+    # inner_monte_carlo(pose)
     println("Seed: $seed")
 end

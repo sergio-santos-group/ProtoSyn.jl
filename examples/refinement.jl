@@ -1,8 +1,24 @@
 using ProtoSyn
 using ProtoSyn.Peptides
+using ProtoSyn.Builder
 using Printf
 
-pose = ProtoSyn.Peptides.load("monte_carlo_1.pdb")
+res_lib  = ProtoSyn.Peptides.grammar()
+
+sequence = seq"MGSWAEFKQRLAAIKTRLQALGA"
+pose     = ProtoSyn.Peptides.build(res_lib, sequence)
+
+begin
+    pose = ProtoSyn.Peptides.load("monte_carlo_1.pdb")
+    ProtoSyn.Peptides.add_sidechains!(pose, res_lib)
+end
+# ProtoSyn.write(pose, "refinement.pdb")
+energy_function = ProtoSyn.Common.default_energy_function()
+cb = ProtoSyn.Common.default_energy_step_frame_callback(10, "refinement.jl")
+sd = ProtoSyn.Drivers.SteepestDescent(energy_function, cb, 1000, 0.001, 0.1)
+sd(pose)
+
+
 
 α_sol   = 0.01
 α_cmap  = 0.001
