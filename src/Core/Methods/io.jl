@@ -124,8 +124,8 @@ end
 load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     top  = Topology("UNK", -1)
-    seg  =  Segment("", -1)     # orphan segment
-    res  =  Residue("", -1)     # orphan residue
+    seg  = Segment("", -1)     # orphan segment
+    res  = Residue("", -1)     # orphan residue
     
     seekstart(io)
     natoms = mapreduce(l->startswith(l, "ATOM")|| startswith(l, "HETATM"), +, eachline(io); init=0)
@@ -196,15 +196,18 @@ end
 write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1) = begin
     
     @printf(io, "MODEL %8d\n", model)
-    for atom in eachatom(top)
-        sti = state[atom.index]
-        s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
-            atom.index, atom.name,
-            atom.container.name, atom.container.container.code,
-            atom.container.id,
-            sti.t[1], sti.t[2], sti.t[3],
-            atom.symbol)
-        println(io, s)
+    for (index, segment) in enumerate(eachsegment(top))
+        index > 1 && println(io, "TER")
+        for atom in eachatom(segment)
+            sti = state[atom.index]
+            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
+                atom.index, atom.name,
+                atom.container.name, atom.container.container.code,
+                atom.container.id,
+                sti.t[1], sti.t[2], sti.t[3],
+                atom.symbol)
+            println(io, s)
+        end
     end
 
     for atom in eachatom(top)

@@ -77,6 +77,8 @@ function popparent!(child::AbstractDigraph)
             deleteat!(parent.children, i)
             child.parent = nothing
         end
+    else
+        @warn "Tried to pop parent of $child but no parent was found."
     end
     child
 end

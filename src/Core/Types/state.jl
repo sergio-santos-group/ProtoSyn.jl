@@ -138,7 +138,7 @@ A `State` includes all information of all `AtomStates` in a system.
 Returns a `State` with size `n`, with all `items` set to be an empty
 `AtomState`.
 
-State{T <: AbstractFloat}(items::Vector{AtomState{T}})
+    State{T <: AbstractFloat}(items::Vector{AtomState{T}})
 
 Returns a `State` with size `length(items)`, with all the given `items`.
 """
@@ -264,11 +264,13 @@ end
 Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
     # Note: state.x.coords don't include the 3 origin atoms.
     s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
+    # Note: state.f doesn't include the 3 origin atoms.
+    s1.f = hcat(s1.f[:, 1:(index-1)], zeros(T, 3, s2.size), s1.f[:, index:end])
+    # Now we can add the index_offset
     index += s1.index_offset
     for i = 0:s2.size-1
         insert!(s1.items, index+i, s2[i+1])
     end
-    # TO DO :: FIX STATE.FORCES (INSERT ZEROS)
     s1.size += s2.size
     s1
 end

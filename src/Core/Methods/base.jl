@@ -34,7 +34,7 @@ _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = 
 end
 
 Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
-     _push!(container, item)
+    _push!(container, item)
 end
 
 Base.push!(res::Residue, atm::Atom) = begin

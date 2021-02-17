@@ -79,11 +79,11 @@ module Common
     export default_energy_step_frame_callback
 
     @doc """
-        default_energy_step_frame_callback(n::Int)::Callback
+        default_energy_step_frame_callback(n::Int, filename::String)::Callback
 
     Returns a simple callback that prints the current step and total energy
     value of the pose every `n` steps, while printing the current structures to
-    the given filename (in PDB format).
+    the given `filename` (in PDB format).
 
     # Examples
     ```jldoctest

@@ -38,7 +38,8 @@ function angle(at1::AtomState, at2::AtomState, at3::AtomState)
 
     v21 = at1.t - at2.t
     v23 = at3.t - at2.t
-    return acos(dot(v21, v23) / (norm(v21) * norm(v23)))
+    a = dot(v21, v23) / (norm(v21) * norm(v23))
+    return acos(ceil(a, digits = 15)) # ceil prevents erros when ∠ ≈ 180°
 end
 
 
