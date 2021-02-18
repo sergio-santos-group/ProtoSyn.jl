@@ -242,10 +242,12 @@ Base.splice!(s::State{T}, range::UnitRange{Int}) where {T <: AbstractFloat}= beg
 end
 
 Base.splice!(s::State, index::Int) = begin
-    _index = s.index_offset + index
-    s2 = State([splice!(s.items, _index)])
+    _index     = s.index_offset + index
+    s2         = State([splice!(s.items, _index)]) # * Already sets state.x
+    s2.f      .= s.f[:, index]
     s.x.coords = hcat(s.x.coords[:, 1:(index-1)], s.x.coords[:, (index+1):end])
-    s.size -= s2.size
+    s.f        = hcat(s.f[:, 1:(index-1)], s.f[:, (index+1):end])
+    s.size    -= s2.size
     s2
 end
 
@@ -262,14 +264,16 @@ Base.append!(s1::State{T}, s2::State{T}) where T = begin
 end
 
 Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
-    # Note: state.x.coords don't include the 3 origin atoms.
+    # * Note: state.x.coords doesn't include the 3 origin atoms.
     s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
-    # Note: state.f doesn't include the 3 origin atoms.
+    # * Note: state.f doesn't include the 3 origin atoms.
     s1.f = hcat(s1.f[:, 1:(index-1)], zeros(T, 3, s2.size), s1.f[:, index:end])
     # Now we can add the index_offset
     index += s1.index_offset
     for i = 0:s2.size-1
         insert!(s1.items, index+i, s2[i+1])
+        # * The items need to have the parent state re-assigned
+        s1.items[index+i].parent = s1
     end
     s1.size += s2.size
     s1

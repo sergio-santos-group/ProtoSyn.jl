@@ -88,7 +88,7 @@ undefined the default ProtoSyn.acceleration.active mode will be used. If
 `update_forces` is set to true (false, by default), return the calculated forces
 on each atom as well.
 
-# See also:
+# See also
 `calc_torchani_ensemble` `calc_torchani_model`
 
 # Examples
@@ -96,8 +96,19 @@ on each atom as well.
 julia> Calculators.calc_torchani_model_xmlrpc(pose)
 (...)
 ```
+
+# Notes
+If you use this function in a script, it is recommended to add
+`ProtoSyn.Calculators.TorchANI.stop_torchANI_server()` at the end of the script,
+as the automatic stopping of TorchANI XML-RPC server isn't finished.
 """
 function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+
+    # ! If an `IOError:("read: connection reset py peer, -104")` error is raised
+    # ! when calling this function, check the GPU total allocation (using 
+    # ! `nvidia-smi` on a command line or `ProtoSyn.gpu_allocation()` in a Julia
+    # ! REPL). GPU might have 100% allocation.
+
     if server === nothing
         global proxy = start_torchANI_server()
     end
@@ -105,14 +116,17 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_
     c = collect(pose.state.x.coords')
     s = ProtoSyn.Calculators.TorchANI.get_ani_species(pose)
     response = proxy.calc(s, c, update_forces, model_index)
+    println("Response: $response")
     xml_string = replace(join(Char.(response.body)), "\n" => "")
     xml = LightXML.parse_string(xml_string)
     
     r = Vector{Float64}()
     r_xml_travel!(xml, "double", r)
     if length(r) == 1
+        sleep(0.001) # Required to prevent EOFError() during request
         return r[1], nothing
     else
+        sleep(0.001) # Required to prevent EOFError() during request
         return splice!(r, 1), reshape(r, 3, :)
     end
 end
@@ -120,3 +134,5 @@ end
 calc_torchani_model_xmlrpc(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
     calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model_index = model_index)
 end
+
+torchani_model_xmlrpc = EnergyFunctionComponent("TorchANI_ML_Model_XMLRPC", calc_torchani_model_xmlrpc)

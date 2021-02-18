@@ -54,6 +54,7 @@ function (driver::SteepestDescent{T})(pose::Pose) where {T}
     driver_state.converged = driver_state.max_force[1] < driver.force_tolerance
 
     if driver_state.converged
+        println("Steepest descent converged to minimum force tolerance ($(driver_state.max_force[1]) < $(driver.force_tolerance)) at step $(driver_state.step).")
         return driver_state
     end
     
@@ -76,8 +77,9 @@ function (driver::SteepestDescent{T})(pose::Pose) where {T}
 
         # calculate current scaling factor and step size
         γ = min(γ, driver.max_displacement)
-        # driver_state.stepsize = γ / driver_state.max_force[1]
-        driver_state.stepsize = 1e-1
+        # println("γ: $γ")
+        driver_state.stepsize = γ / driver_state.max_force[1]
+        # driver_state.stepsize = 1e-1
 
         # update coordinates
         for atom_index in 1:pose.state.size

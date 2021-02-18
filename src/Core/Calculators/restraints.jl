@@ -47,8 +47,8 @@ module Restraints
     using LinearAlgebra
 
     function calc_clash_energy(A::Type{M}, pose::Pose; rmin::T = 3.0, update_forces::Bool = false) where {M <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        # coords must be in AoS format
-        # This version doesn't calculate forces (too slow)
+        # * coords must be in AoS format
+        # ! This version doesn't calculate forces (too slow)
         
         dm1 = distance_matrix(A, pose, an"CA")
         if dm1 === nothing # No CA atoms were found

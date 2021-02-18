@@ -247,6 +247,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
     
     reindex(pose.graph)
+    reindex(pose.state)
 
     # Fix CA children positions
     pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)

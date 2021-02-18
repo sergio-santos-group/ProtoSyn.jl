@@ -5,20 +5,27 @@ using Printf
 
 res_lib  = ProtoSyn.Peptides.grammar()
 
-sequence = seq"MGSWAEFKQRLAAIKTRLQALGA"
-pose     = ProtoSyn.Peptides.build(res_lib, sequence)
+pose = ProtoSyn.Peptides.load("monte_carlo_1.pdb")
 
-begin
-    pose = ProtoSyn.Peptides.load("monte_carlo_1.pdb")
-    ProtoSyn.Peptides.add_sidechains!(pose, res_lib)
-end
-# ProtoSyn.write(pose, "refinement.pdb")
 energy_function = ProtoSyn.Common.default_energy_function()
-cb = ProtoSyn.Common.default_energy_step_frame_callback(10, "refinement.jl")
-sd = ProtoSyn.Drivers.SteepestDescent(energy_function, cb, 1000, 0.001, 0.1)
+
+cb = ProtoSyn.Common.default_energy_step_frame_callback(5, "refinement.pdb")
+sd = ProtoSyn.Drivers.SteepestDescent(energy_function, cb, 1000, 0.001, 0.01)
+
 sd(pose)
+sync!(pose)
 
+for rid in 1:1 #length(eachresidue(pose.graph))
+    sele = SerialSelection{Residue}(rid, :id)
+    ProtoSyn.Peptides.add_sidechains!(pose, res_lib)
 
+    ProtoSyn.write(pose, "refinement.pdb")
+
+    energy_function(pose, update_forces = true)
+    sd(pose)
+end
+
+# ---
 
 α_sol   = 0.01
 α_cmap  = 0.001

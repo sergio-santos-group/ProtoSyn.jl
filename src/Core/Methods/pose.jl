@@ -99,7 +99,8 @@ function merge!(pose1::Pose, pose2::Pose)
         ProtoSyn.setparent!(s[1][1], root)
     end
 
-    # Merge states
+    # Merge states (including forces)
+    pose1.state.f = hcat(pose1.state.f, pose2.state.f)
     pose1.state.x.coords = hcat(pose1.state.x.coords, pose2.state.x.coords)
     for item in pose2.state.items[4:end]
         item.parent = pose1.state

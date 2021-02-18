@@ -1,36 +1,61 @@
 using ProtoSyn
 using Printf
-using CUDA
 
-energy_function = ProtoSyn.Common.default_energy_function()
-energy_function.components[ProtoSyn.Calculators.Restraints.clash_restraint] = 0.0
-energy_function.components[ProtoSyn.Calculators.Restraints.bond_distance_restraint] = 0.0
-energy_function.components[ProtoSyn.Peptides.Calculators.Caterpillar.solvation_energy] = 0.0
+energy_function = ProtoSyn.Calculators.EnergyFunction(
+    Dict(ProtoSyn.Calculators.TorchANI.torchani_model => Float64(1.0)))
 
-D = 1.5
-R = 4
+D        = 1.5
+R        = 10
+filename = "gpu_results.csv"
+N_steps  = 1000
+
 pose = ProtoSyn.Materials.Lattices.primitive()
 ProtoSyn.symexp!(pose, [R, R, R], [D, D, D])
-energy_function(pose)
 
-filename = "gpu_results.csv"
-N_atoms  = pose.state.size
-N_steps  = 10000
+energy_function(pose, update_forces = true)
+# ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, update_forces = true)
 
-function gpu_allocation()
-    return (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
-end
+open(filename, "a") do file_out
+    # write(file_out, @sprintf("%10s %-10s %-12s %-10s %-20s\n", "N atoms", "GC", "GC (Forces)", "XML-RPC", "XML-RPC (Forces)"))
 
-open(filename, "w") do file_out
-    write(file_out, @sprintf("N atoms: %10d\n", N_atoms))
-    write(file_out, @sprintf("%10s %12s %10s %12s\n", "Step #", "Allocation %", "Elapsed s", "Energy e.u."))
-    write(file_out, @sprintf("%10d %12.3f %10.3f %12s\n", 0, gpu_allocation(), 0.0, "None"))
-
+    println("GC - No forces")
     start = time()
     for step in 1:N_steps
-        e = energy_function(pose)
-        s = @sprintf("%10d %12.3f %10.3f %12.3f\n", step, gpu_allocation(), time() - start, e)
-        write(file_out, s)
-        println(s)
+        energy_function(pose, update_forces = false)
     end
+    gc_nf = time() - start
+    GC.gc()
+    println(" -> Allocation: $(ProtoSyn.gpu_allocation())")
+
+    println("GC - forces")
+    start = time()
+    for step in 1:N_steps
+        energy_function(pose, update_forces = true)
+    end
+    gc_f = time() - start
+    GC.gc()
+    println(" -> Allocation: $(ProtoSyn.gpu_allocation())")
+
+    # println("XMLRPC - No forces")
+    # start = time()
+    # for step in 1:N_steps
+    #     ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, update_forces = false)
+    # end
+    xml_nf = 0.0
+    # GC.gc()
+    # println(" -> Allocation: $(ProtoSyn.gpu_allocation())")
+
+    # println("XMLRPC - Forces")
+    # start = time()
+    # for step in 1:N_steps
+    #     ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, update_forces = true)
+    # end
+    xml_f = 0.0
+    # GC.gc()
+    # println(" -> Allocation: $(ProtoSyn.gpu_allocation())")
+
+    s = @sprintf("%10d %-10.3f %-12.3f %-10.3f %-20.3f\n", pose.state.size, gc_nf, gc_f, xml_nf, xml_f)
+    write(file_out, s)
 end
+
+ProtoSyn.Calculators.TorchANI.stop_torchANI_server()

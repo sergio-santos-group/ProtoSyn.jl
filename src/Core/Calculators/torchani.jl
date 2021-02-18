@@ -65,6 +65,19 @@ module TorchANI
     julia> Calculators.calc_torchani_model(pose)
     (...)
     ```
+
+    # Notes:
+    In ProtoSyn <=0.4, this function has a memory leak on the python side.
+    Multiple calls to `calc_torchani_model` require often `GC.gc(false)` calls.
+    In order to prevent/automate this process, consider the following options:
+
+    (1) - Use an EnergyFunction struct, as in:
+
+    energy_function = ProtoSyn.Calculators.EnergyFunction(
+        Dict(ProtoSyn.Calculators.TorchANI.torchani_model => Float64(1.0)))
+
+    (2) - Call `calc_torchani_model_xmlrpc` instead.
+
     """
     function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
