@@ -26,4 +26,21 @@ tonumber(v::Number)      = tonumber(defaultFloat, v)
 tonumber(T::DataType, v::String) = T(eval(Meta.parse(v)))
 tonumber(v::String)      = tonumber(defaultFloat, v)
 
+# * CONSTANTS
+
+const max_bond_lengths = Dict{String, defaultFloat}(
+    "CC" => 1.6,
+    "CH" => 1.2,
+    "CN" => 2.2,
+    "CO" => 2.2,
+    "CS" => 2.6,
+    "NH" => 1.2,
+    "OH" => 1.2,
+    "HC" => 1.2,
+    "NC" => 2.2,
+    "OC" => 2.2,
+    "SC" => 2.6,
+    "HN" => 1.2,
+    "HO" => 1.2)
+
 end

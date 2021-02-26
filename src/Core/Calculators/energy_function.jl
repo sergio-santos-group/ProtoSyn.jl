@@ -1,10 +1,11 @@
 using Printf
 
-mutable struct EnergyFunction{T <: AbstractFloat}
+mutable struct EnergyFunction
 
-    components::Dict{EnergyFunctionComponent, T}
+    components::Vector{EnergyFunctionComponent}
     clean_cache_every::Int16
     cache::Int16
+    components_by_name::Dict{String, Int}
 end
 
 EnergyFunction() = begin
@@ -12,28 +13,68 @@ EnergyFunction() = begin
 end
 
 EnergyFunction(::Type{T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction(Dict{EnergyFunctionComponent, T}())
+    return EnergyFunction(Vector{EnergyFunctionComponent}())
 end
 
-EnergyFunction(components::Dict{EnergyFunctionComponent, T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction{T}(components, ProtoSyn.Units.defaultCleanCacheEvery, Int16(0))
+EnergyFunction(components::Vector{EnergyFunctionComponent{T}}) where {T <: AbstractFloat} = begin
+    energy_function = EnergyFunction(Vector{EnergyFunctionComponent}(), ProtoSyn.Units.defaultCleanCacheEvery, Int16(0), Dict{String, Int}())
+    for component in components
+        push!(energy_function, component)
+    end
+
+    return energy_function
 end
 
+# * Overloads ------------------------------------------------------------------
+Base.length(energy_function::EnergyFunction) = length(energy_function.components)
 
-function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = false)
+Base.push!(energy_function::EnergyFunction, component::EnergyFunctionComponent) = begin
+    push!(energy_function.components, component)
+    energy_function.components_by_name[component.name] = length(energy_function)
+end
+
+Base.getindex(energy_function::EnergyFunction, i::Int) = energy_function.components[i]
+
+Base.getindex(energy_function::EnergyFunction, name::String) = begin
+    return energy_function.components[energy_function.components_by_name[name]]
+end
+
+Base.pop!(energy_function::EnergyFunction) = begin
+    component = pop!(energy_function.components)
+    delete!(energy_function.components_by_name, component.name)
+    return component
+end
+
+function Base.copy(ef::EnergyFunction)
+    nef = EnergyFunction()
+    nef.clean_cache_every = ef.clean_cache_every
+    for (component, α) in ef.components
+        nef.components[component] = α
+    end
+    return nef
+end
+
+# * Call energy function -------------------------------------------------------
+
+function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = false)
     e = 0.0
     performed_calc = false
-    for (component, ɑ) in energy_function.components
-        if ɑ > 0.0
-            energy, forces = component.calc(pose, update_forces = update_forces)
+    for component in energy_function.components
+        uf = update_forces & component.update_forces
+        if component.α > 0.0
+            if !performed_calc 
+                pose.state.e = Dict{Symbol, eltype(pose.state)}()
+                uf && fill!(pose.state.f, eltype(pose.state)(0))
+            end
+            energy, forces = component.calc(pose, uf; component.settings...)
             performed_calc = true
-            e_comp         = ɑ * energy
+            e_comp         = component.α * energy
             pose.state.e[Symbol(component.name)] = e_comp
             e += e_comp
 
-            if update_forces & !(forces === nothing)
+            if uf & !(forces === nothing)
                 for atom_index in 1:pose.state.size
-                    pose.state.f[:, atom_index] += forces[:, atom_index] .* ɑ
+                    pose.state.f[:, atom_index] += forces[:, atom_index] .* component.α
                 end
             end
         end
@@ -59,31 +100,14 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces::Bool = fal
     return e
 end
 
+# * Show -----------------------------------------------------------------------
 
 function Base.show(io::IO, efc::EnergyFunction)
     println(io, "\n+"*repeat("-", 58)*"+")
-    @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (ɑ)")
+    @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (α)")
     println(io, "+"*repeat("-", 58)*"+")
-    for (index, (component, ɑ)) in enumerate(efc.components)
-        @printf(io, "| %-5d | %-35s | %-10.3f |\n", index, component.name, ɑ)
+    for (index, component) in enumerate(efc.components)
+        @printf(io, "| %-5d | %-35s | %-10.3f |\n", index, component.name, component.α)
     end
     println(io, "+"*repeat("-", 58)*"+")
-end
-
-function Base.copy(ef::EnergyFunction)
-    nef = EnergyFunction()
-    nef.clean_cache_every = ef.clean_cache_every
-    for (component, α) in ef.components
-        nef.components[component] = α
-    end
-    return nef
-end
-
-function component_by_name(ef::EnergyFunction, component_name::String)
-    for (component, α) in ef.components
-        if component.name == component_name
-            return component
-        end
-    end
-    return nothing
 end

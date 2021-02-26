@@ -77,7 +77,7 @@ end
 
 
 """
-    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose; update_forces::Bool = false, model_index::Int = 3) where {A}
+    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
     
 Calculate the pose energy according to a single TorchANI model neural
 network, using the XML-RPC protocol. If no TorchANI XML-RPC server is found, a
@@ -102,7 +102,7 @@ If you use this function in a script, it is recommended to add
 `ProtoSyn.Calculators.TorchANI.stop_torchANI_server()` at the end of the script,
 as the automatic stopping of TorchANI XML-RPC server isn't finished.
 """
-function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model::Int = 3)
 
     # ! If an `IOError:("read: connection reset py peer, -104")` error is raised
     # ! when calling this function, check the GPU total allocation (using 
@@ -127,12 +127,21 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_
         return r[1], nothing
     else
         sleep(0.001) # Required to prevent EOFError() during request
-        return splice!(r, 1), reshape(r, 3, :)
+        return splice!(r, 1), reshape(r, 3, :).*-1
     end
 end
 
-calc_torchani_model_xmlrpc(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
-    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model_index = model_index)
+calc_torchani_model_xmlrpc(pose::Pose; update_forces::Bool = false, model::Int = 3) = begin
+    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model = model)
 end
 
-torchani_model_xmlrpc = EnergyFunctionComponent("TorchANI_ML_Model_XMLRPC", calc_torchani_model_xmlrpc)
+# * Default Energy Components --------------------------------------------------
+
+function get_default_torchani_model_xmlrpc(α::T = 1.0) where {T <: AbstractFloat}
+    return EnergyFunctionComponent(
+        "TorchANI_ML_Model_XMLRPC",
+        calc_torchani_model_xmlrpc,
+        Dict{Symbol, Any}(:model => 3),
+        α,
+        true)
+end

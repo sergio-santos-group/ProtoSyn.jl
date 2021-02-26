@@ -29,7 +29,7 @@ module TorchANI
     export get_ani_species
 
     """
-    TO DO
+        # TODO
     """
     function get_ani_species(container::ProtoSyn.AbstractContainer)
         
@@ -48,7 +48,7 @@ module TorchANI
     # --- SINGLE MODEL
 
     """
-        Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model_index::Int = 3) where {A}
+        Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
         
     Calculate the pose energy according to a single TorchANI model neural
     network. The model can be defined using `model_index` (from model 1 to 8,
@@ -79,14 +79,13 @@ module TorchANI
     (2) - Call `calc_torchani_model_xmlrpc` instead.
 
     """
-    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
         return 0.0, nothing
     end
 
-    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
-        # c           = get_cartesian_matrix(pose)
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         
         s           = get_ani_species(pose)
@@ -94,18 +93,17 @@ module TorchANI
         
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
-        m3 = get(_model.neural_networks, model_index)(m2)[2]
+        m3 = get(_model.neural_networks, model)(m2)[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
-            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()')
+            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1
         else
             return m3.item(), nothing
         end
-        return nothing, nothing
     end
 
-    calc_torchani_model(pose::Pose; update_forces::Bool = false, model_index::Int = 3) = begin
-        calc_torchani_model(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model_index = model_index)
+    calc_torchani_model(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
+        calc_torchani_model(ProtoSyn.acceleration.active, pose, update_forces, model = model)
     end
 
     # --- ENSEMBLE
@@ -131,10 +129,9 @@ module TorchANI
         return 0.0
     end
 
-    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false)
+    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false)
         
-        c           = get_cartesian_matrix(pose)
-        coordinates = torch.tensor([c], requires_grad = true, device = device).float() # Update this?
+        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
@@ -143,18 +140,26 @@ module TorchANI
         m2 = _model.aev_computer(m1)
         m3 = _model.neural_networks(m2)[2]
         if update_forces
-            return m3.item(), torch.autograd.grad(m3.sum(), coordinates)[1][1].cpu().numpy()
+            f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
+            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1
         else
             return m3.item(), nothing
         end
     end
 
-    calc_torchani_ensemble(pose::Pose; update_forces::Bool = false) = begin
-        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces = update_forces)
+    calc_torchani_ensemble(pose::Pose, update_forces::Bool = false) = begin
+        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces)
     end
 
-    torchani_model    = EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model)
-    torchani_ensemble = EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble)
+    # * Default Energy Components ----------------------------------------------
+
+    function get_default_torchani_model(α::T = 1.0) where {T <: AbstractFloat}
+        EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model, Dict{Symbol, Any}(:model => 3), α, true)
+    end
+    
+    function get_default_torchani_ensemble(α::T = 1.0) where {T <: AbstractFloat}
+        return EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble, Dict{Symbol, Any}(), α, true)
+    end
 
     include("torchani_xmlrpc.jl")
 end

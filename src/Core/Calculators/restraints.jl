@@ -8,63 +8,67 @@ module Restraints
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent, distance_matrix
 
-    function calc_bond_distance_restraint(::Any, pose::Pose; update_forces::Bool = false)
+    """
+        # TODO
+    """
+    function calc_bond_distance_restraint(::Any, pose::Pose; update_forces::Bool = false, x0::T = 2.0) where {T <: AbstractFloat}
 
-        x0 = 2.0 # max bond distance (Should be changable by the user ?)
         e  = 0.0
-        f  = zeros(size(pose.state.f))
-        stack = copy(origin(pose.graph).children)
+        if update_forces
+            f = zeros(size(pose.state.f))
+        end
 
-        while length(stack) > 0
-            i = pop!(stack)
-            stack = vcat(stack, copy(i.children))
-            for j in i.children
-                d = ProtoSyn.distance(pose.state[i], pose.state[j])
+        for atom in eachatom(pose.graph)
+            for bond in atom.bonds
+                d = ProtoSyn.distance(pose.state[atom], pose.state[bond])
+                
+                p = atom.symbol*bond.symbol
+                if p in keys(ProtoSyn.Units.max_bond_lengths)
+                    _x0 = ProtoSyn.Units.max_bond_lengths[p]
+                else
+                    println("Pair $p not found in max lengths list?")
+                    _x0 = x0
+                end
+
                 if d > x0
                     e += (d - x0)
                     if update_forces
-                        v = collect(pose.state[j].t .- pose.state[i].t)
-                        f[:, i.id] -= v
-                        f[:, j.id] += v
+                        v = collect(pose.state[atom].t .- pose.state[bond].t)
+
+                        # * Assumes atom IDs are synched with pose.state
+                        f[:, atom.id] -= v
+                        f[:, bond.id] += v
                     end
                 end
             end
         end
 
-        return e, f
+        if update_forces
+            return e, f
+        else
+            return e, nothing
+        end
     end
 
-    calc_bond_distance_restraint(pose::Pose; update_forces::Bool = false) = begin
-        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, update_forces = update_forces)
+    calc_bond_distance_restraint(pose::Pose; update_forces::Bool = false, x0::T = 2.0) where {T <: AbstractFloat} = begin
+        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, update_forces = update_forces, x0 = x0)
     end
 
-    bond_distance_restraint = begin
-        EnergyFunctionComponent("Bond_Distance_Restraint", calc_bond_distance_restraint)
+    function get_default_bond_distance_restraint(α::T = 1.0) where {T <: AbstractFloat}
+        return EnergyFunctionComponent(
+            "Bond_Distance_Restraint",
+            calc_bond_distance_restraint,
+            Dict{Symbol, Any}(:x0 => 2.0),
+            α,
+            true)
     end
 
     # --------------------------------------------------------------------------
 
-    using LinearAlgebra
+    MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
-    function calc_clash_energy(A::Type{M}, pose::Pose; rmin::T = 3.0, update_forces::Bool = false) where {M <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        # * coords must be in AoS format
-        # ! This version doesn't calculate forces (too slow)
-        
-        dm1 = distance_matrix(A, pose, an"CA")
-        if dm1 === nothing # No CA atoms were found
-            return 0.0, nothing
-        end
-        dm2 = map((rij) -> (rij >= rmin ? 0.0 : - rij + rmin), Matrix(dm1))
-        dm3 = tril(dm2, -1)
-        
-        return sum(dm3), nothing
-    end
-
-    calc_clash_energy(pose::Pose; rmin::T = 3.0, update_forces::Bool = false) where {T <: AbstractFloat}= begin
-        calc_clash_energy(ProtoSyn.acceleration.active, pose; rmin = rmin, update_forces = update_forces)
-    end
-
-    clash_restraint = begin
-        EnergyFunctionComponent("Clash_Restraint", calc_clash_energy)
-    end
+    function calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat}
+        fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
+        ProtoSyn.Calculators.apply_potential(ProtoSyn.acceleration.active, pose, fbr, mask, selection)
+    end # function
 end

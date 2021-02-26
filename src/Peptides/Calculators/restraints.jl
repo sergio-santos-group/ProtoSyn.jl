@@ -3,53 +3,122 @@ module Restraints
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
 
-    function get_calc_distance_restraint(contact_map::Dict{Tuple{Int, Int}, T}) where {T <: AbstractFloat}
-        return function calc_distance_restraint(pose::Pose; update_forces::Bool = false)
-            
-            x0 = 8.0 # in Angstrom
-            e  = 0.0
-            f  = zeros(size(pose.state.f))
+    # * Default Energy Components ----------------------------------------------
 
-            for ((r1, r2), α) in contact_map
-                a1 = pose.graph[1][r1]["CA"]
-                a2 = pose.graph[1][r2]["CA"]
-                d = ProtoSyn.distance(pose.state[a1], pose.state[a2])
+    """
+        get_default_sidechain_clash_restraint(;α::T = 1.0, mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
 
-                if d > x0
-                    e += (d - x0) * α
-                    if update_forces
-                        v = collect(pose.state[a2].t .- pose.state[a1].t) .* α
-                        f[:, a1.id] += v
-                        f[:, a2.id] -= v
-                    end
-                end
-            end
+    Return the default sidechain clash restraint `EnergyFunctionComponent`. `α`
+    sets the component weight (on an `EnergyFunction`). If a `mask` is provided,
+    the component will apply that mask every calculation (fixed mask) -
+    recommended, except for design efforts. Otherwise, the default
+    `get_intra_residue_mask` function will be used, which calculates a new
+    intra-residue mask every calculation.
 
-            return e, f
+    # Examples
+    ```jldoctest
+    julia> Peptides.Calculators.Restraints.get_default_sidechain_clash_restraint()
+         Name : Clash_Sidechain_Restraint
+    Weight(α) : 1.0
+     Settings :
+                :d4 => Inf
+         :selection => UnarySelection{ProtoSyn.Stateless}(!, FieldSelection{ProtoSyn.Stateless,Atom}(r"^CA\$|^N\$|^C\$|^H\$|^O\$", :name, occursin))
+                :d2 => 4.2
+              :mask => _intra_residue_mask
+                :d1 => 2.0
+                :d3 => Inf
+    ```
+    """
+    function get_default_sidechain_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        _sele = !an"^CA$|^N$|^C$|^H$|^O$"r
+        if mask === nothing
+            mask = ProtoSyn.Calculators.get_intra_residue_mask(_sele)
         end
+        return EnergyFunctionComponent(
+            "Clash_Sidechain_Restraint",
+            ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
+            Dict{Symbol, Any}(:d1 => 2.0, :d2 => 4.2, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            α,
+            true)
     end
 
-    function load_contact_map(::Type{T}, filename::String) where {T <: AbstractFloat}
 
-        contact_map = Dict{Tuple{Int, Int}, T}()
+    """
+        get_default_contact_restraint(filename::String; α::T = 1.0) where {T <: AbstractFloat}
 
-        open(filename, "r") do map_file
-            for line in eachline(map_file)
-                elems = split(line)
-                length(elems[1]) > 4 && continue
-                elems[1] == "END" && continue
-                α = parse(T, elems[5])
-                contact_map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
-            end
+    Return the default contact map restraint `EnergyFunctionComponent` by
+    reading the given `filename`. `α` sets the component weight (on an
+    `EnergyFunction`). *Note:* Since the map is fixed, any energy function
+    containing this component can only be applied to one protein/sequence. The
+    attached contact map can be re-defined in `component.settings[:mask]`. *Note:*
+    By default, this component does not calculate forces, as they would only be
+    applied to the Cα atoms. This setting can be re-defined in
+    `component.update_forces`.
+
+    # Examples
+    ```jldoctest
+    julia> Peptides.Calculators.Restraints.get_default_contact_restraint("contact_map_example.txt")
+             Name : Contact_Map
+       Weight (α) : 1.0
+    Update forces : false
+          Setings :
+           :d4 => 12.0
+    :selection => FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal)
+           :d2 => 0.0
+         :mask => Matrix{Float64}((73, 73)
+           :d1 => 0.0
+           :d3 => 8.0
+    ```
+    """
+    function get_default_contact_restraint(filename::String; α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+        _sele = an"CA"
+        mask  = ProtoSyn.Calculators.load_map(T, filename)
+        return EnergyFunctionComponent(
+            "Contact_Map",
+            ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
+            Dict{Symbol, Any}(:d1 => 0.0, :d2 => 0.0, :d3 => 8.0, :d4 => 12.0, :selection => _sele, :mask => mask),
+            α,
+            false)
+    end
+
+    """
+        get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+    
+    Return the default Cα-Cα clash restraint `EnergyFunctionComponent`. `α`
+    sets the component weight (on an `EnergyFunction`). If a `mask` is provided,
+    the component will apply that mask every calculation (fixed mask) -
+    recommended, except for design efforts. Otherwise, the default
+    `get_diagonal_mask` function will be used, which calculates a new
+    diagonal mask every calculation (effectly ignoring the same atom energetic
+    contributions). *Note:* By default, this component does not calculate
+    forces, as they would only be applied to the Cα atoms. This setting can be
+    re-defined in `component.update_forces`.
+
+    # Examples
+    ```jldoctest
+    julia> Peptides.Calculators.Restraints.get_default_ca_clash_restraint()
+             Name : Cα-Cα_Clash_Restraint
+       Weight (α) : 1.0
+    Update forces : false
+          Setings :
+           :d4 => Inf
+    :selection => FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal)
+           :d2 => 3.0
+         :mask => _diagonal_mask
+           :d1 => 1.0
+           :d3 => Inf
+    ```
+    """
+    function get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        _sele = an"CA"
+        if mask === nothing
+            mask = ProtoSyn.Calculators.get_diagonal_mask(_sele)
         end
-
-        calc_distance_restraint = get_calc_distance_restraint(contact_map)
-
-        EnergyFunctionComponent("Contact_Map_Restraint", calc_distance_restraint)
+        return EnergyFunctionComponent(
+            "Cα-Cα_Clash_Restraint",
+            ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.0, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            α,
+            false)
     end
-
-    load_contact_map(filename::String) = begin
-        load_contact_map(ProtoSyn.Units.defaultFloat, filename)
-    end
-
 end
