@@ -35,7 +35,7 @@ filter!(aa -> aa != 'P', design_mutator.searchable_aminoacids)
 
 # 5) Define the RotamerBlitz driver (Here we will consider the 3 most likely
 # rotamers, with just 1 pass).
-rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rot_lib, 3, 1)
+rotamer_blitz = Peptides.Drivers.RotamerBlitz(energy_function, rot_lib, 3, 1)
 
 # 6) Define the custom sampler
 # For this example, we want to identify the changed residues (each step) and
