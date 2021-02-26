@@ -406,6 +406,7 @@ distance_matrix(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::ProtoSyn.Abstrac
         @warn "No atoms found in the pose for the given selection: current distance matrix is unable to be calculated."
         return nothing
     end
+    
     coords = zeros(eltype(pose.state), 3, length(s))
     for (i, atom) in enumerate(s)
         coords[:, i] = pose.state[atom].t

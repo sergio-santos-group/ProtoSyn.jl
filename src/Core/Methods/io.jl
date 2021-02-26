@@ -33,10 +33,12 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     end
 end
 
+
 load(filename::AbstractString; bonds_by_distance = false) = begin
     @info "Consider using Peptides.load when dealing with peptide chains."
     load(Float64, filename, bonds_by_distance = bonds_by_distance)
 end
+
 
 load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T, K} = begin
     
@@ -69,9 +71,11 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
     pose
 end
 
+
 load(filename::AbstractString, ::Type{K}; bonds_by_distance = false) where K = begin
     load(Float64, filename, K, bonds_by_distance = bonds_by_distance)
 end
+
 
 load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     
@@ -120,6 +124,7 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     top.id = state.id = genid()
     sync!(Pose(top, state))
 end
+
 
 load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
@@ -193,6 +198,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     Pose(top, state)
 end
 
+
 write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1) = begin
     
     @printf(io, "MODEL %8d\n", model)
@@ -251,6 +257,7 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
 
 end
 
+
 """
     ProtoSyn.write(pose::Pose, filename::String)
 
@@ -275,6 +282,7 @@ function write(pose::Pose, filename::String)
     close(io)
 end
 
+
 """
     ProtoSyn.append(pose::Pose, filename::String)
 
@@ -297,4 +305,24 @@ function append(pose::Pose, filename::String; model::Int = 1)
         error("Unable to write to '$filename': unsupported file type")
     end
     close(io)
+end
+
+
+"""
+    # TODO
+"""
+function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
+    open(filename, "w") do file_out
+        for (i, atom) in enumerate(eachatom(pose.graph))
+            !any(k -> k != 0, pose.state.f[:, i]) && continue
+            x  = pose.state[atom].t[1]
+            y  = pose.state[atom].t[2]
+            z  = pose.state[atom].t[3]
+            fx = x + (pose.state.f[1, i] * α)
+            fy = y + (pose.state.f[2, i] * α)
+            fz = z + (pose.state.f[3, i] * α)
+            s  = @sprintf("%5d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n", atom.id, x, y, z, fx, fy, fz)
+            Base.write(file_out, s)
+        end
+    end
 end

@@ -38,7 +38,9 @@ function (driver::RotamerBlitz)(cb::Opt{F}, pose::Pose) where {F<:Function}
     cb !== nothing && cb(pose, driver_state)
 
     for step in 1:driver.max_steps
-        for residue in shuffle(residues)
+        # println("Step $step/$(driver.max_steps)")
+        for (r_index, residue) in enumerate(shuffle(residues))
+            # println(" Residue $r_index/$(length(residues))")
             
             # Residue results hold the energy of each rotamer conformation
             # The best rotamer conformation will be applied to this residue
@@ -53,12 +55,14 @@ function (driver::RotamerBlitz)(cb::Opt{F}, pose::Pose) where {F<:Function}
             rotamer_stack = driver.rotamer_library[residue.name][phi, psi]
 
             # Iterate the 'n_first' rotamers, saving the evaluated energy
-            for rotamer in rotamer_stack.rotamers[1:driver.n_first]
-                # Note: Rotamers.apply! doesn't sync! the pose
+            _n_first = min(length(rotamer_stack.rotamers), driver.n_first)
+            for (index, rotamer) in enumerate(rotamer_stack.rotamers[1:_n_first])
+                # * Note: Rotamers.apply! doesn't sync! the pose
                 exact_rotamer = Rotamers.apply!(pose.state, rotamer, residue)
                 sync!(pose)
                 energy = driver.eval!(pose)
                 residue_results[exact_rotamer] = energy
+                # println("  Rotamer: $index/$_n_first")
             end
 
             # Re-apply the best conformation (exactly)

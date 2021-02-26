@@ -84,7 +84,7 @@ function (driver::SteepestDescent{T})(pose::Pose) where {T}
         # update coordinates
         for atom_index in 1:pose.state.size
             t = driver_state.stepsize .* pose.state.f[:, atom_index]
-            pose.state.x[:, atom_index] = pose.state.x[:, atom_index] .- t
+            pose.state.x[:, atom_index] = pose.state.x[:, atom_index] .+ t
         end
 
         # Calculate new energy and forces

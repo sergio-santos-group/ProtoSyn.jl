@@ -8,6 +8,12 @@ using ProtoSyn.Units
 using Printf
 
 pose = Peptides.load("../2a3d.pdb")
+
+ef = Calculators.EnergyFunction()
+ef.components[Calculators.TorchANI.torchani_model] = 1.0
+
+
+
 pose2 = Peptides.load("../2a3d.pdb")
 # rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 10.0)
 # trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 10.0)
@@ -23,11 +29,13 @@ ProtoSyn.append(pose2, "../pose2.pdb")
 
 ProtoSyn.rmsd(pose2, pose1, an"CA")
 
+using ProtoSyn.Peptides
+using ProtoSyn.Builder
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
+pose     = Peptides.build(res_lib, sequence);
 begin
-    pose     = Peptides.build(res_lib, sequence);
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"1:20");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"27:44");
     Peptides.setss!(pose, SecondaryStructure[:helix], rid"50:end");
