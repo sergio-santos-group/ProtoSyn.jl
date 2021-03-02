@@ -15,6 +15,14 @@ module Restraints
     `get_intra_residue_mask` function will be used, which calculates a new
     intra-residue mask every calculation.
 
+    # Sidechain clash energy settings
+    - :d1, :d2, :d3, :d4 -> set each of the distances defining a flat-bottom potential (in Angstrom Å);
+    - :selection -> defines the atom selection limiting the considered atoms for the calculation; 
+    - :mask -> defines the mask applied to the energy and forces result;
+    
+    # See also
+    `ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint`
+
     # Examples
     ```jldoctest
     julia> Peptides.Calculators.Restraints.get_default_sidechain_clash_restraint()
@@ -30,6 +38,9 @@ module Restraints
     ```
     """
     function get_default_sidechain_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        # * Note: The default :d1 and :d2 distances were parametrized based on
+        # * the 2A3D PDB structure.
+        
         _sele = !an"^CA$|^N$|^C$|^H$|^O$"r
         if mask === nothing
             mask = ProtoSyn.Calculators.get_intra_residue_mask(_sele)
@@ -37,7 +48,7 @@ module Restraints
         return EnergyFunctionComponent(
             "Clash_Sidechain_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 2.0, :d2 => 4.2, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
             α,
             true)
     end
@@ -48,16 +59,23 @@ module Restraints
 
     Return the default contact map restraint `EnergyFunctionComponent` by
     reading the given `filename`. `α` sets the component weight (on an
-    `EnergyFunction`). *Note:* Since the map is fixed, any energy function
-    containing this component can only be applied to one protein/sequence. The
-    attached contact map can be re-defined in `component.settings[:mask]`. *Note:*
-    By default, this component does not calculate forces, as they would only be
-    applied to the Cα atoms. This setting can be re-defined in
-    `component.update_forces`.
+    `EnergyFunction`). 
+    !!! note
+        Since the map is fixed, any energy function containing this component can only be applied to one protein/sequence. The attached contact map can be re-defined in `component.settings[:mask]`.
+    !!! note
+        By default, this component does not calculate forces, as they would only be applied to the Cα atoms. This setting can be re-defined in `component.update_forces`.
+
+    # Contact energy settings
+    - :d1, :d2, :d3, :d4 -> set each of the distances defining a flat-bottom potential (in Angstrom Å);
+    - :selection -> defines the atom selection limiting the considered atoms for the calculation; 
+    - :mask -> defines the mask applied to the energy and forces result;
+    
+    # See also
+    `ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint`
 
     # Examples
     ```jldoctest
-    julia> Peptides.Calculators.Restraints.get_default_contact_restraint("contact_map_example.txt")
+    julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_contact_restraint("contact_map_example.txt")
              Name : Contact_Map
        Weight (α) : 1.0
     Update forces : false
@@ -90,9 +108,17 @@ module Restraints
     recommended, except for design efforts. Otherwise, the default
     `get_diagonal_mask` function will be used, which calculates a new
     diagonal mask every calculation (effectly ignoring the same atom energetic
-    contributions). *Note:* By default, this component does not calculate
-    forces, as they would only be applied to the Cα atoms. This setting can be
-    re-defined in `component.update_forces`.
+    contributions). 
+    !!! note
+        By default, this component does not calculate forces, as they would only be applied to the Cα atoms. This setting can be re-defined in `component.update_forces`.
+
+    # Cα clash energy settings
+    - :d1, :d2, :d3, :d4 -> set each of the distances defining a flat-bottom potential (in Angstrom Å);
+    - :selection -> defines the atom selection limiting the considered atoms for the calculation; 
+    - :mask -> defines the mask applied to the energy and forces result;
+    
+    # See also
+    `ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint`
 
     # Examples
     ```jldoctest

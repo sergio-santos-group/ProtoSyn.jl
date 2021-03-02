@@ -9,9 +9,24 @@ module Restraints
     using ProtoSyn.Calculators: EnergyFunctionComponent, distance_matrix
 
     """
-        # TODO
+        Calculators.calc_bond_distance_restraint(::Any, pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat}
+        
+    Calculate the pose bond distance restraint energy according to a quadratic
+    potential. This potential only defines a maximum distance for the bond,
+    based on the elements involved in the bond (See
+    `ProtoSyn.max_bond_lengths`). If the pair of elements is not found, a
+    default `x0` value is used instead.
+
+    # See also
+    `get_default_bond_distance_restraint`
+
+    # Examples
+    ```jldoctest
+    julia> Calculators.Restraints.calc_bond_distance_restraint(pose)
+    (0.0, nothing)
+    ```
     """
-    function calc_bond_distance_restraint(::Any, pose::Pose; update_forces::Bool = false, x0::T = 2.0) where {T <: AbstractFloat}
+    function calc_bond_distance_restraint(::Any, pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat}
 
         e  = 0.0
         if update_forces
@@ -31,13 +46,14 @@ module Restraints
                 end
 
                 if d > x0
-                    e += (d - x0)
+                    e += (d - _x0) * (d - _x0)
                     if update_forces
                         v = collect(pose.state[atom].t .- pose.state[bond].t)
+                        factor1 = 2 * (d - _x0)
 
                         # * Assumes atom IDs are synched with pose.state
-                        f[:, atom.id] -= v
-                        f[:, bond.id] += v
+                        f[:, atom.id] -= v * factor1
+                        f[:, bond.id] += v * factor1
                     end
                 end
             end
@@ -50,11 +66,29 @@ module Restraints
         end
     end
 
-    calc_bond_distance_restraint(pose::Pose; update_forces::Bool = false, x0::T = 2.0) where {T <: AbstractFloat} = begin
-        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, update_forces = update_forces, x0 = x0)
+    calc_bond_distance_restraint(pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat} = begin
+        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, update_forces, x0 = x0)
     end
 
-    function get_default_bond_distance_restraint(α::T = 1.0) where {T <: AbstractFloat}
+    """
+        get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default bond distance restraint `EnergyFunctionComponent`. `α`
+    sets the component weight (on an `EnergyFunction`). This function employs
+    `calc_bond_distance_restraint` and therefore only travels the bond graph in
+    order to calculate each bond distance energy.
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint()
+             Name : Bond_Distance_Restraint
+       Weight (α) : 1.0
+    Update forces : true
+          Setings :
+             :x0 => 2.0
+    ```
+    """
+    function get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "Bond_Distance_Restraint",
             calc_bond_distance_restraint,
@@ -64,6 +98,7 @@ module Restraints
     end
 
     # --------------------------------------------------------------------------
+    # * Flat bottom restraint base function
 
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 

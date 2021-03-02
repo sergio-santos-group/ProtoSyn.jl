@@ -4,13 +4,9 @@ using ProtoSyn
 using ProtoSyn.Calculators: EnergyFunctionComponent, full_distance_matrix
 using CUDA
 
-"""
-    calc_solvation_energy_kernel(coords::CuDeviceArray{T}, Ωi::CuDeviceMatrix{T}, n::Int, rmax::T, sc::T) where {T <: AbstractFloat}
 
-Kernel for CUDA_2 acceleration of `calc_solvation_energy` function.
-"""
 function calc_solvation_energy_kernel(coords::CuDeviceArray{T}, Ωi::CuDeviceMatrix{T}, n::Int, rmax::T, sc::T) where {T <: AbstractFloat}
-    # Note: coords must be in AoS format
+    # ! Note: coords must be in AoS format
 
     i = ((blockIdx().y - 1) * blockDim().y) + threadIdx().y
     j = ((blockIdx().x - 1) * blockDim().x) + threadIdx().x
@@ -54,9 +50,12 @@ used. This function does not calculate forces (not applicable), and therefore
 the `update_forces` flag serves solely for uniformization with other
 energy-calculating functions.
 
+# See also
+`get_default_solvation_energy`
+
 # Examples
 ```jldoctest
-julia> Calculators.calc_solvation_energy(pose)
+julia> ProtoSyn.Peptides.Calculators.Caterpillar.calc_solvation_energy(pose)
 ```
 """
 function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; Ω::Int = 24, rmax::T = 24.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7) where {T <: AbstractFloat}
@@ -137,7 +136,35 @@ end
 
 # * Default Energy Components --------------------------------------------------
 
-function get_default_solvation_energy(α::T = 1.0) where {T <: AbstractFloat}
+"""
+    get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
+
+Return the default Caterpillar solvation `EnergyFunctionComponent`. `α`
+sets the component weight (on an `EnergyFunction`).
+
+# Solvation energy settings
+- :Ω -> defines the minimum number of Cα-Cα contacts to consider a residue 'burried';
+- :sc -> defines the 'slope control' (a higher value defines more sharply when to consider a contact);
+- :hydrophob_map -> `Dict{Symbol, Any}` with the reward/penalty for correct burial/exposal of hydrophobic/hydrophilic residues;
+- :rmax -> defines the minimum distance between Cα's for a contact to be considered (in Angstrom Å).
+
+# See also
+`calc_solvation_energy`
+
+# Examples
+```jldoctest
+julia> Peptides.Peptides.Calculators.Restraints.get_default_solvation_energy()
+         Name : Caterpillar_Solvation
+   Weight (α) : 1.0
+Update forces : false
+      Setings :
+            :Ω => 24
+           :sc => 5.0
+:hydrophob_map => Dict("PHE" => 9.8,"GLN" => -3.5,"ASP" => -3.5,"LYS" => -3.9,"ILE" => 11.5,"TYR" => -1.3,"GLY" => -0.4,"HIE" => -3.2,"ASN" => -3.5,"ARG" => -4.5,"LEU" => 10.8,"TRP" => -0.9,"ALA" => 8.8,"THR" => -0.7,"VAL" => 11.2,"MET" => 8.9,"CYS" => 9.5,"SER" => -0.8,"PRO" => -1.6,"HIS" => -3.2,"GLU" => -3.5)
+         :rmax => 12.0
+```
+"""
+function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "Caterpillar_Solvation",
         calc_solvation_energy,

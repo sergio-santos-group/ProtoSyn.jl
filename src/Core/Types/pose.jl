@@ -31,7 +31,8 @@ interaction graph and the current state of the system represented.
 
 Return a Pose instance from a Fragment, where the State is empty/blank.
 
-*Note:* A Fragment is a Pose{Segment}.
+!!! note
+    A Fragment is a Pose{Segment}.
 
 *See also:*
     
@@ -51,7 +52,7 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
     ProtoSyn.request_i2c(state; all=true)
     return pose
 end
-# Pose(::Type{T}, frag::Fragment)
+
 Pose(frag::Fragment) = Pose(Float64, frag)
 
 

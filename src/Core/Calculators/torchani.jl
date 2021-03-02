@@ -68,13 +68,15 @@ module TorchANI
 
     # Notes:
     In ProtoSyn <=0.4, this function has a memory leak on the python side.
-    Multiple calls to `calc_torchani_model` require often `GC.gc(false)` calls.
-    In order to prevent/automate this process, consider the following options:
+    Multiple calls to `calc_torchani_model` require often `GC.gc(false)` calls
+    to impede the 'CUDA out of memory' error. In order to prevent/automate this
+    process, consider the following options:
 
-    (1) - Use an EnergyFunction struct, as in:
+    (1) - Use an EnergyFunction struct (with automatic calls to `GC.gc(false)`,
+    as in:
 
     energy_function = ProtoSyn.Calculators.EnergyFunction(
-        Dict(ProtoSyn.Calculators.TorchANI.torchani_model => Float64(1.0)))
+        [ProtoSyn.Calculators.TorchANI.get_default_torchani_model(α = 1.0)])
 
     (2) - Call `calc_torchani_model_xmlrpc` instead.
 
@@ -153,11 +155,55 @@ module TorchANI
 
     # * Default Energy Components ----------------------------------------------
 
-    function get_default_torchani_model(α::T = 1.0) where {T <: AbstractFloat}
+    """
+        get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default TorchANI model `EnergyFunctionComponent`. `α`
+    sets the component weight (on an `EnergyFunction`). This component employs
+    `calc_torchani_model`, therefore predicting a structure's TorchANI energy
+    based on a single model.
+
+    # TorchANI model energy settings
+    - :model -> defines which model of the TorchANI ensemble to use.
+
+    # See also
+    `calc_torchani_model` | `get_default_torchani_ensemble`
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
+             Name : TorchANI_ML_Model
+       Weight (α) : 1.0
+    Update forces : true
+          Setings :
+        :model => 3
+    ```
+    """
+    function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
         EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model, Dict{Symbol, Any}(:model => 3), α, true)
     end
     
-    function get_default_torchani_ensemble(α::T = 1.0) where {T <: AbstractFloat}
+    """
+        get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default TorchANI ensemble `EnergyFunctionComponent`. `α`
+    sets the component weight (on an `EnergyFunction`). This component employs
+    `calc_torchani_ensemble`, therefore predicting a structure's TorchANI energy
+    based on the whole TorchANI ensemble (*Note:* This can be very slow).
+
+    # See also
+    `calc_torchani_ensemble` `get_default_torchani_model`
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
+             Name : TorchANI_ML_Ensemble
+       Weight (α) : 1.0
+    Update forces : true
+          Setings : -
+    ```
+    """
+    function get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble, Dict{Symbol, Any}(), α, true)
     end
 

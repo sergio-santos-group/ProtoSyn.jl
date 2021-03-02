@@ -13,7 +13,7 @@ EnergyFunction() = begin
 end
 
 EnergyFunction(::Type{T}) where {T <: AbstractFloat} = begin
-    return EnergyFunction(Vector{EnergyFunctionComponent}())
+    return EnergyFunction(Vector{EnergyFunctionComponent{T}}())
 end
 
 EnergyFunction(components::Vector{EnergyFunctionComponent{T}}) where {T <: AbstractFloat} = begin

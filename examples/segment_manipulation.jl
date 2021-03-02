@@ -10,7 +10,7 @@ using Printf
 pose = Peptides.load("../2a3d.pdb")
 
 ef = Calculators.EnergyFunction()
-ef.components[Calculators.TorchANI.torchani_model] = 1.0
+push!(ef, Calculators.TorchANI.get_default_torchani_model(α = 1.0))
 
 
 

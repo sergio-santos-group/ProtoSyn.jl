@@ -29,6 +29,8 @@ function apply_potential_kernel(coords::CuDeviceArray{T}, energies::CuDeviceArra
         
         # ! Note: When dealing with GPU optimizations, CUDA.jl can't allocate
         # ! new vectors. Therefore, only Tuples can be used.
+        # * Note that in the next line, the returned values are the output of
+        # * calling the `potential` function.
         energies[i, j], (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]), (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]) = potential(dij, v = (dijx, dijy, dijz))
     end
 
@@ -168,7 +170,6 @@ end
 # ------------------------------------------------------------------------------
 # * Available potential functions
 
-# * 1) Flat-bottom potential
 """
     get_flat_bottom_potential(d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
 

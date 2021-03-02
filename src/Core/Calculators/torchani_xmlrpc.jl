@@ -81,28 +81,26 @@ end
     
 Calculate the pose energy according to a single TorchANI model neural
 network, using the XML-RPC protocol. If no TorchANI XML-RPC server is found, a
-new one is spawned (in parallel) from file torchani_server.py. The model can be
-defined using `model_index` (from model 1 to 8, default is 3). The optional `A`
-parameter defines the acceleration mode used (only CUDA_2 is available). If left
+new one is spawned (in parallel) from file `torchani_server.py`. The model can be
+defined using `model` (from model 1 to 8, default is 3). The optional `A`
+parameter defines the acceleration mode used (only `CUDA_2` is available). If left
 undefined the default ProtoSyn.acceleration.active mode will be used. If
 `update_forces` is set to true (false, by default), return the calculated forces
 on each atom as well.
 
 # See also
-`calc_torchani_ensemble` `calc_torchani_model`
+`calc_torchani_ensemble` | `calc_torchani_model`
 
 # Examples
 ```jldoctest
-julia> Calculators.calc_torchani_model_xmlrpc(pose)
+julia> Calculators.TorchANI.calc_torchani_model_xmlrpc(pose)
 (...)
 ```
 
-# Notes
-If you use this function in a script, it is recommended to add
-`ProtoSyn.Calculators.TorchANI.stop_torchANI_server()` at the end of the script,
-as the automatic stopping of TorchANI XML-RPC server isn't finished.
+!!! warning
+    If you use this function in a script, it is recommended to add `ProtoSyn.Calculators.TorchANI.stop_torchANI_server()` at the end of the script, as the automatic stopping of TorchANI XML-RPC server isn't finished.
 """
-function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_forces::Bool = false, model::Int = 3)
+function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
 
     # ! If an `IOError:("read: connection reset py peer, -104")` error is raised
     # ! when calling this function, check the GPU total allocation (using 
@@ -115,8 +113,7 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_
 
     c = collect(pose.state.x.coords')
     s = ProtoSyn.Calculators.TorchANI.get_ani_species(pose)
-    response = proxy.calc(s, c, update_forces, model_index)
-    println("Response: $response")
+    response = proxy.calc(s, c, update_forces, model)
     xml_string = replace(join(Char.(response.body)), "\n" => "")
     xml = LightXML.parse_string(xml_string)
     
@@ -131,13 +128,38 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose; update_
     end
 end
 
-calc_torchani_model_xmlrpc(pose::Pose; update_forces::Bool = false, model::Int = 3) = begin
-    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces = update_forces, model = model)
+calc_torchani_model_xmlrpc(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
+    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces, model = model)
 end
 
 # * Default Energy Components --------------------------------------------------
 
-function get_default_torchani_model_xmlrpc(α::T = 1.0) where {T <: AbstractFloat}
+"""
+    get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}
+
+Return the default TorchANI model `EnergyFunctionComponent`. `α`
+sets the component weight (on an `EnergyFunction`). This component employs
+`calc_torchani_model_xmlrpc`, therefore predicting a structure's TorchANI energy
+based on a single model and starting a new XMLRPC server (in parallel) if
+necessary.
+
+# TorchANI model XMLRPC energy settings
+- :model -> defines which model of the TorchANI ensemble to use.
+
+# See also
+`calc_torchani_model_xmlrpc`
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc()
+         Name : TorchANI_ML_Model_XMLRPC
+   Weight (α) : 1.0
+Update forces : true
+      Setings :
+      :model => 3
+```
+"""
+function get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "TorchANI_ML_Model_XMLRPC",
         calc_torchani_model_xmlrpc,

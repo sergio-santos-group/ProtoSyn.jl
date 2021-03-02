@@ -253,7 +253,7 @@ end
 
 @inline Base.haskey(r::Residue, k::AbstractString) = haskey(r.itemsbyname, k)
 
-@inline Base.findfirst(x::T, c::Vector{T}) where T = findfirst(i -> i === x, c)
+# @inline Base.findfirst(x::T, c::Vector{T}) where T = findfirst(i -> i === x, c) # ???
 
 @inline Base.findfirst(x::T, c::AbstractContainer{T}) where T = findfirst(x, c.items)
 
