@@ -1,12 +1,14 @@
 """
     load([::Type{T}], filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
-Load the given `filename` into a pose, parametrized by T. If this is not provided,
-the default ProtoSyn.Units.defaultFloat is used. The file format is infered from
-the extension (Supported: .pdb, .yml). If `bonds_by_distance` is set to true
-(false, by default), the CONECT records will be complemented with bonds infered
-by distance. The threshold distances for each pair of atoms is defined in
-ProtoSyn.bond_lengths. Infer parenthood and ascedence from bonds.
+Load the given `filename` into a pose, parametrized by T. If this is not
+provided, the default ProtoSyn.Units.defaultFloat is used. The file format is
+infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
+set to true (false, by default), the CONECT records will be complemented with
+bonds infered by distance. The threshold distances for each pair of atoms is
+defined in ProtoSyn.bond_lengths. Infer parenthood and ascedence from bonds.
+!!! note
+    This function is an overload of `ProtoSyn.load`.
 
 # Examples
 ```julia-repl

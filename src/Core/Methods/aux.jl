@@ -52,7 +52,7 @@ end
 """
     unit_circle(value::T) where {T <: AbstractFloat}
 
-Maps an angle value (in radians) from ]-∞, +∞[ to [0, 2π] range. Returns value
+Maps an angle value (in radians) from ]-∞, +∞[ to [0, 2π[ range. Returns value
 in radians.
 
 # Examples
@@ -71,11 +71,15 @@ end
 
 
 """
+    # TODO
 """
 function center_of_mass(pose::Pose, idxs::Vector{Int})
     return mean(pose.state.x[:, idxs], dims = 2)
 end
 
+"""
+    # TODO
+"""
 function gpu_allocation()
     mem = (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
     return ProtoSyn.Units.defaultFloat(mem)

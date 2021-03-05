@@ -69,11 +69,11 @@ Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"A")
 
 # ------------------------------------------------------------------------------
 # (G) Removing and adding sidechains
-Peptides.remove_sidechains!(pose)
+Peptides.remove_sidechains!(pose, res_lib)
 Peptides.add_sidechains!(pose, res_lib)
 
 # Note: You can also specify a region/selection to remove/add the sidechains.
-Peptides.remove_sidechains!(pose, rid"4:5")
+Peptides.remove_sidechains!(pose, res_lib, rid"4:5")
 Peptides.add_sidechains!(pose, res_lib, rid"4:5")
 
 # ------------------------------------------------------------------------------

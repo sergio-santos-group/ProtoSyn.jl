@@ -3,8 +3,8 @@ abstract type AbstractSelection end
 
 abstract type AbstractStateMode end
 
-struct Stateful <: AbstractStateMode end
-struct Stateless <: AbstractStateMode end
+struct Stateful <: AbstractStateMode end  # * Needs state to get selection
+struct Stateless <: AbstractStateMode end # * Doesn't need state to get selection
 
 export select
 
@@ -17,6 +17,7 @@ include("unary.jl")
 include("true.jl")
 include("distance.jl")
 include("random.jl")
+include("terminal.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------

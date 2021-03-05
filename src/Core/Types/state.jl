@@ -62,6 +62,10 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
     ns
 end
 
+Base.findfirst(x::AtomState{T}, v::Vector{AtomState{T}}) where {T <: AbstractFloat} = begin
+    return findfirst(i -> i === x, v)
+end
+
 function Base.show(io::IO, as::AtomState{T}) where {T <: AbstractFloat}
     println(io, "AtomState{$T}:")
     println(io, " Index: $(as.index)")
@@ -267,8 +271,8 @@ Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
     # * Note: state.x.coords doesn't include the 3 origin atoms.
     s1.x.coords = hcat(s1.x.coords[:, 1:(index-1)], s2.x.coords, s1.x.coords[:, index:end])
     # * Note: state.f doesn't include the 3 origin atoms.
-    s1.f = hcat(s1.f[:, 1:(index-1)], zeros(T, 3, s2.size), s1.f[:, index:end])
-    # Now we can add the index_offset
+    s1.f = hcat(s1.f[:, 1:(index-1)], s2.f, s1.f[:, index:end])
+    # * Now we can add the index_offset
     index += s1.index_offset
     for i = 0:s2.size-1
         insert!(s1.items, index+i, s2[i+1])
@@ -288,99 +292,6 @@ request_i2c(s::State; all::Bool=false) = begin
 end
 
 #endregion State
-
-
-#--------------------------------- ???
-# abstract type AbstractRepresentation end
-# struct CartesianRepresentation{T} <: AbstractRepresentation
-#     state::State{T}
-# end
-# struct InternalRepresentation{T} <: AbstractRepresentation
-#     state::State{T}
-# end
-
-# export save, save!, restore!, AbstractRepresentation, CartesianRepresentation, InternalRepresentation
-
-# function backup(x::CartesianView{T}) where T
-#     state = x.state
-#     m = Matrix{T}(undef, state.size, 3)
-#     for i=1:state.size
-#         t = state[i].t
-#         m[i,1] = t[1]
-#         m[i,2] = t[2]
-#         m[i,3] = t[3]
-#     end
-#     m
-# end
-
-# function backup!(m::Matrix{T}, x::CartesianView{T}) where T
-#     state = x.state
-#     for i=1:state.size
-#         t = state[i].t
-#         m[i,1] = t[1]
-#         m[i,2] = t[2]
-#         m[i,3] = t[3]
-#     end
-#     m
-# end
-
-# function backup!(x::CartesianView{T}, m::Matrix{T}) where T
-#     state = x.state
-#     for i=1:state.size
-#         t = state[i].t
-#         t[1] = m[i,1]
-#         t[2] = m[i,2]
-#         t[3] = m[i,3]
-#     end
-#     x
-# end
-
-
-# function save(x::InternalRepresentation{T}) where T
-#     m = Matrix{T}(undef, x.state.size, 3)
-#     save!(m, x)
-# end
-
-# function save!(m::Matrix{T}, x::InternalRepresentation{T}) where T
-#     state = x.state
-#     for i=1:state.size
-#         s = state[i]
-#         m[i, 1] = s.b
-#         m[i, 2] = s.θ
-#         m[i, 3] = s.ϕ
-#     end
-#     m
-# end
-
-# function restore!(x::InternalRepresentation{T}, m::Matrix{T}) where T
-#     state = x.state
-#     for i=1:state.size
-#         s = state[i]
-#         s.b = m[i, 1]
-#         s.θ = m[i, 2]
-#         s.ϕ = m[i, 3]
-#     end
-#     x
-# end
-
-# export prepare
-# function prepare(x::AbstractRepresentation)
-#     state = x.state
-#     # state.x = zeros(T, state.size, 3)
-#     state.f = zeros(eltype(state), state.size, 3)
-# end
-
-# Base.reset(s::State{T}) where T = begin
-#     e = s.e
-#     for k in keys(e); e[k] = 0; end
-#     fill!(s.f, 0)
-#     s
-# end
-
-# export energy,setenergy!
-# energy(s::State) = sum(values(s.e))
-# energy(s::AbstractRepresentation) = energy(s.state)
-# setenergy!(s::State, key::Symbol, value) = (s.e[key]=value; s)
 
 
 function atmax(state::State{T}, comp::Symbol) where T

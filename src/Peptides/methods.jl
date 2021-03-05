@@ -1,3 +1,54 @@
+export grammar
+
+"""
+    grammar([::Type{T}]) where {T <: AbstractFloat}
+
+Build a `LGrammar` for peptides, taking as variables the fragments in the
+default resource directory. If the option type T is not provided, the default
+ProtoSyn float value will be used. The returned LGrammar is required for
+building peptides from fragments.
+
+# Examples
+```julia-repl
+julia> g = Peptides.grammar();
+julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
+...
+```
+"""
+function grammar(::Type{T}) where {T <: AbstractFloat}
+    filename = joinpath(Peptides.resource_dir, "grammars.yml")
+    Builder.fromfile(T, filename, "peptide")
+end
+
+grammar() = grammar(ProtoSyn.Units.defaultFloat)
+
+
+"""
+    build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
+
+Build a `Pose{Topology}` using the given `derivation` sequence on the provided
+`grammar` instructions. If an `ss` is provided, automatically apply it to the
+built pose (linear secondary structure, by default).
+!!! note
+    This function is an overload of `Builder.build`.
+
+# See also
+`setss!`
+
+# Examples
+```julia-repl
+julia> pose = Peptides.build(grammar, seq"QQQ");
+...
+```
+"""
+function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
+
+    pose = Builder.build(grammar, derivation)
+    Peptides.setss!(pose, ss)
+    sync!(pose)
+    pose
+end
+
 """
     setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number})
 
@@ -171,24 +222,26 @@ end
 Mutate the given `pose` at `residue`, changing it's aminoacid to be
 `derivation`, as given by the template at `grammar`. This function changes the
 sidechain only (± 7x faster than `force_mutate!`). When mutating to Proline,
-falls back to `force_mutate!`. *Note:* sidechains are selected based on the atom
-name (backbone atoms must be named N, H, CA, C and O, exclusively. Non backbone
-atoms should have other names, such as H1, H2, etc.)
+falls back to `force_mutate!`. If `ignore_existing_sidechain` is set to `true`
+(`false` by default), existing sidechains are first removed and then re-added,
+regardless of being of the same type.
+!!! note
+    Sidechains are selected based on the atom name (backbone atoms must be named N, H, CA, C and O, exclusively. Non backbone atoms should have other names, such as H1, H2, etc.)
 
 # Examples
 ```jldoctest
 julia> Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
 ```
 """
-function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
+function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
 
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
 
     same_aminoacid = string(Peptides.three_2_one[residue.name]) == derivation[1]
-    if same_aminoacid && length(sidechain) > 0
-        println("No mutation required, residue already has sidechain of the requested type.")
+    if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
+        # println("No mutation required, residue already has sidechain of the requested type.")
         return pose
     end
 
@@ -297,19 +350,70 @@ end
 
 
 """
-    remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+    remove_sidechains!(pose::Pose{Topology}, res_lib::selection::LGrammar, Opt{AbstractSelection} = nothing)
 
 Removes the sidechain atoms of the given `pose`. If a `selection` is given, only
-the atom of that selection are considered for possible removal.
+the sidechain atoms belonging to the residues of that selection are considered
+for possible removal. Essentially, the selected residues are mutated to Glycine,
+based on the provided residue library `res_lib`, without changing the peptide
+sequence. Therefore, the original sequence can be recovered using
+`Peptides.add_sidechains!` and energy components such as `calc_solvation_energy`
+can perform correctly.
+!!! note
+    Proline residues are ignored.
+!!! note
+    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See `cap!` to recover from this.
+
+# See also
+`force_remove_sidechains!`
 
 # Examples
 ```jldoctest
-julia> Peptides.remove_sidechains!(pose)
+julia> Peptides.remove_sidechains!(pose, res_lib)
 
-julia> Peptides.remove_sidechains!(pose, rn"ALA")
+julia> Peptides.remove_sidechains!(pose, res_lib, rn"ALA")
 ```
 """
-function remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+function remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
+    _selection = !rn"PRO"
+    if selection !== nothing
+        _selection = ProtoSyn.promote(_selection & selection, ProtoSyn.Residue)
+    end
+    selected_residues = _selection(pose, gather = true)
+    for residue in selected_residues
+        saved_name = residue.name
+        Peptides.mutate!(pose, residue, res_lib, seq"G")
+        residue.name = saved_name
+    end
+
+    return pose
+end
+
+
+"""
+    force_remove_sidechains!(pose::Pose{Topology}, res_lib::selection::LGrammar, Opt{AbstractSelection} = nothing)
+
+Removes the sidechain atoms of the given `pose`. If a `selection` is given, only
+the sidechain atoms belonging to the residues of that selection are considered
+for possible removal. This function completly removes any atom other than
+backbone atoms (may break Cα coordination).
+
+!!! note
+    Proline residues are ignored.
+!!! note
+    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See `cap!` to recover from this.
+
+# See also
+`remove_sidechains!`
+
+# Examples
+```jldoctest
+julia> Peptides.force_remove_sidechains!(pose)
+
+julia> Peptides.force_remove_sidechains!(pose, rn"ALA")
+```
+"""
+function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
     _selection = !(an"^CA$|^N$|^C$|^H$|^O$"r | rn"PRO")
     if selection !== nothing
         _selection = _selection & selection
@@ -347,7 +451,9 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
     end
     for residue in residues
         derivation = [string(Peptides.three_2_one[residue.name])]
-        Peptides.mutate!(pose, residue, grammar, derivation)
+        derivation == ["P"] && continue
+        Peptides.mutate!(pose, residue, grammar, derivation,
+            ignore_existing_sidechain = true)
     end
 
     return pose
@@ -409,3 +515,199 @@ function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
 
     ProtoSyn.request_i2c(state, all = true)
 end
+
+
+"""
+    is_N_terminal(res::Residue)
+
+Return `true` if the provided `residue` is a child of the residue's container.
+
+# Examples
+```jldoctest
+julia> Peptides.is_N_terminal(pose.graph[1][1])
+true
+```
+"""
+function is_N_terminal(res::Residue)
+    return ProtoSyn.origin(res.container.container).container == res.parent
+end
+
+
+"""
+    is_C_terminal(res::Residue)
+
+Return `true` if the provided `residue` has no children.
+
+# Examples
+```jldoctest
+julia> Peptides.is_N_terminal(pose.graph[1][end])
+true
+```
+"""
+function is_C_terminal(res::Residue)
+    return length(res.children) == 0
+end
+
+
+"""
+    uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+Remove all bonded atoms to the N- and C-terminal (except Cα) of the provided
+`pose`. If a `selection` is provided, search for terminal residues only in the
+given residue. A terminal is identified based on the following criteria:
+- Is a child of the `pose` origin;
+- Has no children;
+Return the modified (in-place) `pose`.
+
+# Examples
+```jldoctest
+julia> Peptides.uncap!(pose)
+```
+"""
+function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+    # * This function assumes that the N- and C- terminals are correctly named
+    # * (N-terminal residue has an atom named "N" and C-terminal has an atom
+    # * named "C", both with a bond to a "CA" atom).
+
+    _selection = ProtoSyn.TerminalSelection{Residue}()
+    if selection !== nothing
+        _selection = _selection & selection
+    end
+
+    residues = _selection(pose, gather = true)
+    if length(residues) == 0
+        @info "The provided selection/pose doesn't seem to have terminal residues."
+        return pose
+    end
+
+    for residue in residues
+        if is_C_terminal(residue)
+            terminal = residue["C"]
+
+            for bond in reverse(terminal.bonds) # Note the reverse loop
+                if !(bond.name in ["CA"])
+                    Builder.pop_atom!(pose, bond)
+                end
+            end
+        end
+
+        if is_N_terminal(residue) # * Note: A residue can be both N- and C- terminal
+            terminal = residue["N"]
+
+            for bond in reverse(terminal.bonds) # Note the reverse loop
+                if !(bond.name in ["CA"])
+                    Builder.pop_atom!(pose, bond)
+                end
+            end
+        end
+    end
+
+    return pose
+end
+
+
+"""
+    cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+Add template terminals to the N- and C- terminals. If a `selection` is provided,
+search for terminal residues only in the given residue. A terminal is identified
+based on the following criteria:
+- Is a child of the `pose` origin;
+- Has no children;
+Return the modified (in-place) `pose`.
+
+# Examples
+```jldoctest
+julia> Peptides.cap!(pose)
+```
+"""
+function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+    # * This function assumes that the N- and C- terminals are correctly ordered
+    # * (N -> CA -> C, in both terminal backbones).
+
+    # * Default terminal fragments
+    T               = eltype(pose.state)
+    n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
+    n_term          = ProtoSyn.Builder.fragment(Peptides.load(T, n_term_filename))
+    n_term_atoms    = ["H1", "H2", "H3"]
+
+    c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
+    c_term          = ProtoSyn.Builder.fragment(load(T, c_term_filename))
+    c_term_atoms    = ["O", "OXT"]
+
+    # * Remove any existing caps
+    uncap!(pose, selection)
+
+    # * Search for terminals to cap
+    _selection = ProtoSyn.TerminalSelection{Residue}()
+    if selection !== nothing
+        _selection = _selection & selection
+    end
+    residues = _selection(pose, gather = true)
+    @assert length(residues) > 0 "The provided selection/pose doesn't seem to have terminal residues."
+
+    # * Cap terminals
+    for residue in residues
+        if is_N_terminal(residue)
+            terminal = residue["N"]
+            # * Align terminal fragment with existing structure
+            mobile_selection = an"^N$|^CA$|^C$"r
+            target_selection = SerialSelection{Residue}(residue.id, :id) & an"^N$|^CA$|^C$"r
+            mobile = ProtoSyn.align!(n_term, pose, mobile_selection, target_selection)
+
+            # * Transfer ownership of terminal atoms from fragment to Pose
+            for atom_name in n_term_atoms
+                atom        = mobile.graph[1][atom_name]
+                atomstate   = mobile.state[atom]
+                atom.parent = nothing
+                atom.bonds  = Vector{Atom}()
+                Builder.insert_atom_as_children!(pose, terminal, atom, atomstate)
+            end
+        end
+        if is_C_terminal(residue) # * Note: A residue can be both N- and C- terminal
+            terminal = residue["C"]
+            # * Align terminal fragment with existing structure
+            mobile_selection = an"^N$|^CA$|^C$"r
+            target_selection = SerialSelection{Residue}(residue.id, :id) & an"^N$|^CA$|^C$"r
+            mobile = ProtoSyn.align!(c_term, pose, mobile_selection, target_selection)
+
+            # * Transfer ownership of terminal atoms from fragment to Pose
+            for atom_name in c_term_atoms
+                atom        = mobile.graph[1][atom_name]
+                atomstate   = mobile.state[atom]
+                atom.parent = nothing
+                atom.bonds  = Vector{Atom}()
+                Builder.insert_atom_as_children!(pose, terminal, atom, atomstate)
+            end
+        end
+    end
+end
+
+
+"""
+    sequence(container::ProtoSyn.AbstractContainer)::String
+
+Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
+as a string.
+
+# Examples
+```julia-repl
+julia> sequence(pose)
+"AAGASTASSE"
+```
+"""
+function sequence(container::ProtoSyn.AbstractContainer)::String
+
+    sequence = ""
+    for residue in eachresidue(container)
+        try
+            sequence *= three_2_one[residue.name]
+        catch KeyError
+            sequence *= '?'
+        end
+    end
+
+    return sequence
+end
+
+sequence(pose::Pose) = sequence(pose.graph)

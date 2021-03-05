@@ -93,6 +93,52 @@ end
 
 
 """
+    insert_atom_as_children!(pose::Pose, parent_atom::Atom, atom::Atom, atomstate::Opt{AtomState} = nothing)
+
+Add the given `atom` to the `pose` graph, as a child of `parent_atom`. Correctly
+sets atom.container, container.size += 1, container.items_by_name, parenthood,
+bonds, indexes and ascedents. If an optional `atomstate` is provided, the
+inserted atom's State is set, otherwise, insert an empty State (with all
+internal and cartesian coordinates set to zero). Return the modified (in-place)
+`pose`.
+
+# Examples
+```jldoctest
+julia> insert_atom_as_children!(pose, pose.graph[1][1], atom)
+```
+"""
+function insert_atom_as_children!(pose::Pose, parent_atom::Atom, atom::Atom, atomstate::Opt{AtomState} = nothing)
+
+    # * 1- Add atom to the pose graph
+    residue = parent_atom.container
+    p_atom_index_in_container = findfirst(parent_atom, residue.items)
+    insert!(residue, p_atom_index_in_container + 1, atom)
+    # * Note: `insert!` above already sets atom.container, container.size += 1
+    # * and container.items_by_name
+
+    # * 2- Set correct bonds and parenthood
+    setparent!(atom, parent_atom)
+    ProtoSyn.bond(atom, parent_atom)
+
+    # * 3- Add atom to the pose state (all internal and cartesian coordinates
+    # * are set to zero). Note that pose.state.items includes the origin, while
+    # * pose.state.x doesn't (and therefore the index for insertion must be -3).
+    p_atom_index_in_state = findfirst(pose.state[parent_atom], pose.state.items)
+    if atomstate === nothing
+        insert!(pose.state, p_atom_index_in_state - 2, State(1))
+    else
+        insert!(pose.state, p_atom_index_in_state - 2, State([atomstate]))
+    end
+
+    # * 4- Reindex graph and state, setting ascendents
+    reindex(pose.state)
+    reindex(pose.graph)
+
+    return pose
+end
+
+
+"""
     insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op = "α", connect_upstream = true)
 
 Based on the provided `grammar`, add the residue sequence from `derivation` to

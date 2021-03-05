@@ -118,13 +118,18 @@ isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
     
 Create and return a new fragment (`Pose` instance with just a single `Segment`)
 using the given `derivation` sequence on the provided `grammar` instructions.
-Note: A fragment does not contain a `Topology` instance.
+The main purpose of fragments is to be temporary carriers of information, such
+as during the building process of a new peptide from a sequence. Therefore,
+these structures often don't have any real meaning and are, as such, deprived of
+a root/origin for the graph. Actual structures should instead be of the slightly
+more complete type `Pose`.
+
+!!! note
+    A fragment does not contain a `Topology` instance.
 
 # Examples
 ```jldoctest
-julia> frag = fragment(reslib, seq"AAA")
-
-julia> frag = fragment(reslib, seq"AAA")
+julia> frag = fragment(res_lib, seq"AAA")
 ```
 """
 function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}

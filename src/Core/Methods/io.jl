@@ -13,9 +13,8 @@ infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
 set to true (false, by default), the CONECT records will be complemented with
 bonds infered by distance. The threshold distances for each pair of atoms is
 defined in ProtoSyn.bond_lengths.
-*NOTE:* This function does not infer any data of parenthood or ascedence. To
-calculate that information, specific implementations of this function are
-provided in other modules (such as `Peptides.load`).
+!!! note
+    This function does not infer any data of parenthood or ascedence. To calculate that information, specific implementations of this function are provided in other modules (such as `Peptides.load`).
 
 # Examples
 ```julia-repl
@@ -309,7 +308,16 @@ end
 
 
 """
-    # TODO
+    write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
+
+Write the `pose` forces to `filename` in a specific format to be read by the
+companion Python script "cgo_arrow.py". `α` sets a multiplying factor to make
+the resulting force vectors longer/shorter (for visualization purposes only).
+
+# Examples
+```julia-repl
+julia> ProtoSyn.write_forces(pose, "forces.dat")
+```
 """
 function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
     open(filename, "w") do file_out
@@ -321,6 +329,7 @@ function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: Abs
             fx = x + (pose.state.f[1, i] * α)
             fy = y + (pose.state.f[2, i] * α)
             fz = z + (pose.state.f[3, i] * α)
+            
             s  = @sprintf("%5d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n", atom.id, x, y, z, fx, fy, fz)
             Base.write(file_out, s)
         end

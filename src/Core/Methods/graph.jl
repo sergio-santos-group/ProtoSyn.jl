@@ -372,10 +372,12 @@ count_atoms(c::AbstractContainer) = mapreduce(x -> count_atoms(x), +, c.items, i
 count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
 
+
 # TRAVEL GRAPH
 export travel_graph
 
 """
+    # TODO
 """
 function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
     atoms = Vector{Atom}([start])

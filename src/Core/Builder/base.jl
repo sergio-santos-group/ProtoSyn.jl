@@ -2,11 +2,12 @@
     append!(pose::Pose{Topology}, frag::Fragment)
 
 Append a fragment as a new segment.
-Note: This function is called by the `build` function.
+!!! note
+    This function is called by the `Builder.build` function.
 """
 Base.append!(pose::Pose{Topology}, frag::Fragment) = begin
 
-    !isfragment(frag) && error("invalid fragment")
+    !isfragment(frag) && error("Invalid fragment")
     
     # Merge the fragment graph (Segment) to the pose graph (Topology).
     push!(pose.graph, frag.graph)

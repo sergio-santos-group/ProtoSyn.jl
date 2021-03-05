@@ -144,18 +144,13 @@ function i2c!(state::State{T}, top::Topology) where T
         
         # move to new position
         @. xi = vji + jstate.t
-        # println(istate)
         istate.t = xi
-        # println(istate)
-
-        # @. state.x[1:3, i] = xi
     end
 
     state.i2c = false
     state.c2i = false
     state
 end
-
 
 
 export setoffset!
@@ -216,19 +211,6 @@ julia> getdihedral(pose.state, pose.graph[1][1][end])
     return s[at].ϕ + s[at2].Δϕ
 end
 
-# export get_cartesian_matrix
-# function get_cartesian_matrix(::Type{T}, pose::Pose) where {T <: AbstractFloat}
-
-#     matrix = Vector{Vector{T}}()
-#     for atom_state in pose.state
-#         push!(matrix, atom_state.t)
-#     end
-
-#     return matrix
-# end
-
-# get_cartesian_matrix(pose::Pose) = get_cartesian_matrix(Units.defaultFloat, pose)
-
 
 export rotate_dihedral!
 
@@ -249,6 +231,9 @@ julia> rotate_dihedral!(pose.state, pose.graph[1][1][end], π)
     s
 end
 
+"""
+    # TODO
+"""
 function reindex(s::State)
     for (index, atomstate) in enumerate(s.items[4:end])
         atomstate.index = index

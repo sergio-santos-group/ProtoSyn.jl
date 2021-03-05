@@ -1,10 +1,6 @@
-# theta = deg2rad(120)
 theta: &theta 2.0943951023931953
 pi: &pi 3.1415926535897
 peptide:
-  #rules:
-  #  P:
-  #    - {p: 1.0, production: [β,P]}
   variables:
     B: Peptides/yml/bkb.yml
     A: Peptides/yml/ala.yml
