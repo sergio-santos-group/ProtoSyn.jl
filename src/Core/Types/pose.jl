@@ -54,31 +54,3 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
 end
 
 Pose(frag::Fragment) = Pose(Float64, frag)
-
-
-export fragment
-
-"""
-    fragment(pose::Pose{Topology})
-    
-Return a fragment from a given Pose `pose`. The pose must have a single segment.
-
-# Examples
-```jldoctest
-julia> frag = fragment(pose)
-```
-"""
-function fragment(pose::Pose{Topology})
-    
-    length(pose.graph) != 1 && error("only topologies with a single segment can be turned into fragments")
-    
-    topology = pose.graph
-    segment = topology[1]
-    state = splice!(pose.state, 1:count_atoms(segment))
-    detach(segment)
-    segment.id = state.id = genid()
-    segment.name = topology.name
-    segment.container = nothing
-
-    Pose(segment, state)
-end

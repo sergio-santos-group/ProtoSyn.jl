@@ -211,6 +211,8 @@ julia> getdihedral(pose.state, pose.graph[1][1][end])
     return s[at].ϕ + s[at2].Δϕ
 end
 
+@inline getdihedral(s::State, at::Nothing) = rand() * 2 * π
+
 
 export rotate_dihedral!
 

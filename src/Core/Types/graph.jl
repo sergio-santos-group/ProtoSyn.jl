@@ -103,7 +103,7 @@ Residue{/UNK:1}
 ```
 """
 mutable struct Residue <: AbstractResidue
-    name::String                    # residue name
+    name::ResidueName                    # residue name
     id::Int                         # residue ID
     index::Int                      # residue index
     items::Vector{Atom}             # list of atoms (children)
@@ -117,7 +117,7 @@ mutable struct Residue <: AbstractResidue
     ascendents::Opt{NTuple{4,Int}}
     
     Residue(name::String, id::Int) = begin
-        r = new(name, id, id, Atom[], Dict{String,Atom}(), nothing, 0)
+        r = new(ResidueName(name), id, id, Atom[], Dict{String,Atom}(), nothing, 0)
         initgraph!(r)
         r
     end
@@ -261,6 +261,10 @@ function Residue!(segment::Segment, name::String, id::Int)::Residue
     r = Residue(name, id)
     push!(segment, r)
     r
+end
+
+Residue!(segment::Segment, name::ResidueName, id::Int) = begin
+    Residue!(segment, name.content, id)
 end
 
 
