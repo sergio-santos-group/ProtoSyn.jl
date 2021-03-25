@@ -27,14 +27,14 @@ function (driver::MonteCarlo)(pose::Pose)
     driver_state.temperature = driver.temperature(0)
     
     previous_state  = copy(pose)
-    previous_energy = driver.eval!(pose, update_forces = false)
+    previous_energy = driver.eval!(pose, false)
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
             
         driver.sample!(pose)
         sync!(pose)
-        energy = driver.eval!(pose, update_forces = false)
+        energy = driver.eval!(pose, false)
         
         n = rand()
         driver_state.temperature = driver.temperature(driver_state.step)

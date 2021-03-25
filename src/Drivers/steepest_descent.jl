@@ -38,9 +38,9 @@ function Base.show(io::IO, sd::SteepestDescent)
 end
 
 
-function (driver::SteepestDescent{T})(pose::Pose) where {T}
+function (driver::SteepestDescent{T})(pose::Pose) where {T <: AbstractFloat}
   
-    energy = driver.eval!(pose, update_forces = true)
+    energy = driver.eval!(pose, true)
 
     # Onstantiate a new DriverState object.
     # By default, no optimization step has yet been taken
@@ -90,7 +90,7 @@ function (driver::SteepestDescent{T})(pose::Pose) where {T}
         # Calculate new energy and forces
         # (make sure to reset forces)
         ProtoSyn.reset_forces!(pose.state)
-        energy = driver.eval!(pose, update_forces = true)
+        energy = driver.eval!(pose, true)
         driver_state.max_force = ProtoSyn.atmax(pose.state, :f)
 
         # Verify convergence
