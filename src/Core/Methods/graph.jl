@@ -56,7 +56,9 @@ Set `parent` as the parent of `child`, while adding `child` to
 `parent.children`.
 """
 function setparent!(child::T, parent::T) where {T <: AbstractDigraph}
-    hasparent(child) && error("unable to setparent! of non-orphan item")
+    hasparent(child) && begin
+        error("unable to setparent! of non-orphan item")
+    end
     push!(parent.children, child)
     child.parent = parent
     child
@@ -183,10 +185,11 @@ julia> reindex(pose.graph[1])
 function reindex(s::Segment)
     aid = rid = 0
     for res in s.items
-        res.id = (rid += 1)
+        res.id    = (rid += 1)
         res.index = rid
         for atm in res.items
-            atm.index = (aid += 1)
+            atm.id    = (aid += 1)
+            atm.index = aid
         end
     end
     s
@@ -250,24 +253,12 @@ function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
 
     #  Remove at2.container from at1.containter.children and set
     # at2.container.parent to nothing
-    popparent!(at2.container)
+    hasparent(at2.container) && popparent!(at2.container)
     setparent!(at2, _origin)
     setparent!(at2.container, _origin.container)
     
     # Reindex to set correct ascendents
     reindex(pose.graph)
-
-
-    at_s = state[at2]
-
-    # Preserve current placement (based on cartesian coordinates)
-    # sync!(pose)
-    # println("CALLED on $at2")
-    # at_s.b = ProtoSyn.distance(at_s, state[_origin])
-    # at_s.θ = ProtoSyn.angle(at_s, state[_origin], state[_origin.parent])
-    # at_s.ϕ = ProtoSyn.dihedral(at_s, state[_origin], state[_origin.parent], state[_origin.parent.parent])
-
-    # ProtoSyn.request_i2c(state; all = true)
 
     return pose
 end
@@ -401,4 +392,66 @@ function ids(atoms::Vector{Atom})::Vector{Int}
         push!(idxs, atom.id)
     end
     return idxs
+end
+
+
+"""
+    is_contiguous(pose::Pose, selection::AbstractSelection)
+
+Returns `true` if all the Residues gathered from the `selection` applied to the
+given `pose` are contiguous (have a parenthood relationship connecting them 
+all). 
+
+# Examples
+```jldoctest
+julia> ProtoSyn.is_contiguous(pose, rid"1" | rid"3")
+false
+
+julia> ProtoSyn.is_contiguous(pose, rid"1:10")
+true
+```
+"""
+function is_contiguous(pose::Pose, selection::ProtoSyn.AbstractSelection)
+    sele              = promote(selection, Residue)
+    selected_residues = sele(pose, gather = true)
+    root              = ProtoSyn.origin(pose.graph).container # * Residue
+    
+    # Initialize
+    stack = Vector{Residue}()
+    for child in root.children
+        push!(stack, child)
+    end
+    
+    # Travel graph, search for first selected residue
+    selected_stack = Vector{Residue}()
+    while length(stack) > 0
+        residue = pop!(stack)
+        if residue in selected_residues
+            push!(selected_stack, residue)
+            break
+        end
+        for child in residue.children
+            push!(stack, child)
+        end
+    end
+
+    length(selected_stack) == 0 && begin
+        @warn "Finished travelling the Pose.graph but the selected residues were not found."
+        return nothing
+    end
+
+    # Travel graph, mark selected atoms found
+    marks = 0
+    while length(selected_stack) > 0
+        marks += 1
+        residue = pop!(selected_stack)
+        for child in residue.children
+            if child in selected_residues
+                push!(selected_stack, child)
+            end
+        end
+    end
+
+    # Compare number of found marks with the number of selected residues
+    return marks == length(selected_residues)
 end
