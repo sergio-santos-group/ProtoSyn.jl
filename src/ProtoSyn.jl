@@ -54,11 +54,12 @@ include("Core/XMLRPC/XMLRPC.jl")
 include("Core/Units/Units.jl")
 include("Core/Methods/constants.jl")
 include("Core/Methods/macros.jl")
+include("Core/Types/other.jl")
 include("Core/Types/graph.jl")
 include("Core/Types/state.jl")
 include("Core/Types/pose.jl")
-include("Core/Methods/graph.jl")
 include("Core/Selections/selections.jl")
+include("Core/Methods/graph.jl") # After selections.jl
 include("Core/Methods/measure.jl") # After selections.jl
 include("Core/Methods/state.jl")
 include("Core/Methods/pose.jl")

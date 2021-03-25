@@ -193,7 +193,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     state.x = StateMatrix(state, x)
     top.id = state.id = genid()
     
-    # request conversion from cartesian to internal
+    # request conversion from cartesian to internal ?
     Pose(top, state)
 end
 

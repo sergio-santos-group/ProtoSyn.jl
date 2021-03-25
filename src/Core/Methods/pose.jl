@@ -200,3 +200,113 @@ function symexp!(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where
     
     return pose
 end # function
+
+
+export fragment
+"""
+    fragment(pose::Pose{Topology})
+    
+Return a fragment from a given Pose `pose`. The pose must have a single segment.
+
+!!! note
+    A Fragment is a Pose{Segment}, without a root/origin. These are usually used
+    as temporary carriers of information, without the ability to be directly
+    incorporated in simulations.
+
+# Examples
+```jldoctest
+julia> frag = fragment(pose)
+```
+"""
+function fragment(pose::Pose{Topology})
+    
+    length(pose.graph) != 1 && error("only topologies with a single segment can be turned into fragments")
+    
+    topology = copy(pose.graph)
+    segment = topology[1]
+    state = splice!(copy(pose.state), 1:count_atoms(segment))
+    
+    # Detach segment from the old root. This includes removing any parenthood to
+    # the origin on any atom or residue.
+    detach(segment)
+
+    segment.id = state.id = genid()
+    segment.name = topology.name
+    segment.container = nothing
+
+    Pose(segment, state)
+end
+
+
+"""
+    # TODO
+"""
+function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
+    # Assumes all residues selected belong to the same Segment
+
+    sele = promote(selection, Residue)
+    if !ProtoSyn.is_contiguous(pose, sele)
+        error("Tried to fragment a non-contigous selection of residues.")
+    end
+
+    @assert length(unique([res.container.id for res in sele(pose, gather = true)])) == 1 "Tried to fragment a contiguous selection of residues belonging to different Segments."
+
+    residues       = sele(pose, gather = true)
+    copied_segment = copy(residues[1].container)
+    residues       = sele(copied_segment, gather = true)
+
+    # Get a copy of the selected residues as a new Segment
+    segment       = Segment(residues[1].container.name, 1)
+    segment.items = residues
+    segment.size  = length(segment.items)
+
+    # Fix the parenthood of the copied residues
+    for residue in segment.items
+        if !(residue.parent in residues) # parenthood outside this new segment
+            residue.parent = nothing
+        end
+        for child in residue.children
+            if !(child in residues) # parenthood to child outside this segment
+                indexes = findall(res -> res == child, residue.children)
+                deleteat!(residue.children, indexes)
+            end
+        end
+
+        # Fix the parenthood and bond structures of the copied atoms
+        for atom in residue.items
+            if !(atom.parent.container in residues)              
+                # Remove from bond list
+                indexes = findall(at -> at == atom.parent, atom.bonds)
+                deleteat!(atom.bonds, indexes)
+                
+                atom.parent = nothing
+            end
+            for child in atom.children
+                if !(child.container in residues)
+                    indexes = findall(at -> at == child, atom.children)
+                    deleteat!(atom.children, indexes)
+
+                    # Remove from bond list
+                    indexes = findall(at -> at == child, atom.bonds)
+                    deleteat!(atom.bonds, indexes)
+                end
+            end
+        end
+    end
+
+    # Get a copy of the selected residues' State
+    n_atoms = count_atoms(segment)
+    state = ProtoSyn.State(n_atoms)
+    for (index, atom) in enumerate(eachatom(segment))
+        state.items[index + state.index_offset]        = copy(pose.state[atom])
+        state.items[index + state.index_offset].parent = state
+        state.items[index + state.index_offset].index  = index
+        state.x[:, index] = copy(pose.state.x[:, atom.index])
+    end
+
+    segment.id = state.id = genid()
+    reindex(segment)
+    reindex(state)
+
+    return Pose(segment, state)
+end
