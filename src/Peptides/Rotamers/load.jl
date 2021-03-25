@@ -17,7 +17,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             #  a) Gather the name of the Rotamer corresponding residue
             name = string(elem[1])
 
-            #  b) Gather chi values/standar deviation
+            #  b) Gather chi values/standard deviation
             chis = Dict{DihedralType, Tuple{T, T}}()
             for index in 1:4
                 elem[index + 4] == "0" && continue
@@ -45,6 +45,8 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             end
         end
     end
+
+    matrices["HIE"] = copy(matrices["HIS"])
 
     return matrices
 end

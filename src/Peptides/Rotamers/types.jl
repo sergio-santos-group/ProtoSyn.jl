@@ -12,7 +12,7 @@ mutable struct Rotamer{T <: AbstractFloat}
 end
 
 function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}
-    print(io, "Rotamer{$T}: $(as_string(r))")
+    print(io, "Rotamer{$T}: $(as_string(r))\n")
 end
 
 function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
@@ -59,4 +59,13 @@ end
 
 function Base.show(io::IO, r::BBD_RotamerLibrary)
     println(io, "Name: $(r.name) | Shape: $(size(r.rotamer_stacks))")
+end
+
+Base.copy(rot_lib::Rotamers.BBD_RotamerLibrary{T}) where {T <: AbstractFloat} = begin
+    return BBD_RotamerLibrary(
+        rot_lib.name,
+        copy(rot_lib.phis),
+        copy(rot_lib.psis),
+        copy(rot_lib.rotamer_stacks)
+    )
 end
