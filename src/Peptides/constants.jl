@@ -79,13 +79,12 @@ module Dihedral
     struct Chi4 <: DihedralType end; const chi4 = Chi4()
 
     function get_chi(residue::Residue, chi::Int)
-        available_chis = chi_dict[residue.name]
+        available_chis = chi_dict[residue.name.content]
         @assert chi <= length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis)) chi angles defined"
-        chi_atom = available_chis[chi]
-        @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom.name), which was not found"
-        @assert length(residue[chi_atom].children) > 0 "At least one children atom of $(residue[chi_atom]) needs to exist (0 found)."
+        chi_atom = available_chis[chi + 1]
+        @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
         
-        return residue[chi_atom].children[end]
+        return residue[chi_atom]
     end
 
     (chi1::Chi1)(residue::Residue) = get_chi(residue, 1)
@@ -99,28 +98,28 @@ module Dihedral
     # setting the dihedral value Δϕ on any of its children. By definition, 
     # dihedral angles which only rotate the position of hydrogens are not
     # considered in this dict.
-    const chi_dict = Dict{String, Vector{String}}(
-        "ALA" => [],
-        "CYS" => ["CB"],
-        "ASP" => ["CB", "CG"],
-        "GLU" => ["CB", "CG", "CD"],
-        "PHE" => ["CB", "CG"],
+    chi_dict = Dict{String, Vector{String}}(
+        "ALA" => ["HB1"],
+        "CYS" => ["CB", "SG"],
+        "ASP" => ["CB", "CG", "OD1"],
+        "GLU" => ["CB", "CG", "CD", "OE1"],
+        "PHE" => ["CB", "CG", "CD1"],
         "GLY" => [],
-        "HIS" => ["CB", "CG"],
-        "HIE" => ["CB", "CG"],
-        "ILE" => ["CB", "CG1"],
-        "LYS" => ["CB", "CG", "CD", "CE"],
-        "LEU" => ["CB", "CG"],
-        "MET" => ["CB", "CG", "SD"],
-        "ASN" => ["CB", "CG"],
-        "PRO" => ["CB", "CG", "CD"], # Attention
-        "GLN" => ["CB", "CG", "CD"],
-        "ARG" => ["CB", "CG", "CD", "NE"],
-        "SER" => ["CB"],
-        "THR" => ["CB"],
-        "VAL" => ["CB"],
-        "TRP" => ["CB", "CG"],
-        "TYR" => ["CB", "CG"]
+        "HIS" => ["CB", "CG", "ND1"],
+        "HIE" => ["CB", "CG", "ND1"],
+        "ILE" => ["CB", "CG1", "CD", "HD1"],
+        "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
+        "LEU" => ["CB", "CG", "CD1"],
+        "MET" => ["CB", "CG", "SD", "CE", "NZ"],
+        "ASN" => ["CB", "CG", "OD1", "HD21"],
+        "PRO" => ["CB", "CG", "CD", "HD1"], # Attention
+        "GLN" => ["CB", "CG", "CD", "NE2"],
+        "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
+        "SER" => ["CB", "OG"],
+        "THR" => ["CB", "OG1"],
+        "VAL" => ["CB", "CG1"],
+        "TRP" => ["CB", "CG", "CD1"],
+        "TYR" => ["CB", "CG", "CD1"]
     )
 end
 

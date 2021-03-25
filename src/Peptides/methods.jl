@@ -126,6 +126,24 @@ function append_residues!(pose::Pose{Topology}, residue::Residue,
     return pose
 end
 
+function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; ss::Opt{NTuple{3,Number}} = nothing, op = "α")
+    
+    residue_selection = SerialSelection{Residue}(residue.id, :id)
+    rotamer = Rotamers.get_rotamer(pose, residue)
+    Builder.append_fragment!(pose, residue, grammar, frag, op = op)
+    
+    if ss !== nothing
+        residues = residue.container.items[(residue.index + 1):(residue.index + length(frag.graph))]
+        setss!(pose, ss, residues)
+    end
+
+    derivation = [string(Peptides.three_2_one[residue.name.content])]
+    Peptides.force_mutate!(pose, residue, grammar, derivation)
+    residue = residue_selection(pose, gather = true)[1]
+    Rotamers.apply!(pose.state, rotamer, residue)
+    return pose
+end
+
 
 """
     insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
@@ -198,13 +216,17 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
 
     # 2) Remove old residue (now in position R + 1)
     old_r_pos += 1
+    N = residue.container.items[old_r_pos]["N"]
     Peptides.pop_residue!(pose, residue.container.items[old_r_pos])
+    # i = findall(a -> a == N, ProtoSyn.origin(pose.graph).children)
+    # deleteat!(ProtoSyn.origin(pose.graph).children, i)
 
     # 3) Remove downstream residue parents (now in position R + 1, since we
-    # deleted the R + 1 old residue)
+    # deleted the R + 1 old residue). Current parents (after pop_residue! are
+    # the root).
     downstream_r_pos = old_r_pos
-    new_residue.container.items[downstream_r_pos].parent = nothing
-    new_residue.container.items[downstream_r_pos]["N"].parent = nothing
+    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
+    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
 
     # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
     # position, based on the peptidic bond
@@ -316,7 +338,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
         end
     end
     
-    residue.name = Peptides.one_2_three[derivation[1][1]]
+    residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
     ProtoSyn.request_i2c(pose.state)
 
     return pose
@@ -338,7 +360,9 @@ julia> Peptides.pop_residue!(pose, pose.graph[1][3])
 function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
     # 1) Since we are calling Peptides, we know that we should unbond this
-    # residue and the next (children)
+    # residue and the next (children).
+    # * Note: Peptides.unbond sets the position of the child residue, while
+    # * connecting it to the root
     for child in residue.children
         Peptides.unbond(pose, residue, child) # Order is important
     end

@@ -1,5 +1,6 @@
+# TODO Documentation
 function apply!(state::State, rotamer::Rotamer, residue::Residue)
-    @assert rotamer.name === residue.name "Tried to apply a $(rotamer.name) rotamer to residue $(residue.name)."
+    @assert rotamer.name == residue.name "Tried to apply a $(rotamer.name) rotamer to residue $(residue.name)."
     T = eltype(state)
 
     chis = Dict{DihedralType, Tuple{T, T}}()
@@ -46,8 +47,9 @@ end
 function get_rotamer(pose::Pose, residue::Residue)
     T = eltype(pose.state)
     chis = Dict{DihedralType, Tuple{T, T}}()
-    for chi_index in 1:length(Dihedral.chi_dict[residue.name])
+    for chi_index in 1:(length(Dihedral.chi_dict[residue.name.content]) - 1)
         chi = getfield(ProtoSyn.Peptides.Dihedral, Symbol("chi$chi_index"))
+        #            Value                                  Standard Deviation
         chis[chi] = (getdihedral(pose.state, chi(residue)), T(0))
     end
     return Rotamer{T}(residue.name, chis)

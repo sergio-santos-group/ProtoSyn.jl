@@ -2,6 +2,8 @@ using ProtoSyn.Peptides.Rotamers
 using ProtoSyn.Peptides: Dihedral
 using ProtoSyn: TrueSelection, getdihedral
 
+# TODO Documentation
+
 mutable struct RotamerMutator <: AbstractMutator
     rotamer_library::Dict{String, ProtoSyn.Peptides.Rotamers.BBD_RotamerLibrary}
     p_mut::AbstractFloat
