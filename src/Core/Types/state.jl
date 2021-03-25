@@ -283,6 +283,12 @@ Base.insert!(s1::State{T}, index::Integer, s2::State{T}) where T = begin
     s1
 end
 
+Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
+    return ProtoSyn.AtomState(
+        nothing, as.index, copy(as.t), copy(as.r),
+        as.b, as.θ, as.ϕ, as.Δϕ, as.changed)
+end
+
 request_c2i(s::State; all=false) = (s.c2i = true; s)
 
 request_i2c(s::State; all::Bool=false) = begin
