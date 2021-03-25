@@ -7,6 +7,94 @@ using ProtoSyn.Builder
 using ProtoSyn.Units
 using Printf
 
+# Test
+T = Float64
+res_lib  = ProtoSyn.Peptides.grammar(T)
+# seq = seq"Y"
+# pose     = ProtoSyn.Peptides.build(res_lib, seq, Peptides.SecondaryStructure[:linear])
+# ProtoSyn.write(pose, "teste.pdb")
+# pose = Peptides.load("teste.pdb")
+# for residue in reverse(rid"3:11"(pose, gather = true))
+#     ProtoSyn.Peptides.pop_residue!(pose, residue)
+# end
+# ProtoSyn.append(pose, "teste.pdb")
+# println(ProtoSyn.origin(pose.graph).children)
+# println(ProtoSyn.origin(pose.graph).container.children)
+
+# rot_lib  = Peptides.Rotamers.load_dunbrack(T, Peptides.resource_dir * "/dunbrack_rotamers.lib")
+# seq = seq"ACDEFGHIKLMNPQRSTVWY"
+# pose     = ProtoSyn.Peptides.build(res_lib, seq, Peptides.SecondaryStructure[:linear])
+# ProtoSyn.write(pose, "teste.pdb")
+
+# rot_mut = Peptides.Mutators.RotamerMutator(rot_lib, 1.0, -1, an"CA")
+# for i in 1:10
+#     rot_mut(pose)
+#     ProtoSyn.append(pose, "teste.pdb")
+# end
+
+sequence   = seq"MRSWVHLI"
+small_pose = ProtoSyn.Peptides.build(res_lib, sequence, Peptides.SecondaryStructure[:helix])
+ProtoSyn.write(small_pose, "teste.pdb")
+
+pose    = Peptides.load("../2a3d.pdb")
+ProtoSyn.write(pose, "teste2.pdb")
+ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][end], res_lib, fragment(small_pose))
+ProtoSyn.append(pose, "teste2.pdb")
+
+for residue in reverse(rid"44:50"(pose, gather = true))
+    ProtoSyn.Peptides.pop_residue!(pose, residue)
+end
+
+ProtoSyn.append(pose, "teste2.pdb")
+
+pose3 = ProtoSyn.Peptides.load("../1c01.pdb")
+ProtoSyn.write(pose3, "teste3.pdb")
+frag = ProtoSyn.fragment(pose3, rid"35:41")
+ProtoSyn.write(Pose(frag), "teste4.pdb")
+
+ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][43], res_lib, frag)
+ProtoSyn.append(pose, "teste2.pdb")
+
+ProtoSyn.bond(pose.graph[1][50]["C"], pose.graph[1][51]["N"])
+ProtoSyn.popparent!(pose.graph[1][51]["N"])
+ProtoSyn.popparent!(pose.graph[1][51])
+ProtoSyn.setparent!(pose.graph[1][51]["N"], pose.graph[1][50]["C"])
+ProtoSyn.setparent!(pose.graph[1][51], pose.graph[1][50])
+ProtoSyn.append(pose, "teste2.pdb")
+
+energy_function = ProtoSyn.Common.default_energy_function()
+energy_function["Bond_Distance_Restraint"].α = 1.0
+cb = ProtoSyn.Common.default_energy_step_frame_callback(1, "../teste1.pdb")
+ProtoSyn.write(pose, "../teste1.pdb")
+
+selection        = rid"43:50" & an"C$|N$"r
+p_mut            = 1/(length(selection(pose, gather = true)))
+dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, p_mut, 0.5, selection)
+monte_carlo      = ProtoSyn.Drivers.MonteCarlo(
+    energy_function, dihedral_mutator, cb, 100,
+    ProtoSyn.Drivers.get_linear_quench(0.1, 100))
+
+monte_carlo(pose)
+
+sd = ProtoSyn.Drivers.SteepestDescent(energy_function, cb, 30000, 0.001, 0.1)
+sd(pose)
+
+
+
+# ---
+
+ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
+ProtoSyn.append(pose, "teste.pdb")
+Peptides.cap!(pose)
+ProtoSyn.append(pose, "teste.pdb")
+
+
+# for i in 1:35
+#     ProtoSyn.setdihedral!(pose.state, ProtoSyn.Peptides.Dihedral.psi(pose.graph[1][2]), deg2rad(-45 + i * 10))
+#     ProtoSyn.append(pose, "teste.pdb")
+# end
+
+
 pose = Peptides.load("../2a3d.pdb")
 
 ef = Calculators.EnergyFunction()
@@ -129,6 +217,7 @@ end
 
 energy_function = ProtoSyn.Common.get_default_energy_function()
 energy_function(pose)
+
 
 selection = (rid"21:26" | rid"45:49") & an"C$|N$"r
 p_mut = 1/(length(selection(pose, gather = true)))

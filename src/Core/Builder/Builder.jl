@@ -67,6 +67,16 @@ function append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Build the fragment to append
     frag = Builder.fragment(grammar, derivation)
 
+    return Builder.append_fragment!(pose, residue, grammar, frag, op = op)
+end
+
+function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α")
+
+    # Remove any old parent, if it exists
+    if hasparent(ProtoSyn.root(frag.graph).container)
+        ProtoSyn.root(frag.graph).container.parent = nothing
+    end
+
     # Insert the fragment residues in the pose.graph and set
     # frag_residue.container (of each residue in the fragment) to be the segment
     # of the "parent" residue
@@ -238,24 +248,31 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
         error("Given Atom does not belong to the provided topology.")
     end
 
-    # Save information to return 
+    # Save information to return
     popped_atom = Atom(atom.name, 1, 1, atom.symbol)
 
     # Save children and parent of this atom (will be removed in next step)
     children    = copy(atom.children)
-    grandparent = atom.parent
 
     # Unset parents/children and unbond neighbours
+    # (includes children and parent)
     for i = length(atom.bonds):-1:1   # Note the reverse loop
         other = atom.bonds[i]
-        ProtoSyn.unbond(pose, atom, other)
+        ProtoSyn.unbond(pose, atom, other) # Already pops parent between the two
+        # and sets parent to origin if this is an inter-residue connection
     end
 
-    # Using saved children and parent, set all child.parent to be this
-    # atom.parent
+    # During the last step, this atom might have been severed in an
+    # inter-residue connection while being a child, therefore, it's parent was
+    # assigned to the root. We should remove it own parent, therefore, in case
+    # it happened
+    hasparent(atom) && popparent!(atom)
+    hasparent(atom.container) && popparent!(atom.container)
+
+    # Using saved children and parent, set all child.parent to be the origin,
+    # independent of this being an inter- or intra-residue connection
     for child in children
-        # child.parent = grandparent
-        child.parent = origin(pose.graph)
+        ProtoSyn.setparent!(child, origin(pose.graph))
     end
 
     # Remove from graph
@@ -306,5 +323,8 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
     deleteat!(residue.container.items, findfirst(residue, residue.container.items))
     residue.container.size -= 1
 end
+
+
+
 
 end
