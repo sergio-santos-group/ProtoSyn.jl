@@ -129,7 +129,7 @@ end
     byatom = eachatom(r0)
     
     # Create residue (Automatically updates residue.index)
-    r1 = Residue(r0.name, r0.id)
+    r1 = Residue(r0.name.content, r0.id)
 
     # Populate residue with atoms
     # (Automatically updates residue.size, residue.items, residue.itemsbyname)
@@ -183,7 +183,11 @@ Base.copy(s0::Segment) = begin
 
     # deal with residue graph
     for r0 in eachresidue(s0)
-        hasparent(r0) && r0.parent != root.container && setparent!(old2new[r0], old2new[r0.parent])
+        if root === nothing # Dealing with fragment
+            hasparent(r0) && setparent!(old2new[r0], old2new[r0.parent])
+        else
+            hasparent(r0) && r0.parent != root.container && setparent!(old2new[r0], old2new[r0.parent])
+        end
     end
 
     return s1
@@ -194,8 +198,22 @@ Base.copy(t0::Topology) = begin
     for s0 in eachsegment(t0)
         s1 = copy(s0)
         push!(t1, s1)
-        setparent!(s1[1], t1.root)
-        setparent!(s1[1][1], origin(t1))
+        # setparent!(s1[1], t1.root)
+        # setparent!(s1[1][1], origin(t1))
+    end
+
+    root0 = ProtoSyn.origin(t0)
+    root1 = ProtoSyn.origin(t1)
+    for (atom0, atom1) in zip(eachatom(t0), eachatom(t1))
+        if atom0.parent == root0
+            setparent!(atom1, root1)
+        end
+    end
+
+    for (res0, res1) in zip(eachresidue(t0), eachresidue(t1))
+        if res0.parent == root0.container
+            setparent!(res1, root1.container)
+        end
     end
 
     return t1
@@ -290,9 +308,13 @@ end
 #region detach -----------------------------------------------------------------
 
 Base.detach(s::Segment) = begin
+    # * This function should remove the parenthood to the origin on all atoms
+    # * and residues of this segment that are connected to the root.
     root = origin(s)
     for at in root.children
+        !(at.container.container == s) && continue
         isparent(root, at) && popparent!(at)
+        isparent(root.container, at.container) && popparent!(at.container)
     end
     hascontainer(s) && delete!(s.container, s)
 end
