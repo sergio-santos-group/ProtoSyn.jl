@@ -82,7 +82,7 @@ abstract type Driver end
 include("Core/Mutators/Mutators.jl")
 
 @info "Loading Drivers"
-include("Drivers/Drivers.jl")
+include("Core/Drivers/Drivers.jl")
 
 @info "Loading Peptides"
 include("Peptides/Peptides.jl")
