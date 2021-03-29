@@ -22,40 +22,40 @@ end
 
 
 """
-    hasparent(c::AbstractDigraph) -> Bool
+    hasparent(c::AbstractContainer) -> Bool
 
-Test whether the given AbstractDigraph `c` has a parent.
+Test whether the given AbstractContainer `c` has a parent.
 """
-@inline hasparent(c::AbstractDigraph) = c.parent !== nothing
-
-
-"""
-    haschildren(c::AbstractDigraph) -> Bool
-
-Test whether the given AbstractDigraph `c` has children.
-"""
-@inline haschildren(c::AbstractDigraph) = !isempty(c.children)
+@inline hasparent(c::AbstractContainer) = c.parent !== nothing
 
 
 """
-    isparent(parent::AbstractDigraph, child::AbstractDigraph) -> Bool
+    haschildren(c::AbstractContainer) -> Bool
+
+Test whether the given AbstractContainer `c` has children.
+"""
+@inline haschildren(c::AbstractContainer) = !isempty(c.children)
+
+
+"""
+    isparent(parent::AbstractContainer, child::AbstractContainer) -> Bool
 
 Test whether `parent` is the parent of `child`.
 """
-@inline isparent(parent::AbstractDigraph, child::AbstractDigraph) = begin
+@inline isparent(parent::AbstractContainer, child::AbstractContainer) = begin
     parent === child.parent
 end
 
-@inline isparent(::Nothing, child::AbstractDigraph) = false
+@inline isparent(::Nothing, child::AbstractContainer) = false
 
 
 """
-    setparent!(child::T, parent::T) where {T<:AbstractDigraph}
+    setparent!(child::T, parent::T) where {T <: AbstractContainer}
 
 Set `parent` as the parent of `child`, while adding `child` to
 `parent.children`.
 """
-function setparent!(child::T, parent::T) where {T <: AbstractDigraph}
+function setparent!(child::T, parent::T) where {T <: AbstractContainer}
     hasparent(child) && begin
         error("unable to setparent! of non-orphan item")
     end
@@ -66,12 +66,12 @@ end
 
 
 """
-    popparent!(child::AbstractDigraph}
+    popparent!(child::AbstractContainer}
 
 Remove the parent from `child` (sets it to `nothing`) while removing `child`
 from `parent.children` (only if `child` is a child of `parent`).
 """
-function popparent!(child::AbstractDigraph)
+function popparent!(child::AbstractContainer)
     if hasparent(child)
         parent = child.parent
         i = findfirst(x -> x === child, parent.children)
@@ -87,12 +87,12 @@ end
 
 
 """
-    popchild!(parent::AbstractDigraph} -> child
+    popchild!(parent::AbstractContainer} -> child
 
 Remove child at index 1 from `parent` and return it. Note: The returned element
 is orphan. Return `nothing` if the item has no children.
 """
-popchild!(parent::AbstractDigraph) = begin
+popchild!(parent::AbstractContainer) = begin
     isempty(parent.children) ? nothing : popparent!(parent.children[1])
 end
 
@@ -276,7 +276,7 @@ julia> bond(atom1, atom2)
 ```
 """
 @inline function bond(at1::Atom, at2::Atom)
-    @assert segment(at1) === segment(at2) "can only bond atoms within the same segment"
+    @assert at1.container.container === at2.container.container "can only bond atoms within the same segment"
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
 end

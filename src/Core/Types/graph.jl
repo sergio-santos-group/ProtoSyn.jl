@@ -4,25 +4,12 @@ export Atom, Residue, Segment, Topology
 const Opt = Union{Nothing, T} where T
 
 """
-    AbstractDigraph
-
-Supertype for a directed graph node. Types implementing the AbstractDigraph
-interface should have the following fields:
- - parent::Union{T,Nothing}
- - children::Vector{T}
- - visited::Bool
- - ascendents::Union{Nothing,NTuple{N,Int}}
-"""
-abstract type AbstractDigraph end
-
-
-"""
     AbstractContainer{T} <: AbstractDigraph
 
 Supertype for a container of elements of type `T`, implementing
 the `AbstractDigraph` interface.
 """
-abstract type AbstractContainer{T} <: AbstractDigraph  end
+abstract type AbstractContainer{T} end
 
 abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
 abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
@@ -30,7 +17,7 @@ abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
 abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
 
 
-function initgraph!(c::T) where {T<:AbstractDigraph}
+function initgraph!(c::T) where {T <: AbstractContainer}
     c.children   = Vector{T}()
     c.ascendents = nothing
     c.parent     = nothing
@@ -48,18 +35,28 @@ An `Atom` type.
     
 Construct an `Atom`, with the given `name`, `id`, `index`, and `symbol`.
 The created atom has no bonds and container; it is also a free directed-graph
-node.
+node (no parent/children). *Note:* [`Atom`](@ref) is of super type
+`AbstractAtom`, which is an `AbstractContainer`.
+
+# Fields
+* `name::String` - The name of the [`Atom`](@ref)
+* `id::Int` - The ID of the [`Atom`](@ref)
+* `index::Int` - The index of the [`Atom`](@ref) (default: same as `:id`)
+* `symbol::String` - The chemical element symbol of this [`Atom`](@ref)
+* `bonds::Vector{Atom}` - A list of [`Atom`](@ref) instances connected to this [`Atom`](@ref) by a bond (default: empty)
+* `container::Opt{AbstractResidue}` - An optional container for this [`Atom`](@ref) (default: `nothing`)
+* `visited::Bool` - Check whether this [`Atom`](@ref) has been visited (used by a some functions) (default: `false`)
+* `parent::Opt{Atom}` - Optionally, the parent of this [`Atom`](@ref) in the directional graph (default: `nothing`)
+* `children::Vector{Atom}` - Optionally, the list of children [`Atom`](@ref) instances downstream of this [`Atom`](@ref) (default: empty)
+* `ascedents::Opt{NTuple{4, Int}}` - Optionally, the list of 4 ascendents, including this [`Atom`](@ref) (default: `nothing`)
+
+# See also
+[`Residue`](@ref) [ascendents]
 
 # Examples
 ```jldoctest
 julia> at = Atom("H1", 1, 1, "H")
 Atom{/H1:1}
-
-julia> hascontainer(at), isempty(at.bonds)
-(false, true)
-
-julia> hasparent(at), haschildren(at)
-(false, false)
 ```
 """
 mutable struct Atom <: AbstractAtom
@@ -82,19 +79,32 @@ mutable struct Atom <: AbstractAtom
     end
 end
 
-segment(at::Atom) = hascontainer(at) ? at.container.container : nothing
-
 
 """
     Residue <: AbstractResidue
-
-A `Residue` type.
-
     Residue(name::String, id::Int)
     
-Construct a `Residue`, with the given `name` and `id`.
-The created residue has no container; it is also a free directed-graph
-node.
+Construct a [`Residue`](@ref), with the given `name` and `id`. The created
+residue has no container; it is also a free directed-graph node
+(no parent/children). A [`Residue`](@ref) is a group of [`Atom`](@ref)
+instances. *Note:* [`Residue`](@ref) is of super type `AbstractResidue`, which
+is an `AbstractContainer`.
+
+# Fields
+* `name::ResidueName` - The name of the [`Residue`](@ref)
+* `id::Int` - The ID of the [`Residue`](@ref)
+* `index::Int` - The index of the [`Residue`](@ref) (default: same as `:id`)
+* `items::Vector{Atom}` - A list of [`Atom`](@ref) instances in this [`Residue`](@ref) (default: empty)
+* `itemsbyname::Dict{String, Atom}` - A `Dict` object containing a link to each of the [`Atom`](@ref) instances in this [`Residue`](@ref) bsed on the `:name` of the [`Atom`](@ref) (default: empty)
+* `container::Opt{AbstractSegment}` - An optional container for this [`Residue`](@ref) (default: `nothing`)
+* `size::Int` - The number of [`Atom`](@ref) instances in this [`Residue`](@ref) (default: 0)
+* `visited::Bool` - Check whether this [`Residue`](@ref) has been visited (used by a some functions) (default: `false`)
+* `parent::Opt{Residue}` - Optionally, the parent of this [`Residue`](@ref) in the directional graph (default: `nothing`)
+* `children::Vector{Residue}` - Optionally, the list of children [`Residue`](@ref) instances downstream of this [`Residue`](@ref) (default: empty)
+* `ascedents::Opt{NTuple{4, Int}}` - Optionally, the list of 4 ascendents, including this [`Residue`](@ref) (default: `nothing`)
+
+# See also
+[`Segment`](@ref) [`Atom`](@ref) [ascendents] [`ResidueName`](@ref)
 
 # Examples
 ```jldoctest
@@ -106,9 +116,9 @@ mutable struct Residue <: AbstractResidue
     name::ResidueName                    # residue name
     id::Int                         # residue ID
     index::Int                      # residue index
-    items::Vector{Atom}             # list of atoms (children)
-    itemsbyname::Dict{String, Atom} # child atoms indexed by name
-    container::Opt{AbstractSegment} # parent segment
+    items::Vector{Atom}             # list of atoms
+    itemsbyname::Dict{String, Atom} # list of atoms indexed by name
+    container::Opt{AbstractSegment} # container segment
     size::Int
     
     visited::Bool
@@ -126,13 +136,24 @@ end
 
 """
     Segment <: AbstractSegment
-
-A `Segment` type.
-
     Segment(name::String, id::Int)
     
-Construct a `Segment`, with the given `name` and `id`.
-The created segment has no container.
+Construct a [`Segment`](@ref), with the given `name` and `id`. The created
+segment has no container. A [`Segment`](@ref) is a group of [`Residue`](@ref)
+instances. *Note:* [`Segment`](@ref) is of super type `AbstractSegment`, which
+is an `AbstractContainer`.
+
+# Fields
+* `name::String` - The name of the [`Segment`](@ref)
+* `id::Int` - The ID of the [`Segment`](@ref)
+* `index::Int` - The index of the [`Segment`](@ref) (default: same as `:id`)
+* `code::Char` - A 1-letter code for the chain (used in PDB formatting) (default: '?')
+* `items::Vector{Residue}` - A list of [`Residue`](@ref) instances in this [`Segment`](@ref) (default: empty)
+* `container::Opt{AbstractTopology}` - An optional container for this [`Segment`](@ref) (default: `nothing`)
+* `size::Int` - The number of [`Residue`](@ref) instances in this [`Segment`](@ref) (default: 0)
+
+# See also
+[`Topology`](@ref) [`Residue`](@ref)
 
 # Examples
 ```jldoctest
@@ -145,8 +166,8 @@ mutable struct Segment <: AbstractSegment
     id::Int                             # segment ID
     index::Int                          # segment index
     code::Char
-    items::Vector{Residue}              # list of residues (children)
-    container::Opt{AbstractTopology}    # parent topology
+    items::Vector{Residue}              # list of residues
+    container::Opt{AbstractTopology}    # container topology
     size::Int
     
     Segment(name::String, id::Int) = begin
@@ -156,18 +177,37 @@ end
 
 
 """
+
     Topology <: AbstractTopology
-
-A `Topology` type.
-
     Topology(name::String, id::Int)
     
-Construct a `Topology`, with the given `name` and `id`.
+Construct a [`Topology`](@ref), with the given `name` and `id`. A
+[`Topology`](@ref) is the top level of hierarchy in a Graph, and holds a `root`
+[`Residue`](@ref), therefore initializing the internal coordinates system in the
+corresponding [State] of a [Pose](@ref).  *Note:* [`Topology`](@ref) is of super
+type `AbstractTopology`, which is an `AbstractContainer`.
+
+# Fields
+* `name::String` - The name of the [`Topology`](@ref)
+* `id::Int` - The ID of the [`Topology`](@ref)
+* `items::Vector{Segment}` - All the [`Segment`](@ref) instances in this [`Topology`](@ref) (default: empty)
+* `size::Int` - The number of [`Segment`](@ref) instances in this [`Topology`](@ref) (default: 0)
+* `root::Residue` - The root [`Residue`](@ref) of this [`Topology`](@ref)
+* `container::Nothing` - Used to identify the root [`Residue`](@ref)  (default: `nothing`)
+
+!!! ukw "Note:"
+    When in a [Pose](@ref), both the [`Topology`](@ref) and the corresponding
+    [State](@ref) need to share the same `:id`. This is used to identify
+    situations where a change in one of this structures was not reflected on the
+    other.
+
+# See also
+[Root] [`Segment`](@ref)
 
 # Examples
 ```jldoctest
-julia> res = Segment("UNK", 1)
-Segment{/UNK:1}
+julia> top = Topology("UNK", 1)
+Topology{/UNK:1}
 ```
 """
 mutable struct Topology <: AbstractTopology

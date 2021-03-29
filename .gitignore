@@ -5,6 +5,7 @@
 *.zip
 *.txt
 *.pdb
+*.forces
 
 docs/build/
 .vscode/

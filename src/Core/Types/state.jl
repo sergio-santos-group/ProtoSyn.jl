@@ -4,19 +4,60 @@ using Printf
 
 #region AtomState --------------------------------------------------------------
 
-export AtomState
+export AtomState, StateMatrix
 
 """
-    AtomState{T <: AbstractFloat}()
-
-An `AtomState` instance. Holds information regarding the state of the atom,
+    AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
+    
+An [`AtomState`](@ref) instance. Holds information regarding the state of the atom,
 including the cartesian and internal coordinates.
+
+    AtomState([::T]) where {T <: AbstractFloat}
+
+Return an empty [`AtomState`](@ref) instance, with all default values.
+
+!!! ukw "Note:"
+    If no type `T <: AbstractFloat` is provided, `Units.defaultFloat` will be used.
+
+!!! ukw "Note:"
+    Changing this [`AtomState`](@ref) cartesian coordinates will update and sync
+    changes with a sibling [`StateMatrix`](@ref), as long as this structs `parent`
+    is correctly set.
+
+# Fields
+* `parent::Any` - If set, should point to the parent [`State`](@ref) containing this [`AtomState`](@ref) (default: nothing)
+* `index::Int` - the index of this [`AtomState`](@ref)
+* `t::MVector{3, T}` - The translation vector from origin (cartesian coordinates) (default: empty)
+* `r::MMatrix{3, 3, T, 9}` - The rotation matrix for cartesian to internal coordinate sync (default: empty)
+* `b::T` - Distance (in Angstrom Å) to parent atom (default: 0)
+* `θ::T` - Angle (in radians) to ascendent atoms (default: 0)
+* `ϕ::T` - Dihedral angle (in radians) to ascendent atoms (default: 0)
+* `Δϕ::T` - Dihedral angle change (in radians) to be applied to children atoms (default: 0)
+* `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions) (default: false)
+
+!!! ukw "Note:"
+    The `Δϕ` field in [`AtomState`](@ref) allows for easy set-up of dihedral angles in molecular structures.
+    By modifying `Δϕ` in an atom, all child atoms will be rotated by the same amount, even in being branched structures.
+
+# See also
+[`State`](@ref) [`StateMatrix`](@ref)
+
+# Examples
+```jldoctest
+julia> AtomState()
+AtomState{Float64}:
+ Index: -1
+ T: [0.000, 0.000, 0.000]
+ b: 0.000 Å | θ:  0.000 rad (   0.00°) | ϕ:  0.000 rad (   0.00°) | Δϕ:  0.000 rad (   0.00°)
+ Changed: false
+```
+
 """
 mutable struct AtomState{T <: AbstractFloat}
     parent
     index::Int
-    t::MVector{3,T}         # translation vector
-    r::MMatrix{3,3,T,9}     # local to global rotation matrix
+    t::MVector{3, T}        # translation vector
+    r::MMatrix{3, 3, T, 9}  # local to global rotation matrix
     
     # internal coordinates
     b::T                    # self<->parent bond length
@@ -77,7 +118,39 @@ end
 
 #endregion AtomState
 
+"""
+    StateMatrix{T}(parent::Any, coords::Matrix{T}) where {T <: AbstractFloat}
 
+A [`StateMatrix`](@ref) instance holds the cartesian coordinates of all [`AtomState`](@ref)
+instances in a [`State`](@ref). It is an overload of a `Matrix` struct, and used to efficiently
+apply substantial changes to a system or a large number of atoms. 
+
+!!! ukw "Note:"
+    If no type `T <: AbstractFloat` is provided, `Units.defaultFloat` will be used.
+
+!!! ukw "Note:"
+    Changing this [`StateMatrix`](@ref) cartesian coordinates will update and sync
+    changes with a sibling [`AtomState`](@ref), as long as this structs `parent`
+    is correctly set.
+
+# Fields
+* `parent::Any` - If set, should point to the parent [`State`](@ref) containing this [`StateMatrix`](@ref) (default: nothing)
+* `coords::Matrix` - The cartesian coordinates matrix
+
+# See also
+[`State`](@ref) [`AtomState`](@ref)
+
+# Examples
+```jldoctest
+julia> StateMatrix(zeros(3, 3))
+StateMatrix{Float64}:
+ Parent set: false
+3×3 Array{Float64,2}:
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0
+```
+"""
 mutable struct StateMatrix{T <: AbstractFloat}
     parent
     coords::Matrix{T}
@@ -133,18 +206,46 @@ end
 export State
 
 """
-    State{T <: AbstractFloat}()
+    State([::T]) where {T <: AbstractFloat}
 
-A `State` includes all information of all `AtomStates` in a system.
+A `State` is a complete representation of a given molecular system regarding the
+position, the forces felt and the resulting energetic contribution by each atom.
+Each [`AtomState`](@ref) in a system.
 
-    State{T <: AbstractFloat}(n::Int)
+    State([::T], n::Int) where {T <: AbstractFloat}
 
-Returns a `State` with size `n`, with all `items` set to be an empty
-`AtomState`.
+Return a [`State`](@ref) with size `n`, with all `items` set to be an empty
+[`AtomState`](@ref).
 
-    State{T <: AbstractFloat}(items::Vector{AtomState{T}})
+    State([::T], items::Vector{AtomState{T}}) where {T <: AbstractFloat}
 
-Returns a `State` with size `length(items)`, with all the given `items`.
+Return a [`State`](@ref) with size `length(items)`, with all the given `items`.
+
+!!! ukw "Note:"
+    If no type `T <: AbstractFloat` is provided, `Units.defaultFloat` will be used.
+
+# Fields
+* `items::Vector{AtomState{T}}` - The list of [`AtomState`](@ref) instances in this [`State`](@ref) (default: empty)
+* `size::Int` - The number of [`AtomState`](@ref) instances in this [`State`](@ref) (default: 0)
+* `id::Int` - The Id (to be matched to the corresponding [`Topology`](@ref) in a [`Pose`](@ref)) (default: -1)
+* `i2c::Bool` - Flag indicating this [`State`](@ref) needs to be synched to cartesian coordinates (default: false)
+* `c2i::Bool` - Flag indicating this [`State`](@ref) needs to be synched to internal coordinates (default: false)
+* `index_offset::Int` - Ignore the first *N* [`AtomState`](@ref) instances (default: 3)
+* `x::StateMatrix{T}` - The cartesian coordinate matrix of all [`AtomState`](@ref) instances in this [`State`](@ref) (default: empty)
+* `f::Matrix{T}` - The force matrix of all [`AtomState`](@ref) instances in this [`State`](@ref) (default: empty)
+* `e::Dict{Symbol, T}` - The list of all energetic components evaluated for this [`State`](@ref) (default: empty)
+
+# See also
+[`Topology`](@ref) [`AtomState`](@ref) [`StateMatrix`](@ref)
+
+# Examples
+```jldoctest
+julia> State(4)
+State{Float64}:
+ Size: 4
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+```
 """
 mutable struct State{T <: AbstractFloat}
     items::Vector{AtomState{T}} 
@@ -190,7 +291,7 @@ end
 
 State(n::Int) = State{Units.defaultFloat}(n)
 State(::Type{T}, n::Int) where T = State{T}(n)
-State(::Type{T}, items::Vector{AtomState{T}}) where T = begin
+State(::Type{T}, items::Vector{AtomState{T}}) where {T <: AbstractFloat} = begin
     state = State{T}(items, length(items), -1, false, false, 0, StateMatrix(zeros(T, 3, length(items))), zeros(T, 3, length(items)), Dict(:Total => Inf))
     for (index, item) in enumerate(state.items)
         item.parent = state
@@ -204,7 +305,8 @@ end
 
 State(items::Vector{AtomState{T}}) where T = State(T, items)
 
-State{T}() where T = State{T}(0)
+State(::T) where {T <: AbstractFloat} = State{T}(0)
+State() = State{Units.defaultFloat}(0)
 
 # ---
 

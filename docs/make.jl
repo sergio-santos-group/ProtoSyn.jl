@@ -1,39 +1,31 @@
 push!(LOAD_PATH, "../src")
 
-using Documenter, ProtoSyn, ProtoSyn.Builder, ProtoSyn.Peptides, ProtoSyn.Sugars
+using Documenter, ProtoSyn, ProtoSyn.Builder, ProtoSyn.Peptides
 
 makedocs(
     sitename="ProtoSyn.jl",
+    modules=[ProtoSyn],
     pages = [
-        # "Home" => "index.md",
-        # "Manual" => [
-        #     "manual/getting-started.md"
-        # ],
-        # "ProtoSyn" => [
-        #     "core/index.md"
-        #     "core/graph.md"
-        #     "core/types.md"
-        # ],
-        "Builder" => "core/builder.md",
-        "Peptides" => [
-            "peptides/index.md"
+        "Home" => "index.md",
+        "Getting Started" => [
+            "Installation" => "getting-started/installation.md",
+            "First steps" => "getting-started/first-steps.md"
         ],
-        "Sugars" => [
-            "sugars/index.md"
-        ],
-        # "XMLRPC" => [
-        #     "xmlrpc/index.md"
-        # ]
+        "ProtoSyn API" => [
+            "Core" => [
+                "Types" => "protosyn-api/core/types.md"
+            ]
+        ]
     ]
 )
 
 deploydocs(
     repo = "github.com/sergio-santos-group/ProtoSyn.jl.git",
     # osname = "linux",
-    # julia = "1.0",
+    # julia = "1.5",
     #deps = nothing,
     #make = nothing,
     #target = "build",
-    #devbranch = "refactoring",
-    #devurl = "dev",
+    branch = "use-cases",
+    devurl = "dev",
 )
