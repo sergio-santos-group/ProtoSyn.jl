@@ -13,7 +13,8 @@ makedocs(
         ],
         "ProtoSyn API" => [
             "Core" => [
-                "Types" => "protosyn-api/core/types.md"
+                "Types" => "protosyn-api/core/types.md",
+                "Selections" => "protosyn-api/core/selections.md"
             ]
         ]
     ]

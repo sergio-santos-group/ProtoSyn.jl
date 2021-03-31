@@ -2,15 +2,28 @@ export UnarySelection
 # Note: UnarySelection is a BRANCH selection.
 
 """
-    UnarySelection{M} <: AbstractSelection
+    UnarySelection{M}(op::Function, sele::AbstractSelection)
 
-A `UnarySelection` applies an operation `op` to the given `AbstractSelection`
-`sele`, such as `!`.
+A [`UnarySelection`](@ref) applies an operation `op` to the given `AbstractSelection`
+`sele`. Available operations with short syntax:
+* `!` - Logical Not. Negates the values selected by `sele`.
+
+# State mode
+
+The selection type of [`UnarySelection`](@ref) can be either `Stateless` or
+`Stateful`. When using the short syntax, it will automatically be set to the
+`StateMode` of the provided `sele`.
+
+# Selection type
+
+The selection type of [`UnarySelection`](@ref) can be any
+`T <: AbstractContainer`. When queried for using the `selection_type` function,
+will return the selection type of the given `sele`.
 
 # Examples
 ```jldoctest
 julia> sele = !rn"ALA"
-UnarySelection{ProtoSyn.Stateless}(true, !, FieldSelection{ProtoSyn.Stateless,Residue}(false, r"ALA", :name))
+UnarySelection{ProtoSyn.Stateless}(!, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
 ```
 """
 mutable struct UnarySelection{M} <: AbstractSelection

@@ -2,23 +2,34 @@ export TerminalSelection
 # Note: TerminalSelection is a LEAF selection.
 
 """
-    TerminalSelection{M, T} <: AbstractSelection
+    TerminalSelection()
 
-A `TerminalSelection` returns a `Mask{Residue}` selecting only the terminal
-residues in a Pose/Abstract Container. Terminal residues are considered when
-either:
+A [`TerminalSelection`](@ref) returns a [`Mask`](@ref) selecting only the
+terminal [`Residue`](@ref) instances in a [`Pose`](@ref) or `AbstractContainer`.
+Terminal [`Residue`](@ref) instancs are considered when either:
 
 - Are children of the respective pose's origin residue;
 - Are residues without children;
 
+# State mode
+
+The state mode of [`TerminalSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`TerminalSelection`](@ref) `T` is forced to be [`Residue`](@ref).
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
+
 # Examples
 ```jldoctest
-julia> sele = TerminalSelection{Residue}()
+julia> sele = TerminalSelection()
 TerminalSelection{ProtoSyn.Stateless,Residue}()
 ```
 """
-mutable struct TerminalSelection{M, Residue} <: AbstractSelection
-    TerminalSelection{Residue}() = begin
+mutable struct TerminalSelection{M, T} <: AbstractSelection
+    TerminalSelection() = begin
         new{Stateless, Residue}()
     end
 end
@@ -28,7 +39,6 @@ selection_type(::TerminalSelection{M, T})  where {M, T} = T
 
 
 # --- Select -------------------------------------------------------------------
-# select(::TrueSelection{Stateless, T}, container::AbstractContainer) where {T <: AbstractContainer} = Mask{T}(trues(counter(T)(container)))
 
 function select(sele::TerminalSelection{Stateless, Residue}, container::AbstractContainer)
     @assert typeof(container) > Residue "Can't apply TerminalSelection{Residue} to container of type $(typeof(container))"

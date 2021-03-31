@@ -16,7 +16,7 @@ Build a `Pose{Topology}` using the given `derivation` sequence on the provided
 """
 function build(grammar::LGrammar{T}, derivation) where {T<:AbstractFloat}
     top = Topology("UNK", 1)
-    state = State{T}()
+    state = State(T)
     state.id = top.id
     pose = Pose(top, state)
 

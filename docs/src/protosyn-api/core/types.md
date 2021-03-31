@@ -20,7 +20,7 @@ Fragment
 
 The birectional graph holds the information regarding the hierarchical organization of a molecular system, where the top level of organization is a [`Topology`](@ref) instance, which can contain one or more instances of [`Segment`](@ref). This structure, in turn, is comprised of one or more [`Residue`](@ref) instances, which are themselves a set of [`Atom`](@ref) instances, this being the lowest level of data organization in ProtoSyn.
 
-![graph](../../assets/ProtoSyn-graph.png)
+![ProtoSyn graph](../../assets/ProtoSyn-graph.png)
 
 ```@docs
 Topology

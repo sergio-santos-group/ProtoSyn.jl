@@ -32,7 +32,7 @@ res_lib  = ProtoSyn.Peptides.grammar(T)
 #     ProtoSyn.append(pose, "teste.pdb")
 # end
 
-sequence   = seq"MRSWVHLI"
+sequence   = seq"MRS"
 small_pose = ProtoSyn.Peptides.build(res_lib, sequence, Peptides.SecondaryStructure[:helix])
 ProtoSyn.write(small_pose, "teste.pdb")
 

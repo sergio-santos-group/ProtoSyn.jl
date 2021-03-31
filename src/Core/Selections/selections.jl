@@ -52,7 +52,7 @@ end
 """
     ProtoSyn.gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}
 
-Gather all instances of type `T` from container whose relative position is
+Gather all instances of type `T` from `container` whose relative position is
 marked as `true` in the given `mask`.
 
 # Examples

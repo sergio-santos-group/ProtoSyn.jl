@@ -2,37 +2,48 @@ export SerialSelection
 # Note: SerialSelection is a LEAF selection.
 
 """
-    SerialSelection{M, T} <: AbstractSelection
-
-A `SerialSelection` takes an input `serial` (as an `Int`) and a `field` (as a
-`Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`) containing all
-instances of said type in the given `container` whose `field` matches the
-`serial` number given. This selection works simillarly to FieldSelection, except
-it is especialized in dealing with numbers.
-
     SerialSelection{T}(serial::Int, field::Symbol) where {T <: AbstractContainer}
     
-The state mode of SerialSelection `M` is forced to be Stateless.
-The short syntax macros are: sid"..." = Segment ID; six"..." = Segment Index;
-rid"..." = Residue ID; rix"..." = Residue Index;
-aid"..." = Atom ID; aix"..." = Atom Index;
+
+A [`SerialSelection`](@ref) selects instances based on `:id` and `:index`. It takes an
+input `serial` (as an `Int`) and a `field` (as a `Symbol`) and outputs a [`Mask`](@ref)
+(of type `T <: AbstractContainer`) containing all instances of said type in the
+given `container` whose `field` matches the `serial` number given. This
+selection works similarly to [`FieldSelection`](@ref), but is especialized in dealing
+with number variables.
+
+# State mode
+
+The state mode of [`SerialSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`SerialSelection`](@ref) can be any `T <: AbstractContainer`.
+
+# Short syntax
+
+* sid"..." = Segment ID;
+* rid"..." = Residue ID;
+* aid"..." = Atom ID;
+* six"..." = Segment Index;
+* rix"..." = Residue Index;
+* aix"..." = Atom Index;
 
 # Examples
 ```jldoctest
 julia> sele = SerialSelection{Segment}(1, :id)
-SerialSelection{ProtoSyn.Stateless,Segment}(true, 1, :id)
+SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
 
 julia> sele = SerialSelection{Atom}(2, :index)
-SerialSelection{ProtoSyn.Stateless,Atom}(true, 2, :index)
+SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
 ```
 
-# Short Syntax
 ```jldoctest
 julia> sele = sid"1"
-SerialSelection{ProtoSyn.Stateless,Segment}(true, 1, :id)
+SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
 
 julia> sele = aix"2"
-SerialSelection{ProtoSyn.Stateless,Atom}(true, 2, :index)
+SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
 ```
 """
 mutable struct SerialSelection{M, T} <: AbstractSelection
@@ -67,38 +78,54 @@ export RangeSelection
 # Note: RangeSelection is a LEAF selection.
 
 """
-    RangeSelection{M, T} <: AbstractSelection
+    RangeSelection{T}(range::UnitRange{Int}, field::Symbol) where {T <: AbstractContainer}
 
-A `RangeSelection` takes an input `range` (as an `UnitRange{Int}`) and a `field`
-(as a `Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`)
+A [`RangeSelection`](@ref) takes an input `range` (as an `UnitRange{Int}`) and a `field`
+(as a `Symbol`) and outputs a [`Mask`](@ref) (of type `T <: AbstractContainer`)
 containing all instances of said type in the given `container` whose `field`
 matches is in the `range` given. This selection works simillarly to
-FieldSelection, except it is especialized in dealing with numbers.
+[`FieldSelection`](@ref), but is especialized in dealing with numbers.
 
-    RangeSelection{T}(range::UnitRange{Int}, field::Symbol) where {T <: AbstractContainer}
-    
-The state mode of RangeSelection `M` is forced to be Stateless.
-# The short syntax macros are: sid"..." = Segment ID; six"..." = Segment Index;
-# rid"..." = Residue ID; rix"..." = Residue Index;
-# aid"..." = Atom ID; aix"..." = Atom Index;
+!!! ukw "Note:"
+    The [`RangeSelection`](@ref) is inclusive, meaning the `:id` of `:index`
+    given in the selection will also be included in the selected [`Mask`](@ref).
+
+# State mode
+
+The state mode of [`RangeSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`RangeSelection`](@ref) can be any `T <: AbstractContainer`.
+
+# Short syntax
+* sid"..." = Segment ID
+* rid"..." = Residue ID
+* aid"..." = Atom ID
+* six"..." = Segment Index;
+* rix"..." = Residue Index;
+* aix"..." = Atom Index;
 
 # Examples
 ```jldoctest
-julia> sele = SerialSelection{Segment}(1, :id)
-SerialSelection{ProtoSyn.Stateless,Segment}(true, 1, :id)
+julia> sele = RangeSelection{Segment}(1:4, :id)
+RangeSelection{ProtoSyn.Stateless,Segment}(1:4, :id)
 
-julia> sele = SerialSelection{Atom}(2, :index)
-SerialSelection{ProtoSyn.Stateless,Atom}(true, 2, :index)
+julia> sele = RangeSelection{Atom}(2:10, :index)
+RangeSelection{ProtoSyn.Stateless,Atom}(2:10, :index)
 ```
 
-# Short Syntax
 ```jldoctest
-julia> sele = sid"1"
-SerialSelection{ProtoSyn.Stateless,Segment}(true, 1, :id)
+julia> sele = sid"1:4"
+SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
 
-julia> sele = aix"2"
-SerialSelection{ProtoSyn.Stateless,Atom}(true, 2, :index)
+julia> sele = aix"2:10"
+SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
 ```
+
+!!! ukw "Note:"
+    This selection assumes that all `Abstractcontainer` instances are ordered
+    (i.e: `aid"1:10"` will select atoms 1, 2, 3, 4, 5, 6, 7, 8, 9 and 10).
 """
 mutable struct RangeSelection{M, T} <: AbstractSelection
     range::Union{UnitRange{Int}, Int}

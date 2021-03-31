@@ -4,23 +4,32 @@ export PromoteSelection
 """
     PromoteSelection(sele::AbstractSelection, ::Type{T}, op::Function) where {T <: AbstractContainer}
 
-A `PromoteSelection` takes an input selection `sele` and outputs the same result
-in a different mask type, depending on the operation `op` requested. This is, in
-essence, the same as calculating the `Mask` of a given `AbstractSelection` and
-then using the function `promote` to cast the result to the desired `Mask` type
-(Ex: `ProtoSyn.promote(mask, Type, container, f = op)`).  
-The state mode of `PromoteSelection` `M` is set to the state mode of `sele`.
+A [`PromoteSelection`](@ref) takes an input selection `sele` and outputs the
+same result in a different [`Mask`](@ref) type, (depending on the operation `op`
+requested for _upwards_ promotions). 
+
+# State mode
+
+The selection type of [`PromoteSelection`](@ref) can be either `Stateless` or
+`Stateful`: it will automatically be set to the `StateMode` of the provided
+`sele` on the constructor.
+
+# Selection type
+
+The selection type of [`PromoteSelection`](@ref) can be any
+`T <: AbstractContainer`. When queried for using the `selection_type` function,
+will return the selection type of the given `sele`.
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version. However, the `promote`
+    function is used to return [`PromoteSelection`](@ref) instances with a more
+    user friendly syntax.
 
 # Examples
 ```jldoctest
 julia> sele = PromoteSelection(rn"ALA", Segment, all)
 PromoteSelection{ProtoSyn.Stateless}(FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), Segment, all)
 ```
-```
-
-## Note
-
-Operation `op`is only employed in upwards promotions (Ex: `Atom` to `Residue`).
 """
 mutable struct PromoteSelection{M} <: AbstractSelection
     sele::AbstractSelection
@@ -37,6 +46,20 @@ selection_type(sele::PromoteSelection{M})  where {M} = sele.T
 
 
 export promote
+
+"""
+    promote(sele::AbstractSelection, ::Type{T2}, [aggregator::Function = any]) where {T2 <: AbstractContainer}
+
+Return a [`PromoteSelection`](@ref) instance for selection `sele`, promoting to
+the requested type `T2 <: AbstractContainer`. If this is an _upwards_ promotion,
+use the given `aggregator` function (default: `any`).
+
+# Examples
+```jldoctest
+julia> ProtoSyn.promote(rn"ALA", Atom)
+PromoteSelection{ProtoSyn.Stateless}(FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), Atom, any)
+```
+"""
 function promote(sele::AbstractSelection, ::Type{T2}, aggregator::Function = any) where {T2 <: AbstractContainer}
     PromoteSelection(sele, T2, aggregator)
 end
@@ -59,12 +82,23 @@ function select(sele::PromoteSelection{Stateful}, container::AbstractContainer)
 end
 
 
-# --- Promotion tools ----------------------------------------------------------
+# --- Promotion tools for Masks ------------------------------------------------
 """
     promote(m1::Mask{T1}, m2::Mask{T2}, container::AbstractContainer) where {T1, T2}
 
 Promote one of the 2 given `Masks` (`m1` and `m2`) to the lowest ranking common
-type (Ex. `promote(m1::Mask{Residue}, m2::Mask{Atom}) => Mask{Atom}`).
+type (Ex. `promote(m1::Mask{Residue}, m2::Mask{Atom}) => (Mask{Atom},
+Mask{Atom)`).
+
+# Examples
+```jldoctest
+julia> m1 = an"CB"(pose)
+
+julia> m2 = rn"LEU"(pose)
+
+julia> ProtoSyn.promote(m1, m2, pose.graph)
+(ProtoSyn.Mask{Atom}(1140,), ProtoSyn.Mask{Atom}(1140,))
+```
 """
 function promote(m1::Mask{T1}, m2::Mask{T2}, container::AbstractContainer) where {T1, T2}
 
@@ -83,16 +117,29 @@ end
 """
     promote(mask::Mask{T1}, ::Type{T2}, container::AbstractContainer, f::Function = any)::Mask where {T1 <: AbstractContainer, T2 <: AbstractContainer}
 
-Cast a mask of type T1 to be of type T2, in the context of the given `container`.
-If casting to a higher ranking type (Ex. Atom -> Residue), a function `f`
-establishes the grouping operation (`any` occurrence (by default) or `all`
-occurrences of lower ranking type must be `true` to set the higher ranking entry
-to `true`.)
+Cast a [`Mask`](@ref) of type `T1` to be of type `T2`, in the context of the
+given `container`. If casting to a higher ranking type (_upwards_ promotion -
+Ex. Atom -> Residue), a function `f` establishes the grouping operation (`any`
+occurrence (by default) or `all` occurrences of lower ranking type must be
+`true` to set the higher ranking entry to `true`.)
 
 # Examples
 ```jldoctest
+julia> m1 = an"CB"(pose)
+
 julia> promote(m1, Residue, container)
-ProtoSyn.Mask{Residue}(Bool[1, 1, 1, 1, 1])
+ProtoSyn.Mask{Residue}(73,)
+73-element BitArray{1}:
+ 1
+ 0
+ 1
+ 1
+ 1
+ ⋮
+ 1
+ 1
+ 1
+ 1
 ```
 """
 function promote(mask::Mask{T1}, ::Type{T2}, container::AbstractContainer, f::Function = any)::Mask where {T1 <: AbstractContainer, T2 <: AbstractContainer}

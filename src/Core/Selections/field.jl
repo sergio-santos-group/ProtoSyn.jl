@@ -2,53 +2,47 @@ export FieldSelection
 # Note: FieldSelection is a LEAF selection.
 
 """
-    FieldSelection{M, T} <: AbstractSelection
+    FieldSelection{T}(pattern::String, field::Symbol, [is_regex::Bool = false]) where {T <: AbstractContainer}
 
-A `FieldSelection` takes an input `pattern` (as a `String`) and a `field` (as a
+A [`FieldSelection`](@ref) takes an input `pattern` (as a `String`) and a `field` (as a
 `Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`) containing all
 instances of said type in the given `container` whose `field` matches the `pattern`.
 
-    FieldSelection{T}(pattern::String, field::Symbol) where {T <: AbstractContainer}
-    
-The given `pattern` is to be considered as a Regular Expression (`Regex`).
-The state mode of DistanceSelection `M` is forced to be Stateless.
-The short syntax macros are: an"..." = Atom name; as"..." = Atom symbol; rn"..."
-= Residue name; sn"..." = Segment name
+!!! ukw "Note:"
+    The given `pattern` can be considered as a Regular Expression (`Regex`), if
+    `is_regex` flag is set to `true`. Optinally, when using a short syntax,
+    appending an "r" flag at the end of the expression also sets `is_regex` to
+    `true`. Check the examples bellow.
+
+# State mode
+
+The state mode of [`FieldSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`FieldSelection`](@ref) can be any `T <: AbstractContainer`.
+
+# Short syntax
+* an"..." = Atom name
+* as"..." = Atom symbol
+* rn"..." = Residue name
+* sn"..." = Segment name
 
 # Examples
 ```jldoctest
-julia> sele = FieldSelection{Segment}("UNK", :name)
-FieldSelection{ProtoSyn.Stateless,Segment}(true, r"UNK", :name)
-
-julia> sele = FieldSelection{Residue}("ALA", :name)
-FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name)
-
-julia> sele = FieldSelection{Residue}("GL*", :name)
-FieldSelection{ProtoSyn.Stateless,Residue}(true, r"GL*", :name)
-
-julia> sele = FieldSelection{Atom}("CA", :name)
-FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name)
-
 julia> sele = FieldSelection{Atom}("C", :symbol)
-FieldSelection{ProtoSyn.Stateless,Atom}(true, r"C", :symbol)
+FieldSelection{ProtoSyn.Stateless,Atom}("C", :symbol, isequal)
+
+julia> sele = FieldSelection{Residue}("AL*", :name, is_regex = true)
+FieldSelection{ProtoSyn.Stateless,Residue}(r"AL*", :name, occursin)
 ```
 
-# Short Syntax
 ```jldoctest
-julia> sele = sn"UNK"
-FieldSelection{ProtoSyn.Stateless,Segment}(true, r"UNK", :name)
-
-julia> sele = rn"ALA"
-FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name)
-
-julia> sele = rn"GL*"
-FieldSelection{ProtoSyn.Stateless,Residue}(true, r"GL*", :name)
-
-julia> sele = an"CA"
-FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name)
-
 julia> sele = as"C"
-FieldSelection{ProtoSyn.Stateless,Atom}(true, r"C", :symbol)
+FieldSelection{ProtoSyn.Stateless,Atom}("C", :symbol, isequal)
+
+julia> sele = rn"AL*"r
+FieldSelection{ProtoSyn.Stateless,Residue}(r"AL*", :name, occursin)
 ```
 """
 mutable struct FieldSelection{M, T} <: AbstractSelection

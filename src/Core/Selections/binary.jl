@@ -2,29 +2,59 @@ export BinarySelection
 # Note: BinarySelection is a BRANCH selection.
 
 """
-    BinarySelection{LM, RM} <: AbstractSelection
-
-A `BinarySelection` merges two selections using different operators, such as `and`
-and `or`.
-
     BinarySelection(op::Function, left::L, right::R) where {L <: AbstractSelection, R <: AbstractSelection}
-    
-Construct a new `BinarySelection` that combines both `left` and `right` AbstractSelections,
-using the defined operator `op`. If the defined selections have different resulting
-mask types (Ex: `Atom` and `Residue`), the resulting mask will be promoted to the lowest
-ranking type (Ex: `Atom`). If the defined selections have different state modes
-(Ex: `Stateless` and `Stateful`) the resulting selection will have a `Stateful` state mode.
+
+A [`BinarySelection`](@ref) merges two selections using different operators
+`op`, such as `and` and `or`. Return a new [`BinarySelection`](@ref) that
+combines both `left` and `right` AbstractSelections, using the defined operator
+`op`.
+
+# State mode
+
+If the defined selections have the same state mode, the resulting mask will be
+of that state mode. If the defined selections have different state modes (Ex:
+`Stateless` and `Stateful`) the resulting selection will have a `Stateful` state
+mode.
+
+# Selection type
+
+If the defined have the same selection type, the resulting mask will be of that
+type. If the defined selections have different selection types (Ex: `Atom`
+and `Residue`), the resulting mask will be promoted to the lowest ranking type
+(Ex: `Atom`).
+
+# See also
+[Promotion](@ref)
+
+# Short syntax
+* ... & ...
+* ... | ...
+
+!!! ukw "Note:"
+    [`BinarySelection`](@ref) instances are _left-dominant_, meaning that a
+    grouping of logical operators such as `rn"ALA" & rn"LEU" | an"CA"` will
+    first resolve the `rn"ALA" & rn"LEU"` part (which should return an all-false
+    [`Mask`](@ref)) and only then combine this [`Mask`](@ref) with the `| an"CA"`
+    [`BinarySelection`](@ref), thus essentially selecting only the _CA_ atoms of
+    the `AbstractContainer` its applied to.
+
+    However, **selections respect to parenthesis grouping**, meaning `rn"ALA" &
+    (rn"LEU" | an"CA")` will first resolve `rn"LEU" | an"CA"` (which should
+    return a [`Mask`](@ref) selecting all atoms of all _LEU_ residues plus the
+    _CA_ atoms of all other residues) and only then combine this [`Mask`](@ref)
+    with the `rn"ALA" &` [`BinarySelection`](@ref), thus essentially selecting
+    only the _CA_ atoms of any _ALA_ residues of the `AbstractContainer` its
+    applied to.
 
 # Examples
 ```jldoctest
 julia> sele = BinarySelection(&, rn"ALA", an"CA")
-BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(true, &, FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name), FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name))
+BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(&, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal))
 ```
 
-# Short Syntax
 ```jldoctest
 julia> rn"ALA" & an"CA"
-BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(true, &, FieldSelection{ProtoSyn.Stateless,Atom}(true, r"CA", :name), FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name))
+BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(&, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal))
 ```
 """
 mutable struct BinarySelection{LM, RM} <: AbstractSelection

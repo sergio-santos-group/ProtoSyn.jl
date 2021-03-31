@@ -2,9 +2,22 @@ export TrueSelection
 # Note: TrueSelection is a LEAF selection.
 
 """
-    TrueSelection{M, T} <: AbstractSelection
+    TrueSelection{T}()
 
-A `TrueSelection` returns a `Mask{T}` with all entries set to true.
+A [`TrueSelection`](@ref) returns a [`Mask`](@ref) (of type
+`T <: AbstractContainer`) with all entries set to `true`.
+
+# State mode
+    
+The state mode of [`TrueSelection`] `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`RandomRangeSelection`](@ref) can be any
+`T <: AbstractContainer`.
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
 
 # Examples
 ```jldoctest

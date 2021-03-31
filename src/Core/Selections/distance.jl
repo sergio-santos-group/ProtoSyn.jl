@@ -2,39 +2,41 @@ export DistanceSelection
 # Note: DistanceSelection is a BRANCH selection.
 
 """
-    DistanceSelection{M} <: AbstractSelection
-
-A `DistanceSelection` takes an input selection `sele` and outputs a `Mask` of
-`Atoms` within the given `distance` (in Ansgtrom Å).
-
     DistanceSelection(distance::Number, sele::S) where {S <: AbstractSelection}
-    
-The state mode of `DistanceSelection` `M` is forced to be Stateful, and the
-resulting `Mask` type is forced to be Atom.
+
+A [`DistanceSelection`](@ref) takes an input selection `sele` and outputs a
+[`Mask`](@ref) of [`Atom`](@ref) instances within the given `distance` (in
+Ansgtrom Å) of the selected atoms from `sele`.
+
+# State mode
+The state mode of [`DistanceSelection`](@ref) `M` is forced to be Stateful
+
+# Selection type
+
+The selection type of [`DistanceSelection`](@ref) `T` is forced to be [`Atom`](@ref).
 
 # Examples
 ```jldoctest
 julia> sele = DistanceSelection(2.0, rn"ALA")
-DistanceSelection{ProtoSyn.Stateful}(true, 2.0, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name)))
+DistanceSelection{ProtoSyn.Stateful,Atom}(2.0, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
 ```
 
-# Short Syntax
 ```jldoctest
 julia> 2.0:rn"ALA"
-DistanceSelection{ProtoSyn.Stateful}(true, 2.0, FieldSelection{ProtoSyn.Stateless,Residue}(true, r"ALA", :name)))
+DistanceSelection{ProtoSyn.Stateful,Atom}(2.0, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
 ```
 """
-mutable struct DistanceSelection{M} <: AbstractSelection
+mutable struct DistanceSelection{M, T} <: AbstractSelection
     distance::Number
     sele::AbstractSelection
 
     DistanceSelection(distance::Number, sele::S) where {S <: AbstractSelection} = begin
-        new{Stateful}(distance, sele)
+        new{Stateful, Atom}(distance, sele)
     end
 end
 
-state_mode_type(::DistanceSelection{M}) where {M} = M
-selection_type(::DistanceSelection) = Atom
+state_mode_type(::DistanceSelection{M, T}) where {M, T} = M
+selection_type(::DistanceSelection{M, T}) where {M, T} = T
 
 
 # --- Select -------------------------------------------------------------------
@@ -112,4 +114,5 @@ select(sele::DistanceSelection, container::AbstractContainer, state::State) = be
 end
 
 # --- Short Syntax -------------------------------------------------------------
+
 Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)

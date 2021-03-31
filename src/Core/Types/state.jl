@@ -305,7 +305,7 @@ end
 
 State(items::Vector{AtomState{T}}) where T = State(T, items)
 
-State(::T) where {T <: AbstractFloat} = State{T}(0)
+State(::Type{T}) where {T <: AbstractFloat} = State{T}(0)
 State() = State{Units.defaultFloat}(0)
 
 # ---

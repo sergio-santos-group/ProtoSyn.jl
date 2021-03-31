@@ -134,7 +134,7 @@ julia> frag = fragment(res_lib, seq"AAA")
 """
 function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}
 
-    state = State{T}()
+    state = State(T)
     seg = Segment("UNK", 1)
     seg.code = 'A'
 
