@@ -194,7 +194,7 @@ Base.copy(s0::Segment) = begin
 end
 
 Base.copy(t0::Topology) = begin
-    t1 = Topology(t0.name, t0.id)
+    t1 = Topology(t0.name, genid())
     for s0 in eachsegment(t0)
         s1 = copy(s0)
         push!(t1, s1)
@@ -231,7 +231,7 @@ Base.copy(s::State{T}) where T = begin
         ns[index].Δϕ = atomstate.Δϕ
         ns[index].changed = atomstate.changed
     end
-    ns.id = s.id
+    ns.id = genid()
     ns.i2c = s.i2c
     ns.c2i = s.c2i
     ns.f = copy(s.f)
@@ -239,7 +239,12 @@ Base.copy(s::State{T}) where T = begin
     ns
 end
 
-Base.copy(p::Pose) = Pose(copy(p.graph), copy(p.state))
+Base.copy(p::Pose) = begin
+    graph = copy(p.graph)
+    state = copy(p.state)
+    graph.id = state.id = genid()
+    return Pose(graph, state)
+end
 
 #endregion copy
 
