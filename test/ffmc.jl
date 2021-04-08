@@ -27,7 +27,7 @@ const NOFORCES = Val{false}
 
 
 function myeval(s::InternalRepresentation, ::Bool)
-    ProtoSyn.request_i2c(s.state)
+    ProtoSyn.request_i2c!(s.state)
     ProtoSyn.sync!(s.state, pose.graph)
 
     st = s.state
@@ -58,7 +58,7 @@ function mysampler(s::InternalRepresentation)
             setdihedral!(s.state, dihedral, randn())
         end
     end
-    #ProtoSyn.request_i2c(pose.state)
+    #ProtoSyn.request_i2c!(pose.state)
     #sync!(pose)
 end
 

@@ -18,8 +18,8 @@ res_lib  = ProtoSyn.Peptides.grammar(T)
 #     ProtoSyn.Peptides.pop_residue!(pose, residue)
 # end
 # ProtoSyn.append(pose, "teste.pdb")
-# println(ProtoSyn.origin(pose.graph).children)
-# println(ProtoSyn.origin(pose.graph).container.children)
+# println(ProtoSyn.root(pose.graph).children)
+# println(ProtoSyn.root(pose.graph).container.children)
 
 # rot_lib  = Peptides.Rotamers.load_dunbrack(T, Peptides.resource_dir * "/dunbrack_rotamers.lib")
 # seq = seq"ACDEFGHIKLMNPQRSTVWY"
@@ -404,7 +404,7 @@ end
 # Peptides.append_residues!(pose, pose.graph[1][end], res_lib, seq"GGG");
 # unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
 # sync!(pose);
-# println("Outside angle: $(pose.state[pose.graph[1][3]["N"]].ϕ) $(ProtoSyn.dihedral(pose.state[pose.graph[1][3]["N"]], pose.state[ProtoSyn.origin(pose.graph)], pose.state[ProtoSyn.origin(pose.graph).parent], pose.state[ProtoSyn.origin(pose.graph).parent.parent]))")
+# println("Outside angle: $(pose.state[pose.graph[1][3]["N"]].ϕ) $(ProtoSyn.dihedral(pose.state[pose.graph[1][3]["N"]], pose.state[ProtoSyn.root(pose.graph)], pose.state[ProtoSyn.root(pose.graph).parent], pose.state[ProtoSyn.root(pose.graph).parent.parent]))")
 # Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"LLL");
 # Peptides.mutate!(pose, pose.graph[1][2], res_lib, seq"L");
 # setss!(pose, SecondaryStructure[:helix], rid"2:end");
@@ -582,7 +582,7 @@ end
 
 # s = pose.state
 # a = pose.graph[1]
-# ProtoSyn.request_i2c(pose.state)
+# ProtoSyn.request_i2c!(pose.state)
 # sync!(pose)
 
 # println("PHI 22: $(rad2deg(ProtoSyn.dihedral(s[a[21]["C"]], s[a[22]["N"]], s[a[22]["CA"]], s[a[22]["C"]])))")

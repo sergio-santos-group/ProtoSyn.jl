@@ -158,7 +158,7 @@ end
 Base.copy(s0::Segment) = begin
     s1 = Segment(s0.name, s0.id)
     old2new = IdDict{AbstractContainer, AbstractContainer}()
-    root = origin(s0)
+    root = ProtoSyn.root(s0)
 
     # copy residues and atoms
     for r0 in eachresidue(s0)
@@ -199,11 +199,11 @@ Base.copy(t0::Topology) = begin
         s1 = copy(s0)
         push!(t1, s1)
         # setparent!(s1[1], t1.root)
-        # setparent!(s1[1][1], origin(t1))
+        # setparent!(s1[1][1], root(t1))
     end
 
-    root0 = ProtoSyn.origin(t0)
-    root1 = ProtoSyn.origin(t1)
+    root0 = ProtoSyn.root(t0)
+    root1 = ProtoSyn.root(t1)
     for (atom0, atom1) in zip(eachatom(t0), eachatom(t1))
         if atom0.parent == root0
             setparent!(atom1, root1)
@@ -239,9 +239,28 @@ Base.copy(s::State{T}) where T = begin
     ns
 end
 
-Base.copy(p::Pose) = begin
-    graph = copy(p.graph)
-    state = copy(p.state)
+"""
+    copy(pose::Pose)
+
+Return a copied [Pose](@ref) of the provided `pose`. The resulting [Pose](@ref)
+will have different `:id` fields for the [Graph](@ref) [`Topology`](@ref) and
+[State](@ref).
+
+*This function is a Base module overload.*
+
+# Examples
+```jldoctest
+julia> copy(pose)
+Pose{Topology}(Topology{/2a3d:1195}, State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+Base.copy(pose::Pose) = begin
+    graph = copy(pose.graph)
+    state = copy(pose.state)
     graph.id = state.id = genid()
     return Pose(graph, state)
 end
@@ -312,16 +331,36 @@ end
 
 #region detach -----------------------------------------------------------------
 
-Base.detach(s::Segment) = begin
+"""
+
+    detach(segment::Segment)
+
+Detach the given [`Segment`](@ref) from it's container [Graph](@ref), by:
+* Detaching any [`Atom`](@ref) and [`Residue`](@ref) instance from the [Graph](@ref)'s Root (by popping parenthood relationships), if said instances belong to the given [`Segment`](@ref) instance.
+* Deleting this [`Segment`](@ref) from its container [`Topology`](@ref). 
+
+*This function is a Base module overload.*
+
+!!! ukw "Note:"
+    This function does not alter the [State](@ref) of the [Pose](@ref)
+    containing the provided [`Segment`](@ref). 
+
+# Examples
+```jldoctest
+julia> detach(pose.graph[1])
+Topology{/2a3d:46790}
+```
+"""
+Base.detach(segment::Segment) = begin
     # * This function should remove the parenthood to the origin on all atoms
     # * and residues of this segment that are connected to the root.
-    root = origin(s)
-    for at in root.children
-        !(at.container.container == s) && continue
-        isparent(root, at) && popparent!(at)
-        isparent(root.container, at.container) && popparent!(at.container)
+    root = ProtoSyn.root(segment)
+    for atom in root.children
+        !(atom.container.container == segment) && continue
+        isparent(root, atom) && popparent!(atom)
+        isparent(root.container, atom.container) && popparent!(atom.container)
     end
-    hascontainer(s) && delete!(s.container, s)
+    hascontainer(segment) && delete!(segment.container, segment)
 end
 
 #endregion detach

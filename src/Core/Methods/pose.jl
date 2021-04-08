@@ -1,21 +1,3 @@
-"""
-    sync!(pose::Pose)
-    
-Check whether the given `Pose` instance has either i2c or c2i flag set to true
-and update the cartesian/internal coordinates accordingly. Return the altered
-`Pose` instance.
-
-
-# Examples
-```jldoctest
-julia> sync(pose)
-```
-"""
-function sync!(pose::Pose)::Pose
-    sync!(pose.state, pose.graph)
-    pose
-end
-
 function recoverfrom!(pose::Pose, backup::Pose)
     pose.state = copy(backup.state)
     pose.graph = copy(backup.graph)
@@ -23,7 +5,7 @@ end
 
 
 """
-    merge(pose1::Pose, pose2::Pose)::Pose
+    merge(pose1::Pose, pose2::Pose)
 
 Merge the two given poses, creating a new `Pose` in the process.
 
@@ -53,7 +35,7 @@ function merge(pose1::Pose, pose2::Pose)::Pose
 
     # Merge graphs
     graph = Topology("merged", -1)
-    root = ProtoSyn.origin(graph)
+    root = ProtoSyn.root(graph)
     merge_segments(pose1)
     merge_segments(pose2)
 
@@ -71,7 +53,7 @@ end
 
 
 """
-    merge!(pose1::Pose, pose2::Pose)::Pose
+    merge!(pose1::Pose, pose2::Pose)
 
 Merge the two given poses, updating/overwritting the given `pose1`.
 
@@ -89,7 +71,7 @@ Pose{Topology}(Topology{/merged:10313}, State{Float64}:
 function merge!(pose1::Pose, pose2::Pose)
 
     # Merge graphs
-    root = ProtoSyn.origin(pose1.graph)
+    root = ProtoSyn.root(pose1.graph)
     for segment in pose2.graph.items
         s = copy(segment)
         push!(pose1.graph, s)
@@ -117,13 +99,12 @@ end
 """
     symexp(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where {T <: AbstractFloat}
 
-Symmetry Expansion:
-Create N copies of the given `pose` in all 3 symmetry axis of a cube, where
-`reps` is the number of copies in each of the dimensions X, Y and Z (N is,
-therefore, reps[1]*reps[2]*reps[3]). **Note:** Length of `reps` must be 3.
-`unit_cell_dims` sets the distance in each of dimension to translate the copies,
-in Angstrom. **Note:** Length of `unit_cell_dims` must be 3. Copies the given
-`pose`.
+Return a symmetry expanded [Pose](@ref). Create N copies of the given `pose` in
+all 3 symmetry axis of a cubic lattice, where `reps` is the number of copies in
+each of the dimensions X, Y and Z (N is, therefore, reps[1]*reps[2]*reps[3]).
+Length of `reps` must be 3. `unit_cell_dims` sets the distance in each of
+dimension to translate the copies, in Angstrom Å. Length of `unit_cell_dims`
+must be 3. Copies the given `pose`, returning a new struct.
 
 # See also
 `symexp!` `merge`
@@ -140,8 +121,8 @@ Pose{Topology}(Topology{/merged:10313}, State{Float64}:
 ```
 """
 function symexp(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where {T <: AbstractFloat}
-    @assert length(reps)==3, "`reps` should be a Vector{Int} with 3 numbers - x, y and z number of repetitions"
-    @assert length(unit_cell_dims)==3, "`unit_cell_dims` should be a Vector{AbstractFloat} with 3 numbers - x, y and z distances of the bounding box"
+    @assert length(reps)==3 "`reps` should be a Vector{Int} with 3 numbers - x, y and z number of repetitions"
+    @assert length(unit_cell_dims)==3 "`unit_cell_dims` should be a Vector{AbstractFloat} with 3 numbers - x, y and z distances of the bounding box"
 
     _pose = copy(pose)
     return symexp!(_pose, reps, unit_cell_dims)
@@ -151,12 +132,12 @@ end
 """
     symexp!(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where {T <: AbstractFloat}
 
-Symmetry Expansion:
-Create N copies of the given `pose` in all 3 symmetry axis of a cube, where
-`reps` is the number of copies in each of the dimensions X, Y and Z (N is,
-therefore, reps[1]*reps[2]*reps[3]). **Note:** Length of `reps` must be 3.
-`unit_cell_dims` sets the distance in each of dimension to translate the copies,
-in Angstrom. **Note:** Length of `unit_cell_dims` must be 3. Updates/overwrites
+Return a symmetry expanded [Pose](@ref). Create N copies of the given `pose` in
+all 3 symmetry axis of a cubic lattice, where `reps` is the number of copies in
+each of the dimensions X, Y and Z (N is, therefore, reps[1]*reps[2]*reps[3]).
+Length of `reps` must be 3. `unit_cell_dims` sets the distance in each of
+dimension to translate the copies, in Angstrom Å. Length of `unit_cell_dims`
+must be 3. Copies the given `pose`, returning a new struct. Updates/overwrites
 the given `pose`.
 
 # See also
@@ -191,7 +172,7 @@ function symexp!(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where
                 for i in 1:_pose.state.size
                     _pose.state.x[:, i] = pose.state.x[:, i] .+ translation
                 end
-                ProtoSyn.request_c2i(_pose.state)
+                ProtoSyn.request_c2i!(_pose.state)
                 sync!(_pose)
                 ProtoSyn.merge!(pose, _pose)    
             end # k for
@@ -206,16 +187,29 @@ export fragment
 """
     fragment(pose::Pose{Topology})
     
-Return a fragment from a given Pose `pose`. The pose must have a single segment.
+Return a [Fragment](@ref) from a given [Pose](@ref) `pose`. The pose must have a
+single [`Segment`](@ref).
 
-!!! note
-    A Fragment is a Pose{Segment}, without a root/origin. These are usually used
-    as temporary carriers of information, without the ability to be directly
-    incorporated in simulations.
+    fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
+
+Return a [Fragment](@ref) from a list of residues retrieved from the given
+`selection` when applied to the provided [Pose](@ref) `pose`. If not yet of
+selection type [`Residue`](@ref), the `selection` will be promoted to
+[`Residue`](@ref) selection type (with the default `any` aggregating function).
+The resulting list of residues must be contiguous (a connected graph of
+[`Residue`](@ref) instances parenthoods). These will constitute the unique
+[`Segment`](@ref) of the resulting [Fragment](@ref).
+
+!!! ukw "Note:"
+    A [Fragment](@ref) is a `Pose{Segment}`, without a root/origin. These are
+    usually used as temporary carriers of information, without the ability to be
+    directly incorporated in simulations.
 
 # Examples
 ```jldoctest
 julia> frag = fragment(pose)
+
+julia> frag = fragment(pose, rid":1:10")
 ```
 """
 function fragment(pose::Pose{Topology})
@@ -238,9 +232,6 @@ function fragment(pose::Pose{Topology})
 end
 
 
-"""
-    # TODO
-"""
 function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     # Assumes all residues selected belong to the same Segment
 

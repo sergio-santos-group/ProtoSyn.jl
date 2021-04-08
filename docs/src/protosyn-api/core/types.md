@@ -11,7 +11,7 @@ Pose
 
 ## Fragment
 
-ProtoSyn.jl package uses a pose of a single [`Segment`](@ref) (therefore without a root) to carry information during certain processes (such as [Building a new peptide from a sequence]).
+ProtoSyn.jl package uses a pose of a single [`Segment`](@ref) (therefore without a Root) to carry information during certain processes (such as [Building a new peptide from a sequence]).
 ```@docs
 Fragment
 ```
@@ -20,7 +20,7 @@ Fragment
 
 The birectional graph holds the information regarding the hierarchical organization of a molecular system, where the top level of organization is a [`Topology`](@ref) instance, which can contain one or more instances of [`Segment`](@ref). This structure, in turn, is comprised of one or more [`Residue`](@ref) instances, which are themselves a set of [`Atom`](@ref) instances, this being the lowest level of data organization in ProtoSyn.
 
-![ProtoSyn graph](../../assets/ProtoSyn-graph.png)
+![ProtoSyn graph](../../assets/ProtoSyn-graph1.png)
 
 ```@docs
 Topology
@@ -30,14 +30,11 @@ Residue
 
 !!! ukw "Note:"
     Instead of defining [`Residue`](@ref).name as a String, ProtoSyn uses a specific type ([`ResidueName`](@ref ProtoSyn.ResidueName)) to accomodate specific conventions in aminoacid naming.
+
 ```@docs
 ProtoSyn.ResidueName
-```
-
-```@docs
 Atom
 ```
-
 
 ## State
 

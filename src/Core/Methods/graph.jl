@@ -2,45 +2,70 @@
 # functions that deal with parent/child relations, indexes and bonds, among
 # others.
 
-export hasparent, haschildren, isparent
-export setparent!, popparent!
-export popchild!
-export root
+export origin
+"""
+    origin(container::AbstractContainer)
 
+Return the first `Atom` in `AbstractContainer` `container` that has no parent.
+The iteration follows the [`Atom`](@ref) instance `:id` field, if correctly
+indexed. If no [`Atom`](@ref) instance without parent is found (i.e.: circular
+structures), return `nothing`.
+
+# See also
+[`root`](@ref) [`reindex`](@ref)
 
 """
-    root(c::AbstractContainer)
-
-Return the first `Atom` in `AbstractContainer` `c` that has no parent.
-"""
-root(c::AbstractContainer) = begin
-    for atom in eachatom(c)
+origin(container::AbstractContainer) = begin
+    for atom in eachatom(container)
         !hasparent(atom) && return atom
     end
-    nothing
+    return nothing
 end
 
 
+export root
+"""
+    root(container::AbstractContainer)
+
+Return the first [`Atom`](@ref) of the Root of the [Graph](@ref) that given
+`AbstractContainer` `container` belongs to. If the given `AbstractContainer`
+`container` is not a [`Topology`](@ref) instance and has `:container` field set
+to `nothing`, return `nothing`.
+
+    root(topology::Topology)
+
+Return the first [`Atom`](@ref) of the Root of the given [`Topology`](@ref)
+`topology` instance.
+
+# See also
+[`origin`](@ref)
+"""
+@inline root(topology::Topology) = get(topology.root, "OO")
+@inline root(container::AbstractContainer) = begin
+    hascontainer(container) ? root(container.container) : nothing
+end
+
+
+export hasparent
 """
     hasparent(c::AbstractContainer) -> Bool
 
 Test whether the given AbstractContainer `c` has a parent.
+
+# See Also
+[`isparent`](@ref)
 """
 @inline hasparent(c::AbstractContainer) = c.parent !== nothing
 
 
+export isparent
 """
-    haschildren(c::AbstractContainer) -> Bool
-
-Test whether the given AbstractContainer `c` has children.
-"""
-@inline haschildren(c::AbstractContainer) = !isempty(c.children)
-
-
-"""
-    isparent(parent::AbstractContainer, child::AbstractContainer) -> Bool
+    isparent(parent::AbstractContainer, child::AbstractContainer)
 
 Test whether `parent` is the parent of `child`.
+
+# See Also
+[`hasparent`](@ref)
 """
 @inline isparent(parent::AbstractContainer, child::AbstractContainer) = begin
     parent === child.parent
@@ -49,11 +74,15 @@ end
 @inline isparent(::Nothing, child::AbstractContainer) = false
 
 
+export setparent!
 """
     setparent!(child::T, parent::T) where {T <: AbstractContainer}
 
 Set `parent` as the parent of `child`, while adding `child` to
 `parent.children`.
+
+# See also
+[`popparent!`](@ref)
 """
 function setparent!(child::T, parent::T) where {T <: AbstractContainer}
     hasparent(child) && begin
@@ -65,11 +94,15 @@ function setparent!(child::T, parent::T) where {T <: AbstractContainer}
 end
 
 
+export popparent!
 """
     popparent!(child::AbstractContainer}
 
 Remove the parent from `child` (sets it to `nothing`) while removing `child`
 from `parent.children` (only if `child` is a child of `parent`).
+
+# See also
+[`setparent!`](@ref)
 """
 function popparent!(child::AbstractContainer)
     if hasparent(child)
@@ -86,57 +119,61 @@ function popparent!(child::AbstractContainer)
 end
 
 
-"""
-    popchild!(parent::AbstractContainer} -> child
-
-Remove child at index 1 from `parent` and return it. Note: The returned element
-is orphan. Return `nothing` if the item has no children.
-"""
-popchild!(parent::AbstractContainer) = begin
-    isempty(parent.children) ? nothing : popparent!(parent.children[1])
-end
-
-
 export hascontainer
+"""
+    hascontainer(c::AbstractContainer)
+
+Return `true` if the given `AbstractContainer.container` is not `nothing`.
+"""
 @inline hascontainer(c::AbstractContainer) = c.container !== nothing
 
-export origin
-@inline origin(t::Topology) = get(t.root, "OO")
-@inline origin(c::AbstractContainer) = hascontainer(c) ? origin(c.container) : nothing
-
-export hasgraph
-@inline hasgraph(t::Topology) = !isempty(origin(t).children)
 
 export genid
+"""
+    genid()
+
+Return a random `UInt16` number.
+"""
 @inline genid() = Int(rand(UInt16))
 
 
 export reindex
-
 """
-    reindex(t::Topology; set_ascendents = true)
+    reindex(topology::Topology; set_ascendents = true)
     
-Re-indexes the whole topology, setting both the ID and index of elements
-inside the topology to the corresponding relative index in the container.items
-which they belong to. If `set_ascendents` is set to true (is, by default), each
-`Atom` instance `ascendents` field will be updated to reflect the new indices.
+Re-indexes the whole [`Topology`](@ref) `topology`, setting both the `:id` and
+`:index` of instances inside the `topology` to the corresponding relative index
+in the `container.items` which they belong to. If `set_ascendents` is set to
+`true` (is, by default), each [`Atom`](@ref) instance `:ascendents` field will
+be updated to reflect the new indices.
+
+    reindex(segment::Segment)
+
+Re-indexes a [`Segment`](@ref) `segment`, setting both the `:id` and `:index` of
+instances inside the `topology` to the corresponding relative index in the
+`container.items` which they belong to.
+
+# See also
+[`ascendents`](@ref) [`reindex(::State)`](@ref)
 
 # Examples
 ```jldoctest
 julia> reindex(pose.graph)
+
+julia> reindex(pose.graph[1])
 ```
 """
-function reindex(t::Topology; set_ascendents = true)
+function reindex(topology::Topology; set_ascendents::Bool = true)
     aid = rid = sid = 0
-    for seg in t.items
-        seg.id    = (sid += 1)
-        seg.index = sid
-        for res in seg.items
-            res.id    = (rid += 1)
-            res.index = rid
-            for atm in res.items
-                atm.id    = (aid += 1)
-                atm.index = aid
+    for segment in topology.items
+        segment.id    = (sid += 1)
+        segment.index = sid
+        for residue in segment.items
+            residue.id    = (rid += 1)
+            residue.index = rid
+            for atom in residue.items
+                atom.id    = (aid += 1)
+                atom.index = aid
             end
         end
     end
@@ -144,22 +181,34 @@ function reindex(t::Topology; set_ascendents = true)
     # update ascendents (not possible before because
     # of possible problems with index assignment)
     if set_ascendents
-        for atm in eachatom(t)
-            atm.ascendents = ascendents(atm, 4)
+        for atom in eachatom(topology)
+            atom.ascendents = ascendents(atom, 4)
         end
     end
 
-    t
+    return topology
+end
+
+function reindex(segment::Segment)
+    aid = rid = 0
+    for residue in segment.items
+        residue.id    = (rid += 1)
+        residue.index = rid
+        for atom in residue.items
+            atom.id    = (aid += 1)
+            atom.index = aid
+        end
+    end
+    return segment
 end
 
 
 export ascendents
-
 """
-    ascedents(c::AbstractContainer, level::Int)
+    ascedents(container::AbstractContainer, level::Int)
     
-Return a Tuple containing the N (`level`) previous `parent` instances in the
-graph (recursivelly).
+Return a `Tuple` containing the N (`level`) previous `:id` fields of the
+`:parent` `AbstractContainer` instances of the given `container` (recursivelly).
 
 # Examples
 ```jldoctest
@@ -167,43 +216,29 @@ julia> ascendents(atom, 4)
 (1, 2, 3, 4)
 ```
 """
-function ascendents(c::AbstractContainer, level::Int)
-    level > 1 ? (c.index, ascendents(c.parent, level-1)...) : (c.index,)
-end
-
-
-"""
-    reindex(s::Segment)
-    
-Re-indexes the given `Segment` instance.
-
-# Examples
-```jldoctest
-julia> reindex(pose.graph[1])
-```
-"""
-function reindex(s::Segment)
-    aid = rid = 0
-    for res in s.items
-        res.id    = (rid += 1)
-        res.index = rid
-        for atm in res.items
-            atm.id    = (aid += 1)
-            atm.index = aid
-        end
+function ascendents(container::AbstractContainer, level::Int)
+    if level > 1
+        return (container.index, ascendents(container.parent, level - 1)...)
+    else
+        (container.index,)
     end
-    s
 end
 
 
 """
     unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     
-Return a Pose instance with both given atoms unbonded (removed from eachother
-`bonds` list; pops parenthood - if parent - and, if bond is inter-residue, sets
-the downstream residue.parent to be the origin of the system, maintaining the 
-same relative position as measured from internal coordinates, after sync! is
-called).
+Return a [Pose](@ref) instance with both given [`Atom`](@ref) instances unbonded
+(removed from eachother `bonds` list; pops parenthood - if parent - and, if bond
+is inter-residue, sets the downstream [`Residue`](@ref) to be the Root of the
+[`Topology`](@ref). 
+
+!!! ukw "Note:"
+    This function does not maintain the  same relative position as measured from
+    internal coordinates, after [`sync!`](@ref) is called. In order to keep the
+    position of the downstream [`Residue`](@ref) instances, call
+    [`request_c2i!`](@ref) and [`sync!`](@ref), in order to _fixate_ the
+    cartesian coordinates to the new [Graph](@ref) organization.
 
 # Examples
 ```jldoctest
@@ -240,16 +275,12 @@ function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     at1.container === at2.container && return pose
 
     # Case this is an inter-residue connection, the downstream residue needs to
-    # be coupled with the origin
-            
-    state = pose.state
-
-    # Detach from residue graph
+    # be coupled with the origin and detached from residue graph
     # This assumes ROOT is always on the side of the parent
     # This assumes at1 is parent of at2
     #  Remove at2 from at1.children and set at2.parent to nothing
     #  Add at2 to origin.children and set at2.parent to origin
-    _origin = ProtoSyn.origin(at1)
+    _origin = ProtoSyn.root(at1)
 
     #  Remove at2.container from at1.containter.children and set
     # at2.container.parent to nothing
@@ -267,8 +298,12 @@ end
 """
     bond(at1::Atom, at2::Atom)
     
-Bond both given Atoms (adds at2 to at1.bonds and vice-versa). Both atoms need
-to be in the same segment.
+Bond both given [`Atom`](@ref) instances (adds `at2` to `at1.bonds` and
+vice-versa). Both [`Atom`](@ref) instances need to be in the same
+[`Segment`](@ref).
+
+# See also
+[`join`](@ref) [`unbond`](@ref)
 
 # Examples
 ```jldoctest
@@ -283,19 +318,30 @@ end
 
 
 """
+    join(at1::Atom, at2::Atom)
+
+Join [`Atom`](@ref) `at1` with [`Atom`](@ref) `at2`.
+
     join(r1::Residue, s1::String, r2::Residue, s2::String)
     
-Join atom named `s1` from residue `r1` with atom named `s2` from residue `r2`.
-Bond (add eachother to other.bonds field) and set parent/children of both the
-atoms and respective atom.container (residue).
+Join [`Atom`](@ref) named `s1` from [`Residue`](@ref) `r1` with [`Atom`](@ref)
+named `s2` from [`Residue`](@ref) `r2`.
+
+Bond (add eachother to `other.bonds` field) and set parent/children relationship
+of both the [`Atom`](@ref) instances and respective `atom.container`
+([`Residue`](@ref)). Note that `at2` [`Atom`](@ref) will become parent at `at1`
+(and `at2.container` [`Residue`](@ref) will become parent of `at1.container`).
+
+# See also
+[`bond`](@ref) [`unbond`](@ref)
 
 # Examples
 ```jldoctest
 julia> join(r1, "C", r2, "N")
 ```
 """
-function join(r1::Residue, s1::String, r2::Residue, s2::String) # IMPORTANT
-    hasparent(r2) && error("r2 is already connected")
+function join(r1::Residue, s1::String, r2::Residue, s2::String) # ! IMPORTANT
+    hasparent(r2) && error("r2 is already connected.")
     at1 = r1[s1]
     at2 = r2[s2]
     bond(at1, at2)          # at1 <-> at2
@@ -303,53 +349,11 @@ function join(r1::Residue, s1::String, r2::Residue, s2::String) # IMPORTANT
     setparent!(r2, r1)      # r1 -> r2
 end
 
-
-export build_tree!
-function build_tree!(seedfinder::Function, top::Topology)
-
-    head = tail = 0
-    natoms = count_atoms(top)
-    tree = Vector{Atom}(undef, natoms)
-    
-    #seeds = seedfinder(top)
-    root = origin(top)
-
-    # build atom tree
-    # for seed in seeds
-    for seg in top.items
-        seed = seedfinder(seg)
-        seed === nothing && continue
-        tree[tail+=1] = seed
-        seed.visited = true
-        while head < tail
-            parent = tree[head+=1]
-            for atom in parent.bonds
-                atom.visited && continue
-                setparent!(atom, parent)
-                tree[tail+=1] = atom 
-                atom.visited = true
-            end
-        end
-        hasparent(seed) && error("invalid seed encountered")
-        setparent!(seed, root)
-    end
-    
-    # build residue graph
-    if head > 0
-        for atom in tree
-            atom.ascendents = ascendents(atom, 4)
-            r = atom.container
-            p = atom.parent.container
-            if r===p || p===top.root || (r.visited && p.visited)
-                continue
-            end
-            if r.container !== p.container
-                error("parent and child residue must belong to the same segment")
-            end
-            setparent!(r, p)
-            r.visited = p.visited = true
-        end
-    end
+function join(at1::Atom, at2::Atom)
+    hasparent(at2) && error("at2 is already connected.")
+    bond(at1, at2)
+    setparent!(at2, at1)
+    setparent!(at2.container, at1.container)
 end
 
 # COUNTERS
@@ -364,11 +368,30 @@ count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
 
 
-# TRAVEL GRAPH
 export travel_graph
 
 """
-    # TODO
+    travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
+
+Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
+and `stop`, while following the structure's [Graph](@ref). If no `stop`
+[`Atom`](@ref) instance is provided or if it isn't found as a downstream parent
+of the `start` [`Atom`](@ref), all instances until no children [`Atom`](@ref)
+instances are found are returned (for example, until the end of the current
+[Pose](@ref) of [`Segment`](@ref)). Note that the order of the returned
+[`Atom`](@ref) instances reflects the organization of the graph followed, and
+not the distance/parenthood to the `start` [`Atom`](@ref), and should therefore
+be ignored in most cases.
+
+# See also
+[`is_contiguous`](@ref) [`hasparent`](@ref) [`setparent!`](@ref)
+ 
+# Examples
+```jldoctest
+julia> ProtoSyn.travel_graph(pose.graph[1][72][1])
+32-element Array{Atom,1}:
+ ...
+```
 """
 function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
     atoms = Vector{Atom}([start])
@@ -386,6 +409,23 @@ function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
 end
 
 export ids
+
+"""
+    ids(atoms::Vector{Atom})
+
+Return a vector with the `:id` `Int` field for every [`Atom`](@ref) in the given
+`atoms` vector.
+
+# See also
+[`travel_graph`](@ref)
+
+# Examples
+```jldoctest
+ProtoSyn.ids(atoms)
+32-element Array{Int64,1}:
+ ...
+```
+"""
 function ids(atoms::Vector{Atom})::Vector{Int}
     idxs = Vector{Int}()
     for atom in atoms
@@ -398,9 +438,9 @@ end
 """
     is_contiguous(pose::Pose, selection::AbstractSelection)
 
-Returns `true` if all the Residues gathered from the `selection` applied to the
-given `pose` are contiguous (have a parenthood relationship connecting them 
-all). 
+Returns `true` if all the [`Residue`](@ref) instances gathered from the
+`selection` applied to the given `pose` are contiguous (have a parenthood
+relationship connecting them all). 
 
 # Examples
 ```jldoctest
@@ -414,7 +454,7 @@ true
 function is_contiguous(pose::Pose, selection::ProtoSyn.AbstractSelection)
     sele              = promote(selection, Residue)
     selected_residues = sele(pose, gather = true)
-    root              = ProtoSyn.origin(pose.graph).container # * Residue
+    root              = ProtoSyn.root(pose.graph).container # * Residue
     
     # Initialize
     stack = Vector{Residue}()

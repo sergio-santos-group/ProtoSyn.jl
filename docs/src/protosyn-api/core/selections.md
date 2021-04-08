@@ -1,6 +1,8 @@
 # Selections
 
-ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all selections is an `AbstractSelection`, which is parametrized by 2 different static types:
+> The [Selections](@ref) are a sub-module of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and [Methods](@ref) that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+ 
+ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref) is an `AbstractSelection`, which is parametrized by 2 different static types:
 
 * First, a `StateMode` indicates whether an `AbstractSelection` is `Stateful` or `Stateless`.
     * `Stateful` selections require a [`State`](@ref) in order to correctly calculate the Selection. An example would be a Selection that selects all residues within 10Å of a given residue.

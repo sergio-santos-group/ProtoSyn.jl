@@ -28,7 +28,7 @@ function (rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Ve
         # pose.state[atom].t .+= translation_vector
         pose.state[atom].t = translation_vector .+ pose.state[atom].t
     end
-    ProtoSyn.request_c2i(pose.state)
+    ProtoSyn.request_c2i!(pose.state)
 end
 
 # ------------------------------------------------------------------------------
@@ -56,5 +56,5 @@ function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
     idxs  = findall(mask.content)
     pivot = rigid_body_mutator.pivot_sampler(pose, idxs)
     pose.state.x[:, idxs] = (rmat * (pose.state.x[:, idxs] .- pivot)) .+ pivot
-    ProtoSyn.request_c2i(pose.state)
+    ProtoSyn.request_c2i!(pose.state)
 end

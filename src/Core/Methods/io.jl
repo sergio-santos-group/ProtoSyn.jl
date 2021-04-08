@@ -64,7 +64,7 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
         end
     end
 
-    ProtoSyn.request_c2i(pose.state)
+    ProtoSyn.request_c2i!(pose.state)
     # println()
     # sync!(pose)
     pose
@@ -109,17 +109,16 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
         foreach(other -> setparent!(res[other], atom), others)
     end
 
-    root = origin(top)
     setparent!(
         res[graph["root"]],
-        origin(top)
+        ProtoSyn.root(top)
     )
     
     for atom in eachatom(top)
         atom.ascendents = ascendents(atom, 4)
     end
 
-    request_i2c(state; all=true)
+    request_i2c!(state; all=true)
     top.id = state.id = genid()
     sync!(Pose(top, state))
 end
@@ -161,7 +160,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 
             if res.id != resid || res.name != resname
                 res = Residue!(seg, resname, resid)
-                setparent!(res, ProtoSyn.origin(top).container)
+                setparent!(res, ProtoSyn.root(top).container)
             end
 
             atsymbol = length(line)>77 ? string(strip(line[77:78])) : "?"
@@ -247,7 +246,7 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     println(io, "  root: N")
     println(io, "  adjacency:")
     for at in byatom
-        if haschildren(at)
+        if !isempty(c.children)
             print(io, "    ", at.name, ": [")
             print(io, Base.join(map(a->a.name, at.children), ", "))
             println(io, "]")

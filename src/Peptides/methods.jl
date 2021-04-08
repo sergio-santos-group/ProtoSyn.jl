@@ -164,7 +164,7 @@ julia> insert_residues!(pose, pose.graph[1][2], reslib, seq"A")
 function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
     ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
 
-    connected_to_origin = residue.parent == ProtoSyn.origin(pose.graph).container
+    connected_to_origin = residue.parent == ProtoSyn.root(pose.graph).container
     if connected_to_origin
         state = pose.state
         N = state[residue["N"]] # This is the N atom state
@@ -180,7 +180,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     if connected_to_origin
         N = state[residue.container[i]["N"]]
         (N.b, N.θ, N.ϕ) = (b, θ, ϕ)
-        ProtoSyn.request_i2c(state; all = true)
+        ProtoSyn.request_i2c!(state; all = true)
     end
 
     # residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
@@ -218,8 +218,8 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     old_r_pos += 1
     N = residue.container.items[old_r_pos]["N"]
     Peptides.pop_residue!(pose, residue.container.items[old_r_pos])
-    # i = findall(a -> a == N, ProtoSyn.origin(pose.graph).children)
-    # deleteat!(ProtoSyn.origin(pose.graph).children, i)
+    # i = findall(a -> a == N, ProtoSyn.root(pose.graph).children)
+    # deleteat!(ProtoSyn.root(pose.graph).children, i)
 
     # 3) Remove downstream residue parents (now in position R + 1, since we
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
@@ -339,7 +339,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     end
     
     residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
-    ProtoSyn.request_i2c(pose.state)
+    ProtoSyn.request_i2c!(pose.state)
 
     return pose
 end
@@ -515,7 +515,7 @@ function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
     
     # Set correct positioning
     state = pose.state
-    _origin = ProtoSyn.origin(pose.graph)
+    _origin = ProtoSyn.root(pose.graph)
     sync!(pose)
 
     at_N = state[residue_2["N"]]
@@ -537,7 +537,7 @@ function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
         end
     end
 
-    ProtoSyn.request_i2c(state, all = true)
+    ProtoSyn.request_i2c!(state, all = true)
 end
 
 
@@ -553,7 +553,7 @@ true
 ```
 """
 function is_N_terminal(res::Residue)
-    return ProtoSyn.origin(res.container.container).container == res.parent
+    return ProtoSyn.root(res.container.container).container == res.parent
 end
 
 

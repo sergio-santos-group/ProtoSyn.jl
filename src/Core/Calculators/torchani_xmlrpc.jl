@@ -64,7 +64,7 @@ type is attempted).
 function r_xml_travel!(xml::Union{XMLDocument, XMLElement}, query::String, results::Vector{T}) where {T <: AbstractFloat}
 
     if typeof(xml) == XMLDocument
-        xml = LightXML.root(xml)
+        xml = LightXML.origin(xml)
     end
     for element in child_elements(xml)
         if name(element) == query

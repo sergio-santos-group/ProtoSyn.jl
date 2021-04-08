@@ -35,14 +35,14 @@ module Lattices
 
         top = Topology("primitive", -1)
         seg = Segment!(top, "unitcell", 1)
-        root = ProtoSyn.origin(seg)
+        root = ProtoSyn.root(seg)
         res = Residue!(seg, "UNK", 1)
         setparent!(res, root.container)
         atm = Atom!(res, "C", 1, 1, "C")
         setparent!(atm, root)
 
         state = State(1)
-        ProtoSyn.request_c2i(state)
+        ProtoSyn.request_c2i!(state)
         top.id = state.id = genid()
         pose = Pose(top, state)
         reindex(pose.graph)
@@ -79,7 +79,7 @@ module Lattices
 
         top = Topology("primitive", -1)
         seg = Segment!(top, "unitcell", 1)
-        root = ProtoSyn.origin(seg)
+        root = ProtoSyn.root(seg)
         res = Residue!(seg, "UNK", 1)
         setparent!(res, root.container)
         atm1 = Atom!(res, "C1", 1, 1, "C")
@@ -92,7 +92,7 @@ module Lattices
         y2 = unit_cell_dims[2]/2
         z2 = unit_cell_dims[3]/2
         state.items[5].t = Vector{T}([x2, y2, z2])
-        ProtoSyn.request_c2i(state)
+        ProtoSyn.request_c2i!(state)
         top.id = state.id = genid()
         pose = Pose(top, state)
         reindex(pose.graph)

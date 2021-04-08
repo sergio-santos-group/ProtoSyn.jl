@@ -2,32 +2,110 @@
 # functions that deal with internal/cartesian coordinate syncs, among others.
 using LinearAlgebra
 
-export sync!
+"""
+    request_c2i!(state::State; [all::Bool = false])
+
+Sets `state.c2i` to `true`. If `all` is set to `true` (`false`, by default),
+update all [`AtomState`](@ref) instances in the given [State](@ref) `state` to
+have `:changed` field set to `true`. Return the altered [State](@ref) `state`.
+
+# See also
+[`request_i2c!`](@ref) [`c2i!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.request_c2i!(pose.state)
+State{Float64}:
+ Size: 1140
+ i2c: false | c2i: true
+ Energy: Dict(:Total => Inf)
+```
+"""
+function request_c2i!(state::State; all::Bool = false)
+    state.c2i = true
+    if all
+        for atomstate in state.items
+            atomstate.changed = true
+        end
+    end
+    return state
+end
+
 
 """
-    sync!(state::State, top::Topology)
-    
-Check whether the given `State` instance has either i2c or c2i flag set to true
-and update the cartesian/internal coordinates accordingly. Return the altered
-`State` instance.
+    request_i2c!(state::State; [all::Bool = false])
 
+Sets `state.i2c` to `true`. If `all` is set to `true` (`false`, by default),
+update the first [`AtomState`](@ref) instance in the given [State](@ref) `state`
+(in the Root) to have `:changed` field set to `true`. Return the altered
+[State](@ref) `state`.
+
+# See also
+[`request_c2i!`](@ref) [`i2c!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.request_i2c!(pose.state)
+State{Float64}:
+ Size: 1140
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+```
+"""
+function request_i2c!(s::State; all::Bool=false)
+    s[0].changed = all
+    s.i2c = true
+    s
+end
+
+
+export sync!
+"""
+    sync!(state::State, topology::Topology)
+    
+Check whether the given [`State`](@ref) `state` instance has either `i2c` or
+`c2i` flag set to `true` and if so update the cartesian/internal coordinates
+accordingly. Return the altered [`State`](@ref) instance. 
+
+    sync!(pose::Pose)
+
+Check whether the given [Pose](@ref) instance has either `i2c` or
+`c2i` flag set to `true` in its `pose.state` field and if so update the
+cartesian/internal coordinates accordingly. Return the altered [Pose](@ref) instance. 
+
+!!! ukw "Note:"
+    Requesting both `i2c` and `c2i` conversions simultaneously is not possible
+    and will result in an error. Consider calling [`i2c!`](@ref) or
+    [`c2i!`](@ref) to choose one of the coordinate systems to be synched. 
+
+# See also
+[`i2c!`](@ref) [`c2i!`](@ref)
 
 # Examples
 ```jldoctest
 julia> sync(pose.state, pose.graph)
+State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
 ```
 """
-function sync!(state::State, top::Topology)::State
+function sync!(state::State, topology::Topology)::State
 
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
-        c2i!(state, top)
+        c2i!(state, topology)
     elseif state.i2c
-        i2c!(state, top)
+        i2c!(state, topology)
     end
 
-    state
+    return state
+end
+
+function sync!(pose::Pose)::Pose
+    sync!(pose.state, pose.graph)
+    return pose
 end
 
 
@@ -35,52 +113,82 @@ end
     c2i!(state::State{T}, top::Topology)
     
 Update the internal coordinates to match the measured cartesian coordinates,
-in the given `State`. Return the aletered `State` instance.
+in the given [`State`](@ref) `state`. Note that only the [`AtomState`](@ref)
+instances with `:changed` field set to `true` will be updated, and the flag is
+therefore changed to `false`. Return the altered [`State`](@ref) `state`
+instance. If `state.c2i` is not set to `true`, return the original
+[`State`](@ref) `state` instance, without changes.
 
+# See also
+[`i2c!`](@ref) [`request_c2i!`](@ref)
 
 # Examples
 ```jldoctest
-julia> c2i!(pose.state, pose.graph)
+julia> ProtoSyn.c2i!(pose.state, pose.graph)
+State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
 ```
 """
 function c2i!(state::State{T}, top::Topology) where T
 
+    state.c2i == false && return state
     for atom in eachatom(top)
+        istate = state[atom.id]
+        !(istate.changed) && continue
         (i, j, k, l) = atom.ascendents
-        istate = state[i]
         jstate = state[j]
         kstate = state[k]
         
         # Bond
-        istate.b = ProtoSyn.distance(jstate, istate)
+        istate.b       = ProtoSyn.distance(jstate, istate)
 
         # Angle
-        istate.θ = ProtoSyn.angle(kstate, jstate, istate)
+        istate.θ       = ProtoSyn.angle(kstate, jstate, istate)
 
         # Dihedral
-        istate.ϕ = ProtoSyn.dihedral(state[l], kstate, jstate, istate)
-        istate.Δϕ = 0
+        istate.ϕ       = ProtoSyn.dihedral(state[l], kstate, jstate, istate)
+        istate.Δϕ      = 0
+        istate.changed = false # * Reset the :changed flag
     end
 
     state.c2i = false
-    state
+    return state
 end
 
 
 """
     i2c!(state::State{T}, top::Topology)
     
-Update the cartesian coordinates to match the current internal coordinates,
-in the given `State`. Return the aletered `State` instance.
+Update the cartesian coordinates to match the measured internal coordinates,
+in the given [`State`](@ref) `state`. Note that only the [`AtomState`](@ref)
+instances with `:changed` field set to `true` will be updated, and the flag is
+therefore changed to `false`. Return the altered [`State`](@ref) `state`
+instance. If `state.c2i` is not set to `true`, return the original
+[`State`](@ref) `state` instance, without changes.
 
+!!! ukw "Note:"
+    Any [`AtomState`](@ref) that requires an update (has `:changed` flag set to
+    `true`) will cause all downstream residues to be updated as well (in the
+    same [Graph](@ref)).
+
+# See also
+[`c2i!`](@ref) [`request_i2c!`](@ref)
 
 # Examples
 ```jldoctest
-julia> i2c!(pose.state, pose.graph)
+julia> ProtoSyn.i2c!(pose.state, pose.graph)
+State{Float64}:
+    Size: 1140
+    i2c: false | c2i: false
+    Energy: Dict(:Total => Inf)
 ```
 """
 function i2c!(state::State{T}, top::Topology) where T
     
+    state.i2c == false && return state
+
     vjk = MVector{3, T}(0, 0, 0)
     vji = MVector{3, T}(0, 0, 0)
     n   = MVector{3, T}(0, 0, 0)
@@ -88,7 +196,7 @@ function i2c!(state::State{T}, top::Topology) where T
     
     queue = Atom[]
 
-    root = origin(top)
+    root = ProtoSyn.root(top)
     root_changed = state[root].changed
 
     for child in root.children
@@ -148,27 +256,28 @@ function i2c!(state::State{T}, top::Topology) where T
     end
 
     state.i2c = false
-    state.c2i = false
-    state
+    return state
 end
 
 
 export setoffset!
-
 """
-    setoffset!(state::State{T}, at::Atom, default::Number) where T
+    setoffset!(state::State{T}, at::Atom, default::Number) where {T <: AbstractFloat}
 
-Rotate all sibling dihedrals of `at` so that the dihedral angle identified by
-`at` is equal to `default`.
+Rotate all sibling dihedrals of [`Atom`](@ref) `atom` in the given
+[`State`](@ref) `state` so that the dihedral angle identified by `atom` is equal
+to `default`. Set the `i2c` flag to `true` and return the altered
+[`State`](@ref) `state`.
 """
-setoffset!(state::State{T}, at::Atom, default::Number) where T = begin
+function setoffset!(state::State{T}, atom::Atom, default::Number) where {T <: AbstractFloat}
 
-    if hasparent(at)
-        ϕ = state[at].ϕ - T(default)
-        for child in at.parent.children
+    if hasparent(atom)
+        ϕ = state[atom].ϕ - T(default)
+        for child in atom.parent.children
             state[child].ϕ -= ϕ
         end
     end
+
     state.i2c = true
     state
 end
@@ -176,29 +285,43 @@ end
 export setdihedral!, getdihedral
 
 """
-    setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat}
+    setdihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat}
 
-Set the dihedral in `Atom` `at` of `State` `s` to be `val` (in radians).
+Set the dihedral in [`Atom`](@ref) `atom` of [`State`](@ref) `state` to be
+exactly `value` (in radians). Automatically requests internal to cartesian
+coordinate conversion (by setting `state.i2c` as `true`). Return the altered
+[`State`](@ref) `state`.
+
+# See also
+[`ascendents`](@ref) [`request_i2c!`](@ref) [`getdihedral`](@ref)
+[`rotate_dihedral!`](@ref)
 
 # Examples
 ```jldoctest
-julia> setdihedral!(pose.state, pose.graph[1][1][end], π)
+julia> setdihedral!(pose.state, pose.graph[1][1][end], Float64(π))
+State{Float64}:
+ Size: 1140
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
 ```
 """
-@inline setdihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
-    at2 = at.ascendents[2]
-    s[at2].Δϕ += val - getdihedral(s, at)
-    ProtoSyn.request_i2c(s)
-    s
+@inline setdihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat} = begin
+    atom2 = atom.ascendents[2]
+    state[atom2].Δϕ += value - getdihedral(state, atom)
+    ProtoSyn.request_i2c!(state)
+    return state
 end
 
 
 """
-    getdihedral(s::State, at::Atom)
+    getdihedral(state::State, atom::Atom)
 
-Get the dihedral value for `Atom` `at` of `State` `s` (in radians).
-This value is the sum of the intrisic dihedral angle and the second ascendent
-Δϕ.
+Get the dihedral value for [`Atom`](@ref) `atom` of [`State`](@ref) `state` (in
+radians). This value is the sum of the intrisic dihedral angle and the second
+ascendent Δϕ.
+
+# See also
+[`ascendents`](@ref) [`setdihedral!`](@ref)
 
 # Examples
 ```jldoctest
@@ -206,38 +329,68 @@ julia> getdihedral(pose.state, pose.graph[1][1][end])
 3.1415926535897
 ```
 """
-@inline getdihedral(s::State, at::Atom) = begin
-    at2 = at.ascendents[2]
-    return s[at].ϕ + s[at2].Δϕ
+@inline getdihedral(state::State, atom::Atom) = begin
+    atom2 = atom.ascendents[2]
+    return state[atom].ϕ + state[atom2].Δϕ
 end
-
-@inline getdihedral(s::State, at::Nothing) = rand() * 2 * π
 
 
 export rotate_dihedral!
-
 """
-    rotate_dihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat}
+    rotate_dihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat}
 
-Rotate the dihedral in `Atom` `at` of `State` `s` by `val` (in radians).
+Rotate the dihedral in [`Atom`](@ref) `atom` of [`State`](@ref) `state` by
+`value` (in radians, __adds__ to the current dihedral angle). Automatically
+requests internal to cartesian coordinate conversion (by setting `state.i2c` as
+`true`). Return the altered [`State`](@ref) `state`.
+
+# See also
+[`ascendents`](@ref) [`request_i2c!`](@ref) [`getdihedral`](@ref)
+[`setdihedral!`](@ref)
 
 # Examples
 ```jldoctest
-julia> rotate_dihedral!(pose.state, pose.graph[1][1][end], π)
+julia> rotate_dihedral!(pose.state, pose.graph[1][1][end], Float64(π))
+State{Float64}:
+ Size: 1140
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
 ```
 """
-@inline rotate_dihedral!(s::State, at::Atom, val::T) where {T <: AbstractFloat} = begin
-    at2 = at.ascendents[2]
-    s[at2].Δϕ += val
-    ProtoSyn.request_i2c(s)
-    s
+@inline rotate_dihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat} = begin
+    atom2 = atom.ascendents[2]
+    state[atom2].Δϕ += value
+    ProtoSyn.request_i2c!(state)
+    return state
 end
 
 """
-    # TODO
+    reindex(state::State)
+
+Re-indexes the whole [`State`](@ref) `state` (excluding the Root), setting
+the `:index` field of [`AtomState`](@ref) instances. Return the altered
+[`State`](@ref) `state`.
+
+!!! ukw "Note:"
+    Since we are altering a field of [`AtomState`](@ref) structs, the `:changed`
+    field will automatically be set to `true` and therefore be updated in a
+    future [`sync!`](@ref) call (if either `:i2c` or `:c2i` flag in the
+    corresponding `state` is set to `true`).
+
+# See also
+[`reindex(::Topology, ::Bool)`](@ref)
+
+# Examples
+julia> reindex(pose.state)
+State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+```
 """
-function reindex(s::State)
-    for (index, atomstate) in enumerate(s.items[4:end])
+function reindex(state::State)
+    for (index, atomstate) in enumerate(state.items[4:end])
         atomstate.index = index
     end
+    return state
 end

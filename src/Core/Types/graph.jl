@@ -182,7 +182,7 @@ end
     Topology(name::String, id::Int)
     
 Construct a [`Topology`](@ref), with the given `name` and `id`. A
-[`Topology`](@ref) is the top level of hierarchy in a Graph, and holds a `root`
+[`Topology`](@ref) is the top level of hierarchy in a Graph, and holds a `Root`
 [`Residue`](@ref), therefore initializing the internal coordinates system in the
 corresponding [State] of a [Pose](@ref).  *Note:* [`Topology`](@ref) is of super
 type `AbstractTopology`, which is an `AbstractContainer`.
@@ -202,7 +202,7 @@ type `AbstractTopology`, which is an `AbstractContainer`.
     other.
 
 # See also
-[Root] [`Segment`](@ref)
+[`root`](@ref) [`Segment`](@ref)
 
 # Examples
 ```jldoctest

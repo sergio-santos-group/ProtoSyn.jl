@@ -43,7 +43,7 @@ selection_type(::TerminalSelection{M, T})  where {M, T} = T
 function select(sele::TerminalSelection{Stateless, Residue}, container::AbstractContainer)
     @assert typeof(container) > Residue "Can't apply TerminalSelection{Residue} to container of type $(typeof(container))"
     
-    origin = ProtoSyn.origin(container).container
+    origin = ProtoSyn.root(container).container
     n_residues = counter(Residue)(container)
     mask = Mask{Residue}(n_residues)
 

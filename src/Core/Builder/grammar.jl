@@ -110,7 +110,22 @@ isvar(lg::LGrammar, k) = haskey(lg.variables, k)
 
 export isfragment
 
-isfragment(p::Pose) = !(hascontainer(p.graph) || isempty(p.graph))
+"""
+    isfragment(pose::Pose)
+
+Return `true` if the given `pose` [Graph](@ref) is a single non-empty
+[`Segment`](@ref) (with no container).
+
+# See also
+[`fragment`](@ref)
+
+# Examples
+```jldoctest
+julia> isfragment(frag)
+true
+```
+"""
+@inline isfragment(pose::Pose) = !(hascontainer(pose.graph) || isempty(pose.graph))
 
 
 """

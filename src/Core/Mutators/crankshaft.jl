@@ -43,8 +43,8 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
                 # 4) Apply the rotation matrix to all atoms between Ai and Aj
                 # Note 2: inc_last_res selection optionally adds a subset of
                 # atom from the last residue in the rotation. In the case of
-                # proteins, for example, it should be the sidechain, as in:
-                # !(an"^CA$|^N$|^C$|^H$|^O$"r)
+                # proteins, for example, it should be the sidechain, as in
+                # the selection !(an"^CA$|^N$|^C$|^H$|^O$"r)
                 ids    = ProtoSyn.ids(travel_graph(atom_i, atom_j))
                 atoms  = crankshaft_mutator.inc_last_res(atom_j.container, gather = true)
                 ids2   = ProtoSyn.ids(atoms)
@@ -52,7 +52,7 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
                 M      = pose.state.x[:, idxs]
                 result = (rmat * (M .- pivot)) .+ pivot
                 pose.state.x[:, idxs] = result
-                ProtoSyn.request_c2i(pose.state, all = true)
+                ProtoSyn.request_c2i!(pose.state, all = true)
             end
         end
     end

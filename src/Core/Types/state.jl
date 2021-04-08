@@ -33,7 +33,7 @@ Return an empty [`AtomState`](@ref) instance, with all default values.
 * `θ::T` - Angle (in radians) to ascendent atoms (default: 0)
 * `ϕ::T` - Dihedral angle (in radians) to ascendent atoms (default: 0)
 * `Δϕ::T` - Dihedral angle change (in radians) to be applied to children atoms (default: 0)
-* `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions) (default: false)
+* `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions such as [`i2c!`](@ref) and [`c2i!`](@ref)) (default: false)
 
 !!! ukw "Note:"
     The `Δϕ` field in [`AtomState`](@ref) allows for easy set-up of dihedral angles in molecular structures.
@@ -95,7 +95,6 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
         setfield!(ns, :changed, true)
         setfield!(ns, key, MVector{3, T}(val))
         update_state_matrix(ns.parent.x, val, :, ns.index, update_items = false)
-        ns.parent.c2i = true
     else
         setfield!(ns, :changed, true)
         setfield!(ns, key, val)
@@ -389,14 +388,6 @@ Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
     return ProtoSyn.AtomState(
         nothing, as.index, copy(as.t), copy(as.r),
         as.b, as.θ, as.ϕ, as.Δϕ, as.changed)
-end
-
-request_c2i(s::State; all=false) = (s.c2i = true; s)
-
-request_i2c(s::State; all::Bool=false) = begin
-    s[0].changed = all
-    s.i2c = true
-    s
 end
 
 #endregion State

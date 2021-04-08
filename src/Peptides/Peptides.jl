@@ -65,7 +65,7 @@ include("io.jl")
 #     pose = ProtoSyn.load(T, filename)
     
 #     for segment in eachsegment(pose.graph)
-#         setparent!(segment[1][1], ProtoSyn.origin(pose.graph))
+#         setparent!(segment[1][1], ProtoSyn.root(pose.graph))
         
 #         n_residues = ProtoSyn.count_residues(segment)
 #         for residue_index in 2:n_residues
@@ -106,7 +106,7 @@ include("io.jl")
 #     end
     
 #     reindex(pose.graph)
-#     ProtoSyn.request_c2i(pose.state)
+#     ProtoSyn.request_c2i!(pose.state)
 #     sync!(pose)
 
 #     pose

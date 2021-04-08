@@ -26,7 +26,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 
     # Set parenthood pf residues
     for segment in eachsegment(pose.graph)
-        setparent!(segment[1][1], ProtoSyn.origin(pose.graph))
+        setparent!(segment[1][1], ProtoSyn.root(pose.graph))
 
         n_residues = ProtoSyn.count_residues(segment)
         for residue_index in 2:n_residues
@@ -53,7 +53,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     end
 
     reindex(pose.graph)
-    ProtoSyn.request_c2i(pose.state)
+    ProtoSyn.request_c2i!(pose.state)
     sync!(pose)
 
     return pose

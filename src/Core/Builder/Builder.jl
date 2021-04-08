@@ -24,7 +24,7 @@ function build(grammar::LGrammar{T}, derivation) where {T<:AbstractFloat}
         frag = fragment(grammar, derivation)
         append!(pose, frag) # Appending the fragment (which is a segment) to the Topology
         
-        ProtoSyn.request_i2c(state; all=true)
+        ProtoSyn.request_i2c!(state; all=true)
     end
     pose
 end
@@ -73,8 +73,8 @@ end
 function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α")
 
     # Remove any old parent, if it exists
-    if hasparent(ProtoSyn.root(frag.graph).container)
-        ProtoSyn.root(frag.graph).container.parent = nothing
+    if hasparent(ProtoSyn.origin(frag.graph).container)
+        ProtoSyn.origin(frag.graph).container.parent = nothing
     end
 
     # Insert the fragment residues in the pose.graph and set
@@ -97,7 +97,7 @@ function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Reindex to define new ascendents
     reindex(pose.graph)
     
-    ProtoSyn.request_i2c(pose.state; all=true)
+    ProtoSyn.request_i2c!(pose.state; all=true)
     return pose
 end
 
@@ -180,7 +180,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Remove all references of the origin as the parent of any of its children
     # (if said children belong to the residue that is being displaced)
     # and remove said children from origin.children
-    pose_origin = ProtoSyn.origin(pose.graph) # This is an Atom
+    pose_origin = ProtoSyn.root(pose.graph) # This is an Atom
     parent_is_origin = residue.parent == pose_origin.container
     if parent_is_origin
         for child in pose_origin.children
@@ -189,7 +189,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         
         # Add the first atom of the appendage as a child of origin AND set its
         # parent as being the origin
-        _root = ProtoSyn.root(frag.graph)
+        _root = ProtoSyn.origin(frag.graph)
         setparent!(_root, pose_origin)
         setparent!(_root.container, pose_origin.container)
         popparent!(residue)
@@ -220,7 +220,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Reindex to set correct ascendents
     reindex(pose.graph)
     
-    ProtoSyn.request_i2c(pose.state; all=true)
+    ProtoSyn.request_i2c!(pose.state; all=true)
     return pose
 end
 
@@ -272,7 +272,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
     # Using saved children and parent, set all child.parent to be the origin,
     # independent of this being an inter- or intra-residue connection
     for child in children
-        ProtoSyn.setparent!(child, origin(pose.graph))
+        ProtoSyn.setparent!(child, root(pose.graph))
     end
 
     # Remove from graph
@@ -323,8 +323,6 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
     deleteat!(residue.container.items, findfirst(residue, residue.container.items))
     residue.container.size -= 1
 end
-
-
 
 
 end

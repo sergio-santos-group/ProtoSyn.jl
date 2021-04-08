@@ -47,7 +47,7 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
 
             # 4) Apply sampled rotamer
             Rotamers.apply!(pose.state, rotamer, residue)
-            ProtoSyn.request_i2c(pose.state, all = true)
+            ProtoSyn.request_i2c!(pose.state, all = true)
         end
     end
 end
