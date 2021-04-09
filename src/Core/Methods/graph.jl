@@ -27,7 +27,7 @@ export root
 """
     root(container::AbstractContainer)
 
-Return the first [`Atom`](@ref) of the Root of the [Graph](@ref) that given
+Return the first [`Atom`](@ref) of the Root of the [Graph](@ref state-types) that given
 `AbstractContainer` `container` belongs to. If the given `AbstractContainer`
 `container` is not a [`Topology`](@ref) instance and has `:container` field set
 to `nothing`, return `nothing`.
@@ -238,7 +238,7 @@ is inter-residue, sets the downstream [`Residue`](@ref) to be the Root of the
     internal coordinates, after [`sync!`](@ref) is called. In order to keep the
     position of the downstream [`Residue`](@ref) instances, call
     [`request_c2i!`](@ref) and [`sync!`](@ref), in order to _fixate_ the
-    cartesian coordinates to the new [Graph](@ref) organization.
+    cartesian coordinates to the new [Graph](@ref state-types) organization.
 
 # Examples
 ```jldoctest
@@ -374,7 +374,7 @@ export travel_graph
     travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
 
 Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
-and `stop`, while following the structure's [Graph](@ref). If no `stop`
+and `stop`, while following the structure's [Graph](@ref state-types). If no `stop`
 [`Atom`](@ref) instance is provided or if it isn't found as a downstream parent
 of the `start` [`Atom`](@ref), all instances until no children [`Atom`](@ref)
 instances are found are returned (for example, until the end of the current

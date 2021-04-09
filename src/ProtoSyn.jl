@@ -58,7 +58,7 @@ include("Core/Types/other.jl")
 include("Core/Types/graph.jl")
 include("Core/Types/state.jl")
 include("Core/Types/pose.jl")
-include("Core/Selections/selections.jl")
+include("Core/Submodules/Selections/selections.jl")
 include("Core/Methods/graph.jl") # After selections.jl
 include("Core/Methods/measure.jl") # After selections.jl
 include("Core/Methods/state.jl")
@@ -69,8 +69,8 @@ include("Core/Methods/iterators.jl")
 include("Core/Methods/aux.jl")
 include("Core/Methods/align.jl")
 include("Core/Clustering/Clustering.jl")
-include("Core/Builder/grammar.jl")
-include("Core/Builder/Builder.jl")
+include("Core/Submodules/Builder/grammar.jl")
+include("Core/Submodules/Builder/Builder.jl")
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")

@@ -30,39 +30,124 @@ _push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = 
         # Update the container size to reflect the addition
         container.size += 1
     end
-    container
+
+    return container
 end
 
-Base.push!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
-    _push!(container, item)
+"""
+    push!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer}
+
+Add an `AbstractContainer` `item` to the `AbstractContainer` `container`,
+updating the `container` size and setting the correct `item.container`. Return
+the altered `container`.
+
+    push!(residue::Residue, atom::Atom)
+
+In the specific case of adding an [`Atom`](@ref) `atom` to a [`Residue`](@ref)
+`residue`, also add the `atom.name` to the `residue.itemsbyname` dictionary for
+correct indexation by name. Return the altered [`Residue`](@ref) `residue`.
+
+    push!(container::AbstractContainer{T}, items::Vector{T}) where {T <: AbstractContainer}
+
+Add a vector of `AbstractContainer` `items` in the `AbstractContainer`
+`container`, updating the `container` size and setting the correct
+`item.container` for each item in the `items`. Note that this method keeps the
+order of `items`. Return the altered `container`.
+
+*This function is a Base module overload.*
+
+!!! ukw "Note:"
+    This function does not set any [Bonds](@ref) or
+    [Parenthood relationships](@ref) to other items in the same `container`.
+    This function does not set a complementary [State](@ref state-types).
+
+# See also
+[`insert!`](@ref) [`delete!`](@ref)
+
+# Examples
+```jldoctest
+julia> push!(pose.graph[1][1], Atom("CA", -1, -1, "C"))
+Residue{/UNK:1/UNK:1/GLY:1}
+```
+"""
+Base.push!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer} = begin
+    return _push!(container, item)
 end
 
-Base.push!(res::Residue, atm::Atom) = begin
-    res.itemsbyname[atm.name] = atm
-    if !in(atm, res)
-        _push!(res, atm)
+Base.push!(container::AbstractContainer{T}, items::Vector{T}) where {T <: AbstractContainer} = begin
+    for item in items
+        _push!(container, item)
     end
-    res
+
+    return container
+end
+
+Base.push!(residue::Residue, atom::Atom) = begin
+    residue.itemsbyname[atom.name] = atom
+    if !in(atom, residue)
+        _push!(residue, atom)
+    end
+
+    return residue
 end
 
 #endregion push!
 
 #region insert! ----------------------------------------------------------------
 
+"""
+    insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer}
+
+Insert an `AbstractContainer` `item` in the `AbstractContainer` `container` at
+the given `index`, updating the `container` size and setting the correct
+`item.container`. Return the altered `container`.
+
+    insert!(container::Residue, index::Integer, item::Atom)
+
+In the specific case of inserting an [`Atom`](@ref) `atom` in a
+[`Residue`](@ref) `residue`, also add the `atom.name` to the
+`residue.itemsbyname` dictionary for correct indexation by name. Return the
+altered [`Residue`](@ref) `residue`.
+
+    insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer}
+
+Insert a vector of `AbstractContainer` `items` in the `AbstractContainer`
+`container` at the given `index`, updating the `container` size and setting the
+correct `item.container` for each item in the `items`. Note that this method
+keeps the order of `items`. Return the altered `container`.
+
+*This function is a Base module overload.*
+
+!!! ukw "Note:"
+    This function does not set any [Bonds](@ref) or
+    [Parenthood relationships](@ref) to other items in the same `container`.
+    This function does not set a complementary [State](@ref state-types).
+
+# See also
+[`push!`](@ref) [`delete!`](@ref)
+
+# Examples
+```jldoctest
+julia> insert!(pose.graph[1][1], 3, Atom("CA", -1, -1, "C"))
+Residue{/UNK:1/UNK:1/GLY:1}
+```
+"""
 Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
     insert!(container.items, index, item)
     item.container = container
     container.size += 1
-    container
+
+    return container
 end
 
-Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T1}) where {T <: AbstractContainer, T1 <: AbstractContainer} = begin
+Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer} = begin
     for item in Iterators.reverse(items)
         insert!(container.items, index, item)
         item.container = container
         container.size += 1
     end
-    container
+
+    return container
 end
 
 Base.insert!(container::Residue, index::Integer, item::Atom) = begin
@@ -70,7 +155,8 @@ Base.insert!(container::Residue, index::Integer, item::Atom) = begin
     item.container = container
     container.size += 1
     container.itemsbyname[item.name] = item
-    container
+
+    return container
 end
 
 #endregion insert!
@@ -120,6 +206,23 @@ end
 
 #region copy -------------------------------------------------------------------
 
+"""
+    copy(container::AbstractContainer)
+
+Return a copy of the given `AbstractContainer` `container`. Note that for
+[`Residue`](@ref) instances only the intra-residue [Bonds](@ref) and
+[Parenthood relationships](@ref) can be copied. The same logic applies to the
+intra-segment [Graph](@ref graph-types).
+
+# Example
+```jldoctest
+julia> copy(pose.graph[1, 1, 1])
+Atom{/N:1}
+
+julia> copy(pose.graph[1, 1])
+Residue{/GLY:1}
+```
+"""
 @inline Base.copy(a0::Atom) = begin
     return Atom(a0.name, a0.id, a0.index, a0.symbol)
 end
@@ -219,6 +322,7 @@ Base.copy(t0::Topology) = begin
     return t1
 end
 
+# !!!!!!!
 Base.copy(s::State{T}) where T = begin
     ns = State(T, s.size)
     # Updating item.t also updates the parent.x matrix
@@ -243,8 +347,8 @@ end
     copy(pose::Pose)
 
 Return a copied [Pose](@ref) of the provided `pose`. The resulting [Pose](@ref)
-will have different `:id` fields for the [Graph](@ref) [`Topology`](@ref) and
-[State](@ref).
+will have different `:id` fields for the [Graph](@ref state-types) [`Topology`](@ref) and
+[State](@ref state-types).
 
 *This function is a Base module overload.*
 
@@ -269,16 +373,44 @@ end
 
 #region delete! ----------------------------------------------------------------
 
-Base.delete!(container::AbstractContainer{T}, item::T) where {T<:AbstractContainer} = begin
+"""
+    delete!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer}
+
+Delete the given `AbstractContainer` `item` from the `AbstractContainer`
+`container`, if found, while updating the `container.size` and `item.container`
+fields. In the specific case of deleting an [`Atom`](@ref) instance from a
+[`Residue`](@ref), update `container.itemsbyname` as well. Return the altered
+`container`. If the given `AbstractContainer` `item` is not found in the
+`AbstractContainer` `container`, return `nothing`.
+
+# See also
+[`push!`](@ref) [`insert!`](@ref)
+
+# Examples
+```jldoctest
+julia> delete!(pose.graph[1][1], pose.graph[1][1]["CA"])
+Residue{/UNK:1/UNK:1/GLY:1}
+```
+"""
+Base.delete!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer} = begin
     if in(item, container)
         i = findfirst(x -> x === item, container.items)
         if i !== nothing
+            if hasproperty(container, :itemsbyname)
+                delete!(container.itemsbyname, item.name)
+            end
             deleteat!(container.items, i)
             item.container = nothing
             container.size -= 1
         end
     end
-    container
+
+    return container
+end
+
+Base.delete!(container::AbstractContainer{T}, item::Nothing) where {T <: AbstractContainer}= begin
+    @warn "Tried to delete an instance of $T which was not found in the given container $container."
+    return item
 end
 
 #endregion delete!
@@ -301,48 +433,20 @@ end
 
 #endregion Others
 
-#region pop! -------------------------------------------------------------------
-
-Base.pop!(pose::Pose{Topology}, seg::Segment) = begin
-
-    if seg.container !== pose.graph
-        error("given residue does not belong to the provided topology")
-    end
-
-    # remove node states from parent state and create
-    # a new state for this segment
-    st = splice!(pose.state, seg[1][1].index:seg[end][end].index)
-    
-    pop!(pose.graph.items, seg)
-
-    reindex(pose.graph)
-    
-    # new common ID
-    seg.id = st.id = genid()
-    Pose(seg, st)
-end
-
-Base.pop!(top::Topology, seg::Segment) = begin
-    deleteat!(top.items, findall(x -> x == seg, top.items))
-    top.size -= 1
-end
-
-#endregion pop!
-
 #region detach -----------------------------------------------------------------
 
 """
 
     detach(segment::Segment)
 
-Detach the given [`Segment`](@ref) from it's container [Graph](@ref), by:
-* Detaching any [`Atom`](@ref) and [`Residue`](@ref) instance from the [Graph](@ref)'s Root (by popping parenthood relationships), if said instances belong to the given [`Segment`](@ref) instance.
+Detach the given [`Segment`](@ref) from it's container [Graph](@ref state-types), by:
+* Detaching any [`Atom`](@ref) and [`Residue`](@ref) instance from the [Graph](@ref state-types)'s Root (by popping parenthood relationships), if said instances belong to the given [`Segment`](@ref) instance.
 * Deleting this [`Segment`](@ref) from its container [`Topology`](@ref). 
 
 *This function is a Base module overload.*
 
 !!! ukw "Note:"
-    This function does not alter the [State](@ref) of the [Pose](@ref)
+    This function does not alter the [State](@ref state-types) of the [Pose](@ref)
     containing the provided [`Segment`](@ref). 
 
 # Examples

@@ -197,7 +197,7 @@ type `AbstractTopology`, which is an `AbstractContainer`.
 
 !!! ukw "Note:"
     When in a [Pose](@ref), both the [`Topology`](@ref) and the corresponding
-    [State](@ref) need to share the same `:id`. This is used to identify
+    [State](@ref state-types) need to share the same `:id`. This is used to identify
     situations where a change in one of this structures was not reflected on the
     other.
 

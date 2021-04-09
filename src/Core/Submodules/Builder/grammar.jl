@@ -113,7 +113,7 @@ export isfragment
 """
     isfragment(pose::Pose)
 
-Return `true` if the given `pose` [Graph](@ref) is a single non-empty
+Return `true` if the given `pose` [Graph](@ref state-types) is a single non-empty
 [`Segment`](@ref) (with no container).
 
 # See also

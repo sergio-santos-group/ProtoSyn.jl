@@ -242,14 +242,12 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
 
     @assert length(unique([res.container.id for res in sele(pose, gather = true)])) == 1 "Tried to fragment a contiguous selection of residues belonging to different Segments."
 
-    residues       = sele(pose, gather = true)
+    # Get a copy of the selected residues as a new Segment
     copied_segment = copy(residues[1].container)
     residues       = sele(copied_segment, gather = true)
-
-    # Get a copy of the selected residues as a new Segment
-    segment       = Segment(residues[1].container.name, 1)
-    segment.items = residues
-    segment.size  = length(segment.items)
+    segment        = Segment(residues[1].container.name, 1)
+    segment.items  = residues
+    segment.size   = length(segment.items)
 
     # Fix the parenthood of the copied residues
     for residue in segment.items

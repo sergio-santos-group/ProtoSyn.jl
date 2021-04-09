@@ -1,6 +1,6 @@
 # Selections
 
-> The [Selections](@ref) are a sub-module of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and [Methods](@ref) that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Selections](@ref) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and [Methods](@ref) that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
  
 ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref) is an `AbstractSelection`, which is parametrized by 2 different static types:
 
@@ -129,7 +129,7 @@ ProtoSyn.Mask{Residue}(73,)
  0
 ```
 
-As stated before, `Stateful` selections require a [State](@ref) to calculate the selection. Given the syntax used, there are two ways of providing the [State](@ref):
+As stated before, `Stateful` selections require a [State](@ref state-types) to calculate the selection. Given the syntax used, there are two ways of providing the [State](@ref state-types):
 
 ```jldoctest
 julia> (10:rn"ALA")(pose.graph)(pose.state)

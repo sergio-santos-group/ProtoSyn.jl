@@ -6,8 +6,8 @@ using LinearAlgebra
     request_c2i!(state::State; [all::Bool = false])
 
 Sets `state.c2i` to `true`. If `all` is set to `true` (`false`, by default),
-update all [`AtomState`](@ref) instances in the given [State](@ref) `state` to
-have `:changed` field set to `true`. Return the altered [State](@ref) `state`.
+update all [`AtomState`](@ref) instances in the given [State](@ref state-types) `state` to
+have `:changed` field set to `true`. Return the altered [State](@ref state-types) `state`.
 
 # See also
 [`request_i2c!`](@ref) [`c2i!`](@ref)
@@ -36,9 +36,9 @@ end
     request_i2c!(state::State; [all::Bool = false])
 
 Sets `state.i2c` to `true`. If `all` is set to `true` (`false`, by default),
-update the first [`AtomState`](@ref) instance in the given [State](@ref) `state`
+update the first [`AtomState`](@ref) instance in the given [State](@ref state-types) `state`
 (in the Root) to have `:changed` field set to `true`. Return the altered
-[State](@ref) `state`.
+[State](@ref state-types) `state`.
 
 # See also
 [`request_c2i!`](@ref) [`i2c!`](@ref)
@@ -171,7 +171,7 @@ instance. If `state.c2i` is not set to `true`, return the original
 !!! ukw "Note:"
     Any [`AtomState`](@ref) that requires an update (has `:changed` flag set to
     `true`) will cause all downstream residues to be updated as well (in the
-    same [Graph](@ref)).
+    same [Graph](@ref state-types)).
 
 # See also
 [`c2i!`](@ref) [`request_i2c!`](@ref)
@@ -381,6 +381,7 @@ the `:index` field of [`AtomState`](@ref) instances. Return the altered
 [`reindex(::Topology, ::Bool)`](@ref)
 
 # Examples
+```jldoctest
 julia> reindex(pose.state)
 State{Float64}:
  Size: 1140
