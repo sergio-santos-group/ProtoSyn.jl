@@ -1,6 +1,6 @@
 using ProtoSyn
 using ProtoSyn.Peptides
-using ProtoSyn.Builder
+using ProtoSyn
 using Printf
 
 # 1) Load the default residue library

@@ -3,7 +3,7 @@ push!(LOAD_PATH, "../src")
 using ProtoSyn
 using ProtoSyn.Calculators
 using ProtoSyn.Peptides
-using ProtoSyn.Builder
+using ProtoSyn
 using ProtoSyn.Units
 using Printf
 
@@ -118,7 +118,7 @@ ProtoSyn.append(pose2, "../pose2.pdb")
 ProtoSyn.rmsd(pose2, pose1, an"CA")
 
 using ProtoSyn.Peptides
-using ProtoSyn.Builder
+using ProtoSyn
 T        = Float64
 res_lib  = Peptides.grammar(T)
 sequence = seq"MGSWAEFKQRLAAIKTRLQALGGSEAELAAFEKEIAAFESELQAYKGKGNPEVEALRKEAAAIRDELQAYRHN"
@@ -410,16 +410,16 @@ end
 # setss!(pose, SecondaryStructure[:helix], rid"2:end");
 
 # pose = Peptides.build(res_lib, seq"AAAAAAAAAA");
-# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°); # Bug: is measuring i-2 and setting i-1
+# ProtoSyn.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°); # Bug: is measuring i-2 and setting i-1
 # io = open("../teste1.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 # pose = Peptides.load("../teste1.pdb");
-# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 180°); # Bug: is measuring i-2 and setting i-1
+# ProtoSyn.setdihedral!(pose.state, pose.graph[1][3]["CA"], 180°); # Bug: is measuring i-2 and setting i-1
 # io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 
 # Peptides.setdihedral!(pose.state, pose.graph[1][23], Peptides.Dihedral.phi, -60°)
 # Peptides.setdihedral!(pose.state, pose.graph[1][23], Peptides.Dihedral.psi, 150°)
 # Peptides.setdihedral!(pose.state, pose.graph[1][2], Peptides.Dihedral.omega, 180°)
-# Builder.setdihedral!(pose.state, pose.graph[1][3]["C"], 0°);
+# ProtoSyn.setdihedral!(pose.state, pose.graph[1][3]["C"], 0°);
 # Peptides.setss!(pose, SecondaryStructure[:helix], rid"2:end");
 
 # pose = Peptides.load("../2a3d.pdb");
@@ -564,9 +564,9 @@ io = open("../teste3.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 # Peptides.setss!(pose, SecondaryStructure[:linear], pose.graph[1].items[1:4]);
 # Peptides.append_residues!(pose, pose.graph[1][4], res_lib, seq"LLL");
 
-# Builder.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°);
+# ProtoSyn.setdihedral!(pose.state, pose.graph[1][3]["CA"], 0°);
 # Peptides.setdihedral!(pose.state, pose.graph[1][3], Peptides.Dihedral.omega, 0°);
-# Builder.setdihedral!(pose.state, pose.graph[1][7]["CA"], 0°);
+# ProtoSyn.setdihedral!(pose.state, pose.graph[1][7]["CA"], 0°);
 # pop!(pose, pose.graph[1][9])
 
 
@@ -651,22 +651,22 @@ Peptides.append_residues!(pose, last_res, res_lib, seq"AAAAAAAAAAAAAAA", ss = Se
 # setss!(pose, SecondaryStructure[:linear], MaxSerialSelection{Segment}(:index))
 # sync!(pose)
 
-# @pymol append!(pose, single_residue, 1id, PeptideRxToolbelt)
+# @pymol append_fragment_as_new_segment!(pose, single_residue, 1id, PeptideRxToolbelt)
 # @pymol sync!(pose)
 
 # Optinally, one can use a wrapping function to append a residue to the end
 # of an existing pose.
-# @pymol append!(pose, "A")
+# @pymol append_fragment_as_new_segment!(pose, "A")
 
 # Example 3.
 # -> Append multiple residues to the end of the peptide
 # The same functions used in the previous example can be employed to add more
 # than 1 residue simultaneously to the end of the petidic chain.
 # multiple_residues = Peptides.fragment("PAPA", residue_library)
-# @pymol append!(pose, multiple_residues, 1id, PeptideRxToolbelt)
+# @pymol append_fragment_as_new_segment!(pose, multiple_residues, 1id, PeptideRxToolbelt)
 # @pymol sync!(pose)
 
-@pymol append!(pose, "PAPA")
+@pymol append_fragment_as_new_segment!(pose, "PAPA")
 
 # QUESTION
 # When adding mutiple residues, the resulting conformation is not linear, it has

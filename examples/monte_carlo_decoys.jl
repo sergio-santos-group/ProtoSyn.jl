@@ -4,7 +4,7 @@ n_workers = 4
 addprocs(n_workers)
 
 @everywhere using ProtoSyn
-@everywhere using ProtoSyn.Builder
+@everywhere using ProtoSyn
 @everywhere using ProtoSyn.Peptides
 @everywhere using ProtoSyn.Calculators
 @everywhere using Printf

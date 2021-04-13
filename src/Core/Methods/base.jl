@@ -132,7 +132,7 @@ julia> insert!(pose.graph[1][1], 3, Atom("CA", -1, -1, "C"))
 Residue{/UNK:1/UNK:1/GLY:1}
 ```
 """
-Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
+Base.insert!(container::ProtoSyn.AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
     insert!(container.items, index, item)
     item.container = container
     container.size += 1
@@ -140,7 +140,7 @@ Base.insert!(container::AbstractContainer{T}, index::Integer, item::T) where {T 
     return container
 end
 
-Base.insert!(container::AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer} = begin
+Base.insert!(container::ProtoSyn.AbstractContainer{T}, index::Integer, items::Vector{T}) where {T <: AbstractContainer} = begin
     for item in Iterators.reverse(items)
         insert!(container.items, index, item)
         item.container = container

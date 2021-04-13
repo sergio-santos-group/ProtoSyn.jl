@@ -268,6 +268,18 @@ Rotate all sibling dihedrals of [`Atom`](@ref) `atom` in the given
 [`State`](@ref) `state` so that the dihedral angle identified by `atom` is equal
 to `default`. Set the `i2c` flag to `true` and return the altered
 [`State`](@ref) `state`.
+
+# See also
+[`LGrammar`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.setoffset!(pose.state, pose.graph[1][2]["CA"], 3.14)
+State{Float64}:
+ Size: 24
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+```
 """
 function setoffset!(state::State{T}, atom::Atom, default::Number) where {T <: AbstractFloat}
 

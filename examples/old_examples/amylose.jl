@@ -4,7 +4,7 @@ include("../src/ProtoSyn.jl")
 
 using .ProtoSyn
 using .ProtoSyn.Sugars
-using .ProtoSyn.Builder
+using .ProtoSyn
 
 grammar = Sugars.grammar(Float64, "amylose")
 

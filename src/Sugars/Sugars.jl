@@ -1,7 +1,7 @@
 module Sugars
 
 using ..ProtoSyn
-using ..ProtoSyn.Builder
+using ..ProtoSyn
 
 export grammar
 
@@ -17,19 +17,19 @@ end
 
 Build a [`LGrammar`](@ref) for polysaccharide `polyname` from the `grammars.yml`
 file available in the `Sugars` resource directory.
-The returned L-grammar can then be used by the [`Builder.build`](@ref) function
+The returned L-grammar can then be used by the [`ProtoSyn.build`](@ref) function
 to build the polymer.
 
 # Examples
 ```julia-repl
 julia> g = Sugars.grammar("amylose");
-julia> pose = Builder.build(g, "AAA")
+julia> pose = ProtoSyn.build(g, "AAA")
 ...
 ```
 """
 function grammar(::Type{T}, polyname::String) where {T <: AbstractFloat}
     filename = joinpath(resource_dir, "grammars.yml")
-    Builder.fromfile(T, filename, polyname)
+    ProtoSyn.load_grammar_from_file(T, filename, polyname)
 end
 grammar(polyname::String) = grammar(Float64, polyname)
 

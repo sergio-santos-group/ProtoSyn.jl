@@ -225,6 +225,7 @@ function ascendents(container::AbstractContainer, level::Int)
 end
 
 
+export unbond
 """
     unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     
@@ -317,6 +318,7 @@ julia> bond(atom1, atom2)
 end
 
 
+export join
 """
     join(at1::Atom, at2::Atom)
 

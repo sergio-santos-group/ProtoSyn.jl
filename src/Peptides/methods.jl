@@ -17,7 +17,7 @@ julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
 """
 function grammar(::Type{T}) where {T <: AbstractFloat}
     filename = joinpath(Peptides.resource_dir, "grammars.yml")
-    Builder.fromfile(T, filename, "peptide")
+    ProtoSyn.load_grammar_from_file(T, filename, "peptide")
 end
 
 grammar() = grammar(ProtoSyn.Units.defaultFloat)
@@ -30,7 +30,7 @@ Build a `Pose{Topology}` using the given `derivation` sequence on the provided
 `grammar` instructions. If an `ss` is provided, automatically apply it to the
 built pose (linear secondary structure, by default).
 !!! note
-    This function is an overload of `Builder.build`.
+    This function is an overload of `ProtoSyn.build`.
 
 # See also
 `setss!`
@@ -43,7 +43,7 @@ julia> pose = Peptides.build(grammar, seq"QQQ");
 """
 function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
-    pose = Builder.build(grammar, derivation)
+    pose = ProtoSyn.build(grammar, derivation)
     Peptides.setss!(pose, ss)
     sync!(pose)
     pose
@@ -120,17 +120,19 @@ function append_residues!(pose::Pose{Topology}, residue::Residue,
     grammar::LGrammar, derivation;
     ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
-    Builder.append_residues!(pose, residue, grammar, derivation; op = op)
+    ProtoSyn.append_residues!(pose, residue, grammar, derivation; op = op)
     residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
     setss!(pose, ss, residues)
     return pose
 end
 
+"""
+"""
 function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; ss::Opt{NTuple{3,Number}} = nothing, op = "α")
     
     residue_selection = SerialSelection{Residue}(residue.id, :id)
     rotamer = Rotamers.get_rotamer(pose, residue)
-    Builder.append_fragment!(pose, residue, grammar, frag, op = op)
+    ProtoSyn.append_fragment!(pose, residue, grammar, frag, op = op)
     
     if ss !== nothing
         residues = residue.container.items[(residue.index + 1):(residue.index + length(frag.graph))]
@@ -174,7 +176,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         ProtoSyn.unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
     end
     
-    Builder.insert_residues!(pose, residue, grammar, derivation; op = op,
+    ProtoSyn.insert_residues!(pose, residue, grammar, derivation; op = op,
         connect_upstream = !connected_to_origin)
 
     if connected_to_origin
@@ -271,11 +273,11 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
         return Peptides.force_mutate!(pose, residue, grammar, derivation)
     end
 
-    frag = Builder.fragment(grammar, derivation)
+    frag = ProtoSyn.fragment(grammar, derivation)
     
     # Remove old sidechain
     for atom in sidechain
-        Builder.pop_atom!(pose, atom)
+        ProtoSyn.pop_atom!(pose, atom)
     end
     
     # Insert new sidechain
@@ -369,7 +371,7 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
     # 2) Now we can safelly pop the residue, while maintaining the positions of
     # downstream residues
-    Builder.pop_residue!(pose, residue)
+    ProtoSyn.pop_residue!(pose, residue)
 end
 
 
@@ -444,7 +446,7 @@ function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractS
     end
     sidechain = _selection(pose, gather = true)
     for atom in reverse(sidechain) # Note the reverse loop
-        Builder.pop_atom!(pose, atom)
+        ProtoSyn.pop_atom!(pose, atom)
     end
 
     return pose
@@ -610,7 +612,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    Builder.pop_atom!(pose, bond)
+                    ProtoSyn.pop_atom!(pose, bond)
                 end
             end
         end
@@ -620,7 +622,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    Builder.pop_atom!(pose, bond)
+                    ProtoSyn.pop_atom!(pose, bond)
                 end
             end
         end
@@ -652,11 +654,11 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * Default terminal fragments
     T               = eltype(pose.state)
     n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
-    n_term          = ProtoSyn.Builder.fragment(Peptides.load(T, n_term_filename))
+    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
     n_term_atoms    = ["H1", "H2", "H3"]
 
     c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
-    c_term          = ProtoSyn.Builder.fragment(load(T, c_term_filename))
+    c_term          = ProtoSyn.ProtoSyn.fragment(load(T, c_term_filename))
     c_term_atoms    = ["O", "OXT"]
 
     # * Remove any existing caps
@@ -685,7 +687,7 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
                 atomstate   = mobile.state[atom]
                 atom.parent = nothing
                 atom.bonds  = Vector{Atom}()
-                Builder.insert_atom_as_children!(pose, terminal, atom, atomstate)
+                ProtoSyn.insert_atom_as_children!(pose, terminal, atom, atomstate)
             end
         end
         if is_C_terminal(residue) # * Note: A residue can be both N- and C- terminal
@@ -701,7 +703,7 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
                 atomstate   = mobile.state[atom]
                 atom.parent = nothing
                 atom.bonds  = Vector{Atom}()
-                Builder.insert_atom_as_children!(pose, terminal, atom, atomstate)
+                ProtoSyn.insert_atom_as_children!(pose, terminal, atom, atomstate)
             end
         end
     end

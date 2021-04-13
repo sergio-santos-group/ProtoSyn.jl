@@ -23,7 +23,7 @@ addprocs(n_workers)
 # special caso which is automatically loaded in all workers.
 @everywhere using ProtoSyn
 @everywhere using ProtoSyn.Peptides
-@everywhere using ProtoSyn.Builder
+@everywhere using ProtoSyn
 @everywhere using ProtoSyn.Calculators
 @everywhere using Printf
 

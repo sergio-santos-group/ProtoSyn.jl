@@ -1,5 +1,5 @@
 using ProtoSyn
-using ProtoSyn.Builder
+using ProtoSyn
 using ProtoSyn.Peptides
 using Printf
 using Random

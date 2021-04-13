@@ -3,7 +3,7 @@ include("../src/ProtoSyn.jl")
 
 using .ProtoSyn
 using .ProtoSyn.Peptides
-using .ProtoSyn.Builder
+using .ProtoSyn
 using .ProtoSyn.Units
 println(" | ProtoSyn loaded successfully.")
 

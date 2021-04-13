@@ -13,7 +13,7 @@ CurrentModule = ProtoSyn
 ```@docs
 fragment(::Pose{Topology})
 isfragment
-Base.append!(::Pose{Topology}, ::Fragment)
+append_fragment_as_new_segment!(::Pose{Topology}, ::Fragment)
 Base.copy(::Pose)
 merge
 merge!
@@ -193,6 +193,7 @@ The next functions deal with setting and rotating dihedral angles.
 getdihedral
 setdihedral!
 rotate_dihedral!
+setoffset!
 ```
 
 ![ProtoSyn c&i](../../assets/ProtoSyn-dihedral-rotation.gif)

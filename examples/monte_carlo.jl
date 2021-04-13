@@ -4,7 +4,7 @@
 # aminoacids belonging to the 2A3D peptide from PDB.
 
 using ProtoSyn
-using ProtoSyn.Builder
+using ProtoSyn
 using ProtoSyn.Peptides
 using Printf
 using Random

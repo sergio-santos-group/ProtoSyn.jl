@@ -299,3 +299,64 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
 
     return Pose(segment, state)
 end
+
+
+export isfragment
+"""
+    isfragment(pose::Pose)
+
+Return `true` if the given `pose` [Graph](@ref state-types) is a single non-empty
+[`Segment`](@ref) (with no container).
+
+# See also
+[`fragment`](@ref)
+
+# Examples
+```jldoctest
+julia> isfragment(frag)
+true
+```
+"""
+@inline isfragment(pose::Pose) = !(hascontainer(pose.graph) || isempty(pose.graph))
+
+
+"""
+    append_fragment_as_new_segment!(pose::Pose{Topology}, frag::Fragment)
+
+Append a [Fragment](@ref) `frag` as a new [`Segment`](@ref) to the given
+[Pose](@ref) `pose`. This function overwrites `pose`.
+
+# See also
+[`isfragment`](@ref) [`fragment`](@ref)
+
+# Examples
+```jldoctest
+julia> append_fragment_as_new_segment!(pose, frag)
+Pose{Topology}(Topology{/2a3d:35776}, State{Float64}:
+ Size: 2280
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function append_fragment_as_new_segment!(pose::Pose{Topology}, frag::Fragment)
+    # This function is called by the `ProtoSyn.build` function.
+
+    !isfragment(frag) && error("Invalid fragment")
+    _frag = copy(frag)
+    
+    # Merge the fragment graph (Segment) to the pose graph (Topology).
+    push!(pose.graph, _frag.graph)
+
+    # Merge the fragment state to the pose state.
+    Base.append!(pose.state, _frag.state)
+    
+    # Make sure the fragment graph has the same origin of the new pose.
+    root_residue = origin(_frag.graph).container
+    setparent!(origin(_frag.graph), root(pose.graph))
+    setparent!(root_residue, root(pose.graph).container)
+
+    # Re-index the pose to account for the new segment/residue/atoms
+    reindex(pose.graph)
+    pose
+end

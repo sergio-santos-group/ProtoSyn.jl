@@ -7,7 +7,6 @@ other methods) specific for proteins and peptides.
 module Peptides
 
 using ..ProtoSyn
-using ..ProtoSyn.Builder
 
 # resource directory for this module
 const resource_dir = let
@@ -39,7 +38,7 @@ include("io.jl")
 # """
 # function grammar(::Type{T}) where {T <: AbstractFloat}
 #     filename = joinpath(resource_dir, "grammars.yml")
-#     Builder.fromfile(T, filename, "peptide")
+#     ProtoSyn.load_grammar_from_file(T, filename, "peptide")
 # end
 
 # grammar() = grammar(ProtoSyn.Units.defaultFloat)
@@ -50,7 +49,7 @@ include("io.jl")
 # """
 # function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
-#     pose = Builder.build(grammar, derivation)
+#     pose = ProtoSyn.build(grammar, derivation)
 #     Peptides.setss!(pose, ss)
 #     sync!(pose)
 #     pose

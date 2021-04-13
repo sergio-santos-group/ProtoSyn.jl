@@ -1,9 +1,13 @@
 push!(LOAD_PATH, "../src")
 
-using Documenter, ProtoSyn, ProtoSyn.Builder, ProtoSyn.Peptides
+using Documenter, ProtoSyn, ProtoSyn.Peptides
 
 makedocs(
     sitename="ProtoSyn.jl",
+    authors="José Pereira & Sérgio Santos",
+    format = Documenter.HTML(
+        assets = ["assets/favicon.ico"],
+    ),
     modules=[ProtoSyn],
     pages = [
         "Home" => "index.md",
@@ -19,6 +23,9 @@ makedocs(
                     "Selections" => "protosyn-api/core/selections.md",
                     "Builder" => "protosyn-api/core/builder.md"
                 ]
+            ],
+            "Peptides" => [
+                "Introduction" => "protosyn-api/peptides/introduction.md"
             ]
         ]
     ]

@@ -8,7 +8,7 @@
 
 using ProtoSyn
 using ProtoSyn.Peptides
-using ProtoSyn.Builder
+using ProtoSyn
 
 res_lib = Peptides.grammar()
 pose = Peptides.build(res_lib, seq"AAAGGGKKKLLL")

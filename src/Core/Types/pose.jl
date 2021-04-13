@@ -49,7 +49,7 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
     state = State{T}()
     state.id = top.id
     pose = Pose(top, state)
-    Base.append!(pose, frag2)
+    Base.append_fragment_as_new_segment!(pose, frag2)
 
     ProtoSyn.request_i2c!(state; all=true)
     return pose

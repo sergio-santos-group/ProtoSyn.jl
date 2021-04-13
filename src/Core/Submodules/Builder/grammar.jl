@@ -1,34 +1,130 @@
 export StochasticRule, LGrammar
-export derive, build, lgfactory, fromfile
+export derive, build, lgfactory, load_grammar_from_file
 export @seq_str
 
-struct StochasticRule{K, V}
-    p::Float64
+"""
+    StochasticRule(p::T, rule::Pair{K, V}) where {T <: AbstractFloat, K, V}
+
+Return a new [`StochasticRule`](@ref) instance with the given probability of
+occurrence `p`. The `rule` is a `Pair{K, V}` where in most cases `K` is an
+instance of type `String` (i.e.: a Key) and `V` is an instance of type
+`Vector{String}` (i.e.: a Vector of instructions). These are also called of 
+"production instructions" and define the result of deriving the given "key"
+in any derivation. As an example, the pair `"A" => ["A", "ɑ", "A"]` would be
+interpreted upon derivation, and the entry `A` would be _expanded_ to `AA`,
+where both new `A` instances are joined by the `ɑ` operator, with a probability
+of occurrence of `p`.
+
+# Fields
+* `p::T` - The probability of occurrence;
+* `source::K` - The key of the `rule` on this [`StochasticRule`](@ref) instance;
+* `production::V` - The resulting vector of the derivation of this [`StochasticRule`](@ref) instance on the given `source`.
+
+# See also
+[`LGrammar`](@ref)
+
+# Examples
+```jldoctest
+julia> sr = StochasticRule(1.0, "A" => ["A", "ɑ", "A"])
+A(p=1.0) -> ["A", "ɑ", "A"]
+```
+"""
+struct StochasticRule{T <: AbstractFloat, K, V}
+    p::T
     source::K
     production::V
-    StochasticRule(p::Float64, rule::Pair{K,V}) where {K,V} = begin
+
+    StochasticRule(p::T, rule::Pair{K, V}) where {T <: AbstractFloat, K, V} = begin
         (p > 1 || p < 0) && error("Invalid probability")
-        new{K,V}(p, rule.first, rule.second)
+        new{T, K, V}(p, rule.first, rule.second)
     end
 end
+
 Base.show(io::IO, sr::StochasticRule) = begin
     println(io, sr.source, "(p=", sr.p, ") -> ", sr.production)
 end
 
+
+"""
+    LGrammar{T <: AbstractFloat, K, V}(rules::Dict{K, Vector{StochasticRule{K,V}}}, variables::Dict{K, Fragment}, operators::Dict{K, Function}, defop::Opt{Function})
+
+An [`LGrammar`](@ref) instance. Holds information regarding a stochastic
+L-Grammar system, made up of a set of `variables` connectable by one or more
+`operators`. Optionally, stochastic `rules` can randomly pick the operator to
+apply, based on a set of weights.
+
+    LGrammar{T, K, V}() where {T <: AbstractFloat, K, V}
+
+Return an empty [`LGrammar`](@ref) instance.
+
+# Fields:
+* `rules::Dict{K, Vector{StochasticRule{K,V}}}` - A dictionary of [`StochasticRule`](@ref) instances indexed by the `variable` key over which the given rule will operate; 
+* `variables::Dict{K, Fragment}` - A dictionary of variables ([`Fragment`](@ref) templates) indexed by the corresponding code;
+* `operators::Dict{K, Function}` - A dictionary of operator `Function` instances indexed by a named `String`;
+* `defop::Opt{Function}` - Default operator. If no operator is described in the given `derivation` (during the [`build`](@ref) process), uses this operator.
+
+# See also
+[`StochasticRule`](@ref) [`build`](@ref) [`load_grammar_from_file`](@ref)
+
+!!! ukw "Note:"
+    As a general rule, [`LGrammar`](@ref) instances are loaded from an .YML file
+    (using the [`load_grammar_from_file`](@ref) method). Check this entry for a
+    more in-depth description of the file format.
+
+# Examples
+```jldoctest
+julia> grammar = LGrammar{Float64, String, Vector{String}}()
+LGrammar{Float64, String, Array{String,1}}:
+ Rules: None.
+ Variables: None.
+ Operators: None.
+
+julia> grammar = ProtoSyn.Peptides.grammar()
+ ...
+```
+"""
 mutable struct LGrammar{T <: AbstractFloat, K, V}
-    rules::Dict{K, Vector{StochasticRule{K,V}}}
+    rules::Dict{K, Vector{StochasticRule{T, K,V}}}
     variables::Dict{K, Fragment}
     operators::Dict{K, Function}
     defop::Opt{Function}
 end
 
-
 LGrammar{T, K, V}() where {T <: AbstractFloat, K, V} = LGrammar{T, K, V}(
-    Dict{K, Vector{StochasticRule{K,V}}}(),
+    Dict{K, Vector{StochasticRule{T, K, V}}}(),
     Dict{K, Fragment}(),
     Dict{K, Function}(),
     nothing
 )
+
+Base.show(io::IO, lgrammar::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V} = begin
+    print(io, "LGrammar{$T, $K, $V}:\n Rules:")
+    if length(lgrammar.rules) == 0
+        print(" None.")
+    else
+        for (key, rule) in lgrammar.rules
+            print(io, "\n $key => $rule")
+        end
+    end
+
+    print(io, "\n Variables:")
+    if length(lgrammar.variables) == 0
+        print(" None.")
+    else
+        for (key, variable) in lgrammar.variables
+            print(io, "\n $key => $variable")
+        end
+    end
+
+    print(io, "\n Operators:")
+    if length(lgrammar.operators) == 0
+        print(" None.")
+    else
+        for (key, operator) in lgrammar.operators
+            print(io, "\n $key => $operator")
+        end
+    end
+end
 
 
 getrule(g::LGrammar, r) = begin
@@ -81,6 +177,8 @@ Base.setindex!(g::LGrammar{T, K, V}, x::Function, key::K) where {T <: AbstractFl
 end
 
 
+# ---
+# TODO
 derive(lg::LGrammar, axiom) = begin
     derivation = []
     for x in axiom
@@ -107,44 +205,28 @@ isvar(lg::LGrammar, k) = haskey(lg.variables, k)
 
 
 #region fragment ----------------------------------------------------------------
-
-export isfragment
-
-"""
-    isfragment(pose::Pose)
-
-Return `true` if the given `pose` [Graph](@ref state-types) is a single non-empty
-[`Segment`](@ref) (with no container).
-
-# See also
-[`fragment`](@ref)
-
-# Examples
-```jldoctest
-julia> isfragment(frag)
-true
-```
-"""
-@inline isfragment(pose::Pose) = !(hascontainer(pose.graph) || isempty(pose.graph))
-
-
 """
     fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}
     
-Create and return a new fragment (`Pose` instance with just a single `Segment`)
-using the given `derivation` sequence on the provided `grammar` instructions.
-The main purpose of fragments is to be temporary carriers of information, such
-as during the building process of a new peptide from a sequence. Therefore,
-these structures often don't have any real meaning and are, as such, deprived of
-a root/origin for the graph. Actual structures should instead be of the slightly
-more complete type `Pose`.
+Create and return a new [`Fragment`](@ref) ([`Pose`](@ref) instance with just a
+single [`Segment`](@ref)) using the given `derivation` sequence on the provided
+[`LGrammar`](@ref) `grammar` instructions. The main purpose of fragments is to
+be temporary carriers of information, such as during the building process of a
+new peptide from a sequence. Therefore, these structures often don't have any
+real meaning and are, as such, deprived of a root/origin for the graph. Actual
+structures should instead be of the slightly more complete type [`Pose`](@ref).
 
-!!! note
-    A fragment does not contain a `Topology` instance.
+# See also
+[`build`](@ref)
 
 # Examples
 ```jldoctest
 julia> frag = fragment(res_lib, seq"AAA")
+Pose{Segment}(Segment{/UNK:61880}, State{Float64}:
+ Size: 30
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFloat, K, V}
@@ -185,22 +267,28 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
     return Pose(seg, state)
 end
 
-# fragment(grammar::LGrammar, derivation) = fragment(Units.defaultFloat, grammar, derivation)
-
 #endregion fragment
 
 
 """
-    opfactory(args) -> Function
+    opfactory(args::Any)
 
-Creates the operation function (as closures) given the input arguments `args`
+Return the `operation` function (as a closure) given the input arguments `args`
 (normally read from a grammar file). 
 
-Note: The operation functions are responsible for setting the internal
-coordinates of residues in the system when connecting, building and manipulating
-poses.
+# See also
+[`lgfactory`](@ref)
+
+!!! ukw "Note:"
+    The resulting operation function is responsible for setting the internal
+    coordinates of residues in the system when connecting, building and
+    manipulating poses.
+
+!!! ukw "Note:"
+    This is an internal method of ProtoSyn and shouldn't normally be used
+    directly.
 """
-function opfactory(args)
+function opfactory(args::Any)
     # Note: residue_index is the index on the fragment/pose ('f2') used to
     # actually connect to 'r1'
     return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1)
@@ -234,31 +322,20 @@ end
 
 
 """
-    lgfactory([T=Float64,] template::Dict) -> LGrammar{T, String, Vector{String}}
+    lgfactory([::Type{T}], template::Dict) where {T <: AbstractFloat}
 
 Create an `LGrammar` instance from the contencts of a `template` Dict (normally
-read from a grammar file).
+read from a grammar file). Any numerical entry is parsed to the provided type
+`T` (or `Units.defaultFloat` if no type is provided). The `operators` entry is
+parsed by the [`opfactory`](@ref) method. Return the parsed [`LGrammar`](@ref)
+instance.
 
-# Example
-```yml
-amylose:
-  rules:
-    A:
-      - {p: 0.75, production: [A,α,A]}
-      - {p: 0.25, production: [B,"[",α,A,"]",β,A]}
-  variables:
-    A: resources/Sugars/GLC14.pdb
-  operators:
-    α14:
-      residue1: C1
-      residue2: O4
-      presets:
-        O4: {θ: 127, ϕ: -90.712, b: 1.43}
-        C4: {θ: 100, ϕ: -103.475}
-      offsets:
-        H4: 0
-  defop: α14
-```
+# See also
+[`LGrammar`](@ref) [`load_grammar_from_file`](@ref) [`opfactory`](@ref)
+
+!!! ukw "Note:"
+    This is an internal method of ProtoSyn and shouldn't normally be used
+    directly.
 """
 function lgfactory(::Type{T}, template::Dict) where T
     grammar = LGrammar{T, String, Vector{String}}()
@@ -294,7 +371,7 @@ function lgfactory(::Type{T}, template::Dict) where T
     grammar.defop = getop(grammar, template["defop"])
 
     if haskey(template, "rules")
-        for (key,rules) in template["rules"]
+        for (key, rules) in template["rules"]
             @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
@@ -303,31 +380,42 @@ function lgfactory(::Type{T}, template::Dict) where T
             end
         end
     end
-    grammar
+
+    return grammar
 end
 
 lgfactory(template::Dict) = lgfactory(Float64, template)
 
 
 """
-    fromfile(::Type{T}, filename::AbstractString, key::String) -> LGrammar{String,Vector{String}}
+    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
 
-Create an `LGrammar` instance from the contencts of a grammar file (in YML
-format).
+Create an [`LGrammar`](@ref) instance from the contents of a grammar file (in
+.YML format) under the `key` entry. The file contents are parsed by the
+[`lgfactory`](@ref) method. Any numerical entry is parsed to the provided type
+`T` (or `Units.defaultFloat` if no type is provided). Return the parsed
+[`LGrammar`](@ref) instance.
+
+# See also
+[`LGrammar`](@ref) [`lgfactory`](@ref)
 
 # Examples
 ```jldoctest
-julia> lgrammar = fromfile(Float64, filename, "peptide")
+julia> lgrammar = load_grammar_from_file(Float64, filename, "peptide")
+ ...
 
-julia> lgrammar = fromfile(filename, "peptide")
+julia> lgrammar = load_grammar_from_file(filename, "peptide")
+ ...
 ```
 """
-function fromfile(::Type{T}, filename::AbstractString, key::String) where T
+function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     open(filename) do io
         @info "loading grammar from file $filename"
         yml = YAML.load(io)
-        lgfactory(T, yml[key])
+        return lgfactory(T, yml[key])
     end
 end
 
-fromfile(filename::AbstractString, key::String) = fromfile(Units.defaultFloat, filename, key)
+load_grammar_from_file(filename::AbstractString, key::String) = begin
+    return load_grammar_from_file(Units.defaultFloat, filename, key)
+end

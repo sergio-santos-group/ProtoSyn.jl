@@ -3,7 +3,7 @@ module Tst
 include("../src/ProtoSyn.jl")
 
 using .ProtoSyn
-using .ProtoSyn.Builder
+using .ProtoSyn
 
 STEPWISE = false
 
@@ -64,11 +64,11 @@ if STEPWISE
     push!(grammar, StochasticRule(0.75, 'A' => "AαA"))
     push!(grammar, StochasticRule(0.25, 'A' => "B[αA]βA"))
 
-    @pymol Builder.getvar(grammar, 'A')
-    @pymol Builder.getvar(grammar, 'B')
+    @pymol ProtoSyn.getvar(grammar, 'A')
+    @pymol ProtoSyn.getvar(grammar, 'B')
 
-    ProtoSyn.write(stdout, Builder.getvar(grammar, 'A'))
-    ProtoSyn.write(stdout, Builder.getvar(grammar, 'B'))
+    ProtoSyn.write(stdout, ProtoSyn.getvar(grammar, 'A'))
+    ProtoSyn.write(stdout, ProtoSyn.getvar(grammar, 'B'))
 
     @show derivation = join(derive(grammar, "A", 4))
 
@@ -76,10 +76,10 @@ else
 
     using YAML
     yml = YAML.load(open("examples/data/protosugar.yml"))
-    grammar = Builder.lgfactory(Float64, yml["protosugar"])
+    grammar = ProtoSyn.lgfactory(Float64, yml["protosugar"])
 
-    @pymol Builder.getvar(grammar, "A")
-    @pymol Builder.getvar(grammar, "B")
+    @pymol ProtoSyn.getvar(grammar, "A")
+    @pymol ProtoSyn.getvar(grammar, "B")
 
     @show derivation = derive(grammar, seq"A", 1)
     @show derivation = derive(grammar, derivation, 1)

@@ -4,17 +4,16 @@ export Atom, Residue, Segment, Topology
 const Opt = Union{Nothing, T} where T
 
 """
-    AbstractContainer{T} <: AbstractDigraph
+    AbstractContainer{T}
 
-Supertype for a container of elements of type `T`, implementing
-the `AbstractDigraph` interface.
+Supertype for a container of elements of type `T`.
 """
 abstract type AbstractContainer{T} end
 
-abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
-abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
-abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
-abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
+# abstract type AbstractAtom         <: AbstractContainer{Nothing}         end
+# abstract type AbstractResidue      <: AbstractContainer{AbstractAtom}    end
+# abstract type AbstractSegment      <: AbstractContainer{AbstractResidue} end
+# abstract type AbstractTopology     <: AbstractContainer{AbstractSegment} end
 
 
 function initgraph!(c::T) where {T <: AbstractContainer}
@@ -59,13 +58,13 @@ julia> at = Atom("H1", 1, 1, "H")
 Atom{/H1:1}
 ```
 """
-mutable struct Atom <: AbstractAtom
-    name::String                    # atom name
-    id::Int                         # atom ID
-    index::Int                      # global atom index (1-based)
-    symbol::String                  # element symbol
-    bonds::Vector{Atom}             # list of connected atoms
-    container::Opt{AbstractResidue} # parent residue
+mutable struct Atom <: AbstractContainer{Nothing}
+    name::String                            # atom name
+    id::Int                                 # atom ID
+    index::Int                              # global atom index (1-based)
+    symbol::String                          # element symbol
+    bonds::Vector{Atom}                     # list of connected atoms
+    container::Opt{AbstractContainer{Atom}} # parent residue
     
     visited::Bool
     parent::Opt{Atom}
@@ -112,13 +111,13 @@ julia> res = Residue("UNK", 1)
 Residue{/UNK:1}
 ```
 """
-mutable struct Residue <: AbstractResidue
-    name::ResidueName                    # residue name
-    id::Int                         # residue ID
-    index::Int                      # residue index
-    items::Vector{Atom}             # list of atoms
-    itemsbyname::Dict{String, Atom} # list of atoms indexed by name
-    container::Opt{AbstractSegment} # container segment
+mutable struct Residue <: AbstractContainer{Atom}
+    name::ResidueName                          # residue name
+    id::Int                                    # residue ID
+    index::Int                                 # residue index
+    items::Vector{Atom}                        # list of atoms
+    itemsbyname::Dict{String, Atom}            # list of atoms indexed by name
+    container::Opt{AbstractContainer{Residue}} # container segment
     size::Int
     
     visited::Bool
@@ -161,13 +160,13 @@ julia> res = Segment("UNK", 1)
 Segment{/UNK:1}
 ```
 """
-mutable struct Segment <: AbstractSegment
-    name::String                        # segment name
-    id::Int                             # segment ID
-    index::Int                          # segment index
+mutable struct Segment <: AbstractContainer{Residue}
+    name::String                               # segment name
+    id::Int                                    # segment ID
+    index::Int                                 # segment index
     code::Char
-    items::Vector{Residue}              # list of residues
-    container::Opt{AbstractTopology}    # container topology
+    items::Vector{Residue}                     # list of residues
+    container::Opt{AbstractContainer{Segment}} # container topology
     size::Int
     
     Segment(name::String, id::Int) = begin
@@ -210,7 +209,7 @@ julia> top = Topology("UNK", 1)
 Topology{/UNK:1}
 ```
 """
-mutable struct Topology <: AbstractTopology
+mutable struct Topology <: AbstractContainer{Segment}
     name::String
     id::Int
     items::Vector{Segment}

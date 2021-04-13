@@ -4,7 +4,7 @@ include("../src/ProtoSyn.jl")
 
 using YAML
 using .ProtoSyn
-using .ProtoSyn.Builder
+using .ProtoSyn
 using .ProtoSyn.Peptides
 using .ProtoSyn.Calculators#.Forcefield
 
