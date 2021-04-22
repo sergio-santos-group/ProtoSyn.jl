@@ -328,12 +328,12 @@ end
 """
     getdihedral(state::State, atom::Atom)
 
-Get the dihedral value for [`Atom`](@ref) `atom` of [`State`](@ref) `state` (in
-radians). This value is the sum of the intrisic dihedral angle and the second
-ascendent Δϕ.
+Get the current dihedral value for [`Atom`](@ref) `atom` of [`State`](@ref)
+`state` (in radians, based on the internal coordinates). This value is the sum
+of the intrisic dihedral angle `ϕ` and the second ascendent `Δϕ`.
 
 # See also
-[`ascendents`](@ref) [`setdihedral!`](@ref)
+[`ascendents`](@ref) [`setdihedral!`](@ref) [`dihedral`](@ref)
 
 # Examples
 ```jldoctest

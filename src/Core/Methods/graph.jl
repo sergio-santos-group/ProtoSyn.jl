@@ -410,8 +410,8 @@ function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
     return atoms
 end
 
-export ids
 
+export ids
 """
     ids(atoms::Vector{Atom})
 

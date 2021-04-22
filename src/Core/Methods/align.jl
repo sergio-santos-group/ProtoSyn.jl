@@ -9,21 +9,32 @@ export align!
     align!(mobile::Pose, target::Pose, mobile_selection::ProtoSyn.AbstractSelection, target_selection::ProtoSyn.AbstractSelection)
     
 Application of the Kabsch algorithm. Applies a rotation + translation movement
-on the mobile Pose in order to align to the target Pose. If a selection is
-provided, only the subset of selected Atoms (on both Poses) will be considered
-to calculate the necessary rotation + translation movement (minimizing the
-RMSD). If two selection are provided, each is applied to the respective Pose.
-Sets `mobile.state.c2i` to `true`.
-!!! note
-    This function can align Fragments.
+on the `mobile` [`Pose`](@ref) instance in order to align to the `target`
+[`Pose`](@ref) instance. If a `selection` is provided, only the subset of
+selected [`Atom`](@ref) instances (on both [`Pose`](@ref) structures) will be
+considered to calculate the necessary rotation + translation movement
+(minimizing the RMSD). If two `AbstractSelection` instances are provided
+(`mobile_selection` and `target_selection`), each is applied to the respective
+[`Pose`](@ref) instances (`mobile` and `target`, respectively) in order to
+calculate the necessary rotation + translation movement. Sets `mobile.state.c2i`
+to `true` and returns the altered `mobile` [`Pose`](@ref) instance.
+
+!!! ukw "Note:"
+    This function can also align [Fragment](@ref) instances.
+
+# See also
+[`rmsd`](@ref)
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.align!(pose2, pose1)
+ ...
 
 julia> ProtoSyn.align!(pose2, pose1, an"CA")
+ ...
 
 julia> ProtoSyn.align!(pose2, pose1, an"CA", an"CB")
+ ...
 ```
 """
 function align!(mobile::Pose, target::Pose, selection::AbstractSelection)
@@ -34,8 +45,8 @@ function align!(mobile::Pose, target::Pose, selection::AbstractSelection)
 
     c_mobile                 = mean(mobile_coords, dims = 2)
     c_target                 = mean(target_coords, dims = 2)
-    _mobile_coords         .-= c_mobile
-    _target_coords         .-= c_target
+    _mobile_coords           = mobile_coords .- c_mobile
+    _target_coords           = target_coords .- c_target
        
     cm                       = _mobile_coords * _target_coords'
     u, d, vt                 = svd(cm)

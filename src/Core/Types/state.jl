@@ -364,7 +364,7 @@ Base.append!(s1::State{T}, s2::State{T}) where T = begin
     end
     s1.size += s2.size
     s1.f = hcat(s1.f, zeros(T, 3, s2.size))
-    s1.x.coords = hcat(s1.x.coords, zeros(T, 3, s2.size))
+    s1.x.coords = hcat(s1.x.coords, s2.x.coords)
     s1
 end
 

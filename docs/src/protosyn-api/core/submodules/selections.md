@@ -1,6 +1,6 @@
 # Selections
 
-> The [Selections](@ref) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and [Methods](@ref) that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Selections](@ref) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
  
 ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref) is an `AbstractSelection`, which is parametrized by 2 different static types:
 
@@ -26,7 +26,7 @@ RangeSelection
 FieldSelection
 ```
 
-![ProtoSyn selections](../../assets/ProtoSyn-select1.png)
+![ProtoSyn selections](../../../assets/ProtoSyn-select1.png)
 
 **Figure 1 |** An example of a Serial, Range and Field selections being employed.
 
@@ -35,7 +35,7 @@ TerminalSelection
 DistanceSelection
 ```
 
-![ProtoSyn selections](../../assets/ProtoSyn-select2.png)
+![ProtoSyn selections](../../../assets/ProtoSyn-select2.png)
 
 **Figure 2 |** An example of the Terminal and Distance selections being employed.
 

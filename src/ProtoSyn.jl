@@ -62,7 +62,6 @@ include("Core/Submodules/Selections/selections.jl")
 include("Core/Methods/graph.jl") # After selections.jl
 include("Core/Methods/measure.jl") # After selections.jl
 include("Core/Methods/state.jl")
-include("Core/Methods/pose.jl")
 include("Core/Methods/base.jl")
 include("Core/Methods/io.jl")
 include("Core/Methods/iterators.jl")
@@ -71,6 +70,7 @@ include("Core/Methods/align.jl")
 include("Core/Clustering/Clustering.jl")
 include("Core/Submodules/Builder/grammar.jl")
 include("Core/Submodules/Builder/Builder.jl")
+include("Core/Methods/pose.jl")
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")

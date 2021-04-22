@@ -1,6 +1,6 @@
 # Builder
 
-> The [Builder](@ref) is a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and [Methods](@ref) that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Builder](@ref) is a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
 
 The following sections offer a more in-depth view of the available types and methods for building molecular structures from template libraries:
 
@@ -18,7 +18,7 @@ Therefore, as an example of employment of [Peptides](@ref) L-Grammar, the string
 !!! ukw "Note:"
     Since L-grammars are specific for a given type/family of molecules, no default grammar is provided by `ProtoSyn.Core` module. The following examples and details are discussed by using the [Peptides](@ref) default L-grammar. 
 
-![ProtoSyn L-grammar](../../assets/ProtoSyn-L-grammar.png)
+![ProtoSyn L-grammar](../../../assets/ProtoSyn-L-grammar.png)
 
 **Figure 1 |** A diagram representation of the [Peptides](@ref) default L-grammar. Any L-grammar in ProtoSyn is composed of 3 elements: **[1]** a variables library containing the templates of all the building blocks available. Each variable is a complete description of all internal associations between [`Atom`](@ref) instances ([Bonds](@ref) and [Parenthood relationships](@ref)) as well as all internal coordinates). This information, once loaded, forms an independent [`Fragment`](@ref) object and is indexed by a `:name` or a `:code`. In the case of the [Peptides](@ref) L-Grammar, there are 20 variables, one for each of the 20 natural aminoacids; **[2]** one or more operators, describing bridging connections between 2 of the L-Grammar variables. These, once loaded, return a function that bonds (and applies the correct [Parenthood relationships](@ref)) the requested [`Atom`](@ref) instances, while also applying specific internal coordinates to the involved [`Atom`](@ref) instances. In the case of the [Peptides](@ref) L-Grammar, the only available operator describes a peptidic bond; **[3]** optionally, a set of stochastic rules for choosing an operator. ProtoSyn employs stochastic rules for choosing what operator to apply to any 2 given templates, meaning that different operators can be randomly applied based on a set of weights, generating complex structures in a random way, if desired. In the case of the [Peptides](@ref) L-grammar, such rules are not applied, since there is only 1 operator to be applied.
 
@@ -30,7 +30,7 @@ StochasticRule
 load_grammar_from_file
 ```
 
-![ProtoSyn L-grammar](../../assets/ProtoSyn-yml-format.png)
+![ProtoSyn L-grammar](../../../assets/ProtoSyn-yml-format.png)
 
 **Figure 2 |** An exploration of the .YML file format describing a new [`LGrammar`](@ref) instance (and loaded by the [`load_grammar_from_file`](@ref) method). Templates for the `variables` entry can be in any of the supported formats by ProtoSyn (such as .YML and .PDB). Usually .YML formats are employed, since extra information such as the [Parenthood relationships](@ref) between intra-residue atoms can be easily included. ProtoSyn is able to parse certain unit symbols, such as the degree symbol (`°`). Otherwise, the default units are in radians.
 
@@ -54,16 +54,14 @@ build
 Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the following section. The [Builder](@ref) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.
 
 ```@docs
-append_residues!
-append_fragment!
-insert_residues!
-insert_fragment!
+append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Any; ::Any)
+insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Any; ::Any, ::Bool)
 ```
 
 !!! ukw "Note:"
-    Both the [`insert_residues!`](@ref) and [`insert_fragment!`](@ref) functions do not have access to the picked [`Atom`](@ref) instances for connection, in the operator `op` (for example atoms C and N, for the [Peptides](@ref) [`LGrammar`](@ref) `α` operator). Therefore, it cannot unbond and remove parenthood relationships before attempting to [`join`](@ref ProtoSyn.join) the existing [`Pose`](@ref) and the new [`Fragment`](@ref), resulting in an error (since [`Atom`](@ref) and [`Residue`](@ref) instances cannot have more than 1 parent). In order to prevent this, either manually [`unbond`](@ref) the place of insertion of the new [`Fragment`](@ref) or consider using more specific methods, such as [`Peptides.insert_residues!`](@ref).
+    The [`insert_fragment!`](@ref) function does not have access to the picked [`Atom`](@ref) instances for connection, in the operator `op` (for example atoms C and N, for the [Peptides](@ref) [`LGrammar`](@ref) `α` operator). Therefore, it cannot unbond and remove parenthood relationships before attempting to [`join`](@ref ProtoSyn.join) the existing [`Pose`](@ref) and the new [`Fragment`](@ref), resulting in an error (since [`Atom`](@ref) and [`Residue`](@ref) instances cannot have more than 1 parent). In order to prevent this, either manually [`unbond`](@ref) the place of insertion of the new [`Fragment`](@ref) or consider using more specific methods, such as [`Peptides.insert_residues!`](@ref).
 
 
-![ProtoSyn Manipulation](../../assets/ProtoSyn-manipulation.png)
+![ProtoSyn Manipulation](../../../assets/ProtoSyn-manipulation.png)
 
-**Figure 3 |** Some examples of the application of molecular manipulation methods: **[1]** Appending [`Residue`](@ref) instances at the end of a [`Segment`](@ref) using the [`append_residues!`](@ref) method; **[2]** Adding [`Residue`](@ref) instances at the center and **[3]** at the beggining of an existing [`Segment`](@ref), using the [`insert_residues!`](@ref) method. In the schematic representation of the molecular structure, _R_ denotes the [`Topology`](@ref) root.
+**Figure 3 |** Some examples of the application of molecular manipulation methods: **[1]** Appending [`Residue`](@ref) instances at the end of a [`Segment`](@ref) using the [`append_fragment!`](@ref) method; **[2]** Adding [`Residue`](@ref) instances at the center and **[3]** at the beggining of an existing [`Segment`](@ref), using the [`insert_fragment!`](@ref) method. In the schematic representation of the molecular structure, _R_ denotes the [`Topology`](@ref) root.

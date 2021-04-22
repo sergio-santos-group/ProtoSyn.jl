@@ -1,13 +1,16 @@
 using LinearAlgebra
 
 export distance
-
 """
     distance(at1::AtomState, at2::AtomState)
     
-Calculates the distance between the two `AtomState` instances, based on the
-cartesian coordinates. Note: Make sure the corresponding pose has been synced.
+Calculates the distance between the two [`AtomState`](@ref) instances (`at1` and
+`at2`), based on the cartesian coordinates. Note: Make sure the corresponding
+[`Pose`](@ref) instance has been synched (using the [`sync!`](@ref) method).
 Returns result in Angstrom (Å).
+
+# See also
+[`angle`](@ref) [`dihedral`](@ref)
 
 # Examples
 ```jldoctest
@@ -20,13 +23,16 @@ function distance(at1::AtomState, at2::AtomState)
 end
 
 export angle
-
 """
     angle(at1::AtomState, at2::AtomState, at3::AtomState)
     
-Calculates the angle between the three `AtomState` instances, based on the
-cartesian coordinates. Note: Make sure the corresponding pose has been synced.
-Returns result in radians.
+Calculates the angle between the three [`AtomState`](@ref) instances (`at1`,
+`at2` and `at3`), based on the cartesian coordinates. Note: Make sure the
+corresponding [`Pose`](@ref) instance has been synched (using the
+[`sync!`](@ref) method). Returns result in radians.
+
+# See also
+[`distance`](@ref) [`dihedral`](@ref)
 
 # Examples
 ```jldoctest
@@ -44,13 +50,13 @@ end
 
 
 export dihedral
-
 """
     dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState)
     
-Calculates the dihedral angle between the four `AtomState` instances, based on
-the cartesian coordinates. Note: Make sure the corresponding pose has been
-synced. Returns result in radians.
+Calculates the dihedral angle between the four [`AtomState`](@ref) instances
+(`at1`, `at2`, `at3` and `at4`), based on the cartesian coordinates. Note: Make
+sure the corresponding [`Pose`](@ref) instance has been synched (using the
+[`sync!`](@ref) method). Returns result in radians.
 
 # Examples
 ```jldoctest
@@ -70,23 +76,27 @@ function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState
     return atan(x, y) # in rad
 end
 
-export rmsd
 
+export rmsd
 """
     rmsd(pose1::Pose, pose2::Pose)
     rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)
     
-Calculates the RMSD value between 2 `Pose` instances, based on the cartesian
-coordinates. Note: Make sure the poses have been synced. If an
-`AbstractSelection` is provided, calculate the RMSD values of only the selected
-subset of atoms. Returns result in Angstrom (Å). 
+Calculates the RMSD value between 2 [`Pose`](@ref) instances, based on the
+cartesian coordinates. Note: Make sure the poses have been synched beforehand
+(using the [`sync!`](@ref) method). If an `AbstractSelection` `selection` is
+provided, calculate the RMSD values of only the selected subset of
+[`Atom`](@ref) instances. Returns RMSD result in Angstrom (Å). 
+
+# See also
+[`align!`](@ref) [`getdihedral`](@ref)
 
 # Examples
 ```jldoctest
-julia> a = ProtoSyn.rmsd(pose1, pose2)
+julia> ProtoSyn.rmsd(pose1, pose2)
 5.441139694078181
 
-julia> a = ProtoSyn.rmsd(pose1, pose2, an"CA")
+julia> ProtoSyn.rmsd(pose1, pose2, an"CA")
 4.2278726943222384
 ```
 """
@@ -97,6 +107,7 @@ function rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)
     d = p1 .- p2
     return sqrt(sum(d.*d)/size(d)[2])
 end
+
 
 function rmsd(pose1::Pose, pose2::Pose)
     d = pose1.state.x.coords .- pose2.state.x.coords

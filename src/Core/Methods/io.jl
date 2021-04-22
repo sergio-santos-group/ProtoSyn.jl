@@ -5,21 +5,30 @@ const PDB = Val{1}
 const YML = Val{2}
 
 """
-    load([::Type{T}], filename::AbstractString) where {T <: AbstractFloat}
+    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false]) where {T <: AbstractFloat}
 
-Load the given `filename` into a pose, parametrized by T. If this is not
-provided, the default ProtoSyn.Units.defaultFloat is used. The file format is
+Load the given `filename` into a pose, parametrized by `T`. If this is not
+provided, the default `ProtoSyn.Units.defaultFloat` is used. The file format is
 infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
-set to true (false, by default), the CONECT records will be complemented with
-bonds infered by distance. The threshold distances for each pair of atoms is
-defined in ProtoSyn.bond_lengths.
-!!! note
-    This function does not infer any data of parenthood or ascedence. To calculate that information, specific implementations of this function are provided in other modules (such as `Peptides.load`).
+set to `true` (`false`, by default), the CONECT records will be complemented
+with bonds infered by distance. The distances for each pair of atoms
+is defined in `ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard
+deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance.
+
+# See also
+[`distance`](@ref)
+
+!!! ukw "Note:"
+    This function does not infer any data of parenthood or ascendents. To calculate that information, specific implementations of this function are provided in other modules (such as [`Peptides.load`](@ref)). For this reason, the returned [`Pose`](@ref) instance does not have internal coordinates information and cannot be synched using the [`sync!`](@ref) method.
 
 # Examples
-```julia-repl
-julia> ProtoSyn.load("1ctf.pdb")
-...
+```jldoctest
+julia> ProtoSyn.load("2a3d.pdb")
+Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
+ Size: 1140
+ i2c: false | c2i: true
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
@@ -39,7 +48,7 @@ load(filename::AbstractString; bonds_by_distance = false) = begin
 end
 
 
-load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T, K} = begin
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T <: AbstractFloat, K} = begin
     
     pose = load(T, open(filename), K)
     name, ext = splitext(basename(filename))
@@ -56,8 +65,12 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
                 atom_j = atoms[j]
                 atom_j in atom_i.bonds && continue
                 putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
-                !(putative_bond in keys(bond_lengths)) && continue
-                d = bond_lengths[putative_bond]
+
+                if !(putative_bond in keys(ProtoSyn.Units.bond_lengths))
+                    continue
+                end
+
+                d = ProtoSyn.Units.bond_lengths[putative_bond]
                 d += d * threshold
                 dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
             end
@@ -259,12 +272,17 @@ end
 """
     ProtoSyn.write(pose::Pose, filename::String)
 
-Write to file the given `pose`. The structure format is infered from the
-`filename` extension (Supported: .pdb, .yml).
+Write to file the given [`Pose`](@ref) `pose`. The file format is infered from
+the `filename` extension (Supported: .pdb, .yml). The [`Pose`](@ref) `pose`
+structure is automatically synched (using the[`sync!`](@ref) method) when
+writting to file, as only the cartesian coordinates are used.
+
+# See also
+[`append`](@ref)
 
 # Examples
-```julia-repl
-julia> ProtoSyn.write(pose, "1ctf_modified.pdb")
+```jldoctest
+julia> ProtoSyn.write(pose, "new_file.pdb")
 ```
 """
 function write(pose::Pose, filename::String)
@@ -282,14 +300,20 @@ end
 
 
 """
-    ProtoSyn.append(pose::Pose, filename::String)
+    ProtoSyn.append(pose::Pose, filename::String, [model::Int = 1])
 
-Append to file the given `pose` (as a new frame). The structure format is
-infered from the `filename` extension (Supported: .pdb, .yml).
+Append to file the given [`Pose`](@ref) `pose` (as a new frame, identified by
+the model number `model`: default is 1). The file format is infered from the
+`filename` extension (Supported: .pdb, .yml). The [`Pose`](@ref) `pose`
+structure is automatically synched (using the[`sync!`](@ref) method) when
+writting to file, as only the cartesian coordinates are used.
+
+# See also
+[`write`](@ref)
 
 # Examples
-```julia-repl
-julia> ProtoSyn.append(pose, "1ctf_modified.pdb")
+```jldoctest
+julia> ProtoSyn.append(pose, "new_file.pdb")
 ```
 """
 function append(pose::Pose, filename::String; model::Int = 1)

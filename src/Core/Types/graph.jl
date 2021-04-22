@@ -100,10 +100,10 @@ is an `AbstractContainer`.
 * `visited::Bool` - Check whether this [`Residue`](@ref) has been visited (used by a some functions) (default: `false`)
 * `parent::Opt{Residue}` - Optionally, the parent of this [`Residue`](@ref) in the directional graph (default: `nothing`)
 * `children::Vector{Residue}` - Optionally, the list of children [`Residue`](@ref) instances downstream of this [`Residue`](@ref) (default: empty)
-* `ascedents::Opt{NTuple{4, Int}}` - Optionally, the list of 4 ascendents, including this [`Residue`](@ref) (default: `nothing`)
+* `ascedents::Opt{NTuple{4, Int}}` - Optionally, the list of 4 [`ascendents`](@ref), including this [`Residue`](@ref) (default: `nothing`)
 
 # See also
-[`Segment`](@ref) [`Atom`](@ref) [ascendents] [`ResidueName`](@ref)
+[`Segment`](@ref) [`Atom`](@ref) [`ascendents`](@ref) [`ResidueName`](@ref)
 
 # Examples
 ```jldoctest

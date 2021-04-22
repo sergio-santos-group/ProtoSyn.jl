@@ -18,10 +18,16 @@ makedocs(
         "ProtoSyn API" => [
             "Core" => [
                 "Types" => "protosyn-api/core/types.md",
-                "Methods" => "protosyn-api/core/methods.md",
+                "Methods" => [
+                    "protosyn-api/core/methods/graph.md",
+                    "protosyn-api/core/methods/state.md",
+                    "protosyn-api/core/methods/pose.md",
+                    "protosyn-api/core/methods/io.md",
+                    "protosyn-api/core/methods/aux.md",
+                ],
                 "Submodules" => [
-                    "Selections" => "protosyn-api/core/selections.md",
-                    "Builder" => "protosyn-api/core/builder.md"
+                    "Selections" => "protosyn-api/core/submodules/selections.md",
+                    "Builder" => "protosyn-api/core/submodules/builder.md"
                 ]
             ],
             "Peptides" => [

@@ -41,6 +41,27 @@ const max_bond_lengths = Dict{String, defaultFloat}(
     "OC" => 2.2,
     "SC" => 2.6,
     "HN" => 1.2,
-    "HO" => 1.2)
+    "HO" => 1.2
+)
+
+const bond_lengths = Dict{String, defaultFloat}(
+    "NH" => 0.99,
+    "NC" => 1.47,
+    "CC" => 1.54,
+    "CO" => 1.43,
+    "CH" => 1.09,
+    "OH" => 0.98,
+    "CS" => 1.82,
+    "SH" => 1.34,
+    # * Reverse order (for easy & fast access)
+    "HN" => 0.99,
+    "CN" => 1.47,
+    "CC" => 1.54,
+    "OC" => 1.43,
+    "HC" => 1.09,
+    "HO" => 0.98,
+    "SC" => 1.82,
+    "HS" => 1.34
+)
 
 end

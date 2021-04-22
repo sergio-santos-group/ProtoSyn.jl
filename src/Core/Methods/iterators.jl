@@ -80,7 +80,6 @@ end
 
 #region ResidueIterator
 
-# QUESTION: This works?
 export eachsegment
 eachsegment(t::Topology) = ItemIterator{Topology, _BySegment}(t, (length(t),))
 Base.iterate(iter::ItemIterator{Topology, _BySegment}, (s,)=(1,)) = begin
