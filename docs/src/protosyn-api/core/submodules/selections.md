@@ -18,7 +18,17 @@ ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular 
 
 # Available selection functions
 
-In this first section we will simply list all available `AbstractSelection` types.
+In this section the list all available `AbstractSelection` types will be explored.
+
++ [`SerialSelection`](@ref)
++ [`RangeSelection`](@ref)
++ [`FieldSelection`](@ref)
++ [`TerminalSelection`](@ref)
++ [`DistanceSelection`](@ref)
++ [`RandomSelection`](@ref)
++ [`RandomRangeSelection`](@ref)
++ [`TrueSelection`](@ref)
++ [`UnarySelection`](@ref)
 
 ```@docs
 SerialSelection

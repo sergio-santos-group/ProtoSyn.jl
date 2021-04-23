@@ -120,17 +120,20 @@ end
 """
     StateMatrix{T}(parent::Any, coords::Matrix{T}) where {T <: AbstractFloat}
 
-A [`StateMatrix`](@ref) instance holds the cartesian coordinates of all [`AtomState`](@ref)
-instances in a [`State`](@ref). It is an overload of a `Matrix` struct, and used to efficiently
-apply substantial changes to a system or a large number of atoms. 
+A [`StateMatrix`](@ref) instance holds the cartesian coordinates of all
+[`AtomState`](@ref) instances in a [`State`](@ref). It is an overload of a
+`Matrix` struct, and used to efficiently apply substantial changes to a system
+or a large number of atoms. 
 
 !!! ukw "Note:"
-    If no type `T <: AbstractFloat` is provided, `Units.defaultFloat` will be used.
+    If no type `T <: AbstractFloat` is provided, `Units.defaultFloat` will be
+    used.
 
 !!! ukw "Note:"
-    Changing this [`StateMatrix`](@ref) cartesian coordinates will update and sync
-    changes with a sibling [`AtomState`](@ref), as long as this structs `parent`
-    is correctly set.
+    Changing this [`StateMatrix`](@ref) cartesian coordinates will update and
+    sync changes with a sibling [`AtomState`](@ref), as long as this structs
+    `parent` is correctly set. In such case, the `parent.c2i` flag is also set
+    to `true`.
 
 # Fields
 * `parent::Any` - If set, should point to the parent [`State`](@ref) containing this [`StateMatrix`](@ref) (default: nothing)

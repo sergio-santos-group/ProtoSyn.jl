@@ -10,7 +10,7 @@ end
 Merge the two given poses, creating a new `Pose` in the process.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> ProtoSyn.merge(pose1, pose2)
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748
@@ -58,7 +58,7 @@ end
 Merge the two given poses, updating/overwritting the given `pose1`.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> ProtoSyn.merge!(pose1, pose2)
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748
@@ -110,7 +110,7 @@ must be 3. Copies the given `pose`, returning a new struct.
 `symexp!` `merge`
 
 # Examples
-```julia-repl
+```jldoctest
 julia> ProtoSyn.symexp(pose, [2, 2, 2], [50.0, 50.0, 50.0])
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748
@@ -144,7 +144,7 @@ the given `pose`.
 `symexp` `merge`
 
 # Examples
-```julia-repl
+```jldoctest
 julia> ProtoSyn.symexp!(pose, [2, 2, 2], [50.0, 50.0, 50.0])
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748

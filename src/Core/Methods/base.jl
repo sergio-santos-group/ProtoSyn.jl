@@ -440,7 +440,8 @@ end
 
     detach(segment::Segment)
 
-Detach the given [`Segment`](@ref) from it's container [Graph](@ref state-types), by:
+Detach and return the given [`Segment`](@ref) from it's container
+[Graph](@ref state-types), by:
 * Detaching any [`Atom`](@ref) and [`Residue`](@ref) instance from the [Graph](@ref state-types)'s Root (by popping parenthood relationships), if said instances belong to the given [`Segment`](@ref) instance.
 * Deleting this [`Segment`](@ref) from its container [`Topology`](@ref). 
 
@@ -466,6 +467,7 @@ Base.detach(segment::Segment) = begin
         isparent(root.container, atom.container) && popparent!(atom.container)
     end
     hascontainer(segment) && delete!(segment.container, segment)
+    return segment
 end
 
 #endregion detach

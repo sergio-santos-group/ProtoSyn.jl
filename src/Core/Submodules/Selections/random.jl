@@ -10,7 +10,7 @@ A [`RandomSelection`](@ref) outputs a [`Mask`](@ref) (of type
 
 # State mode    
 
-The state mode of [`RandomSelection`] `M` is forced to be `Stateless`.
+The state mode of [`RandomSelection`](@ref) `M` is forced to be `Stateless`.
 
 # Selection type
 

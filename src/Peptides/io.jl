@@ -11,7 +11,7 @@ defined in ProtoSyn.bond_lengths. Infer parenthood and ascedence from bonds.
     This function is an overload of `ProtoSyn.load`.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> Peptides.load("1ctf.pdb", bonds_by_distance = true)
 ...
 ```

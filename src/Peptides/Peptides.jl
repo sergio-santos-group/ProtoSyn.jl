@@ -30,7 +30,7 @@ include("io.jl")
 # building peptides from fragments.
 
 # # Examples
-# ```julia-repl
+# ```jldoctest
 # julia> g = Peptides.grammar();
 # julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
 # ...
@@ -123,7 +123,7 @@ include("io.jl")
 # as a string.
 
 # # Examples
-# ```julia-repl
+# ```jldoctest
 # julia> sequence(pose)
 # "AAGASTASSE"
 # ```

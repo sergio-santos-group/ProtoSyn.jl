@@ -56,5 +56,6 @@ The following methods allow a user to juxtapose two [`Pose`](@ref) instances and
 
 ```@docs
 align!
+center_of_mass
 rmsd
 ```

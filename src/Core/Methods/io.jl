@@ -338,7 +338,7 @@ companion Python script "cgo_arrow.py". `α` sets a multiplying factor to make
 the resulting force vectors longer/shorter (for visualization purposes only).
 
 # Examples
-```julia-repl
+```jldoctest
 julia> ProtoSyn.write_forces(pose, "forces.dat")
 ```
 """

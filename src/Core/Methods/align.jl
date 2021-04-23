@@ -89,3 +89,55 @@ end
 align!(mobile::Pose, target::Pose) = begin
     return align!(mobile, target, ProtoSyn.TrueSelection{Atom}())
 end
+
+
+"""
+    center_of_mass(pose::Pose)
+    
+Return the center of mass X, Y and Z cartesian coordinates of the given
+[`Pose`](@ref) `pose` (based on the current cartesian coordinates - make sure
+the [`Pose`](@ref) `pose` is synched, using the [`sync!`](@ref) method).
+
+    center_of_mass(pose::Pose, selection::AbstractSelection)
+
+Return the center of mass X, Y and Z cartesian coordinates of the given
+[`Pose`](@ref) `pose`, taking into consideration only the subset of selected
+[`Atom`](@ref) instances in the `AbstractSelection` `selection` (based on the
+current cartesian coordinates - make sure the [`Pose`](@ref) `pose` is synched,
+using the [`sync!`](@ref) method).
+
+    center_of_mass(pose::Pose, idxs::Vector{Int})
+
+Return the center of mass X, Y and Z cartesian coordinates of the given
+[`Pose`](@ref) `pose`, taking into consideration only the subset of 
+[`Atom`](@ref) instances in the vector `idxs` (by [`Atom`](@ref) index, based on
+the current cartesian coordinates - make sure the [`Pose`](@ref) `pose` is
+synched, using the [`sync!`](@ref) method).
+
+# Examples
+```jldoctest
+julia> ProtoSyn.center_of_mass(pose)
+3×1 Array{Float64,2}:
+ 3.749889807243829
+ 3.118859185150233
+ 0.8416667785693792
+
+julia> ProtoSyn.center_of_mass(pose, an"CA")
+3×1 Array{Float64,2}:
+ 3.329659162004171
+ 1.5509243805729065
+ 2.4897904713792956e-8
+```
+"""
+function center_of_mass(pose::Pose)
+    return mean(pose.state.x.coords, dims = 2)
+end
+
+function center_of_mass(pose::Pose, selection::AbstractSelection)
+    idxs = findall(selection(pose).content)
+    return center_of_mass(pose, idxs)
+end
+
+function center_of_mass(pose::Pose, idxs::Vector{Int})
+    return mean(pose.state.x[:, idxs], dims = 2)
+end

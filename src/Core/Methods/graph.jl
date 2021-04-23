@@ -9,7 +9,8 @@ export origin
 Return the first `Atom` in `AbstractContainer` `container` that has no parent.
 The iteration follows the [`Atom`](@ref) instance `:id` field, if correctly
 indexed. If no [`Atom`](@ref) instance without parent is found (i.e.: circular
-structures), return `nothing`.
+structures), return `nothing`. Note that the [`root`](@ref) atoms are not
+considered. 
 
 # See also
 [`root`](@ref) [`reindex`](@ref)
@@ -315,6 +316,7 @@ julia> bond(atom1, atom2)
     @assert at1.container.container === at2.container.container "can only bond atoms within the same segment"
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
+    return nothing
 end
 
 
@@ -442,7 +444,11 @@ end
 
 Returns `true` if all the [`Residue`](@ref) instances gathered from the
 `selection` applied to the given `pose` are contiguous (have a parenthood
-relationship connecting them all). 
+relationship connecting them all). Note that the given `selection` is always
+promoted to [`Residue`](@ref) level.
+
+# See also
+[`ProtoSyn.promote`](@ref)
 
 # Examples
 ```jldoctest

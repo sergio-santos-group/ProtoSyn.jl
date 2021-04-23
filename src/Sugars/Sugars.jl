@@ -21,7 +21,7 @@ The returned L-grammar can then be used by the [`ProtoSyn.build`](@ref) function
 to build the polymer.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> g = Sugars.grammar("amylose");
 julia> pose = ProtoSyn.build(g, "AAA")
 ...

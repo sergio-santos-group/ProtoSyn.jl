@@ -9,7 +9,7 @@ ProtoSyn float value will be used. The returned LGrammar is required for
 building peptides from fragments.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> g = Peptides.grammar();
 julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
 ...
@@ -36,7 +36,7 @@ built pose (linear secondary structure, by default).
 `setss!`
 
 # Examples
-```julia-repl
+```jldoctest
 julia> pose = Peptides.build(grammar, seq"QQQ");
 ...
 ```
@@ -717,7 +717,7 @@ Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
 as a string.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> sequence(pose)
 "AAGASTASSE"
 ```
