@@ -1,6 +1,20 @@
 using ProtoSyn.Peptides
 
-println("-----------\n Builder:")
+println("-----------\n Builder submodule:")
+
+@testset "Building a pose from derivation" begin
+    res_lib = Peptides.grammar(Float64)
+    @test length(res_lib.variables) === 21
+    @test length(res_lib.operators) === 1
+    frag    = fragment(res_lib, seq"GME") 
+    @test size(frag.graph) === (3, 39)
+    @test typeof(frag.graph) === Segment
+    pose    = ProtoSyn.build(res_lib, seq"GME")
+    @test size(pose.graph) === (1, 3, 39)
+    @test typeof(pose.graph) === Topology
+    @test length(pose.state) === pose.state.size === 39
+    @test pose.state[1].t == pose.state.x[:, 1]
+end
 
 res_lib = Peptides.grammar(Float64)
 pose    = ProtoSyn.build(res_lib, seq"GME")

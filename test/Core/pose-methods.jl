@@ -1,3 +1,5 @@
+println("-----------\n Pose Methods:")
+
 @testset "Aligning two poses" begin
     pose1 = copy(backup)
     pose2 = copy(backup)
