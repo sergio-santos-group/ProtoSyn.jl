@@ -25,10 +25,14 @@ makedocs(
                     "protosyn-api/core/methods/io.md",
                     "protosyn-api/core/methods/aux.md",
                 ],
+                "Calculators" => [
+                    "Energy function" => "protosyn-api/core/calculators/energy-function.md",
+                    "TorchANI" => "protosyn-api/core/calculators/torchani.md",
+                ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",
                     "Builder" => "protosyn-api/core/submodules/builder.md"
-                ]
+                ],
             ],
             "Peptides" => [
                 "Introduction" => "protosyn-api/peptides/introduction.md"

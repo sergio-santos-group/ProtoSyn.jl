@@ -1,6 +1,11 @@
 # Types
 
-In this section we will explore the main `struct` instances that compose the core of ProtoSyn's engine.
+In this section we will explore the main `struct` instances that compose the core of ProtoSyn's engine, divided in the following topics, for organization purposes:
+
++ [Pose](@ref)
++ [Fragment](@ref)
++ [Graph](@ref)
++ [Pose](@ref)
 
 ## Pose
 
@@ -45,3 +50,16 @@ State
 AtomState
 StateMatrix
 ```
+
+### Array of Structures vs Structure of Arrays
+
+Given this organization of cartesian coordinates in a [Pose](@ref), a decades old dilemma naturally emerges: should the data be organized in Array of Structures or in a Structure of Arrays. The differences are illustrated bellow:
+
++ Structure of Arrays (SoA) - The main object is a single structure which holds a vector for each of the coordinates of all [`Atom`](@ref) instances. Each coordinate vector of all [`Atom`](@ref) instances is contiguous in memory.
++ Array of Structures (AoS) - The main object is a vector of [`Atom`](@ref) instances, where each [`Atom`](@ref) structure holds a field for each coordinate. Each [`Atom`](@ref) set of coordinates is contiguous in memory.
+
+![ProtoSyn Energy Function](../../assets/ProtoSyn-aos-vs-soa.png)
+
+**Figure 1 |** Visualization of [`Atom`](@ref) instances organization in memory: Structure of Arrays (SoA) vs Array of Structures (AoS). In one hand, when employing the Structure of Arrays (SoA) paradigm, memory is contiguous when accessing all the X coordinates of each [`Atom`](@ref) instance (for example). On the other hand, when employing the Array of Structures (AoS) paradigm, memory is contiguous when accessing all the X, Y and Z coordinates of a single atom (or adjacently indexed atoms).
+
+Given that Julia is a [column major programming language](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-column-major) and based on performance benchmarks during early development cycles, ProtoSyn is developed using the **Array of Structures (AoS)** paradigm (each [`State`](@ref) contains an array of structures [`AtomState`](@ref)).

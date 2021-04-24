@@ -14,7 +14,7 @@ others. These are subdivided by topics, for organization purposes:
 + [Counters and Iterators](@ref)
 + [Bonds](@ref)
 
-### Root vs Origin
+## Root vs Origin
 
 The __root__ of a [Graph](@ref state-types) is a set of 3 pseudoatoms belonging to a [`Topology`](@ref), acting as the anchor for internal coordinate calculations, while an __origin__ is any [`Atom`](@ref) instance with no parent in any given container (for example, due to a cut). While a [`Pose`](@ref) can only have 1 __root__, it can have multiple __origins__ (which usually need to be reconnected for most of the simulations of ProtoSyn).
 
@@ -23,7 +23,7 @@ origin
 root
 ```
 
-### Parenthood relationships
+## Parenthood relationships
 
 [`Atom`](@ref) and [`Residue`](@ref) instances have parenthood relationships, in a directional [Graph](@ref state-types). Several methods allow the manipulation of such relationships, and are of additional importance when using internal coordinates to facilitate and speed up some calculations.
 
@@ -42,7 +42,7 @@ is_contiguous
 
 **Figure 1 |** A diagram of a directional [Graph](@ref state-types) in ProtoSyn.
 
-### Container manipulation
+## Container manipulation
 
 [`Atom`](@ref) instances have a `:container` field, setting the container `AbstractContainer` (usually a [`Residue`](@ref) instance). The same logic applies to [`Residue`](@ref) instances, inside [`Segment`](@ref) structs, and [`Segment`](@ref) instances inside [`Topology`](@ref) structs (according to the established hierarchy of `AbstractContainer` instances). The following methods allow for the correct manipulation of this relations, allowing to add and remove `AbstractContainer` instances from the respective `:container` field, as well as creating copies of them.
 
@@ -54,7 +54,7 @@ Base.delete!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.copy(::Atom)
 ```
 
-### [Indexation](@id graph-methods-indexation)
+## [Indexation](@id graph-methods-indexation)
 
 An important initial detail when describing the [Graph](@ref graph-methods) methods is describing the family of `getindex` methods overloaded by ProtoSyn when dealing with [Graph](@ref graph-types) structures. There is, in essence, 4 ways to access a specific instance in the [Graph](@ref graph-types):
 
@@ -107,7 +107,7 @@ reindex(::Topology; ::Bool)
 ids
 ```
 
-### Counters and Iterators
+## Counters and Iterators
 
 ProtoSyn includes custom [Counters and Iterators](@ref) to analyze and loop over [Graph](@ref graph-types) structures. In one hand, by using Counters the user can count the number of sub `AbstractContainer` instances in a [Graph](@ref graph-types) component (for example, the number of [`Atom`](@ref) instances in a [`Segment`](@ref) or a [`Residue`](@ref)). This can be achieved by using the `count_atoms`, `count_residues` and `count_segments` methods.
 
@@ -126,7 +126,7 @@ for residue in eachresidue(pose.graph[1])
 end
 ```
 
-### Bonds
+## Bonds
 
 The following methods deal with the bonding/unbonding of atoms (and respective
 [Parenthood relationships](@ref) when using the [`join`](@ref) function).

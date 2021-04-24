@@ -7,6 +7,22 @@ using ProtoSyn
 using ProtoSyn.Units
 using Printf
 
+struct AtomState
+    x::Float64
+    y::Float64
+    z::Float64
+end
+
+system = Vector{AtomState}(N)
+
+struct State
+    xs::Vector{Float64}
+    ys::Vector{Float64}
+    zs::Vector{Float64}
+end
+
+system = State(N, N, N)
+
 # Test
 T = Float64
 res_lib  = ProtoSyn.Peptides.grammar(T)

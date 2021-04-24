@@ -1,5 +1,72 @@
 using Printf
 
+"""
+    EnergyFunction(components::Vector{EnergyFunctionComponent}, clean_cache_every::Int16, cache::Int16, components_by_name::Dict{String, Int})
+
+Construct and return a new [`EnergyFunction`](@ref) instance. An
+[`EnergyFunction`](@ref) is a collection of [`EnergyFunctionComponent`](@ref)
+instances, where each of these components calculates an energetic contribution
+to the `:total` energy and forces acting on a system. An
+[`EnergyFunctionComponent`](@ref) can be retrieved by its index or by its name
+(as saved in `components_by_name`). The Julia cache is automatically cleaned by
+garbage collection. However, in certain cases (such as using the
+[TorchANI](@ref) [`EnergyFunctionComponent`](@ref)), a manual call to garbage
+collection is necessary (see [Issue 55140](https://discourse.julialang.org/t/using-gpu-via-pycall-causes-non-reusable-memory-allocation/55140/4)).
+In such cases, the [`EnergyFunction`](@ref) object has an internal `cache` that
+is cleaned (by calling garbage collection) at intervals of `clean_cache_every`
+calls. This interval is automatically adjusted down by measuring the current
+load on the GPU, calling garbage collection once the memory allocation is
+greater than `ProtoSyn.Units.max_gpu_allocation`.
+
+    EnergyFunction([::Type{T}])
+
+Construct and return an empty [`EnergyFunction`](@ref) instance. The
+`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`.
+
+    EnergyFunction(components::Vector{EnergyFunctionComponent{T}}) where {T <: AbstractFloat}
+
+Construct and return a new [`EnergyFunction`](@ref) instance filled with the
+given list of [`EnergyFunctionComponent`](@ref) instances `components`. The
+`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`.  
+
+# Fields
+* `components::Vector{EnergyFunctionComponent}` - The list of [`EnergyFunctionComponent`](@ref) instances in this [`EnergyFunction`](@ref);
+* `clean_cache_every::Int16` - Forcefully call garbage collection every `N` calls;
+* `cache::Int16` - Current number of calls performed. Resets to zero every `clean_cache_every`;
+* `components_by_name::Dict{String, Int}` - The list of [`EnergyFunctionComponent`](@ref) instances in this [`EnergyFunction`](@ref), indexed by `:name`.
+
+# See also
+[`EnergyFunctionComponent`](@ref)
+
+# Examples
+```jldoctest
+julia> energy_function = Calculators.EnergyFunction()
+
++----------------------------------------------------------+
+| Index | Component name                      | Weight (α) |
++----------------------------------------------------------+
++----------------------------------------------------------+
+
+julia> push!(energy_function, Calculators.Restraints.get_default_bond_distance_restraint())
+
++----------------------------------------------------------+
+| Index | Component name                      | Weight (α) |
++----------------------------------------------------------+
+| 1     | Bond_Distance_Restraint             | 1.000      |
++----------------------------------------------------------+
+
+julia> energy_function["Bond_Distance_Restraint"].α = 0.5
+0.5
+
+julia> energy_function
+
++----------------------------------------------------------+
+| Index | Component name                      | Weight (α) |
++----------------------------------------------------------+
+| 1     | Bond_Distance_Restraint             | 0.500      |
++----------------------------------------------------------+
+```
+"""
 mutable struct EnergyFunction
 
     components::Vector{EnergyFunctionComponent}
@@ -31,6 +98,7 @@ Base.length(energy_function::EnergyFunction) = length(energy_function.components
 Base.push!(energy_function::EnergyFunction, component::EnergyFunctionComponent) = begin
     push!(energy_function.components, component)
     energy_function.components_by_name[component.name] = length(energy_function)
+    return energy_function
 end
 
 Base.getindex(energy_function::EnergyFunction, i::Int) = energy_function.components[i]
