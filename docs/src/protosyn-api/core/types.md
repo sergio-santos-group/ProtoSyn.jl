@@ -4,8 +4,8 @@ In this section we will explore the main `struct` instances that compose the cor
 
 + [Pose](@ref)
 + [Fragment](@ref)
-+ [Graph](@ref)
-+ [Pose](@ref)
++ [Graph](@ref graph-types)
++ [State](@ref state-types)
 
 ## Pose
 

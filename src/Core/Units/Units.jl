@@ -28,7 +28,7 @@ tonumber(v::String)      = tonumber(defaultFloat, v)
 
 # * CONSTANTS
 
-const max_bond_lengths = Dict{String, defaultFloat}(
+const max_bond_lengths = Dict{String, defaultFloat}( # in Å
     "CC" => 1.6,
     "CH" => 1.2,
     "CN" => 2.2,

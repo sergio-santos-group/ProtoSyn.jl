@@ -39,33 +39,68 @@ end # function
 
 # * Coords / No Mask
 """
-    apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::Function) where {T <: AbstractFloat}
-    apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+    apply_potential([::Type{A}], coords::Vector{T}, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType, <: AbstractFloat}
+    apply_potential([::Type{A}], coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
 
 Apply the given `potential` to the provided `coords`, return the total energy of
-the system and matrix of forces felt on each atom. If a `mask` is provided,
-the resulting energy and force matrices are multiplied by this mask. A list of 
-default masks is provided in `ProtoSyn.Calculators` module (example: `load_map`
-and `intra_residue_mask`). The `potential` function should receive a distance::T
-and return an energy value e::T. If it received an optional tuple
-v::Tuple{T, T, T}, it should return the forces f1::Tuple{T, T, T} and
-f2::Tuple{T, T, T} felt on both ends of the vector, based on the given distance.
-Several default potential functions are made available in `ProtoSyn.Calculators`
-module (example: `get_flat_bottom_potential`).
+the system and matrix of forces felt on each atom (forces are always calculated).
+If a `mask` is provided, the resulting energy and force matrix are multiplied by
+this `mask` (See [Available masks](@ref) for a list of default masks is provided
+in `ProtoSyn.Calculators` module). The `potential` function should receive a
+`distance::T` and return an energy value `e::T`. If it receives an optional
+tuple `v::Tuple{T, T, T}`, it should also return the forces `f1::Tuple{T, T, T}`
+and `f2::Tuple{T, T, T}` felt on both ends of the vector, based on the given
+`distance::T` (See [Available potentials](@ref) for a list of default potential
+functions available in `ProtoSyn.Calculators` module and [Creating custom
+potential functions](@ref) for the correct function signatures of new
+potentials). An optional parameter `Type{<: AbstractAccelerationType}` can be
+provided, stating the acceleration type used to calculate this energetic
+contribution (See [ProtoSyn acceleration types](@ref)).
 
-    apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::AbstractSelection) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
-    apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+*Selection | Mask*
 
-Apply the given `potential` to the selected atoms of `pose` via the provided
-`selection`, return the total energy of the system and matrix of forces felt on
-each atom. If given, the `mask` size must match the N selected atoms.
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType}
 
-    apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
-    apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+*Selection | No Mask*
 
-Apply the given `potential` to the all atoms of `pose`, return the total energy
-of the system and matrix of forces felt on each atom. If given, the `mask` size
-must match the N selected atoms.
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Nothing, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType}
+
+Apply the given `potential` to the selected atoms of [`Pose`](@ref) `pose` via
+the provided `selection`, return the total energy of the system and matrix of
+forces felt on each atom. Optionally, multiply the results by a `mask` (See
+[Available masks](@ref)). If given (and not equal to `nothing`), the `mask` size
+must match the `N` selected atoms. Alternatively, the given `mask` can be a
+`Function`, in which case it receives a [`Pose`](@ref) `pose` as input (For the
+correct signature of this `Function` `mask`, see [Creating custom masks](@ref)).
+
+*No Selection | Mask*
+
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, selection::Nothing, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType}
+    
+*No Selection | No Mask*
+
+    apply_potential([::Type{A}], pose::Pose, potential::Function, mask::Nothing) where {A <: ProtoSyn.AbstractAccelerationType}
+    apply_potential([::Type{A}], pose::Pose, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, selection::Nothing, mask::Nothing) where {A <: ProtoSyn.AbstractAccelerationType}
+    apply_potential([::Type{A}], pose::Pose, potential::Function, selection::Nothing) where {A <: ProtoSyn.AbstractAccelerationType}
+
+Apply the given `potential` to the all atoms of [`Pose`](@ref) `pose`, return
+the total energy of the system and matrix of forces felt on each [`Atom`](@ref).
+If given (and not equal to `nothing`), the `mask` size must match the total
+number of [`Atom`](@ref) instances in the pose. Alternatively, the given `mask`
+can be a`Function`, in which case it receives a [`Pose`](@ref) `pose` as input
+(For the correct signature of this `Function` `mask`, see
+[Creating custom masks](@ref)).
+
+!!! ukw "Note:"
+    As of ProtoSyn 1.0, this function's acceleration type defaults to
+    `CUDA_2` regardless of the requested acceleration type. This may be changed
+    in future iterations.
 
 # Examples
 ```jldoctest
@@ -100,6 +135,11 @@ function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::
     return energies, forces
 end # function
 
+apply_potential(::Type{A}, coords::Vector{T}, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
+    apply_potential(ProtoSyn.CUDA_2, coords, potential)
+end
+
+
 # * Coords / Mask
 function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer}
 
@@ -114,6 +154,12 @@ function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::
 
     return energy, forces
 end # function
+
+apply_potential(::Type{A}, coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
+end
+
+# ---
 
 
 # * Selection / No Mask
@@ -134,6 +180,16 @@ apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::
     apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
 end
 
+apply_potential(::Type{A}, pose::Pose, potential::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
+end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Nothing, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
+end
+
+# ---
+
 # * Selection / Mask
 apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     sele = ProtoSyn.promote(selection, Atom)(pose).content
@@ -148,60 +204,106 @@ apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::
     apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose), selection)
 end
 
+apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask, selection)
+end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask, selection)
+end
+
+# ---
+
 
 # * No Selection / Mask
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     coords = pose.state.x.coords[:]
     apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
 end
 
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Function) = begin
+apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    coords = pose.state.x.coords[:]
+    apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
+end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose))
+end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose))
 end
 
 
 # * No Selection / No Mask
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+apply_potential(::Type{A}, pose::Pose, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
     coords = pose.state.x.coords[:]
-    apply_potential(ProtoSyn.CUDA_2, coords, potential)
+    e, _f = apply_potential(ProtoSyn.CUDA_2, coords, potential)
+    energy = sum(e)
+    forces = collect(reshape(sum(_f, dims = 1), size(_f)[1], 3)')
+    return energy, forces
 end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential)
+end
+
+apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Nothing) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential)
+end
+
 
 
 # ------------------------------------------------------------------------------
 # * Available potential functions
 
 """
-    get_flat_bottom_potential(d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
+    get_flat_bottom_potential(;d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
 
 Return a flat-bottom potential function, using the specified distances. The
-potential has the following specifications:
+potential is made up of 5 different sectors, each with the following functions:
 
-- f_1) e = m1 * d + b1 {d < d1}
-- f_2) e = (d - d2)^2  {d1 <= d < d2}
-- f_3) e = 0           {d2 <= d <= d3}
-- f_4) e = (d - d3)^2  {d3 < d <= d4}
-- f_5) e = m2 * d + b2 {d > d4}
+\$f_{1}) \\;\\;\\;\\;\\;\\; e = m_{1} \\cdot d + b_{1} \\;\\;\\;\\;\\;\\; \\left \\{ d < d_{1} \\right \\}\\,\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
 
-Where m1 = 2 * (d1 - d2); b1 = f2(d1) - m1 * d1; and m2 = 2 (d4 - d3) and
-b2 = f4(d4) - m2 * d4.
+\$f_{2}) \\;\\;\\;\\;\\;\\; e = \\left (d-d_{2}  \\right )^{2} \\;\\;\\;\\;\\;\\;\\;\\; \\left \\{ d_{1} \\leqslant d < d_{2} \\right \\}\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+
+\$f_{3}) \\;\\;\\;\\;\\;\\; e = 0 \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\; \\left \\{ d_{2} \\leqslant d \\leqslant d_{3} \\right \\}\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+
+\$f_{4}) \\;\\;\\;\\;\\;\\; e = \\left (d-d_{3}  \\right )^{2} \\;\\;\\;\\;\\;\\;\\;\\; \\left \\{ d_{4} < d \\leqslant d_{4} \\right \\}\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+
+\$f_{5}) \\;\\;\\;\\;\\;\\; e = m_{2} \\cdot d + b_{2} \\;\\;\\;\\;\\;\\;  \\left \\{ d > d_{4} \\right \\}\\,\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+
+Where 
+
+\$m_{1} = 2 \\left ( d_{1}-d_{2} \\right ) \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+\$b_{1} = f_{2}\\left ( d_{1} \\right ) - m_{1} \\cdot d_{1} \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+\$m_{2} = 2\\left ( d_{4} - d_{3} \\right ) \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
+\$b_{2} = f_{4}\\left ( d_{4} \\right ) - m_{2} \\cdot d_{4} \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
 
 *The resulting function can be called with the following signature:*
     
-    flat_bottom_potential(d::T; v::Opt{Vector{T}} = nothing) where {T <: AbstractFloat}
+```jldoctest
+flat_bottom_potential(d::T; v::Opt{Vector{T}} = nothing) where {T <: AbstractFloat}
+```
 
 Return an energy value based on the provided distance `d`. If a vector `v` is
 also provided (optional), the flat-bottom restraint will also return the forces
 `f1` and `f2` (the forces felt on both ends of the vector `v`). The vector `v`
 should have length = 3, corresponding to the 3 dimensions of the distance
-between the two atoms (x, y and z). For more information of the flat-bottom
-restraint, please read:
-https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4692055/
+between the two [`Atom`](@ref) instances (X, Y and Z). For more information on
+the flat-bottom potential, please read:
+[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4692055/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4692055/). 
+
+# See also
+[`apply_potential`](@ref ProtoSyn.Calculators.apply_potential) [`calc_flat_bottom_restraint`](@ref ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint)
 
 # Examples
 ```jldoctest
 julia> f = Calculators.get_flat_bottom_potential(1.0, 2.0, 3.0, 4.0)
+
 julia> f(2.5)
 0.0
+
 julia> f(1.73, v = [1.0, 1.0, 1.0])
 (0.0729, [-0.54, -0.54, -0.54], [0.54, 0.54, 0.54])
 ```
@@ -273,11 +375,21 @@ end
 """
     intra_residue_mask(pose::Pose, selection::AbstractSelection)
 
-For all the atoms in the provided `selection` (N), return a 2D N x N Mask with
-all the atoms of the given `pose` **NOT** in the same residue selected. 
+For all the atoms in the provided `AbstractSelection` `selection` (N), return a
+2D N x N [`Mask`](@ref) with all the atoms of the given [`Pose`](@ref) `pose`
+not in the same residue selected. 
+
+!!! ukw "Note:"
+    This function is rather heavy and has low performance. If no design effort
+    is being made (where the sequence changes), the resulting [`Mask`](@ref)
+    from this function can and should be re-used (only calculated once). If, for
+    a specific application, the `AbstractSelection` `selection` remains constant
+    but the [`Mask`](@ref) needs to be re-calculated (for example, because there
+    was a design/mutation step, use the _functor_ resulting from
+    [`get_intra_residue_mask`](@ref)).
 
 # See also
-`diagonal_mask` `get_intra_residue_mask`
+[`diagonal_mask`](@ref) [`get_intra_residue_mask`](@ref)
 
 # Examples
 ```jldoctest
@@ -306,17 +418,18 @@ end
 """
     get_intra_residue_mask(selection::AbstractSelection)
 
-Provides the `_intra_residue_mask` as a functor, which will calculate the intra
-residue mask for the given `selection`. Useful when creating a new
-`EnergyFunctionComponent` that should be updated each step/call.
+Provides the [`intra_residue_mask`](@ref) function as a _functor_, which will
+calculate the intra residue mask for the given `AbstractSelection` `selection`.
+Useful when creating a new [`EnergyFunctionComponent`](@ref) or when the
+[`Mask`](@ref) should be updated each step/call.
 
 # See also
-`intra_residue_mask`
+[`intra_residue_mask`](@ref)
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Calculators.get_intra_residue_mask(an"CA")
-(::ProtoSyn.Calculators.var"#_intra_residue_mask#113"{FieldSelection{ProtoSyn.Stateless,Atom}}) (generic function with 1 method)
+julia> ProtoSyn.Calculators.get_intra_residue_mask(!an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)
+(::ProtoSyn.Calculators.var"#_intra_residue_mask#5"{UnarySelection{ProtoSyn.Stateless}}) (generic function with 1 method)
 ```
 """
 function get_intra_residue_mask(selection::AbstractSelection)
@@ -338,17 +451,27 @@ end
 """
     diagonal_mask(pose::Pose, selection::AbstractSelection)
 
-For all the atoms in the provided `selection` (N), return a 2D N x N Mask with
-all the atoms of the given `pose` **NOT** in the natural diagonal selected (i.e.
-ignores same atom interactions).
+For all the atoms in the provided `AbstractSelection` `selection` (N), return a
+2D N x N [`Mask`](@ref) with all the [`Atom`](@ref) instances of the given
+[`Pose`](@ref) `pose` not in the natural diagonal selected (i.e. ignores same
+atom interaction artifacts).
+
+!!! ukw "Note:"
+    When the selection is constant but the resulting [`Mask`](@ref) needs to be
+    re-calculated every call/step (for example, due to a design or mutation
+    step), consider using the _functor_ from [`get_diagonal_mask`](@ref).
 
 # See also
-`intra_residue_mask` `get_diagonal_mask`
+[`intra_residue_mask`](@ref) [`get_diagonal_mask`](@ref)
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Calculators.intra_residue_mask(pose, an"CA")
-ProtoSyn.Mask{Atom}((73, 73))
+julia> ProtoSyn.Calculators.diagonal_mask(pose, an"CA")
+ProtoSyn.Mask{Atom}(3, 3)
+3×3 BitArray{2}:
+ 0  1  1
+ 1  0  1
+ 1  1  0
 ```
 """
 function diagonal_mask(pose::Pose, selection::AbstractSelection)
@@ -361,17 +484,18 @@ end
 """
     get_diagonal_mask(selection::AbstractSelection)
 
-Provides the `_diagonal_mask` as a functor, which will calculate the diagonal
-mask for the given `selection`. Useful when creating a new
-`EnergyFunctionComponent` that should be updated each step/call.
+Provides the [`diagonal_mask`](@ref) as a _functor_, which will calculate the
+diagonal mask for the given `AbstractSelection` `selection`. Useful when
+creating a new [`EnergyFunctionComponent`](@ref) or when the [`Mask`](@ref)
+should be updated each step/call.
 
 # See also
-`diagonal_mask`
+[`diagonal_mask`](@ref)
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.Calculators.get_diagonal_mask(an"CA")
-(::ProtoSyn.Calculators.var"#_diagonal_mask#85"{FieldSelection{ProtoSyn.Stateless,Atom}}) (generic function with 1 method)
+(::ProtoSyn.Calculators.var"#_diagonal_mask#6"{FieldSelection{ProtoSyn.Stateless,Atom}}) (generic function with 1 method)
 ```
 """
 function get_diagonal_mask(selection::AbstractSelection)
@@ -386,15 +510,15 @@ end
     load_map([::Type{T}], filename::String) where {T <: AbstractFloat}
 
 Load the map in the `filename` file (i.e. Contact Map). The file should be in
-PFRMAT RR format (See: https://predictioncenter.org/casp13/index.cgi?page=format#RR).
+PFRMAT RR format (See: [https://predictioncenter.org/casp13/index.cgi?page=format#RR](https://predictioncenter.org/casp13/index.cgi?page=format#RR)).
 Returns an N x N map of the found weights, with pairs not identified in the file
-set to 0.0 (N is the maximum indentifier found on the file. It might be the case
-where a peptide has 74 residues, but no pair with residue 74 is found on the
-file, the maximum identifier found might be 72, for example. In this case, the
-resulting map will have size 72 x 72. In order to ensure the loaded map size
-matches the underlying peptide size, consider adding an entry of 0.0 on the map
-file, with the correct maximum identifier). *Note:* If no optional type T is
-provided, will use ProtoSyn.Units.defaultFloat.
+set to 0.0 (N is the maximum indentifier found on the file. As an example, it
+might be the case where a peptide has 74 residues, but no pair with residue 74
+is found on the file, the maximum identifier found might be 72, for example. In
+this case, the resulting map will have size 72 x 72. In order to ensure the
+loaded map size matches the underlying peptide size, consider adding an entry of
+0.0 on the map file, with the correct maximum identifier). Note: If no
+optional type `T` is provided, will use `ProtoSyn.Units.defaultFloat`.
 
 # Examples
 ```jldoctest

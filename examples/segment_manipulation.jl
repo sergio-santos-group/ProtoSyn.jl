@@ -7,50 +7,18 @@ using ProtoSyn
 using ProtoSyn.Units
 using Printf
 
-struct AtomState
-    x::Float64
-    y::Float64
-    z::Float64
-end
-
-system = Vector{AtomState}(N)
-
-struct State
-    xs::Vector{Float64}
-    ys::Vector{Float64}
-    zs::Vector{Float64}
-end
-
-system = State(N, N, N)
-
 # Test
 T = Float64
 res_lib  = ProtoSyn.Peptides.grammar(T)
-# seq = seq"Y"
-# pose     = ProtoSyn.Peptides.build(res_lib, seq, Peptides.SecondaryStructure[:linear])
-# ProtoSyn.write(pose, "teste.pdb")
-# pose = Peptides.load("teste.pdb")
-# for residue in reverse(rid"3:11"(pose, gather = true))
-#     ProtoSyn.Peptides.pop_residue!(pose, residue)
-# end
-# ProtoSyn.append(pose, "teste.pdb")
-# println(ProtoSyn.root(pose.graph).children)
-# println(ProtoSyn.root(pose.graph).container.children)
-
-# rot_lib  = Peptides.Rotamers.load_dunbrack(T, Peptides.resource_dir * "/dunbrack_rotamers.lib")
-# seq = seq"ACDEFGHIKLMNPQRSTVWY"
-# pose     = ProtoSyn.Peptides.build(res_lib, seq, Peptides.SecondaryStructure[:linear])
-# ProtoSyn.write(pose, "teste.pdb")
-
-# rot_mut = Peptides.Mutators.RotamerMutator(rot_lib, 1.0, -1, an"CA")
-# for i in 1:10
-#     rot_mut(pose)
-#     ProtoSyn.append(pose, "teste.pdb")
-# end
-
 sequence   = seq"MRS"
-small_pose = ProtoSyn.Peptides.build(res_lib, sequence, Peptides.SecondaryStructure[:helix])
+small_pose = ProtoSyn.Peptides.build(res_lib, sequence)
 ProtoSyn.write(small_pose, "teste.pdb")
+
+for i in 1:179
+    ProtoSyn.ProtoSyn.rotate_dihedral!(small_pose.state, ProtoSyn.Peptides.Dihedral.phi(small_pose.graph[1][2]), deg2rad(2))
+    ProtoSyn.append(small_pose, "teste.pdb")
+end
+
 
 pose    = Peptides.load("../2a3d.pdb")
 ProtoSyn.write(pose, "teste2.pdb")

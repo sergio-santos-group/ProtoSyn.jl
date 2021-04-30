@@ -18,19 +18,32 @@ end
     VerletList(size::Int, capacity::Int, cutoff::Float64, offset::Vector{Int}, list::Vector{Int})
 
 Hold information regarding the neighbouring particles of each particle
-in the system. A Verlet list is comprised of two arrays: the `list`, containing
-the neighbouring atoms (j) of atom i, with sequential atoms divided by a `-1`
-entry; and the `offset` array, containing the positions in array `list` for each
-atom i. Neighbouring atoms are defined as having a distance bellow the defined
-`cutoff`.
+in the system (with number of particles `size`). A [`VerletList`](@ref) is
+comprised of two arrays: the `list`, containing the neighbouring atoms `j` of
+atom `i`, with sequential atoms divided by an invalid `-1` entry; and the
+`offset` array, containing the positions in array `list` for each atom `i`.
+Neighbouring atoms are defined as having a distance bellow the defined `cutoff`.
+The main objective of a [`VerletList`](@ref) is to speed up calculations (by
+ignoring long-range interactions between [`Atom`](@ref) instances) and to lower
+the total amount of memory allocated (the number of allocated [`Atom`](@ref)
+entries is at most the `capacity` of the [`VerletList`](@ref)). Note that, given
+the motion of particles in a simulation, a [`VerletList`](@ref) can quickly
+become obsolete, and needs to be updated using [`update!`](@ref).
 
     VerletList(size::Int)
     
-Creates a new Verlet list with infinite cutoff (holds all atoms in the
-molecule).
+Creates a new [`VerletList`](@ref) with infinite `cutoff` (holds all atoms in
+the molecule).
+
+# Fields
+* `size::Int` - The number of [`Atom`](@ref) instances this [`VerletList`](@ref) makes reference to. Should be the size of `:offset` field;
+* `capacity::Int` - Maximum number of interaction pairs listed in this [`VerletList`](@ref); 
+* `cutoff::Float64` - Interactions are considered when the distance between two [`Atom`](@ref) instances is less than this value;
+* `offset::Vector{Int}` - Vector with the starting index for the neighbouring [`Atom`](@ref)`.id` entries in the `:list` field;
+* `list::Vector{Int}` - Vector with the neighbouring [`Atom`](@ref)`.id` entries, in sectors separated by invalid entries (such as `-1`).
 
 # See also
-`update_serial!`, `update_simd!`
+[`update!`](@ref) [`distance`](@ref)
 
 # Examples
 ```jldoctest
@@ -46,7 +59,9 @@ mutable struct VerletList
     list::Vector{Int}      # nblist
 end
 
-VerletList(size::Int) = VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
+VerletList(size::Int) = begin
+    return VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
+end
 
 
 """
@@ -67,20 +82,23 @@ end
 
 
 """
-    update!([::Type{ProtoSyn.SISD_0}], verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
-    update!([::Type{ProtoSyn.SIMD_1}], verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+    update!([::Type{ProtoSyn.SISD_0}], verlet_list::VerletList, pose::Pose, [selection::Opt{ProtoSyn.AbstractSelection} = nothing])
+    update!([::Type{ProtoSyn.SIMD_1}], verlet_list::VerletList, pose::Pose, [selection::Opt{ProtoSyn.AbstractSelection} = nothing])
 
-Updates the Verlet list (using a SISD or SIMD approach) according to the
-defined 'verlet_list.cutoff' and the given coordinates 'coords' (must be
-in AoS format). If SISD or SIMD acceletarion is not given, the default
-ProtoSyn.acceleration.active is employed.
+Updates the given [`VerletList`](@ref) (using a `SISD_0` or `SIMD_1`
+acceleration approach) according to the defined 'verlet_list.cutoff' and the
+given coordinates in the [`Pose`](@ref) `pose` (in AoS format). If the
+acceletarion type is not given, the default `ProtoSyn.acceleration.active` is
+employed. If an `AbstractSelection` `selection` is provided, only include the
+pair of [`Atom`](@ref) instances as interacting, in the [`VerletList`](@ref), if
+both instances are selected. 
 
 # Examples
 ```jldoctest
-julia> update!(verlet_list, pose.state.x)
+julia> update!(verlet_list, pose)
     ...
 
-julia> update!(verlet_list, pose.state.x, an"CA")
+julia> update!(verlet_list, pose, an"CA")
     ...
 ```
 """

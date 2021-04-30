@@ -26,8 +26,10 @@ makedocs(
                     "protosyn-api/core/methods/aux.md",
                 ],
                 "Calculators" => [
-                    "Energy function" => "protosyn-api/core/calculators/energy-function.md",
+                    "Calculators Module" => "protosyn-api/core/calculators/calculators-module.md",
                     "TorchANI" => "protosyn-api/core/calculators/torchani.md",
+                    "Bond distance Restraint" => "protosyn-api/core/calculators/bond-distance-restraint.md",
+                    "Potential Restraints" => "protosyn-api/core/calculators/potential-restraints.md",
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",

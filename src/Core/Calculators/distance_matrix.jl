@@ -10,35 +10,43 @@ using SIMD
     Calculators.distance_matrix([::A], pose::Pose) where {A}
     
 Return a distance matrix with the distance of all pairs of coordinates in
-`coords` (this should be a Matrix{T} in AoS format) above the triangular matrix.
-Instead of a Matrix{T} `coords`, a `State` or `Pose` can be provided, in which
-case the coordinates considered are all the existent in the State or Pose.state,
-respectively. The optional `A` parameter defines the acceleration mode used
-(SISD_0, SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration.active
-mode will be used.
+`coords` (this should be a `Matrix{T}` in AoS format) above the triangular matrix.
+Instead of a `Matrix{T}` `coords`, a [`State`](@ref) or [`Pose`](@ref) can be
+provided, in which case the coordinates considered are all the existent in the
+[`State`](@ref) or [`Pose`](@ref)`.state`, respectively. The optional `A`
+parameter defines the acceleration mode used (`SISD_0`, `SIMD_1` or `CUDA_2`).
+If left undefined the default `ProtoSyn.acceleration.active` mode will be used.
     
     Calculators.distance_matrix([::A], pose::Pose, selection::ProtoSyn.AbstractSelection)
 
-Return a distance matrix with the distance of all pairs of atoms in the Pose
-`pose` who are included in the given `selection` and above the triangular
-matrix. The optional `A` parameter defines the acceleration mode used (SISD_0,
-SIMD_1 or CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode will
-be used.
+Return a distance matrix with the distance of all pairs of atoms in the
+[`Pose`](@ref) `pose` who are selected in the given `AbstractSelection`
+`selection` and above the triangular matrix. The optional `A` parameter defines
+the acceleration mode used (`SISD_0`, `SIMD_1` or `CUDA_2`). If left undefined
+the default `ProtoSyn.acceleration.active` mode will be used.
 
     Calculators.distance_matrix([::A], coords::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat}
     Calculators.distance_matrix([::A], state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat}
     Calculators.distance_matrix([::A], pose::Pose, verlet_list::VerletList)
 
-Return a distance matrix with the distance of all pairs of coordinates in the
-`VerletList` `verlet_list`. Instead of a Matrix{T} `coords`, a `State` or `Pose`
-can be provided, in which case the coordinates considered are existent in the
-State or Pose.state, respectively. _Note:_ Selections can still be applied when
-using Verlet lists, but need to be applied when updating the lists themselves.
-Check `VerletList` for a more in-depth look at how Verlet lists work. The
-optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1). If
-left undefined the default ProtoSyn.acceleration.active mode will be used. _Note:_
-Using `VerletList`, CUDA_2 acceleration mode is not available. If the default
-ProtoSyn.acceleration.active is set to CUDA_2, SIMD_1 will be used instead.
+Return a top triangular distance matrix with the distance of all pairs of coordinates in the
+[`VerletList`](@ref) `verlet_list`. Instead of a `Matrix{T}` `coords`, a
+[`State`](@ref) or [`Pose`](@ref) can be provided, in which case the coordinates
+considered are existent in the [`State`](@ref) or [`Pose`](@ref)`.state`,
+respectively. The optional `A` parameter defines the acceleration mode used
+(`SISD_0`, `SIMD_1`). If left undefined the default `ProtoSyn.acceleration.active`
+mode will be used. _Note:_ Using `VerletList`, `CUDA_2` acceleration mode is not
+available. If the default `ProtoSyn.acceleration.active` is set to `CUDA_2`,
+`SIMD_1` will be used instead.
+
+!!! ukw "Note:"
+    `AbstractSelections` can still be applied when using [`VerletList`](@ref)
+    instances, but need to be applied when updating the lists themselves. Check
+    [`VerletList`](@ref) and [`update!`](@ref) entries for a more in-depth look
+    at how [Verlet lists](@ref) work.
+
+# See also
+[`full_distance_matrix`](@ref)
 
 # Examples
 ```jldoctest
@@ -135,26 +143,39 @@ distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, verlet_list::VerletList) = 
     distance_matrix(ProtoSyn.SISD_0, pose.state.x, verlet_list)
 end
 
+# * ----------------------------------------------------------------------------
 
 """
     Calculators.full_distance_matrix([::A], coords::Matrix{T}) where {A, T <: AbstractFloat}
+    Calculators.full_distance_matrix([::A], state::State{T}) where {A, T <: AbstractFloat}
+    Calculators.full_distance_matrix([::A], pose::Pose) where {A}
     
-Return a distance matrix with the distance of *all* pairs of coordinates in
-`coords` (this should be a Matrix{T} in AoS format).
-The optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1 or
-CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode will be used.
+Return a distance matrix with the distance of **all** pairs of coordinates in
+`coords` (this should be a `Matrix{T}` in AoS format). Instead of a `Matrix{T}`
+`coords`, a [`State`](@ref) or [`Pose`](@ref) can be provided, in which case the
+coordinates considered are all the existent in the [`State`](@ref) or
+[`Pose`](@ref)`.state`, respectively. The optional `A` parameter defines the
+acceleration mode used (`SISD_0`, `SIMD_1` or `CUDA_2`). If left undefined the
+default `ProtoSyn.acceleration.active` mode will be used.
+
+    Calculators.full_distance_matrix([::A], pose::Pose, selection::ProtoSyn.AbstractSelection)
+
+Return a distance matrix with the distance of **all** pairs of atoms in the
+[`Pose`](@ref) `pose` who are selected in the given `AbstractSelection`
+`selection`. The optional `A` parameter defines the acceleration mode used
+(`SISD_0`, `SIMD_1` or `CUDA_2`). If left undefined the default
+`ProtoSyn.acceleration.active` mode will be used.
+
+# See also
+[`distance_matrix`](@ref)
 
 # Examples
 ```jldoctest
-julia> Calculators.distance_matrix(pose.state.x)
+julia> Calculators.full_distance_matrix(pose.state.x)
 N×N CUDA.CuArray{Float64,2}:
     ...
 
 julia> Calculators.distance_matrix(pose, an"CA")
-N×N CUDA.CuArray{Float64,2}:
-    ...
-
-julia> Calculators.distance_matrix(pose, verlet_list)
 N×N CUDA.CuArray{Float64,2}:
     ...
 ```
