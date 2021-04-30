@@ -16,6 +16,8 @@ provided, in which case the coordinates considered are all the existent in the
 [`State`](@ref) or [`Pose`](@ref)`.state`, respectively. The optional `A`
 parameter defines the acceleration mode used (`SISD_0`, `SIMD_1` or `CUDA_2`).
 If left undefined the default `ProtoSyn.acceleration.active` mode will be used.
+Note: Make sure the given [`Pose`](@ref) `pose` in synched (using the
+[`sync!`](@ref) method).
     
     Calculators.distance_matrix([::A], pose::Pose, selection::ProtoSyn.AbstractSelection)
 
@@ -81,9 +83,9 @@ function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}) where {T <:
     return distance_matrix
 end
 
-distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = distance_matrix(ProtoSyn.SISD_0, pose.state.x)
+distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = distance_matrix(ProtoSyn.SISD_0, pose.state.x.coords)
 distance_matrix(::Type{ProtoSyn.SISD_0}, state::State{T}) where {T <: AbstractFloat} = begin
-    distance_matrix(ProtoSyn.SISD_0, state.x)
+    distance_matrix(ProtoSyn.SISD_0, state.x.coords)
 end
 
 distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
@@ -108,16 +110,15 @@ function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}, verlet_list
         # ptr -> location of the first neighbor of atom i
         # ptr_stop -> location of the last neighbor of atom i
         ptr = verlet_list.offset[i]
-        if verlet_list.list[ptr] < 1
-            continue
-        end
-        ptr_stop = verlet_list.offset[i + 1] - 2
-
+        ptr < 1 && continue
+        verlet_list.list[ptr] < 1 && continue
+        
         # load coordinates for the i-th atom
         @nexprs 3 u -> ri_u = coords[u, i]
         
-        while ptr <= ptr_stop
+        while true
             j = verlet_list.list[ptr]
+            j < 1 && break
 
             # load coordinates for the j-th atom
             # and calculate the ij vector
@@ -136,11 +137,11 @@ function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}, verlet_list
 end
 
 distance_matrix(::Type{ProtoSyn.SISD_0}, state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat} = begin
-    distance_matrix(ProtoSyn.SISD_0, state.x, verlet_list)
+    distance_matrix(ProtoSyn.SISD_0, state.x.coords, verlet_list)
 end
 
 distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, verlet_list::VerletList) = begin
-    distance_matrix(ProtoSyn.SISD_0, pose.state.x, verlet_list)
+    distance_matrix(ProtoSyn.SISD_0, pose.state.x.coords, verlet_list)
 end
 
 # * ----------------------------------------------------------------------------
@@ -198,9 +199,9 @@ function full_distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}) where 
     return distance_matrix
 end
 
-full_distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = full_distance_matrix(ProtoSyn.SISD_0, pose.state.x)
+full_distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose) = full_distance_matrix(ProtoSyn.SISD_0, pose.state.x.coords)
 full_distance_matrix(::Type{ProtoSyn.SISD_0}, state::State{T}) where {T <: AbstractFloat} = begin
-    full_distance_matrix(ProtoSyn.SISD_0, state.x)
+    full_distance_matrix(ProtoSyn.SISD_0, state.x.coords)
 end
 
 full_distance_matrix(::Type{ProtoSyn.SISD_0}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
@@ -235,7 +236,7 @@ function distance_matrix(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}) where {T <:
         _i = i << 2 - (2 + i)
         vi = vload(Vec{4, T}, _coords, _i) # Load XYZ (consecutive)
 
-        @inbounds for j = (i+1):natoms
+        for j = (i+1):natoms
             
             # Atom number to atom position conversion
             _j = j << 2 - (2 + j)
@@ -254,7 +255,9 @@ distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose) = distance_matrix(ProtoSyn.
 distance_matrix(::Type{ProtoSyn.SIMD_1}, state::State{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.SIMD_1, state.x[:])
 end
-
+distance_matrix(::Type{ProtoSyn.SIMD_1}, x::Matrix{T}) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.SIMD_1, x[:])
+end
 
 distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
 
@@ -279,21 +282,20 @@ function distance_matrix(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}, verlet_list
     # then ignored.
     _coords = push!(copy(coords), T(0))
 
-    @inbounds for i = 1:natoms-1
+    for i = 1:natoms-1
 
         ptr = verlet_list.offset[i]
-        if verlet_list.list[ptr] < 1
-            continue
-        end
-        ptr_stop = verlet_list.offset[i + 1] - 2
+        ptr < 1 && continue
+        verlet_list.list[ptr] < 1 && continue
 
         # Atom number to atom position conversion
         i1 = (i<<1) + (i-2)
         vi = vload(Vec{4, T}, _coords, i1) # Load XYZ (consecutive)
 
-        while ptr <= ptr_stop
+        while true
             j = ptr
-            ptr += 1
+            verlet_list.list[ptr] < 1 && break
+
             
             _j = verlet_list.list[j]<<2 - (2 + verlet_list.list[j])
             
@@ -302,6 +304,7 @@ function distance_matrix(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}, verlet_list
             rij = (vload(Vec{4, T}, _coords, _j) - vi) * remaining_mask # xi1, yi1, zi1, wi1
             
             distance_matrix[i, verlet_list.list[j]] = sqrt(sum(rij * rij))
+            ptr += 1
         end # for j
     end # for i
 
@@ -310,6 +313,10 @@ end
 
 distance_matrix(::Type{ProtoSyn.SIMD_1}, state::State{T}, verlet_list::VerletList) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.SIMD_1, state.x[:], verlet_list)
+end
+
+distance_matrix(::Type{ProtoSyn.SIMD_1}, x::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.SIMD_1, x[:], verlet_list)
 end
 
 distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose, verlet_list::VerletList) = begin
@@ -351,10 +358,14 @@ function full_distance_matrix(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}) where 
 end
 
 full_distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose) = full_distance_matrix(ProtoSyn.SIMD_1, pose.state.x[:])
+
 full_distance_matrix(::Type{ProtoSyn.SIMD_1}, state::State{T}) where {T <: AbstractFloat} = begin
     full_distance_matrix(ProtoSyn.SIMD_1, state.x[:])
 end
 
+full_distance_matrix(::Type{ProtoSyn.SIMD_1}, x::Matrix{T}) where {T <: AbstractFloat} = begin
+    full_distance_matrix(ProtoSyn.SIMD_1, x[:])
+end
 
 full_distance_matrix(::Type{ProtoSyn.SIMD_1}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
 
@@ -444,6 +455,10 @@ distance_matrix(::Type{ProtoSyn.CUDA_2}, state::State{T}) where {T <: AbstractFl
     distance_matrix(ProtoSyn.CUDA_2, state.x[:])
 end
 
+distance_matrix(::Type{ProtoSyn.CUDA_2}, x::Matrix{T}) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.CUDA_2, x[:])
+end
+
 full_distance_matrix(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.CUDA_2, coords)
 end
@@ -452,7 +467,23 @@ full_distance_matrix(::Type{ProtoSyn.CUDA_2}, pose::Pose) = begin
     distance_matrix(ProtoSyn.CUDA_2, pose.state.x[:])
 end
 
+full_distance_matrix(::Type{ProtoSyn.CUDA_2}, state::State{T}) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.CUDA_2, state.x[:])
+end
+
+full_distance_matrix(::Type{ProtoSyn.CUDA_2}, x::Matrix{T}) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.CUDA_2, x[:])
+end
+
+full_distance_matrix(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
+    distance_matrix(ProtoSyn.CUDA_2, pose, selection)
+end
+
 # ------------- DYNAMIC---------------------------------------------------------
+
+distance_matrix(coords::Matrix{T}) where {T <: AbstractFloat} = begin
+    distance_matrix(ProtoSyn.acceleration.active, coords[:])
+end
 
 distance_matrix(coords::Vector{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.acceleration.active, coords)
@@ -494,6 +525,20 @@ distance_matrix(coords::Vector{T}, verlet_list::VerletList) where {T <: Abstract
     end
 end
 
+# ---
+
 full_distance_matrix(pose::Pose) = begin
     full_distance_matrix(ProtoSyn.acceleration.active, pose)
+end
+
+full_distance_matrix(coords::Matrix{T}) where {T <: AbstractFloat} = begin
+    full_distance_matrix(ProtoSyn.acceleration.active, coords[:])
+end
+
+full_distance_matrix(state::State{T}) where {T <: AbstractFloat} = begin
+    full_distance_matrix(ProtoSyn.acceleration.active, state)
+end
+
+full_distance_matrix(pose::Pose, selection::ProtoSyn.AbstractSelection) = begin
+    full_distance_matrix(ProtoSyn.acceleration.active, pose, selection)
 end

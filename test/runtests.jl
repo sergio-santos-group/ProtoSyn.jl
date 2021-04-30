@@ -9,4 +9,5 @@ include("Core/pose-methods.jl")
 include("Core/state-methods.jl")
 include("Core/graph-methods.jl")
 include("Core/selections-submodule.jl")
+include("Core/calculators.jl")
 

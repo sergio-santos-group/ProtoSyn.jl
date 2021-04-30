@@ -18,6 +18,7 @@ end
 
 res_lib = Peptides.grammar(Float64)
 pose    = ProtoSyn.build(res_lib, seq"GME")
+sync!(pose)
 
 @testset "Copying a pose" begin
     backup = copy(pose)

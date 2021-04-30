@@ -346,7 +346,7 @@ function get_flat_bottom_potential(;d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T
                     f2      =    v .* factor1
                 end
             elseif d2 <= d <= d3 # * Flat (3)
-                e = 0
+                e = T(0)
             elseif d3 < d <= d4 # * Quadratic Right (4)
                 e = (d - d3) * (d - d3)
                 

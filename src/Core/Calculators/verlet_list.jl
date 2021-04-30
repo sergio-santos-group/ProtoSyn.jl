@@ -77,7 +77,6 @@ end
 Base.resize!(verlet_list::VerletList, n::Int) = begin
     resize!(verlet_list.list, n)
     verlet_list.capacity = n
-    verlet_list
 end
 
 
@@ -112,7 +111,7 @@ function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, s
     cutsq  = convert(eltype(pose.state), verlet_list.cutoff * verlet_list.cutoff)
     offset = 1
     natoms = pose.state.size
-    coords = pose.state.x
+    coords = pose.state.x.coords
 
     if selection !== nothing
         mask = selection(pose)
@@ -221,4 +220,53 @@ function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, s
     end # for i
 
     return verlet_list
+end
+
+update!(::Type{ProtoSyn.CUDA_2}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing) = begin
+    @warn "CUDA_2 acceleration not available for `update!` method. Downgrading to SIMD_1 acceleration ..."
+    update!(ProtoSyn.SIMD_1, verlet_list, pose, selection)
+end
+
+update!(verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing) = begin
+    update!(ProtoSyn.acceleration.active, verlet_list, pose, selection)
+end
+
+
+"""
+    neighbours(verlet_list::VerletList, atom_index::Int)
+
+Return a list of the neighbouring [`Atom`](@ref) instances of [`Atom`](@ref)
+with `:index` `atom_index`, according to the provided [`VerletList`](@ref)
+`verlet_list`. 
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.neighbours(vl, 1)
+22-element Array{Int64,1}:
+  2
+  3
+  4
+  5
+  6
+  ⋮
+ 23
+ 24
+ 25
+ 26
+ 30
+```
+"""
+function neighbours(verlet_list::VerletList, atom_index::Int)
+    index = 0
+    start = verlet_list.offset[atom_index]
+    i = verlet_list.list[start]
+    n = [i]
+    while true
+        index += 1
+        i = verlet_list.list[start + index]
+        i < 0 && break
+        push!(n, i)
+    end
+
+    return n
 end

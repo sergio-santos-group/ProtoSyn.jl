@@ -32,8 +32,8 @@ end
 @testset "DistanceSelection" begin
     pose = copy(backup)
     
-    @test count((5.0:aid"1")(pose)) === 11
-    @test count((5.0:rid"1")(pose)) === 25
+    @test count((5.0:aid"1")(pose)) === 12
+    @test count((5.0:rid"1")(pose)) === 22
 end
 
 @testset "RandomSelection" begin
