@@ -55,7 +55,9 @@ functions available in `ProtoSyn.Calculators` module and [Creating custom
 potential functions](@ref) for the correct function signatures of new
 potentials). An optional parameter `Type{<: AbstractAccelerationType}` can be
 provided, stating the acceleration type used to calculate this energetic
-contribution (See [ProtoSyn acceleration types](@ref)).
+contribution (See [ProtoSyn acceleration types](@ref)). Note that this function
+is usually called by giving a full [`Pose`](@ref) `pose`, using the function
+signatures bellow:
 
 *Selection | Mask*
 
@@ -98,9 +100,9 @@ can be a`Function`, in which case it receives a [`Pose`](@ref) `pose` as input
 [Creating custom masks](@ref)).
 
 !!! ukw "Note:"
-    As of ProtoSyn 1.0, this function's acceleration type defaults to
-    `CUDA_2` regardless of the requested acceleration type. This may be changed
-    in future iterations.
+    As of ProtoSyn 1.0, this function's acceleration type must be `CUDA_2`.
+    Providing any other acceleration type will result in an error. This may be
+    changed in future iterations.
 
 # Examples
 ```jldoctest
@@ -184,22 +186,32 @@ apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, select
     return energy, forces
 end
 
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Nothing, selection::AbstractSelection) = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::AbstractSelection) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::AbstractSelection) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+# --- With explicit mask == nothing
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Nothing) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Nothing, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Nothing) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::AbstractSelection, mask::Nothing) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, selection)
 end
 
 # ---
 
 # * Selection / Mask
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     sele = ProtoSyn.promote(selection, Atom)(pose).content
     coords = pose.state.x.coords[:, sele][:]
     e, _f = apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
@@ -208,16 +220,26 @@ apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::
     return e, f
 end
 
-apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Function, selection::AbstractSelection) = begin
-    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose), selection)
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
-    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask, selection)
+apply_potential(pose::Pose, potential::Function, selection::AbstractSelection, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, selection, mask)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Function, selection::AbstractSelection) where {A <: ProtoSyn.AbstractAccelerationType} = begin
-    apply_potential(ProtoSyn.CUDA_2, pose, potential, mask, selection)
+# --- With mask == Function
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Function) = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, selection, mask(pose))
+end
+
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Function) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::AbstractSelection, mask::Function) = begin
+    apply_potential(ProtoSyn.CUDA_2, pose, potential, selection, mask(pose))
 end
 
 # ---

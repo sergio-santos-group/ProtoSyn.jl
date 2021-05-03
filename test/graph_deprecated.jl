@@ -10,7 +10,7 @@ function f(r,p)
     @test r ∉ p.children
 end
 
-@testset "parenthood" begin
+@testset verbose = true "parenthood" begin
     r = Residue("A", 1)
     p = Residue("B", 2)
     
