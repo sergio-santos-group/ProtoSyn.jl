@@ -1,6 +1,6 @@
 push!(LOAD_PATH, "../src")
 
-using Test, ProtoSyn
+using Base.Test, ProtoSyn
 
 # include("graph.jl")
 include("Core/units.jl")

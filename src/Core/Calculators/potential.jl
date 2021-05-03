@@ -135,8 +135,12 @@ function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::
     return energies, forces
 end # function
 
-apply_potential(::Type{A}, coords::Vector{T}, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
-    apply_potential(ProtoSyn.CUDA_2, coords, potential)
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin
+    apply_potential(ProtoSyn.acceleration.active, coords, potential)
 end
 
 
@@ -155,8 +159,12 @@ function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::
     return energy, forces
 end # function
 
-apply_potential(::Type{A}, coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
-    apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(coords::Vector{T}, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    apply_potential(ProtoSyn.acceleration.active, coords, potential, mask)
 end
 
 # ---
@@ -216,27 +224,67 @@ end
 
 
 # * No Selection / Mask
-apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     coords = pose.state.x.coords[:]
     apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    coords = pose.state.x.coords[:]
+    apply_potential(ProtoSyn.acceleration.active, coords, potential, mask)
+end
+
+# --- With explicit selection = nothing
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     coords = pose.state.x.coords[:]
     apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::Nothing, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
+    coords = pose.state.x.coords[:]
+    apply_potential(ProtoSyn.acceleration.active, coords, potential, mask)
+end
+
+# --- mask as a function
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, mask::Function) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose))
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, mask::Function) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, mask::Function) = begin
+    apply_potential(ProtoSyn.acceleration.active, pose, potential, mask(pose))
+end
+
+# --- mask as a function & explicit selection = nothing
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::Nothing, mask::Function) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential, mask(pose))
+end
+
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::Nothing, mask::Function) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::Nothing, mask::Function) = begin
+    apply_potential(ProtoSyn.acceleration.active, pose, potential, mask(pose))
 end
 
 
 # * No Selection / No Mask
-apply_potential(::Type{A}, pose::Pose, potential::Function) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function) = begin
     coords = pose.state.x.coords[:]
     e, _f = apply_potential(ProtoSyn.CUDA_2, coords, potential)
     energy = sum(e)
@@ -244,14 +292,41 @@ apply_potential(::Type{A}, pose::Pose, potential::Function) where {A <: ProtoSyn
     return energy, forces
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function) = begin
+    apply_potential(ProtoSyn.acceleration.active, pose, potential)
+end
+
+# --- With explicit selection == nothing
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::Nothing) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential)
 end
 
-apply_potential(::Type{A}, pose::Pose, potential::Function, selection::Nothing, mask::Nothing) where {A <: ProtoSyn.AbstractAccelerationType} = begin
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::Nothing) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::Nothing) = begin
+    apply_potential(ProtoSyn.acceleration.active, pose, potential)
+end
+
+# --- With explicit selection == nothing & mask = nothing
+
+apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::Nothing, mask::Nothing) = begin
     apply_potential(ProtoSyn.CUDA_2, pose, potential)
 end
 
+apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, potential::Function, selection::Nothing, mask::Nothing) = begin
+    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+end
+
+apply_potential(pose::Pose, potential::Function, selection::Nothing, mask::Nothing) = begin
+    apply_potential(ProtoSyn.acceleration.active, pose, potential)
+end
 
 
 # ------------------------------------------------------------------------------
