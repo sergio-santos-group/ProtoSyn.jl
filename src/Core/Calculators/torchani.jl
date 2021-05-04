@@ -80,6 +80,9 @@ module TorchANI
     calculate and return the forces acting on each atom based on a single
     TorchANI model neural network.
 
+    !!! ukw "Note:"
+        Each `model` will return a slightly different value for the energy of the molecular system. Use [`calc_torchani_ensemble`](@ref) for a more accurate (and slow) energy prediction. However, as in most cases the energy value is used in comparison with multiple states/frames, [`calc_torchani_ensemble`](@ref) prediction may be suficient.
+
     # See also:
     [`calc_torchani_ensemble`](@ref) [`calc_torchani_model_xmlrpc`](@ref)
 
@@ -102,8 +105,7 @@ module TorchANI
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
     function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
-        println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
-        return 0.0, nothing
+        error("'calc_torchani_model' requires CUDA_2 acceleration.")
     end
 
     function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
@@ -154,9 +156,8 @@ module TorchANI
     (-0.12801788747310638, [ ... ])
     ```
     """
-    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool)
-        println("ERROR: 'calc_torchani_ensemble' requires CUDA_2 acceleration.")
-        return 0.0
+    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false)
+        error("'calc_torchani_ensemble' requires CUDA_2 acceleration.")
     end
 
     function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false)

@@ -460,4 +460,108 @@ println("-----------\n Calculators:")
         end
     end
 
+    @testset verbose = true "$(@sprintf "%-54s" "TorchANI")" begin
+        pose = copy(backup)
+        
+        # get_ani_species
+        @test ProtoSyn.Calculators.TorchANI.get_ani_species(pose.graph[1][1]) == [7, 1, 6, 1, 1, 6, 8]
+        @test ProtoSyn.Calculators.TorchANI.get_ani_species(pose)[1:7] == [7, 1, 6, 1, 1, 6, 8]
+
+        # --- model
+
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_model(ProtoSyn.SISD_0, pose)
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_model(ProtoSyn.SIMD_1, pose)
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model(ProtoSyn.CUDA_2, pose)
+        @test e ≈ 4.698066711425781 atol = 1e-5
+        @test f === nothing
+
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2 # * DYNAMIC
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose)
+            @test e ≈ 4.698066711425781 atol = 1e-5
+            @test f === nothing
+        end
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model(ProtoSyn.CUDA_2, pose, true)
+        @test f[1, 1] ≈ 0.10635934770107269 atol = 1e-5
+        @test f[2, 1] ≈ 0.08172641694545746 atol = 1e-5
+        @test f[3, 1] ≈ -3.624167948146351e-5 atol = 1e-5
+
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2 # * DYNAMIC
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose, true)
+            @test f[1, 1] ≈ 0.10635934770107269 atol = 1e-5
+            @test f[2, 1] ≈ 0.08172641694545746 atol = 1e-5
+            @test f[3, 1] ≈ -3.624167948146351e-5 atol = 1e-5
+        end
+
+        m = ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
+        @test m.calc === ProtoSyn.Calculators.TorchANI.calc_torchani_model
+
+        # --- ensemble
+
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.SISD_0, pose)
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.SIMD_1, pose)
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.CUDA_2, pose)
+        @test e ≈ 6.406177043914795 atol = 1e-5
+        @test f === nothing
+
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.CUDA_2, pose)
+            @test e ≈ 6.406177043914795 atol = 1e-5
+            @test f === nothing
+        end
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.CUDA_2, pose, true)
+        @test f[1, 1] ≈ 0.1007087305188179 atol = 1e-5
+        @test f[2, 1] ≈ 0.0952516570687294 atol = 1e-5
+        @test f[3, 1] ≈ 0.0001887953258119 atol = 1e-5
+        
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(ProtoSyn.CUDA_2, pose, true)
+            @test f[1, 1] ≈ 0.1007087305188179 atol = 1e-5
+            @test f[2, 1] ≈ 0.0952516570687294 atol = 1e-5
+            @test f[3, 1] ≈ 0.0001887953258119 atol = 1e-5
+        end
+
+        m = ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
+        @test m.calc === ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble
+
+        # --- model xml-rpc
+
+        @test ProtoSyn.Calculators.TorchANI.server === nothing
+        ProtoSyn.Calculators.TorchANI.start_torchANI_server()
+        @test typeof(ProtoSyn.Calculators.TorchANI.server) === Base.Process
+        ProtoSyn.Calculators.TorchANI.stop_torchANI_server()
+        @test ProtoSyn.Calculators.TorchANI.server === nothing
+
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.SISD_0, pose)
+        @test_throws ErrorException ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.SIMD_1, pose)
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.CUDA_2, pose)
+        @test e ≈ 4.698066234588623 atol = 1e-5
+        @test f === nothing
+
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.CUDA_2, pose)
+            @test e ≈ 4.698066234588623 atol = 1e-5
+            @test f === nothing
+        end
+
+        e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.CUDA_2, pose, true)
+        @test f[1, 1] ≈ 0.10635934770107269 atol = 1e-5
+        @test f[2, 1] ≈ 0.08172641694545746 atol = 1e-5
+        @test f[3, 1] ≈ -3.624167948146351e-5 atol = 1e-5
+        
+        if ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
+            e, f = ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(ProtoSyn.CUDA_2, pose, true)
+            @test f[1, 1] ≈ 0.10635934770107269 atol = 1e-5
+            @test f[2, 1] ≈ 0.08172641694545746 atol = 1e-5
+            @test f[3, 1] ≈ -3.624167948146351e-5 atol = 1e-5
+        end
+
+        m = ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc()
+        @test m.calc === ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc
+    end
+
 end

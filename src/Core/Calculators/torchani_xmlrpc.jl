@@ -2,12 +2,6 @@ using LightXML
 
 server = nothing
 
-function calc_torchani_model_xmlrpc(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
-    println("ERROR: 'calc_torchani_model_xmlrpc' requires CUDA_2 acceleration.")
-    return 0.0, nothing
-end
-
-
 """
     start_torchANI_server()
 
@@ -152,6 +146,10 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_
         sleep(0.001) # Required to prevent EOFError() during request
         return splice!(r, 1), reshape(r, 3, :).*-1
     end
+end
+
+function calc_torchani_model_xmlrpc(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+    error("'calc_torchani_model_xmlrpc' requires CUDA_2 acceleration.")
 end
 
 calc_torchani_model_xmlrpc(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
