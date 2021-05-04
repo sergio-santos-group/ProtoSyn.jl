@@ -29,7 +29,27 @@ module TorchANI
     export get_ani_species
 
     """
-        # TODO
+        get_ani_species(container::ProtoSyn.AbstractContainer)
+
+    Return a `Vector{Int}` with the atomic number of each [`Atom`](@ref)
+    instance in the given `AbstractContainer` `container`, according to a
+    periodic table.
+
+    # See also
+    [`calc_torchani_model`](@ref) [`calc_torchani_ensemble`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.TorchANI.get_ani_species(pose.graph[1][1])
+    7-element Vector{Int64}:
+     7
+     1
+     6
+     1
+     1
+     6
+     8
+    ```
     """
     function get_ani_species(container::ProtoSyn.AbstractContainer)
         
@@ -46,40 +66,40 @@ module TorchANI
     get_ani_species(pose::Pose) = get_ani_species(pose.graph)
 
     # --- SINGLE MODEL
-
+    
     """
         Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
         
-    Calculate the pose energy according to a single TorchANI model neural
-    network. The model can be defined using `model_index` (from model 1 to 8,
-    default is 3). The optional `A` parameter defines the acceleration mode used
-    (only CUDA_2 is available). If left undefined the default
-    ProtoSyn.acceleration.active mode will be used. If `update_forces` is set to
-    true (false, by default), return the calculated forces on each atom as well.
+    Calculate and return the [`Pose`](@ref) `pose` energy according to a single
+    TorchANI model neural network. The model can be defined using `model_index`
+    (from model 1 to 8, default is 3).The optional `A` parameter defines the
+    acceleration type used (note that only `CUDA_2` is available, any other
+    acceleration type will result in an error). If left undefined the default
+    `ProtoSyn.acceleration.active` mode will be used. By setting the
+    `update_forces` flag to `true` (`false` by default), this function will also
+    calculate and return the forces acting on each atom based on a single
+    TorchANI model neural network.
 
     # See also:
-    `calc_torchani_ensemble` `calc_torchani_model_xmlrpc`
+    [`calc_torchani_ensemble`](@ref) [`calc_torchani_model_xmlrpc`](@ref)
 
     # Examples
     ```jldoctest
-    julia> Calculators.calc_torchani_model(pose)
-    (...)
+    julia> Calculators.TorchANI.calc_torchani_model(pose)
+    (-0.12573561072349548, nothing)
+
+    julia> Calculators.TorchANI.calc_torchani_model(pose, true)
+    (-0.12573561072349548, [ ... ])
     ```
 
-    # Notes:
-    In ProtoSyn <=0.4, this function has a memory leak on the python side.
-    Multiple calls to `calc_torchani_model` require often `GC.gc(false)` calls
-    to impede the 'CUDA out of memory' error. In order to prevent/automate this
-    process, consider the following options:
+    !!! ukw "Note:"
+        In ProtoSyn >= 1.0, this function has a memory leak on the Python call. Multiple calls to [`calc_torchani_model`](@ref) require often `GC.gc(false)` calls to impede the 'CUDA out of memory' error. In order to prevent/automate this process, consider the following options:
 
-    (1) - Use an EnergyFunction struct (with automatic calls to `GC.gc(false)`,
-    as in:
+        (1) - Use an [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) struct (with automatic calls to `GC.gc(false)`, as in:
 
-    energy_function = ProtoSyn.Calculators.EnergyFunction(
-        [ProtoSyn.Calculators.TorchANI.get_default_torchani_model(α = 1.0)])
+        `EnergyFunction([ProtoSyn.Calculators.TorchANI.get_default_torchani_model()])`
 
-    (2) - Call `calc_torchani_model_xmlrpc` instead.
-
+        (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
     function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         println("ERROR: 'calc_torchani_model' requires CUDA_2 acceleration.")
@@ -111,19 +131,27 @@ module TorchANI
     # --- ENSEMBLE
 
     """
-        Calculators.calc_torchani_ensemble([::A], pose::Pose) where {A}
+        Calculators.calc_torchani_ensemble([::A], pose::Pose, update_forces::Bool = false) where {A <: ProtoSyn.AbstractAccelerationType}
     
-    Calculate the pose energy according to the whole TorchANI neural
-    network ensemble. The optional `A` parameter defines the acceleration mode
-    used (only CUDA_2 is available). If left undefined the default
-    ProtoSyn.acceleration.active mode will be used.
+    Calculate and return the [`Pose`](@ref) `pose` energy according to the whole
+    TorchANI neural network ensemble. The optional `A` parameter defines the
+    acceleration type used (note that only `CUDA_2` is available, any other
+    acceleration type will result in an error). If left undefined the default
+    `ProtoSyn.acceleration.active` mode will be used. By setting the
+    `update_forces` flag to `true` (`false` by default), this function will also
+    calculate and return the forces acting on each atom based on the whole
+    TorchANI neural network ensemble.
 
-    #See also:
-    `calc_torchani_model`
+    # See also:
+    [`calc_torchani_model`](@ref)
 
     # Examples
     ```jldoctest
-    julia> Calculators.calc_torchani_ensemble(pose)
+    julia> Calculators.TorchANI.calc_torchani_ensemble(pose)
+    (-0.12801790237426758, nothing)
+
+    julia> Calculators.TorchANI.calc_torchani_ensemble(pose, true)
+    (-0.12801788747310638, [ ... ])
     ```
     """
     function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool)
@@ -158,16 +186,17 @@ module TorchANI
     """
         get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
 
-    Return the default TorchANI model `EnergyFunctionComponent`. `α`
-    sets the component weight (on an `EnergyFunction`). This component employs
-    `calc_torchani_model`, therefore predicting a structure's TorchANI energy
-    based on a single model.
+    Return the default TorchANI model [`EnergyFunctionComponent`](@ref). `α`
+    sets the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_torchani_model`](@ref) method, therefore
+    predicting a structure's TorchANI energy based on a single model.
 
-    # TorchANI model energy settings
-    - :model -> defines which model of the TorchANI ensemble to use.
+    # Settings
+    * `model::Int` - Defines which model of the TorchANI ensemble to use.
 
     # See also
-    `calc_torchani_model` | `get_default_torchani_ensemble`
+    [`calc_torchani_model`](@ref) [`get_default_torchani_ensemble`](@ref)
 
     # Examples
     ```jldoctest
@@ -176,7 +205,7 @@ module TorchANI
        Weight (α) : 1.0
     Update forces : true
           Setings :
-        :model => 3
+            :model => 3
     ```
     """
     function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
@@ -184,15 +213,17 @@ module TorchANI
     end
     
     """
-        get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
 
-    Return the default TorchANI ensemble `EnergyFunctionComponent`. `α`
-    sets the component weight (on an `EnergyFunction`). This component employs
-    `calc_torchani_ensemble`, therefore predicting a structure's TorchANI energy
-    based on the whole TorchANI ensemble (*Note:* This can be very slow).
+    Return the default TorchANI ensemble [`EnergyFunctionComponent`](@ref). `α`
+    sets the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_torchani_ensemble`](@ref) method, therefore
+    predicting a structure's TorchANI energy based on the whole TorchANI
+    ensemble (Note: This can be very slow).
 
     # See also
-    `calc_torchani_ensemble` `get_default_torchani_model`
+    [`calc_torchani_ensemble`](@ref) [`get_default_torchani_model`](@ref)
 
     # Examples
     ```jldoctest

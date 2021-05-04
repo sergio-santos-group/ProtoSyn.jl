@@ -7,6 +7,7 @@ CurrentModule = ProtoSyn.Calculators
 Each module in ProtoSyn may contain a [Calculators module](@ref) which contains types and methods that allow ProtoSyn to measure the fitness of a given [`State`](@ref), according to a specific [`EnergyFunction`](@ref) instance. The resulting energy value is stored in the [`State`](@ref)`.e` field, as a Dictionary of [`EnergyFunctionComponent`](@ref) instances. The `:total` energy of the system is the sum of each component contribution. Each module in ProtoSyn (such as the [Peptides](@ref) module) adds new components and methods specific of that module. As a starting point, the `Core` module sets up all necessary types and methods transversal to all modules, as well as a few basic energetic components. In the next section, a further exploration on how to develop and set-up custom [`EnergyFunction`](@ref) instances is provided, organized in the following sections:
 
 + [Energy functions & energy function components](@ref)
++ [Available EnergyFunctionComponents](@ref)
 + [Creating a custom EnergyFunctionComponent](@ref)
 + [ProtoSyn acceleration types](@ref)
 + [Verlet lists](@ref)
@@ -53,9 +54,18 @@ pose.state.f
 
 **Figure 1 |** A diagram representation of the [`EnergyFunction`](@ref) organization as a set of [`EnergyFunctionComponent`](@ref) instances. Each component contribution is summed to evaluate the `:total` energy of the system, according to each component's scaling factor `ɑ` (in this example, `1.0` for the *TorchANI Ensemble* [`EnergyFunctionComponent`](@ref) and `0.8` for the *Contact Map* [`EnergyFunctionComponent`](@ref)). Some components may be able to calculate the set of forces acting on each atom of the system, in which case this contribution can be toggled *on* and *off* by the `:update_forces` flag. Furthermore, each component may be parametrized by a set of options. In this example, the *Contact Map* [`EnergyFunctionComponent`](@ref) can be further parametrized by setting the `:d1`, `:d2`, `:d3` and `:d4` values (controlling the flat bottom restraint potential), as well as the `:selection ` on which to act and the `:mask` applied. Such settings are specific to each type of [`EnergyFunctionComponent`](@ref) and are explored in detail in each entry.
 
+## Available EnergyFunctionComponents
+
+ProtoSyn.`Core` module makes available the following [`EnergyFunctionComponent`](@ref) instances:
+
+* [Bond Distance Restraint](@ref)
+* [TorchANI](@ref)
+
+Note that most [`EnergyFunctionComponent`](@ref) instances available in ProtoSyn can be found in specific modules (such as [Peptides](@ref)).
+
 ## Creating a custom EnergyFunctionComponent
 
-As stated before, an [`EnergyFunctionComponent`](@ref) is mostly a smart wrap over a `:calc` `Function` responsible for calculating a given energetic contribution based on a specific method, model or restraint type (as an example). Therefore, when developing custom [`EnergyFunctionComponent`](@ref) instances, certain aspects need to be taken into consideration. The following section lists particular restraints when creating custom [`EnergyFunctionComponent`](@ref) instances.
+As stated before, an [`EnergyFunctionComponent`](@ref) is mostly a smart wrapper around a `:calc` `Function` responsible for calculating a given energetic contribution based on a specific method, model or restraint type (as an example). Therefore, when developing custom [`EnergyFunctionComponent`](@ref) instances, certain aspects need to be taken into consideration. The following section lists particular restraints when creating custom [`EnergyFunctionComponent`](@ref) instances.
 
 1. The `calc` `Function` signature:
 

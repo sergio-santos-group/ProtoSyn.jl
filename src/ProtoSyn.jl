@@ -50,17 +50,16 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
 @info "Loading Core"
 
-include("Core/XMLRPC/XMLRPC.jl")
 include("Core/Units/Units.jl")
 include("Core/Methods/constants.jl")
-include("Core/Methods/macros.jl")
 include("Core/Types/other.jl")
+include("Core/Methods/macros.jl") # Requires other.jl
 include("Core/Types/graph.jl")
 include("Core/Types/state.jl")
 include("Core/Types/pose.jl")
 include("Core/Submodules/Selections/selections.jl")
-include("Core/Methods/graph.jl") # After selections.jl
-include("Core/Methods/measure.jl") # After selections.jl
+include("Core/Methods/graph.jl") # Requires selections.jl
+include("Core/Methods/measure.jl") # Requires selections.jl
 include("Core/Methods/state.jl")
 include("Core/Methods/base.jl")
 include("Core/Methods/io.jl")
