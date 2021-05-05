@@ -2,9 +2,9 @@
 CurrentModule = ProtoSyn.Calculators
 ```
 
-# Calculators module
+# Calculators section
 
-Each module in ProtoSyn may contain a [Calculators module](@ref) which contains types and methods that allow ProtoSyn to measure the fitness of a given [`State`](@ref), according to a specific [`EnergyFunction`](@ref) instance. The resulting energy value is stored in the [`State`](@ref)`.e` field, as a Dictionary of [`EnergyFunctionComponent`](@ref) instances. The `:total` energy of the system is the sum of each component contribution. Each module in ProtoSyn (such as the [Peptides](@ref) module) adds new components and methods specific of that module. As a starting point, the `Core` module sets up all necessary types and methods transversal to all modules, as well as a few basic energetic components. In the next section, a further exploration on how to develop and set-up custom [`EnergyFunction`](@ref) instances is provided, organized in the following sections:
+Each module in ProtoSyn may contain a [Calculators section](@ref) which contains types and methods that allow ProtoSyn to measure the fitness of a given [`State`](@ref), according to a specific [`EnergyFunction`](@ref) instance. The resulting energy value is stored in the [`State`](@ref)`.e` field, as a Dictionary of [`EnergyFunctionComponent`](@ref) instances. The `:total` energy of the system is the sum of each component contribution. Each module in ProtoSyn (such as the [Peptides](@ref) module) adds new components and methods specific of that module. As a starting point, the `Core` module sets up all necessary types and methods transversal to all modules, as well as a few basic energetic components. In the next section, a further exploration on how to develop and set-up custom [`EnergyFunction`](@ref) instances is provided, organized in the following sections:
 
 + [Energy functions & energy function components](@ref)
 + [Creating a custom EnergyFunctionComponent](@ref)
@@ -121,7 +121,7 @@ Each one of these contigous sectors is a collection of [`Atom`](@ref)`.id` value
 
 ## Distance matrix calculation
 
-As previously stated, the [Calculators module](@ref) in `Core` exists mainly to set-up types and methods transversal to all ProtoSyn's `Calculators` in different modules (such as [Peptides](@ref)). One such method commonly employed in energy calculations is the ability to measure distance matrices. A distance matrix is a 2D matrix whose entries are the distance between the `X` and `Y` [`Atom`](@ref), usually considering only the top triangular matrix. A full distance matrix can also be useful, as is available by using the [`full_distance_matrix`](@ref) method.
+As previously stated, the [Calculators section](@ref) in `Core` exists mainly to set-up types and methods transversal to all ProtoSyn's `Calculators` in different modules (such as [Peptides](@ref)). One such method commonly employed in energy calculations is the ability to measure distance matrices. A distance matrix is a 2D matrix whose entries are the distance between the `X` and `Y` [`Atom`](@ref), usually considering only the top triangular matrix. A full distance matrix can also be useful, as is available by using the [`full_distance_matrix`](@ref) method.
 
 ```@docs
 Calculators.distance_matrix

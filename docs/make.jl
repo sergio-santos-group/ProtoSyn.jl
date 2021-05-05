@@ -26,10 +26,19 @@ makedocs(
                     "protosyn-api/core/methods/aux.md",
                 ],
                 "Calculators" => [
-                    "Calculators Module" => "protosyn-api/core/calculators/calculators-module.md",
+                    "Calculators Section" => "protosyn-api/core/calculators/calculators-section.md",
                     "TorchANI" => "protosyn-api/core/calculators/torchani.md",
                     "Bond distance Restraint" => "protosyn-api/core/calculators/bond-distance-restraint.md",
                     "Potential Restraints" => "protosyn-api/core/calculators/potential-restraints.md",
+                ],
+                "Mutators" => [
+                    "Mutators Section" => "protosyn-api/core/mutators/mutators-section.md",
+                    "Dihedral Mutator" => "protosyn-api/core/mutators/mutators-dihedral.md",
+                    "Crankshaft Mutator" => "protosyn-api/core/mutators/mutators-crankshaft.md",
+                    "Rigid Body Mutators" => "protosyn-api/core/mutators/mutators-rigid-body.md",
+                ],
+                "Drivers" => [
+                    "Drivers Section" => "protosyn-api/core/drivers/drivers-section.md",
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",

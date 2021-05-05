@@ -30,6 +30,9 @@ end
 Base.iterate(rn::ResidueName) = Base.iterate(rn.content)
 Base.iterate(rn::ResidueName, n::Int64) = Base.iterate(rn.content, n)
 
+Base.length(r::ResidueName) = length(r.content)
+Base.sizeof(r::ResidueName) = sizeof(r.content)
+
 # * ---- XML-RPC ---------------------------------------------------------------
 
 module XMLRPC
