@@ -31,18 +31,16 @@ The selection type of [`FieldSelection`](@ref) can be any `T <: AbstractContaine
 # Examples
 ```jldoctest
 julia> sele = FieldSelection{Atom}("C", :symbol)
-FieldSelection{ProtoSyn.Stateless,Atom}("C", :symbol, isequal)
+FieldSelection › Atom.symbol = C
 
 julia> sele = FieldSelection{Residue}("AL*", :name, is_regex = true)
-FieldSelection{ProtoSyn.Stateless,Residue}(r"AL*", :name, occursin)
-```
+FieldSelection › Residue.name = r"AL*"
 
-```jldoctest
 julia> sele = as"C"
-FieldSelection{ProtoSyn.Stateless,Atom}("C", :symbol, isequal)
+FieldSelection › Atom.symbol = C
 
 julia> sele = rn"AL*"r
-FieldSelection{ProtoSyn.Stateless,Residue}(r"AL*", :name, occursin)
+FieldSelection › Residue.name = r"AL*"
 ```
 """
 mutable struct FieldSelection{M, T} <: AbstractSelection
@@ -83,3 +81,17 @@ macro sn_str(p, flags...); FieldSelection{Segment}(p, :name; is_regex = parse_fl
 macro rn_str(p, flags...); FieldSelection{Residue}(p, :name; is_regex = parse_flags(flags)); end
 macro an_str(p, flags...); FieldSelection{Atom}(p, :name; is_regex = parse_flags(flags)); end
 macro as_str(p, flags...); FieldSelection{Atom}(p, :symbol; is_regex = parse_flags(flags)); end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, fs::FieldSelection) = begin
+    ProtoSyn.show(io, fs)
+end
+
+function show(io::IO, fs::FieldSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"FieldSelection › $(T).$(fs.field) = $(fs.pattern)")
+end

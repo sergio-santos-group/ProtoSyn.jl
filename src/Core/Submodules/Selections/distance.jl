@@ -18,12 +18,12 @@ The selection type of [`DistanceSelection`](@ref) `T` is forced to be [`Atom`](@
 # Examples
 ```jldoctest
 julia> sele = DistanceSelection(2.0, rn"ALA")
-DistanceSelection{ProtoSyn.Stateful,Atom}(2.0, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
-```
+DistanceSelection ❯ Within 2.0 Å (Atom)
+ └── FieldSelection › Residue.name = ALA
 
-```jldoctest
 julia> 2.0:rn"ALA"
-DistanceSelection{ProtoSyn.Stateful,Atom}(2.0, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
+DistanceSelection ❯ Within 2.0 Å (Atom)
+ └── FieldSelection › Residue.name = ALA
 ```
 """
 mutable struct DistanceSelection{M, T} <: AbstractSelection
@@ -116,3 +116,18 @@ end
 # --- Short Syntax -------------------------------------------------------------
 
 Base.:(:)(l::Number, r::AbstractSelection) = DistanceSelection(l, r)
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, ds::DistanceSelection) = begin
+    ProtoSyn.show(io, ds)
+end
+
+function show(io::IO, ds::DistanceSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"DistanceSelection ❯ Within $(ds.distance) Å ($T)")
+    ProtoSyn.show(io, ds.sele, vcat(levels, false))
+end

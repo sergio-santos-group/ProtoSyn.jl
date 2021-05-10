@@ -32,18 +32,16 @@ The selection type of [`SerialSelection`](@ref) can be any `T <: AbstractContain
 # Examples
 ```jldoctest
 julia> sele = SerialSelection{Segment}(1, :id)
-SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
+SerialSelection › Segment.id = 1
 
 julia> sele = SerialSelection{Atom}(2, :index)
-SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
-```
+SerialSelection › Atom.index = 2
 
-```jldoctest
 julia> sele = sid"1"
-SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
+SerialSelection › Segment.id = 1
 
 julia> sele = aix"2"
-SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
+SerialSelection › Atom.index = 2
 ```
 """
 mutable struct SerialSelection{M, T} <: AbstractSelection
@@ -70,6 +68,20 @@ function select(sele::SerialSelection{Stateless, T}, container::AbstractContaine
         end
     end
     return mask
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, ss::SerialSelection) = begin
+    ProtoSyn.show(io, ss)
+end
+
+function show(io::IO, ss::SerialSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"SerialSelection › $(T).$(ss.field) = $(ss.serial)")
 end
 
 # ------------------------------------------------------------------------------
@@ -109,18 +121,16 @@ The selection type of [`RangeSelection`](@ref) can be any `T <: AbstractContaine
 # Examples
 ```jldoctest
 julia> sele = RangeSelection{Segment}(1:4, :id)
-RangeSelection{ProtoSyn.Stateless,Segment}(1:4, :id)
+RangeSelection › Segment.id between 1 and 4
 
 julia> sele = RangeSelection{Atom}(2:10, :index)
-RangeSelection{ProtoSyn.Stateless,Atom}(2:10, :index)
-```
+RangeSelection › Atom.index between 2 and 10
 
-```jldoctest
 julia> sele = sid"1:4"
-SerialSelection{ProtoSyn.Stateless,Segment}(1, :id)
+RangeSelection › Segment.id between 1 and 4
 
 julia> sele = aix"2:10"
-SerialSelection{ProtoSyn.Stateless,Atom}(2, :index)
+RangeSelection › Atom.index between 2 and 10
 ```
 
 !!! ukw "Note:"
@@ -176,3 +186,21 @@ macro rid_str(p); occursin(":", p) && return RangeSelection{Residue}(parse(UnitR
 macro rix_str(p); occursin(":", p) && return RangeSelection{Residue}(parse(UnitRange{Int}, p), :index); SerialSelection{Residue}(parse(Int, p), :index); end
 macro aid_str(p); occursin(":", p) && return RangeSelection{Atom}(parse(UnitRange{Int}, p), :id); SerialSelection{Atom}(parse(Int, p), :id); end
 macro aix_str(p); occursin(":", p) && return RangeSelection{Atom}(parse(UnitRange{Int}, p), :index); SerialSelection{Atom}(parse(Int, p), :index); end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, rs::RangeSelection) = begin
+    ProtoSyn.show(io, rs)
+end
+
+function show(io::IO, rs::RangeSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    if typeof(rs.range) === Int
+        println(io, lead*"RangeSelection › $(T).$(rs.field) larger than $(rs.range)")
+    else
+        println(io, lead*"RangeSelection › $(T).$(rs.field) between $(rs.range.start) and $(rs.range.stop)")
+    end
+end

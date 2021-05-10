@@ -49,12 +49,14 @@ and `Residue`), the resulting mask will be promoted to the lowest ranking type
 # Examples
 ```jldoctest
 julia> sele = BinarySelection(&, rn"ALA", an"CA")
-BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(&, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal))
-```
+BinarySelection ❯  & "and" (Atom)
+ ├── FieldSelection › Residue.name = ALA
+ └── FieldSelection › Atom.name = CA
 
-```jldoctest
 julia> rn"ALA" & an"CA"
-BinarySelection{ProtoSyn.Stateless,ProtoSyn.Stateless}(&, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal))
+BinarySelection ❯  & "and" (Atom)
+ ├── FieldSelection › Residue.name = ALA
+ └── FieldSelection › Atom.name = CA
 ```
 """
 mutable struct BinarySelection{LM, RM} <: AbstractSelection
@@ -124,4 +126,21 @@ select(sele::BinarySelection{Stateful, Stateful}, container::AbstractContainer) 
         l_mask, r_mask = promote(lmask, rmask, container)
         return sele.op(l_mask, r_mask)
     end
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, bs::BinarySelection) = begin
+    ProtoSyn.show(io, bs)
+end
+
+function show(io::IO, bs::BinarySelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    dict = Dict((|) => "or", (&) => "and")
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"BinarySelection ❯  $(bs.op) \"$(dict[bs.op])\" ($(selection_type(bs)))")
+    ProtoSyn.show(io, bs.left, vcat(levels, true))
+    ProtoSyn.show(io, bs.right, vcat(levels, false))
 end

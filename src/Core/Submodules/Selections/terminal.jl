@@ -25,7 +25,7 @@ The selection type of [`TerminalSelection`](@ref) `T` is forced to be [`Residue`
 # Examples
 ```jldoctest
 julia> sele = TerminalSelection()
-TerminalSelection{ProtoSyn.Stateless,Residue}()
+TerminalSelection (Residue)
 ```
 """
 mutable struct TerminalSelection{M, T} <: AbstractSelection
@@ -53,4 +53,18 @@ function select(sele::TerminalSelection{Stateless, Residue}, container::Abstract
         end
     end
     return mask
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, ts::TerminalSelection) = begin
+    ProtoSyn.show(io, ts)
+end
+
+function show(io::IO, ts::TerminalSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"TerminalSelection ($T)")
 end

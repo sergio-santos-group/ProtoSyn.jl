@@ -23,7 +23,7 @@ The selection type of [`RandomSelection`](@ref) can be any
 # Examples
 ```jldoctest
 julia> sele = RandomSelection{Residue}()
-RandomSelection{ProtoSyn.Stateless,Residue}()
+RandomSelection › Residue.id
 ```
 """
 struct RandomSelection{M, T} <: AbstractSelection
@@ -60,6 +60,20 @@ function select(sele::RandomSelection{Stateless, T}, container::AbstractContaine
     end
 end
 
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, rs::RandomSelection) = begin
+    ProtoSyn.show(io, rs)
+end
+
+function show(io::IO, rs::RandomSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"RandomSelection › $T.id")
+end
+
 # ------------------------------------------------------------------------------
 export RandomRangeSelection
 # Note: RandomRangeSelection is a LEAF selection.
@@ -73,7 +87,7 @@ the given `container`. The considered range is based on the instance's `:id`.
 
 # State mode
     
-The state mode of [`RandomRangeSelection`] `M` is forced to be `Stateless`.
+The state mode of [`RandomRangeSelection`](@ref) `M` is forced to be `Stateless`.
 
 # Selection type
 
@@ -86,7 +100,7 @@ The selection type of [`RandomRangeSelection`](@ref) can be any
 # Examples
 ```jldoctest
 julia> sele = RandomRangeSelection{Residue}()
-RandomRangeSelection{ProtoSyn.Stateless,Residue}()
+RandomRangeSelection › Residue.id
 ```
 
 !!! ukw "Note:"
@@ -115,4 +129,95 @@ function select(::RandomRangeSelection{Stateless, T}, container::AbstractContain
     _min, _max      = min(a, b), max(a, b)
     mask[_min:_max] = true
     return mask
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, rrs::RandomRangeSelection) = begin
+    ProtoSyn.show(io, rrs)
+end
+
+function show(io::IO, rrs::RandomRangeSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"RandomRangeSelection › $T.id")
+end
+
+# ------------------------------------------------------------------------------
+export RandomSelectionFromList
+# Note: RandomSelectionFromList is a BRANCH selection.
+
+"""
+    RandomSelectionFromList(selections::Vector{T}) where {T <: AbstractSelection}
+
+A [`RandomSelectionFromList`](@ref) outputs a [`Mask`](@ref) (of type
+`T <: AbstractContainer`). This [`Mask`](@ref) is the result of the application
+of a randomly selected `AbstractSelection` from the provided list of
+`AbstractSelection` instances `selections`.
+
+!!! ukw "Note:"
+    All the given `AbstractSelection` instances must be of the same type.
+
+# State mode
+
+The state mode of [`RandomSelectionFromList`](@ref) `M` is the same as the state
+mode of the provided list of `AbstractSelection` instances (which are all of the
+same type).
+
+# Selection type
+
+The selection type of [`RandomSelectionFromList`](@ref) `M` is the same as the
+selection type of the provided list of `AbstractSelection` instances (which are
+all of the same type).
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
+
+# Examples
+```jldoctest
+julia> s = ProtoSyn.RandomSelectionFromList([rid"1", rid"2"])
+RandomSelectionFromList ❯ (Residue)
+ ├── SerialSelection › Residue.id = 1
+ └── SerialSelection › Residue.id = 2
+ 
+julia> s = ProtoSyn.RandomSelectionFromList([rid"1", rn"CBZ"])
+ERROR: AssertionError: RandomSelectionFromList `selections` elements must be all of the same type.
+```
+"""
+struct RandomSelectionFromList{M, T} <: AbstractSelection
+    
+    selections::Vector{AbstractSelection}
+
+    RandomSelectionFromList(selections::Vector{T}) where {T <: AbstractSelection} = begin
+        @assert length(Set(map(i -> typeof(i), selections))) == 1 "RandomSelectionFromList `selections` elements must be all of the same type."
+        new{state_mode_type(selections[1]), selection_type(selections[1])}(selections)
+    end
+end
+
+state_mode_type(s::RandomSelectionFromList{M, T}) where {M, T} = M
+selection_type(s::RandomSelectionFromList{M, T}) where {M, T} = T
+
+# --- RandomSelectionFromList Select -------------------------------------------
+function select(rsfl::RandomSelectionFromList{M, T}, container::AbstractContainer) where {M, T <: AbstractContainer}
+    return select(rsfl.selections[rand(1:end)], container)
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, rsfl::RandomSelectionFromList) = begin
+    ProtoSyn.show(io, rsfl)
+end
+
+function show(io::IO, rsfl::RandomSelectionFromList{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"RandomSelectionFromList ❯ ($T)")
+    for selection in rsfl.selections[1:(end-1)]
+        ProtoSyn.show(io, selection, vcat(levels, true))
+    end
+    ProtoSyn.show(io, rsfl.selections[end], vcat(levels, false))
 end

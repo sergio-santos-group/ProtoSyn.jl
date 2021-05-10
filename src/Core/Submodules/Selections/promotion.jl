@@ -28,7 +28,8 @@ will return the selection type of the given `sele`.
 # Examples
 ```jldoctest
 julia> sele = PromoteSelection(rn"ALA", Segment, all)
-PromoteSelection{ProtoSyn.Stateless}(FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), Segment, all)
+PromoteSelection ❯ From Residue to Segment
+ └── FieldSelection › Residue.name = ALA
 ```
 """
 mutable struct PromoteSelection{M} <: AbstractSelection
@@ -44,6 +45,22 @@ end
 state_mode_type(::PromoteSelection{M}) where {M} = M
 selection_type(sele::PromoteSelection{M})  where {M} = sele.T
 
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, ps::PromoteSelection) = begin
+    ProtoSyn.show(io, ps)
+end
+
+function show(io::IO, ps::PromoteSelection{M}, levels::Opt{BitArray} = nothing) where {M}
+    lead = ProtoSyn.get_lead(levels)
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"PromoteSelection ❯ From $(selection_type(ps.sele)) to $(ps.T)")
+    ProtoSyn.show(io, ps.sele, vcat(levels, false))
+end
+
+# ------------------------------------------------------------------------------
 
 export promote
 

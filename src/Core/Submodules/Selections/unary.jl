@@ -23,7 +23,8 @@ will return the selection type of the given `sele`.
 # Examples
 ```jldoctest
 julia> sele = !rn"ALA"
-UnarySelection{ProtoSyn.Stateless}(!, FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal))
+UnarySelection ❯ ! "not" (Residue)
+ └── FieldSelection › Residue.name = ALA
 ```
 """
 mutable struct UnarySelection{M} <: AbstractSelection
@@ -57,4 +58,20 @@ function select(sele::UnarySelection{Stateful}, container::AbstractContainer)
         mask = _selector(state)
         return (sele.op)(mask)
     end
+end
+
+# --- Show ---------------------------------------------------------------------
+
+Base.show(io::IO, us::UnarySelection) = begin
+    ProtoSyn.show(io, us)
+end
+
+function show(io::IO, us::UnarySelection{M}, levels::Opt{BitArray} = nothing) where {M}
+    lead = ProtoSyn.get_lead(levels)
+    dict = Dict((!) => "not")
+    if levels === nothing
+        levels = BitArray([])
+    end
+    println(io, lead*"UnarySelection ❯ $(us.op) \"$(dict[us.op])\" ($(selection_type(us)))")
+    ProtoSyn.show(io, us.sele, vcat(levels, false))
 end

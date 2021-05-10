@@ -8,6 +8,22 @@ struct Stateless <: AbstractStateMode end # * Doesn't need state to get selectio
 
 export select
 
+# --- Show ---------------------------------------------------------------------
+
+function get_lead(levels::Opt{BitArray} = nothing)
+    lead = ""
+    levels === nothing && return lead
+
+    for level in levels[1:(end - 1)]
+        lead *= level ? " |  " : "   "
+    end
+
+    ending = levels[end] ? " ├── " : " └── "
+    return lead * ending
+end
+
+# ------------------------------------------------------------------------------
+
 include("masks.jl")
 include("promotion.jl")
 include("binary.jl")
