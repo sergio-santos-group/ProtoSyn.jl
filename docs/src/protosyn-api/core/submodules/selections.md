@@ -26,6 +26,7 @@ In this section the list all available `AbstractSelection` types will be explore
 + [`TerminalSelection`](@ref)
 + [`DistanceSelection`](@ref)
 + [`RandomSelection`](@ref)
++ [`RandomSelectionFromList`](@ref)
 + [`RandomRangeSelection`](@ref)
 + [`TrueSelection`](@ref)
 + [`UnarySelection`](@ref)
@@ -36,7 +37,7 @@ RangeSelection
 FieldSelection
 ```
 
-![ProtoSyn selections](../../../assets/ProtoSyn-select1.png)
+![ProtoSyn selections1](../../../assets/ProtoSyn-select-1.png)
 
 **Figure 1 |** An example of a Serial, Range and Field selections being employed.
 
@@ -45,12 +46,13 @@ TerminalSelection
 DistanceSelection
 ```
 
-![ProtoSyn selections](../../../assets/ProtoSyn-select2.png)
+![ProtoSyn selections2](../../../assets/ProtoSyn-select-2.png)
 
 **Figure 2 |** An example of the Terminal and Distance selections being employed.
 
 ```@docs
 RandomSelection
+RandomSelectionFromList
 RandomRangeSelection
 TrueSelection
 UnarySelection
@@ -91,7 +93,6 @@ ProtoSyn.promote(::Mask{T1}, ::Type{T2}, ::AbstractContainer, ::Function) where 
 promote(::Mask{T1}, ::Mask{T2}, ::AbstractContainer) where {T1, T2}
 ```
 
-
 # Combining selections
 
 Two selections can be combined using logical operators (such as `or` and `and`), returning a [`BinarySelection`](@ref). The resulting selection's `StateMode` and selection type depend on the two merged selections.
@@ -99,6 +100,10 @@ Two selections can be combined using logical operators (such as `or` and `and`),
 ```@docs
 BinarySelection
 ```
+
+![ProtoSyn selections3](../../../assets/ProtoSyn-select-3.png)
+
+**Figure 3 |** An example of a possible combination of `AbstractSelection` types, in ProtoSyn. In this example, two [`FieldSelection`](@ref) instances (`an"CA"` and `rn"ALA"`) are combined using a [`BinarySelection`](@ref), with operation `op` being the `&` ("and"), effectly selecting all [`Atom`](@ref) instances in a given [`Pose`](@ref) who are `CA` atoms belonging to an `ALA` residue. This `AbstractSelection` is further used as input for a [`DistanceSelection`](@ref), selecting all [`Atom`](@ref) instances within 10.0 Å of a `CA` atom in an `ALA` residue. Since [`FieldSelection`](@ref) instances act directly on a given [`Pose`](@ref) instance (and not on other `AbstractSelection` instances), these are said to be "leaf selections", in contrast with "branch selections". Branch selections act on other `AbstractSelection` instances. For example, the [`BinarySelection`](@ref) combines two `AbstractSelection` instances with a given operator `op`. 
 
 # Applying selections
 

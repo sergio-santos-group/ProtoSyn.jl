@@ -12,7 +12,6 @@ function (callback::Callback)(pose::Pose, driver_state::ProtoSyn.Drivers.DriverS
 end
 
 function Base.show(io::IO, cb::Callback)
-    println(" Callback:")
     println(io, "+"*repeat("-", 58)*"+")
     @printf(io, "| %-5s | %-15s | %-30s |\n", "Index", "Field", "Value")
     println(io, "+"*repeat("-", 58)*"+")

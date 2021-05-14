@@ -18,9 +18,20 @@ no input arguments and should return a `Vector{Float}` with size `3`, the `X`,
 `Y` and `Z` dimensions). Although not necessary, this `Vector{Float}` should
 have norm `1.0`. The translation vector is then multiplied by `step_size`. If an
 `AbstractSelection` `selection` is provided, only the selected [`Atom`](@ref)
-instances are translated. Requests cartesian to internal coordinates conversion
-(using [`request_c2i!`](@ref ProtoSyn.request_c2i!) method). Does not
-[`sync!`](@ref) the given [`Pose`](@ref).
+instances are translated. Note that the [`TranslationRigidBodyMutator`](@ref)
+syncs any pending internal to cartesian coordinate conversion (using the
+[`i2c!`](@ref ProtoSyn.i2c!) method). Requests cartesian to internal coordinates
+conversion (using [`request_c2i!`](@ref ProtoSyn.request_c2i!) method). Does not
+[`sync!`](@ref) the given [`Pose`](@ref) afterwards.
+
+The [`TranslationRigidBodyMutator`](@ref) `AbstractMutator` can also be
+optionally called using the following signature, in which case only the provided
+list of [`Atom`](@ref) instances will be considered for the application of this
+`AbstractMutator`.
+
+```
+(rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Vector{Atom})
+```
 
 # Fields
 
@@ -34,7 +45,7 @@ instances are translated. Requests cartesian to internal coordinates conversion
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, rn"CBZ")
-  Translation Rigid Body:
+  Translation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -64,6 +75,10 @@ end
 
 
 function (rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Vector{Atom})
+
+    # TranslationRigidBodyMutator requires updated cartesian coordinates
+    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
+
     translation_vector   = rigid_body_mutator.translation_vector_sampler()
     translation_vector .*= rigid_body_mutator.step_size
     for atom in atoms
@@ -76,7 +91,7 @@ end
 
 
 function Base.show(io::IO, rbm::TranslationRigidBodyMutator)
-    println("  Translation Rigid Body:")
+    println("  Translation Rigid Body Mutator:")
     println(io, "+"*repeat("-", 70)*"+")
     @printf(io, "| %-5s | %-27s | %-30s |\n", "Index", "Field", "Value")
     println(io, "+"*repeat("-", 70)*"+")
@@ -117,9 +132,20 @@ centered in a pivot position, sampled from `pivot_sampler` (receives the
 arguments and should return a `Vector{Float}` with size `3`, the `X`, `Y` and
 `Z` dimensions). If an `AbstractSelection` `selection` is provided, only the
 selected [`Atom`](@ref) instances are rotated and used as input for
-`pivot_sampler`. Requests cartesian to internal coordinates conversion (using
-[`request_c2i!`](@ref ProtoSyn.request_c2i!) method). Does not [`sync!`](@ref)
-the given [`Pose`](@ref).
+`pivot_sampler`. Note that the [`RotationRigidBodyMutator`](@ref) syncs any
+pending internal to cartesian coordinate conversion (using the
+[`i2c!`](@ref ProtoSyn.i2c!) method). Requests cartesian to internal coordinates
+conversion (using [`request_c2i!`](@ref ProtoSyn.request_c2i!) method). Does not
+[`sync!`](@ref) the given [`Pose`](@ref) afterwards.
+
+The [`RotationRigidBodyMutator`](@ref) `AbstractMutator` can also be
+optionally called using the following signature, in which case only the provided
+list of [`Atom`](@ref) instances will be considered for the application of this
+`AbstractMutator`.
+
+```
+(rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose, atoms::Vector{Atom})
+```
 
 # Fields
 
@@ -135,7 +161,7 @@ the given [`Pose`](@ref).
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, rn"CBZ")
-  Rotation Rigid Body:
+  Rotation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -158,6 +184,10 @@ end
 
 
 function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
+
+    # RotationRigidBodyMutator requires updated cartesian coordinates
+    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
+
     axis  = rigid_body_mutator.axis_sampler()
     angle = rigid_body_mutator.angle_sampler() * rigid_body_mutator.step_size
     rmat  = ProtoSyn.rotation_matrix_from_axis_angle(axis, angle)
@@ -169,9 +199,23 @@ function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
     ProtoSyn.request_c2i!(pose.state)
 end
 
+function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose, atoms::Vector{Atom})
+
+    # RotationRigidBodyMutator requires updated cartesian coordinates
+    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
+
+    axis  = rigid_body_mutator.axis_sampler()
+    angle = rigid_body_mutator.angle_sampler() * rigid_body_mutator.step_size
+    rmat  = ProtoSyn.rotation_matrix_from_axis_angle(axis, angle)
+    idxs = ProtoSyn.ids(atoms)
+    pivot = rigid_body_mutator.pivot_sampler(pose, idxs)
+    pose.state.x[:, idxs] = (rmat * (pose.state.x[:, idxs] .- pivot)) .+ pivot
+    ProtoSyn.request_c2i!(pose.state)
+end
+
 
 function Base.show(io::IO, rbm::RotationRigidBodyMutator)
-    println("  Rotation Rigid Body:")
+    println("  Rotation Rigid Body Mutator:")
     println(io, "+"*repeat("-", 70)*"+")
     @printf(io, "| %-5s | %-27s | %-30s |\n", "Index", "Field", "Value")
     println(io, "+"*repeat("-", 70)*"+")

@@ -24,14 +24,30 @@ by travelling the [`Pose`](@ref) [Graph](@ref graph-types) (See
 Note that a new angle for the crankshaft movement is sampled for each selected
 pair of [`Atom`](@ref) instances. If an `AbstractSelection` `selection` is
 provided, only the selected [`Atom`](@ref) instances are looped over. If an
+`AbstractSelection` `selection` is provided, only the selected [`Atom`](@ref)
+instances are looped over. If the given `AbstractSelection` `selection` is not
+of selection type [`Atom`](@ref), it will be promoted to this type (using
+[`promote`](@ref ProtoSyn.promote) with default aggregator `any`). If an
 `AbstractSelection` `inc_last_res` is provided, all atoms in this
 `AbstractSelection` and in the last residue considered for the crankshaft
 movement will be included in the rotation. As an example, for a correct
 crankshaft movement in peptidic structures, the sidechain of the last residue
 should also be included in the rotation. In this example, `inc_last_res` should
-be `!(an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)`. Requests cartesian to internal
-coordinates conversion (using [`request_c2i!`](@ref ProtoSyn.request_c2i!)
-method). Does not [`sync!`](@ref) the given [`Pose`](@ref).
+be `!(an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)`. Note that the
+[`CrankshaftMutator`](@ref) syncs any pending internal to cartesian coordinate
+conversion (using the [`i2c!`](@ref ProtoSyn.i2c!) method). Requests cartesian
+to internal coordinates conversion (using
+[`request_c2i!`](@ref ProtoSyn.request_c2i!) method). Does not [`sync!`](@ref)
+the given [`Pose`](@ref) afterwards.
+
+The [`CrankshaftMutator`](@ref) `AbstractMutator` can also be optionally called
+using the following signature, in which case only the provided list of
+[`Atom`](@ref) instances will be considered for the application of this
+`AbstractMutator`.
+
+```
+(crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom})
+```
 
 # Fields
 * `angle_sampler::Function` - Should return a `Float` angle value (in radians). Is called with no input arguments;
@@ -46,7 +62,7 @@ method). Does not [`sync!`](@ref) the given [`Pose`](@ref).
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 1.0, 1.0, nothing, nothing)
-  Crankshaft:
+  Crankshaft Mutator:
 +--------------------------------------------------------------------+
 | Index | Field                     | Value                          |
 +--------------------------------------------------------------------+
@@ -58,7 +74,7 @@ julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 1.0, 1.0, nothing, nothing)
 +--------------------------------------------------------------------+
 
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 0.01, 1.0, an"CA", !(an"^CA\$|^N\$|^C\$|^H\$|^O\$"r))
-  Crankshaft:
+  Crankshaft Mutator:
 +--------------------------------------------------------------------+
 | Index | Field                     | Value                          |
 +--------------------------------------------------------------------+
@@ -85,7 +101,12 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose)
     if crankshaft_mutator.selection === nothing
         atoms = collect(eachatom(pose.graph))
     else
-        atoms = crankshaft_mutator.selection(pose, gather = true)
+        if ProtoSyn.selection_type(crankshaft_mutator.sele) !== Atom
+            sele  = ProtoSyn.promote(crankshaft_mutator.sele, Atom) # default aggregator is `any`
+            atoms = sele(pose, gather = true)
+        else
+            atoms = crankshaft_mutator.selection(pose, gather = true)
+        end
     end
     
     crankshaft_mutator(pose, atoms)
@@ -93,6 +114,9 @@ end
 
 
 function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom})
+
+    # CrankshaftMutator requires updated cartesian coordinates
+    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
 
     for (i, atom_i) in enumerate(atoms)
         for atom_j in atoms[(i+1):end]
@@ -128,7 +152,7 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
 end
 
 function Base.show(io::IO, cm::CrankshaftMutator)
-    println("  Crankshaft:")
+    println("  Crankshaft Mutator:")
     println(io, "+"*repeat("-", 68)*"+")
     @printf(io, "| %-5s | %-25s | %-30s |\n", "Index", "Field", "Value")
     println(io, "+"*repeat("-", 68)*"+")

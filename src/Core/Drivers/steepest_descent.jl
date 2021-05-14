@@ -30,11 +30,15 @@ SteepestDescent() = begin
 end
 
 function Base.show(io::IO, sd::SteepestDescent)
-    println(io, "Steepest Descent Driver:")
-    println(io, " $(sd.eval!)")
-    println(io, " Max Steps: $(sd.max_steps)")
-    println(io, " Force Tolerance: $(sd.force_tolerance)")
-    println(io, " Max displacement: $(sd.max_displacement)")
+    println(io, "  Steepest Descent Driver:\n   ↘ Energy function:")
+    println(io, "$(sd.eval!)")
+    println(io, "   ↘ Callback:\n$(sd.callback)")
+    println(io, "   ↘ Other settings:")
+    println(io, repeat("-", 60))
+    println(io, "Max steps: $(sd.max_steps)")
+    println(io, "Force Tolerance: $(sd.force_tolerance)")
+    println(io, "Max displacement: $(sd.max_displacement)")
+    println(io, repeat("-", 60))
 end
 
 

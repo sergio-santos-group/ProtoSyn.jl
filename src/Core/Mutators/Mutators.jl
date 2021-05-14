@@ -18,5 +18,5 @@ module Mutators
     include("dihedral.jl")
     include("crankshaft.jl")
     include("rigid_body.jl")
-    include("blockrot.jl")
+    include("compound.jl")
 end

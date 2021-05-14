@@ -36,6 +36,7 @@ makedocs(
                     "Dihedral Mutator" => "protosyn-api/core/mutators/mutators-dihedral.md",
                     "Crankshaft Mutator" => "protosyn-api/core/mutators/mutators-crankshaft.md",
                     "Rigid Body Mutators" => "protosyn-api/core/mutators/mutators-rigid-body.md",
+                    "Compound Mutators" => "protosyn-api/core/mutators/mutators-compound.md",
                 ],
                 "Drivers" => [
                     "Drivers Section" => "protosyn-api/core/drivers/drivers-section.md",

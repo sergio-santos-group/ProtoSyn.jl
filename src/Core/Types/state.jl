@@ -33,7 +33,7 @@ Return an empty [`AtomState`](@ref) instance, with all default values.
 * `θ::T` - Angle (in radians) to ascendent atoms (default: 0)
 * `ϕ::T` - Dihedral angle (in radians) to ascendent atoms (default: 0)
 * `Δϕ::T` - Dihedral angle change (in radians) to be applied to children atoms (default: 0)
-* `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions such as [`i2c!`](@ref) and [`c2i!`](@ref)) (default: false)
+* `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions such as [`i2c!`](@ref ProtoSyn.i2c!) and [`c2i!`](@ref ProtoSyn.c2i!)) (default: false)
 
 !!! ukw "Note:"
     The `Δϕ` field in [`AtomState`](@ref) allows for easy set-up of dihedral angles in molecular structures.

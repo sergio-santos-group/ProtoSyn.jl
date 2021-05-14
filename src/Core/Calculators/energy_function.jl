@@ -171,7 +171,7 @@ end
 # * Show -----------------------------------------------------------------------
 
 function Base.show(io::IO, efc::EnergyFunction)
-    println(io, "\n+"*repeat("-", 58)*"+")
+    println(io, "+"*repeat("-", 58)*"+")
     @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (α)")
     println(io, "+"*repeat("-", 58)*"+")
     for (index, component) in enumerate(efc.components)

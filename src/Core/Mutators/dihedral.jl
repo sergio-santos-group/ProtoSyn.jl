@@ -19,9 +19,23 @@ sampled by calling `angle_sampler` and multiplied by the `step_size` value. The
 resulting value is then added to the selected [`Atom`](@ref)`.Δϕ`. Note that a
 new dihedral rotation is sampled for each selected [`Atom`](@ref) instance. If
 an `AbstractSelection` `selection` is provided, only the selected [`Atom`](@ref)
-instances are looped over. Requests internal to cartesian coordinates conversion
-(using [`request_i2c!`](@ref ProtoSyn.request_i2c!) method). Does not
-[`sync!`](@ref) the given [`Pose`](@ref).
+instances are looped over. If the given `AbstractSelection` `selection` is not
+of selection type [`Atom`](@ref), it will be promoted to this type (using
+[`promote`](@ref ProtoSyn.promote) with default aggregator `any`). Note that the
+[`DihedralMutator`](@ref) syncs any pending cartesian to internal coordinate
+conversion (using the [`c2i!`](@ref ProtoSyn.c2i!) method). Requests internal to
+cartesian coordinates conversion (using
+[`request_i2c!`](@ref ProtoSyn.request_i2c!) method). Does not [`sync!`](@ref)
+the given [`Pose`](@ref) afterwards.
+
+The [`DihedralMutator`](@ref) `AbstractMutator` can also be optionally called
+using the following signature, in which case only the provided list of
+[`Atom`](@ref) instances will be considered for the application of this
+`AbstractMutator`.
+
+```
+(dihedral_mutator::DihedralMutator)(pose::Pose, atoms::Vector{Atom})
+```
 
 # Fields
 
@@ -36,7 +50,7 @@ instances are looped over. Requests internal to cartesian coordinates conversion
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 1.0, nothing)
-  Dihedral:
+  Dihedral Mutator:
 +--------------------------------------------------------------------+
 | Index | Field                     | Value                          |
 +--------------------------------------------------------------------+
@@ -47,7 +61,7 @@ julia> ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 1.0, nothing)
 +--------------------------------------------------------------------+
 
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 0.05, 1.0, an"CA\$|C\$"r)
-Dihedral:
+  Dihedral Mutator:
 +--------------------------------------------------------------------+
 | Index | Field                     | Value                          |
 +--------------------------------------------------------------------+
@@ -69,13 +83,22 @@ function (dihedral_mutator::DihedralMutator)(pose::Pose)
     if dihedral_mutator.selection === nothing
         atoms = collect(eachatom(pose.graph))
     else
-        atoms = dihedral_mutator.selection(pose, gather = true)
+        if ProtoSyn.selection_type(dihedral_mutator.sele) !== Atom
+            sele  = ProtoSyn.promote(dihedral_mutator.sele, Atom) # default aggregator is `any`
+            atoms = sele(pose, gather = true)
+        else
+            atoms = dihedral_mutator.selection(pose, gather = true)
+        end
     end
     
     dihedral_mutator(pose, atoms)
 end
 
 function (dihedral_mutator::DihedralMutator)(pose::Pose, atoms::Vector{Atom})
+    
+    # DihedralMutator requires updated internal coordinates
+    ProtoSyn.c2i!(pose.state, pose.graph) # Checks pose.state.c2i flag inside
+
     for atom in atoms
         if rand() < dihedral_mutator.p_mut
             ∠ = dihedral_mutator.angle_sampler() * dihedral_mutator.step_size
@@ -86,7 +109,7 @@ function (dihedral_mutator::DihedralMutator)(pose::Pose, atoms::Vector{Atom})
 end
 
 function Base.show(io::IO, dm::DihedralMutator)
-    println("  Dihedral:")
+    println("  Dihedral Mutator:")
     println(io, "+"*repeat("-", 68)*"+")
     @printf(io, "| %-5s | %-25s | %-30s |\n", "Index", "Field", "Value")
     println(io, "+"*repeat("-", 68)*"+")

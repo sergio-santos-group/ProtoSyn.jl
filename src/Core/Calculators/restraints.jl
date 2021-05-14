@@ -175,12 +175,8 @@ module Restraints
     """
     function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
-        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, mask, selection)
-        if update_forces
-            return e, f
-        else
-            return e
-        end
+        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, selection, mask)
+        return e, f
     end # function
 
     calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat} = begin
