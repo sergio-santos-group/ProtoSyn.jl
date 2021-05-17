@@ -52,15 +52,15 @@ available. If the default `ProtoSyn.acceleration.active` is set to `CUDA_2`,
 
 # Examples
 ```jldoctest
-julia> Calculators.distance_matrix(pose.state.x)
+julia> ProtoSyn.Calculators.distance_matrix(pose.state.x)
 N×N CUDA.CuArray{Float64,2}:
     ...
 
-julia> Calculators.distance_matrix(pose, an"CA")
+julia> ProtoSyn.Calculators.distance_matrix(pose, an"CA")
 N×N CUDA.CuArray{Float64,2}:
     ...
 
-julia> Calculators.distance_matrix(pose, verlet_list)
+julia> ProtoSyn.Calculators.distance_matrix(pose, verlet_list)
 N×N CUDA.CuArray{Float64,2}:
     ...
 ```
@@ -172,11 +172,11 @@ Return a distance matrix with the distance of **all** pairs of atoms in the
 
 # Examples
 ```jldoctest
-julia> Calculators.full_distance_matrix(pose.state.x)
+julia> ProtoSyn.Calculators.full_distance_matrix(pose.state.x)
 N×N CUDA.CuArray{Float64,2}:
     ...
 
-julia> Calculators.distance_matrix(pose, an"CA")
+julia> ProtoSyn.Calculators.distance_matrix(pose, an"CA")
 N×N CUDA.CuArray{Float64,2}:
     ...
 ```

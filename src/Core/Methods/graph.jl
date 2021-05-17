@@ -160,8 +160,10 @@ instances inside the `topology` to the corresponding relative index in the
 # Examples
 ```jldoctest
 julia> reindex(pose.graph)
+Topology{/UNK:1}
 
 julia> reindex(pose.graph[1])
+Segment{/UNK:1/UNK:1}
 ```
 """
 function reindex(topology::Topology; set_ascendents::Bool = true)
@@ -213,8 +215,8 @@ Return a `Tuple` containing the N (`level`) previous `:id` fields of the
 
 # Examples
 ```jldoctest
-julia> ascendents(atom, 4)
-(1, 2, 3, 4)
+julia> ascendents(pose.graph[1][1][4], 4)
+(4, 3, 1, 0)
 ```
 """
 function ascendents(container::AbstractContainer, level::Int)
@@ -244,7 +246,12 @@ is inter-residue, sets the downstream [`Residue`](@ref) to be the Root of the
 
 # Examples
 ```jldoctest
-julia> unbond(pose, atom1, atom2)
+julia> unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"])
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
@@ -309,7 +316,7 @@ vice-versa). Both [`Atom`](@ref) instances need to be in the same
 
 # Examples
 ```jldoctest
-julia> bond(atom1, atom2)
+julia> ProtoSyn.bond(pose.graph[1][1]["C"], pose.graph[1][2]["CA"])
 ```
 """
 @inline function bond(at1::Atom, at2::Atom)
@@ -341,7 +348,12 @@ of both the [`Atom`](@ref) instances and respective `atom.container`
 
 # Examples
 ```jldoctest
-julia> join(r1, "C", r2, "N")
+julia> Residue!(pose.graph[1], ProtoSyn.ResidueName("ALA"), 1);
+
+julia> Atom!(pose.graph[1][end], "N", 1, 1, "N");
+
+julia> ProtoSyn.join(pose.graph[1][1], "C", pose.graph[1][end], "N")
+Residue{/UNK:1/UNK:1/ALA:1}
 ```
 """
 function join(r1::Residue, s1::String, r2::Residue, s2::String) # ! IMPORTANT

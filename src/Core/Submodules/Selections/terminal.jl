@@ -61,10 +61,10 @@ Base.show(io::IO, ts::TerminalSelection) = begin
     ProtoSyn.show(io, ts)
 end
 
-function show(io::IO, ts::TerminalSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, ts::TerminalSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"TerminalSelection ($T)")
 end

@@ -45,14 +45,15 @@ list of [`Atom`](@ref) instances will be considered for the application of this
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, rn"CBZ")
-  Translation Rigid Body Mutator:
+⚙️  Translation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
 | 1     | translation_vector_sampler  | Function rand_vector_in_sphere |
 | 2     | step_size                   | 1.0000                         |
-| 4     | selection                   | Set: FieldSelection            |
 +----------------------------------------------------------------------+
+ ● Selection: Set
+ └── FieldSelection › Residue.name = CBZ
 ```
 """
 mutable struct TranslationRigidBodyMutator <: AbstractMutator
@@ -89,20 +90,36 @@ function (rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Ve
     ProtoSyn.request_c2i!(pose.state)
 end
 
+Base.show(io::IO, trbm::TranslationRigidBodyMutator) = begin
+    ProtoSyn.Mutators.show(io, trbm)
+end
 
-function Base.show(io::IO, rbm::TranslationRigidBodyMutator)
-    println("  Translation Rigid Body Mutator:")
-    println(io, "+"*repeat("-", 70)*"+")
-    @printf(io, "| %-5s | %-27s | %-30s |\n", "Index", "Field", "Value")
-    println(io, "+"*repeat("-", 70)*"+")
-    @printf(io, "| %-5d | %-27s | %-30s |\n", 1, "translation_vector_sampler", "Function $(rbm.translation_vector_sampler)")
-    @printf(io, "| %-5d | %-27s | %-30.4f |\n", 2, "step_size", rbm.step_size)
-    if rbm.selection === nothing
-        @printf(io, "| %-5d | %-27s | %-30s |\n", 3, "selection", "Not set")
+function show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
+        inner_lead = lead
     else
-        @printf(io, "| %-5d | %-27s | %-30s |\n", 4, "selection", "Set: $(typeof(rbm.selection).name.name)")
+        inner_level_code = copy(level_code)
+        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
+        inner_lead = ProtoSyn.get_lead(inner_level_code)
     end
-    println(io, "+"*repeat("-", 70)*"+")
+
+
+    println(io, lead*"⚙️  Translation Rigid Body Mutator:")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "translation_vector_sampler", "Function $(trbm.translation_vector_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 2, "step_size", trbm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    
+    if trbm.selection !== nothing
+        println(io, inner_lead*" ● Selection: Set")
+        ProtoSyn.show(io, trbm.selection, vcat(level_code, 4))
+    else
+        println(io, inner_lead*" ○  Selection: Not Set")
+    end
 end
 
 # ------------------------------------------------------------------------------
@@ -161,7 +178,7 @@ list of [`Atom`](@ref) instances will be considered for the application of this
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, rn"CBZ")
-  Rotation Rigid Body Mutator:
+⚙️  Rotation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -169,8 +186,9 @@ julia> m = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sp
 | 2     | angle_sampler               | Function randn                 |
 | 3     | pivot_sampler               | Function center_of_mass        |
 | 4     | step_size                   | 1.0000                         |
-| 5     | selection                   | Set: FieldSelection            |
 +----------------------------------------------------------------------+
+ ● Selection: Set
+ └── FieldSelection › Residue.name = CBZ
 ```
 """
 mutable struct RotationRigidBodyMutator <: AbstractMutator
@@ -213,20 +231,36 @@ function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose, atoms::Vecto
     ProtoSyn.request_c2i!(pose.state)
 end
 
+Base.show(io::IO, rrbm::RotationRigidBodyMutator) = begin
+    ProtoSyn.Mutators.show(io, rrbm)
+end
 
-function Base.show(io::IO, rbm::RotationRigidBodyMutator)
-    println("  Rotation Rigid Body Mutator:")
-    println(io, "+"*repeat("-", 70)*"+")
-    @printf(io, "| %-5s | %-27s | %-30s |\n", "Index", "Field", "Value")
-    println(io, "+"*repeat("-", 70)*"+")
-    @printf(io, "| %-5d | %-27s | %-30s |\n", 1, "axis_sampler", "Function $(rbm.axis_sampler)")
-    @printf(io, "| %-5d | %-27s | %-30s |\n", 2, "angle_sampler", "Function $(rbm.angle_sampler)")
-    @printf(io, "| %-5d | %-27s | %-30s |\n", 3, "pivot_sampler", "Function $(rbm.pivot_sampler)")
-    @printf(io, "| %-5d | %-27s | %-30.4f |\n", 4, "step_size", rbm.step_size)
-    if rbm.selection === nothing
-        @printf(io, "| %-5d | %-27s | %-30s |\n", 5, "selection", "Not set")
+function show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
+    lead = ProtoSyn.get_lead(level_code)
+
+    if level_code === nothing
+        level_code = LevelCode()
+        inner_lead = lead
     else
-        @printf(io, "| %-5d | %-27s | %-30s |\n", 5, "selection", "Set: $(typeof(rbm.selection).name.name)")
+        inner_level_code = copy(level_code)
+        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
+        inner_lead = ProtoSyn.get_lead(inner_level_code)
     end
-    println(io, "+"*repeat("-", 70)*"+")
+
+    println(io, lead*"⚙️  Rotation Rigid Body Mutator:")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "axis_sampler", "Function $(rrbm.axis_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 2, "angle_sampler", "Function $(rrbm.angle_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 3, "pivot_sampler", "Function $(rrbm.pivot_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 4, "step_size", rrbm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    
+    if rrbm.selection !== nothing
+        println(io, inner_lead*" ● Selection: Set")
+        ProtoSyn.show(io, rrbm.selection, vcat(level_code, 4))
+    else
+        println(io, inner_lead*" ○  Selection: Not Set")
+    end
 end

@@ -16,7 +16,7 @@ have `:changed` field set to `true`. Return the altered [State](@ref state-types
 ```jldoctest
 julia> ProtoSyn.request_c2i!(pose.state)
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: false | c2i: true
  Energy: Dict(:Total => Inf)
 ```
@@ -47,7 +47,7 @@ update the first [`AtomState`](@ref) instance in the given [State](@ref state-ty
 ```jldoctest
 julia> ProtoSyn.request_i2c!(pose.state)
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -83,9 +83,9 @@ cartesian/internal coordinates accordingly. Return the altered [Pose](@ref) inst
 
 # Examples
 ```jldoctest
-julia> sync(pose.state, pose.graph)
+julia> sync!(pose.state, pose.graph)
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -126,7 +126,7 @@ instance. If `state.c2i` is not set to `true`, return the original
 ```jldoctest
 julia> ProtoSyn.c2i!(pose.state, pose.graph)
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -180,9 +180,9 @@ instance. If `state.c2i` is not set to `true`, return the original
 ```jldoctest
 julia> ProtoSyn.i2c!(pose.state, pose.graph)
 State{Float64}:
-    Size: 1140
-    i2c: false | c2i: false
-    Energy: Dict(:Total => Inf)
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
 ```
 """
 function i2c!(state::State{T}, top::Topology) where T
@@ -276,7 +276,7 @@ to `default`. Set the `i2c` flag to `true` and return the altered
 ```jldoctest
 julia> ProtoSyn.setoffset!(pose.state, pose.graph[1][2]["CA"], 3.14)
 State{Float64}:
- Size: 24
+ Size: 343
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -312,7 +312,7 @@ coordinate conversion (by setting `state.i2c` as `true`). Return the altered
 ```jldoctest
 julia> setdihedral!(pose.state, pose.graph[1][1][end], Float64(π))
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -337,8 +337,8 @@ of the intrisic dihedral angle `ϕ` and the second ascendent `Δϕ`.
 
 # Examples
 ```jldoctest
-julia> getdihedral(pose.state, pose.graph[1][1][end])
-3.1415926535897
+julia> getdihedral(pose.state, pose.graph[1][2]["N"])
+3.141592653589793
 ```
 """
 @inline getdihedral(state::State, atom::Atom) = begin
@@ -364,7 +364,7 @@ requests internal to cartesian coordinate conversion (by setting `state.i2c` as
 ```jldoctest
 julia> rotate_dihedral!(pose.state, pose.graph[1][1][end], Float64(π))
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 ```
@@ -396,7 +396,7 @@ the `:index` field of [`AtomState`](@ref) instances. Return the altered
 ```jldoctest
 julia> reindex(pose.state)
 State{Float64}:
- Size: 1140
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 ```

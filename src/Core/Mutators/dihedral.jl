@@ -50,26 +50,27 @@ using the following signature, in which case only the provided list of
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 1.0, nothing)
-  Dihedral Mutator:
-+--------------------------------------------------------------------+
-| Index | Field                     | Value                          |
-+--------------------------------------------------------------------+
-| 1     | angle_sampler             | Function randn                 |
-| 2     | p_mut                     | 1.0000                         |
-| 3     | step_size                 | 1.0000                         |
-| 4     | selection                 | Not set                        |
-+--------------------------------------------------------------------+
+⚙️  Dihedral Mutator:
++----------------------------------------------------------------------+
+| Index | Field                       | Value                          |
++----------------------------------------------------------------------+
+| 1     | angle_sampler               | Function randn                 |
+| 2     | p_mut                       | 1.0000                         |
+| 3     | step_size                   | 1.0000                         |
++----------------------------------------------------------------------+
+ ○  Selection: Not Set
 
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 0.05, 1.0, an"CA\$|C\$"r)
-  Dihedral Mutator:
-+--------------------------------------------------------------------+
-| Index | Field                     | Value                          |
-+--------------------------------------------------------------------+
-| 1     | angle_sampler             | Function randn                 |
-| 2     | p_mut                     | 0.0500                         |
-| 3     | step_size                 | 1.0000                         |
-| 4     | selection                 | Set: FieldSelection            |
-+--------------------------------------------------------------------+
+⚙️  Dihedral Mutator:
++----------------------------------------------------------------------+
+| Index | Field                       | Value                          |
++----------------------------------------------------------------------+
+| 1     | angle_sampler               | Function randn                 |
+| 2     | p_mut                       | 0.0500                         |
+| 3     | step_size                   | 1.0000                         |
++----------------------------------------------------------------------+
+ ● Selection: Set
+ └── FieldSelection › Atom.name = r"CA\$|C\$"
 ```
 """
 mutable struct DihedralMutator <: AbstractMutator
@@ -108,18 +109,35 @@ function (dihedral_mutator::DihedralMutator)(pose::Pose, atoms::Vector{Atom})
     end
 end
 
-function Base.show(io::IO, dm::DihedralMutator)
-    println("  Dihedral Mutator:")
-    println(io, "+"*repeat("-", 68)*"+")
-    @printf(io, "| %-5s | %-25s | %-30s |\n", "Index", "Field", "Value")
-    println(io, "+"*repeat("-", 68)*"+")
-    @printf(io, "| %-5d | %-25s | %-30s |\n", 1, "angle_sampler", "Function $(dm.angle_sampler)")
-    @printf(io, "| %-5d | %-25s | %-30.4f |\n", 2, "p_mut", dm.p_mut)
-    @printf(io, "| %-5d | %-25s | %-30.4f |\n", 3, "step_size", dm.step_size)
-    if dm.selection === nothing
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "selection", "Not set")
+Base.show(io::IO, dm::DihedralMutator) = begin
+    ProtoSyn.Mutators.show(io, dm)
+end
+
+function show(io::IO, dm::DihedralMutator, level_code::Opt{LevelCode} = nothing)
+    lead = ProtoSyn.get_lead(level_code)
+
+    if level_code === nothing
+        level_code = LevelCode()
+        inner_lead = lead
     else
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "selection", "Set: $(typeof(dm.selection).name.name)")
+        inner_level_code = copy(level_code)
+        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
+        inner_lead = ProtoSyn.get_lead(inner_level_code)
     end
-    println(io, "+"*repeat("-", 68)*"+")
+
+    println(io, lead*"⚙️  Dihedral Mutator:")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "angle_sampler", "Function $(dm.angle_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 2, "p_mut", dm.p_mut)
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 3, "step_size", dm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    
+    if dm.selection !== nothing
+        println(io, inner_lead*" ● Selection: Set")
+        ProtoSyn.show(io, dm.selection, vcat(level_code, 4))
+    else
+        println(io, inner_lead*" ○  Selection: Not Set")
+    end
 end

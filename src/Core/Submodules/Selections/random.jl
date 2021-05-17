@@ -66,10 +66,10 @@ Base.show(io::IO, rs::RandomSelection) = begin
     ProtoSyn.show(io, rs)
 end
 
-function show(io::IO, rs::RandomSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"RandomSelection › $T.id")
 end
@@ -137,10 +137,10 @@ Base.show(io::IO, rrs::RandomRangeSelection) = begin
     ProtoSyn.show(io, rrs)
 end
 
-function show(io::IO, rrs::RandomRangeSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, rrs::RandomRangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"RandomRangeSelection › $T.id")
 end
@@ -210,14 +210,14 @@ Base.show(io::IO, rsfl::RandomSelectionFromList) = begin
     ProtoSyn.show(io, rsfl)
 end
 
-function show(io::IO, rsfl::RandomSelectionFromList{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, rsfl::RandomSelectionFromList{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"RandomSelectionFromList ❯ ($T)")
     for selection in rsfl.selections[1:(end-1)]
-        ProtoSyn.show(io, selection, vcat(levels, true))
+        ProtoSyn.show(io, selection, vcat(level_code, 3))
     end
-    ProtoSyn.show(io, rsfl.selections[end], vcat(levels, false))
+    ProtoSyn.show(io, rsfl.selections[end], vcat(level_code, 4))
 end

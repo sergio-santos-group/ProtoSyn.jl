@@ -37,14 +37,14 @@ ProtoSyn.Mask{Atom}(0,)
 
 julia> ProtoSyn.Mask{Residue}((3, 3))
 ProtoSyn.Mask{Residue}(3, 3)
-3×3 BitArray{2}:
+3×3 BitMatrix:
  0  0  0
  0  0  0
  0  0  0
 
 julia> !ProtoSyn.Mask{Atom}(5)
 ProtoSyn.Mask{Atom}(5,)
-5-element BitArray{1}:
+5-element BitVector:
  1
  1
  1
@@ -172,7 +172,7 @@ expects a 1D [`Mask`](@ref) as input, otherwise will just return the received
 [``tile!`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> m = ProtoSyn.Mask{Atom}(4); m[1] = true; m
 ProtoSyn.Mask{Atom}(4,)
 4-element BitArray{1}:
@@ -222,8 +222,7 @@ and `m1'` (`m1` transpose).
 [`tile`](@ref)
 
 # Examples
-# Examples
-```jldoctest
+```
 julia> m = ProtoSyn.Mask{Atom}(4); m[1] = m[3] = true; m
 ProtoSyn.Mask{Atom}(4,)
 4-element BitArray{1}:

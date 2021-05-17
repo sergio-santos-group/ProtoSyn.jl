@@ -76,10 +76,10 @@ Base.show(io::IO, ss::SerialSelection) = begin
     ProtoSyn.show(io, ss)
 end
 
-function show(io::IO, ss::SerialSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, ss::SerialSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"SerialSelection › $(T).$(ss.field) = $(ss.serial)")
 end
@@ -176,7 +176,15 @@ Base.parse(::Type{UnitRange{Int}}, string::String; base = 2) = begin
     if s[2] == "end"
         return parse(Int, s[1])
     end
-    return parse(Int, s[1]):parse(Int, s[2])
+
+    s1 = s[1]
+    s2 = s[2]
+    s2 < s1 && begin
+        s1 = s[2]
+        s2 = s[1]
+        @warn "Range should be ordered (\"x:y\" where x < y). The provided range (\"$string\") was inverted (to \"$s1:$s2\")."
+    end
+    return parse(Int, s1):parse(Int, s2)
 end
 
 export @aid_str, @aix_str, @sid_str, @six_str, @rid_str, @rix_str
@@ -193,10 +201,10 @@ Base.show(io::IO, rs::RangeSelection) = begin
     ProtoSyn.show(io, rs)
 end
 
-function show(io::IO, rs::RangeSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, rs::RangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     if typeof(rs.range) === Int
         println(io, lead*"RangeSelection › $(T).$(rs.field) larger than $(rs.range)")

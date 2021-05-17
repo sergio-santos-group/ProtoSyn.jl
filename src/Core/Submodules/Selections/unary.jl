@@ -66,12 +66,12 @@ Base.show(io::IO, us::UnarySelection) = begin
     ProtoSyn.show(io, us)
 end
 
-function show(io::IO, us::UnarySelection{M}, levels::Opt{BitArray} = nothing) where {M}
-    lead = ProtoSyn.get_lead(levels)
+function show(io::IO, us::UnarySelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
+    lead = ProtoSyn.get_lead(level_code)
     dict = Dict((!) => "not")
-    if levels === nothing
-        levels = BitArray([])
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"UnarySelection ❯ $(us.op) \"$(dict[us.op])\" ($(selection_type(us)))")
-    ProtoSyn.show(io, us.sele, vcat(levels, false))
+    ProtoSyn.show(io, us.sele, vcat(level_code, 4))
 end

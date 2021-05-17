@@ -45,7 +45,7 @@ field.
 
 # Examples
 ```jldoctest
-julia> Calculators.Restraints.get_default_bond_distance_restraint()
+julia> ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint()
           Name : Bond_Distance_Restraint
     Weight (α) : 1.0
  Update forces : true

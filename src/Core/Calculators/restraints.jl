@@ -42,8 +42,8 @@ module Restraints
 
     # Examples
     ```jldoctest
-    julia> Calculators.Restraints.calc_bond_distance_restraint(pose)
-    (7.216571959087505, nothing)
+    julia> ProtoSyn.Calculators.Restraints.calc_bond_distance_restraint(pose)
+    (0.0, nothing)
     ```
     """
     function calc_bond_distance_restraint(::Type{ProtoSyn.SISD_0}, pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat}
@@ -114,11 +114,11 @@ module Restraints
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint()
-             Name : Bond_Distance_Restraint
-       Weight (α) : 1.0
-    Update forces : true
-          Setings :
-             :x0 => 2.0
+    Name : Bond_Distance_Restraint
+    Weight (α) : 1.0
+ Update forces : true
+       Setings :
+            :x0 => 2.0
     ```
     """
     function get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
@@ -170,7 +170,7 @@ module Restraints
     (0.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
 
     julia> ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint(pose, false, d1 = 10.0, d2 = 12.0)
-    41966.43234537284
+    (556449.1936070295, [-778.9805591574781 -825.1470308736925 … 859.923628825509 813.3028217924204; -274.69982546226254 -129.33437541724834 … 576.8115954145254 823.2632067523211; -6.007243771110971 -8.240806045628176 … 99.38231423439038 92.37075625998477])
     ```
     """
     function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}

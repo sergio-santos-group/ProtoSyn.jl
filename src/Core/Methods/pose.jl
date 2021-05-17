@@ -11,10 +11,10 @@ Merge the two given poses, creating a new `Pose` in the process.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.merge(pose1, pose2)
-Pose{Topology}(Topology{/merged:10313}, State{Float64}:
- Size: 748
- i2c: false | c2i: true
+julia> ProtoSyn.merge(pose, pose_mod)
+Pose{Topology}(Topology{/merged:32083}, State{Float64}:
+ Size: 686
+ i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ...
@@ -58,8 +58,8 @@ end
 Merge the two given poses, updating/overwritting the given `pose1`.
 
 # Examples
-```jldoctest
-julia> ProtoSyn.merge!(pose1, pose2)
+```
+julia> ProtoSyn.merge!(pose, pose_mod)
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748
  i2c: false | c2i: true
@@ -110,10 +110,10 @@ must be 3. Copies the given `pose`, returning a new struct.
 `symexp!` `merge`
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.symexp(pose, [2, 2, 2], [50.0, 50.0, 50.0])
-Pose{Topology}(Topology{/merged:10313}, State{Float64}:
- Size: 748
+Pose{Topology}(Topology{/UNK:59312}, State{Float64}:
+ Size: 9261
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -144,7 +144,7 @@ the given `pose`.
 `symexp` `merge`
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.symexp!(pose, [2, 2, 2], [50.0, 50.0, 50.0])
 Pose{Topology}(Topology{/merged:10313}, State{Float64}:
  Size: 748
@@ -206,15 +206,25 @@ The resulting list of residues must be contiguous (a connected graph of
     directly incorporated in simulations.
 
 # Examples
-```jldoctest
+```
 julia> frag = fragment(pose)
+Fragment(Segment{/UNK:9547}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
-julia> frag = fragment(pose, rid":1:10")
+julia> frag = fragment(pose, rid"1:10")
+Fragment(Segment{/UNK:58266}, State{Float64}:
+ Size: 160
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function fragment(pose::Pose{Topology})
     
-    length(pose.graph) != 1 && error("only topologies with a single segment can be turned into fragments")
+    length(pose.graph) != 1 && error("Only topologies with a single Segment can be turned into fragments")
     
     topology = copy(pose.graph)
     segment = topology[1]
@@ -243,44 +253,16 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     @assert length(unique([res.container.id for res in sele(pose, gather = true)])) == 1 "Tried to fragment a contiguous selection of residues belonging to different Segments."
 
     # Get a copy of the selected residues as a new Segment
+    residues       = sele(pose, gather = true)
     copied_segment = copy(residues[1].container)
     residues       = sele(copied_segment, gather = true)
     segment        = Segment(residues[1].container.name, 1)
     segment.items  = residues
     segment.size   = length(segment.items)
 
-    # Fix the parenthood of the copied residues
+    popparent!(residue[1])
     for residue in segment.items
-        if !(residue.parent in residues) # parenthood outside this new segment
-            residue.parent = nothing
-        end
-        for child in residue.children
-            if !(child in residues) # parenthood to child outside this segment
-                indexes = findall(res -> res == child, residue.children)
-                deleteat!(residue.children, indexes)
-            end
-        end
-
-        # Fix the parenthood and bond structures of the copied atoms
-        for atom in residue.items
-            if !(atom.parent.container in residues)              
-                # Remove from bond list
-                indexes = findall(at -> at == atom.parent, atom.bonds)
-                deleteat!(atom.bonds, indexes)
-                
-                atom.parent = nothing
-            end
-            for child in atom.children
-                if !(child.container in residues)
-                    indexes = findall(at -> at == child, atom.children)
-                    deleteat!(atom.children, indexes)
-
-                    # Remove from bond list
-                    indexes = findall(at -> at == child, atom.bonds)
-                    deleteat!(atom.bonds, indexes)
-                end
-            end
-        end
+        residue.container = segment
     end
 
     # Get a copy of the selected residues' State
@@ -331,9 +313,9 @@ Append a [Fragment](@ref) `frag` as a new [`Segment`](@ref) to the given
 
 # Examples
 ```jldoctest
-julia> append_fragment_as_new_segment!(pose, frag)
-Pose{Topology}(Topology{/2a3d:35776}, State{Float64}:
- Size: 2280
+julia> ProtoSyn.append_fragment_as_new_segment!(pose, frag)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 373
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -436,11 +418,15 @@ cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
 # Examples
 ```jldoctest
 julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
- ...
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 39
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
 julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, frag)
-Pose{Topology}(Topology{/2a3d:58972}, State{Float64}:
- Size: 587
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 69
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -523,8 +509,12 @@ Return the modified (in-place) [`Pose`](@ref) `pose`.
 
 # Examples
 ```jldoctest
-julia> insert_atom_as_children!(pose, pose.graph[1][1], atom)
- ...
+julia> ProtoSyn.insert_atom_as_children!(pose, pose.graph[1][1][1], Atom("N", 1, 1, "N"))
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 344
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function insert_atom_as_children!(pose::Pose, parent_atom::Atom, atom::Atom, atomstate::Opt{AtomState} = nothing)
@@ -575,7 +565,12 @@ Pop and return the desired [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 
 # Examples
 ```jldoctest
-julia> pop_atom!(pose, pose.graph[1][1][2])
+julia> ProtoSyn.pop_atom!(pose, pose.graph[1][1][2])
+Pose{Atom}(Atom{/H:6299}, State{Float64}:
+ Size: 1
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}

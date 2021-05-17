@@ -72,15 +72,14 @@ Return an empty [`LGrammar`](@ref) instance.
     more in-depth description of the file format.
 
 # Examples
-```jldoctest
+```
 julia> grammar = LGrammar{Float64, String, Vector{String}}()
-LGrammar{Float64, String, Array{String,1}}:
+LGrammar{Float64, String, Vector{String}}:
  Rules: None.
  Variables: None.
  Operators: None.
 
 julia> grammar = ProtoSyn.Peptides.grammar()
- ...
 ```
 """
 mutable struct LGrammar{T <: AbstractFloat, K, V}
@@ -220,9 +219,9 @@ structures should instead be of the slightly more complete type [`Pose`](@ref).
 [`build`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> frag = fragment(res_lib, seq"AAA")
-Pose{Segment}(Segment{/UNK:61880}, State{Float64}:
+Fragment(Segment{/UNK:63875}, State{Float64}:
  Size: 30
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
@@ -328,7 +327,8 @@ Create an `LGrammar` instance from the contencts of a `template` Dict (normally
 read from a grammar file). Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). The `operators` entry is
 parsed by the [`opfactory`](@ref) method. Return the parsed [`LGrammar`](@ref)
-instance.
+instance. If `verbose` is set to `true` (is, by default), print the loading
+status.
 
 # See also
 [`LGrammar`](@ref) [`load_grammar_from_file`](@ref) [`opfactory`](@ref)
@@ -337,13 +337,13 @@ instance.
     This is an internal method of ProtoSyn and shouldn't normally be used
     directly.
 """
-function lgfactory(::Type{T}, template::Dict) where T
+function lgfactory(::Type{T}, template::Dict; verbose::Bool = true) where T
     grammar = LGrammar{T, String, Vector{String}}()
 
     vars = template["variables"]
     for (key, name) in vars
         filename = joinpath(ProtoSyn.resource_dir, name)
-        @info "Loading variable '$key' from $filename"
+        verbose && @info "Loading variable '$key' from $filename"
         pose = ProtoSyn.load(T, filename)
         grammar[key] = fragment(pose)
     end
@@ -365,14 +365,14 @@ function lgfactory(::Type{T}, template::Dict) where T
             end
         end
 
-        @info "Loading operator $opname"
+        verbose && @info "Loading operator $opname"
         grammar[opname] = opfactory(opargs)
     end
     grammar.defop = getop(grammar, template["defop"])
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]
-            @info "Loading productions for rule $key"
+            verbose && @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
@@ -388,34 +388,33 @@ lgfactory(template::Dict) = lgfactory(Float64, template)
 
 
 """
-    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
+    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String; [verbose::Bool = true]) where {T <: AbstractFloat}
 
 Create an [`LGrammar`](@ref) instance from the contents of a grammar file (in
 .YML format) under the `key` entry. The file contents are parsed by the
 [`lgfactory`](@ref) method. Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). Return the parsed
-[`LGrammar`](@ref) instance.
+[`LGrammar`](@ref) instance. If `verbose` is set to `true` (is, by default),
+print the loading status.
 
 # See also
 [`LGrammar`](@ref) [`lgfactory`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> lgrammar = load_grammar_from_file(Float64, filename, "peptide")
- ...
 
 julia> lgrammar = load_grammar_from_file(filename, "peptide")
- ...
 ```
 """
-function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
+function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String; verbose::Bool = true) where {T <: AbstractFloat}
     open(filename) do io
-        @info "loading grammar from file $filename"
+        verbose && @info "loading grammar from file $filename"
         yml = YAML.load(io)
-        return lgfactory(T, yml[key])
+        return lgfactory(T, yml[key], verbose = verbose)
     end
 end
 
-load_grammar_from_file(filename::AbstractString, key::String) = begin
-    return load_grammar_from_file(Units.defaultFloat, filename, key)
+load_grammar_from_file(filename::AbstractString, key::String; verbose::Bool = true) = begin
+    return load_grammar_from_file(Units.defaultFloat, filename, key; verbose = verbose)
 end

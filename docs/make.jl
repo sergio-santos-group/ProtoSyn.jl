@@ -2,6 +2,8 @@ push!(LOAD_PATH, "../src")
 
 using Documenter, ProtoSyn, ProtoSyn.Peptides
 
+DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(using ProtoSyn); recursive=true)
+
 makedocs(
     sitename="ProtoSyn.jl",
     authors="José Pereira & Sérgio Santos",
@@ -50,7 +52,8 @@ makedocs(
                 "Introduction" => "protosyn-api/peptides/introduction.md"
             ]
         ]
-    ]
+    ],
+    doctest = false,
 )
 
 deploydocs(

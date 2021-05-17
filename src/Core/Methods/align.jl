@@ -27,14 +27,26 @@ to `true` and returns the altered `mobile` [`Pose`](@ref) instance.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.align!(pose2, pose1)
- ...
+julia> ProtoSyn.align!(pose, pose_mod)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
-julia> ProtoSyn.align!(pose2, pose1, an"CA")
- ...
+julia> ProtoSyn.align!(pose, pose_mod, an"CA")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
-julia> ProtoSyn.align!(pose2, pose1, an"CA", an"CB")
- ...
+julia> ProtoSyn.align!(pose, pose_mod, an"CA", an"CB")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function align!(mobile::Pose, target::Pose, selection::AbstractSelection)

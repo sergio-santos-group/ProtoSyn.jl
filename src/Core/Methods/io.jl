@@ -22,7 +22,7 @@ deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance.
     This function does not infer any data of parenthood or ascendents. To calculate that information, specific implementations of this function are provided in other modules (such as [`Peptides.load`](@ref)). For this reason, the returned [`Pose`](@ref) instance does not have internal coordinates information and cannot be synched using the [`sync!`](@ref) method.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.load("2a3d.pdb")
 Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
  Size: 1140

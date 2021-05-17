@@ -15,7 +15,7 @@ Returns result in Angstrom (Å).
 # Examples
 ```jldoctest
 julia> d = ProtoSyn.distance(pose.state[1], pose.state[2])
-1.004
+1.0093879999999997
 ```
 """
 function distance(at1::AtomState, at2::AtomState)
@@ -37,7 +37,7 @@ corresponding [`Pose`](@ref) instance has been synched (using the
 # Examples
 ```jldoctest
 julia> a = ProtoSyn.angle(pose.state[1], pose.state[2], pose.state[3])
-1.9225977187139336
+0.6444967663659441
 ```
 """
 function angle(at1::AtomState, at2::AtomState, at3::AtomState)
@@ -61,7 +61,7 @@ sure the corresponding [`Pose`](@ref) instance has been synched (using the
 # Examples
 ```jldoctest
 julia> a = ProtoSyn.dihedral(pose.state[1], pose.state[2], pose.state[3], pose.state[4])
-0.4930512314732711
+-1.2318251145557122
 ```
 """
 function dihedral(at1::AtomState, at2::AtomState, at3::AtomState, at4::AtomState)
@@ -93,11 +93,11 @@ provided, calculate the RMSD values of only the selected subset of
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.rmsd(pose1, pose2)
-5.441139694078181
+julia> ProtoSyn.rmsd(pose, pose_mod)
+34.443215682826676
 
-julia> ProtoSyn.rmsd(pose1, pose2, an"CA")
-4.2278726943222384
+julia> ProtoSyn.rmsd(pose, pose_mod, an"CA")
+32.5063913965703
 ```
 """
 function rmsd(pose1::Pose, pose2::Pose, selection::AbstractSelection)

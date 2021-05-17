@@ -134,13 +134,13 @@ Base.show(io::IO, bs::BinarySelection) = begin
     ProtoSyn.show(io, bs)
 end
 
-function show(io::IO, bs::BinarySelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
+function show(io::IO, bs::BinarySelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
     dict = Dict((|) => "or", (&) => "and")
-    if levels === nothing
-        levels = BitArray([])
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"BinarySelection ❯  $(bs.op) \"$(dict[bs.op])\" ($(selection_type(bs)))")
-    ProtoSyn.show(io, bs.left, vcat(levels, true))
-    ProtoSyn.show(io, bs.right, vcat(levels, false))
+    ProtoSyn.show(io, bs.left, vcat(level_code, 3))
+    ProtoSyn.show(io, bs.right, vcat(level_code, 4))
 end

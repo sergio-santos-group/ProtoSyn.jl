@@ -88,10 +88,10 @@ Base.show(io::IO, fs::FieldSelection) = begin
     ProtoSyn.show(io, fs)
 end
 
-function show(io::IO, fs::FieldSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, fs::FieldSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"FieldSelection › $(T).$(fs.field) = $(fs.pattern)")
 end

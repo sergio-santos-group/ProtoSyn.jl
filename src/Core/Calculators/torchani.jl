@@ -88,10 +88,10 @@ module TorchANI
 
     # Examples
     ```jldoctest
-    julia> Calculators.TorchANI.calc_torchani_model(pose)
+    julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose)
     (-0.12573561072349548, nothing)
 
-    julia> Calculators.TorchANI.calc_torchani_model(pose, true)
+    julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose, true)
     (-0.12573561072349548, [ ... ])
     ```
 
@@ -149,10 +149,10 @@ module TorchANI
 
     # Examples
     ```jldoctest
-    julia> Calculators.TorchANI.calc_torchani_ensemble(pose)
+    julia> ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(pose)
     (-0.12801790237426758, nothing)
 
-    julia> Calculators.TorchANI.calc_torchani_ensemble(pose, true)
+    julia> ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(pose, true)
     (-0.12801788747310638, [ ... ])
     ```
     """

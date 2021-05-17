@@ -153,15 +153,15 @@ sets the component weight (on an `EnergyFunction`).
 
 # Examples
 ```jldoctest
-julia> Peptides.Peptides.Calculators.Restraints.get_default_solvation_energy()
-         Name : Caterpillar_Solvation
-   Weight (α) : 1.0
+julia> ProtoSyn.Peptides.Peptides.Calculators.Caterpillar.get_default_solvation_energy()
+Name : Caterpillar_Solvation
+Weight (α) : 1.0
 Update forces : false
-      Setings :
-            :Ω => 24
-           :sc => 5.0
-:hydrophob_map => Dict("PHE" => 9.8,"GLN" => -3.5,"ASP" => -3.5,"LYS" => -3.9,"ILE" => 11.5,"TYR" => -1.3,"GLY" => -0.4,"HIE" => -3.2,"ASN" => -3.5,"ARG" => -4.5,"LEU" => 10.8,"TRP" => -0.9,"ALA" => 8.8,"THR" => -0.7,"VAL" => 11.2,"MET" => 8.9,"CYS" => 9.5,"SER" => -0.8,"PRO" => -1.6,"HIS" => -3.2,"GLU" => -3.5)
-         :rmax => 12.0
+   Setings :
+         :Ω => 24
+        :sc => 5.0
+:hydrophob_map => Dict("PHE" => 9.8, "GLN" => -3.5, "ASP" => -3.5, "LYS" => -3.9, "ILE" => 11.5, "TYR" => -1.3, "GLY" => -0.4, "HIE" => -3.2, "ASN" => -3.5, "ARG" => -4.5, "LEU" => 10.8, "TRP" => -0.9, "ALA" => 8.8, "THR" => -0.7, "VAL" => 11.2, "MET" => 8.9, "CYS" => 9.5, "SER" => -0.8, "PRO" => -1.6, "HIS" => -3.2, "GLU" => -3.5)
+      :rmax => 12.0
 ```
 """
 function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}

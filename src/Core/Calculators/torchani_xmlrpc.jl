@@ -110,10 +110,10 @@ other acceleration type will result in an error). If left undefined the default
 
 # Examples
 ```jldoctest
-julia> Calculators.TorchANI.calc_torchani_model_xmlrpc(pose)
+julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose)
 (4.698066234588623, nothing)
 
-julia> Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, true)
+julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, true)
 (4.698066234588623, [ ... ])
 ```
 

@@ -1,3 +1,10 @@
+```@setup general
+using ProtoSyn
+using ProtoSyn.Calculators
+using ProtoSyn.Mutators
+using ProtoSyn.Peptides
+```
+
 # Types
 
 In this section we will explore the main `struct` instances that compose the core of ProtoSyn's engine, divided in the following topics, for organization purposes:
@@ -13,7 +20,6 @@ A pose holds all necessary information regarding a molecular system. This inform
 ```@docs
 Pose
 ```
-
 ## Fragment
 
 ProtoSyn.jl package uses a pose of a single [`Segment`](@ref) (therefore without a Root) to carry information during certain processes (such as [Building a new peptide from a sequence]).

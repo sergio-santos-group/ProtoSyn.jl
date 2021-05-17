@@ -1,12 +1,13 @@
 export grammar
 
 """
-    grammar([::Type{T}]) where {T <: AbstractFloat}
+    grammar([::Type{T}];[verbose::Bool = true]) where {T <: AbstractFloat}
 
 Build a `LGrammar` for peptides, taking as variables the fragments in the
 default resource directory. If the option type T is not provided, the default
 ProtoSyn float value will be used. The returned LGrammar is required for
-building peptides from fragments.
+building peptides from fragments. If `verbose` is set to `true` (is, by
+default), print the loading status.
 
 # Examples
 ```jldoctest
@@ -15,12 +16,12 @@ julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
 ...
 ```
 """
-function grammar(::Type{T}) where {T <: AbstractFloat}
+function grammar(::Type{T}; verbose::Bool = true) where {T <: AbstractFloat}
     filename = joinpath(Peptides.resource_dir, "grammars.yml")
-    ProtoSyn.load_grammar_from_file(T, filename, "peptide")
+    ProtoSyn.load_grammar_from_file(T, filename, "peptide", verbose = verbose)
 end
 
-grammar() = grammar(ProtoSyn.Units.defaultFloat)
+grammar(;verbose::Bool = true) = grammar(ProtoSyn.Units.defaultFloat; verbose = verbose)
 
 
 """
@@ -113,7 +114,7 @@ default). Return the altered `pose`.
 
 # Examples
 ```jldoctest
-julia> append_residues!(pose, pose.graph[1][1], reslib, seq"A")
+julia> ProtoSyn.Peptides.append_residues!(pose, pose.graph[1][1], res_lib, seq"A")
 ```
 """
 function append_residues!(pose::Pose{Topology}, residue::Residue,
@@ -200,7 +201,7 @@ instead of this function, except for uncommon aminoacids.
 
 # Examples
 ```jldoctest
-julia> Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+julia> ProtoSyn.Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
 ```
 """
 function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
@@ -254,7 +255,7 @@ regardless of being of the same type.
 
 # Examples
 ```jldoctest
-julia> Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+julia> ProtoSyn.Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
 ```
 """
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
@@ -356,7 +357,7 @@ origin of downstream residues.
 
 # Examples
 ```jldoctest
-julia> Peptides.pop_residue!(pose, pose.graph[1][3])
+julia> ProtoSyn.Peptides.pop_residue!(pose, pose.graph[1][3])
 ```
 """
 function pop_residue!(pose::Pose{Topology}, residue::Residue)
@@ -395,9 +396,9 @@ can perform correctly.
 
 # Examples
 ```jldoctest
-julia> Peptides.remove_sidechains!(pose, res_lib)
+julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
 
-julia> Peptides.remove_sidechains!(pose, res_lib, rn"ALA")
+julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib, rn"ALA")
 ```
 """
 function remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
@@ -434,9 +435,9 @@ backbone atoms (may break Cα coordination).
 
 # Examples
 ```jldoctest
-julia> Peptides.force_remove_sidechains!(pose)
+julia> ProtoSyn.Peptides.force_remove_sidechains!(pose)
 
-julia> Peptides.force_remove_sidechains!(pose, rn"ALA")
+julia> ProtoSyn.Peptides.force_remove_sidechains!(pose, rn"ALA")
 ```
 """
 function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
@@ -464,9 +465,9 @@ function.
 
 # Examples
 ```jldoctest
-julia> Peptides.add_sidechains!(pose)
+julia> ProtoSyn.Peptides.add_sidechains!(pose)
 
-julia> Peptides.add_sidechains!(pose, rn"ALA")
+julia> ProtoSyn.Peptides.add_sidechains!(pose, rn"ALA")
 ```
 """
 function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
@@ -550,7 +551,7 @@ Return `true` if the provided `residue` is a child of the residue's container.
 
 # Examples
 ```jldoctest
-julia> Peptides.is_N_terminal(pose.graph[1][1])
+julia> ProtoSyn.Peptides.is_N_terminal(pose.graph[1][1])
 true
 ```
 """
@@ -566,7 +567,7 @@ Return `true` if the provided `residue` has no children.
 
 # Examples
 ```jldoctest
-julia> Peptides.is_N_terminal(pose.graph[1][end])
+julia> ProtoSyn.Peptides.is_N_terminal(pose.graph[1][end])
 true
 ```
 """
@@ -587,7 +588,7 @@ Return the modified (in-place) `pose`.
 
 # Examples
 ```jldoctest
-julia> Peptides.uncap!(pose)
+julia> ProtoSyn.Peptides.uncap!(pose)
 ```
 """
 function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
@@ -644,7 +645,7 @@ Return the modified (in-place) `pose`.
 
 # Examples
 ```jldoctest
-julia> Peptides.cap!(pose)
+julia> ProtoSyn.Peptides.cap!(pose)
 ```
 """
 function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
@@ -718,8 +719,8 @@ as a string.
 
 # Examples
 ```jldoctest
-julia> sequence(pose)
-"AAGASTASSE"
+julia> ProtoSyn.Peptides.sequence(pose)
+"SESEAEFKQRLAAIKTRLQAL"
 ```
 """
 function sequence(container::ProtoSyn.AbstractContainer)::String

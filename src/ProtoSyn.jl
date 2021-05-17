@@ -50,7 +50,11 @@ const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
 @info "Loading Core"
 
+export Opt
+const Opt = Union{Nothing, T} where T
+
 include("Core/Units/Units.jl")
+include("Core/Methods/aux.jl") # Requires Units.jl
 include("Core/Methods/constants.jl")
 include("Core/Types/other.jl")
 include("Core/Methods/macros.jl") # Requires other.jl
@@ -64,7 +68,6 @@ include("Core/Methods/state.jl")
 include("Core/Methods/base.jl")
 include("Core/Methods/io.jl")
 include("Core/Methods/iterators.jl")
-include("Core/Methods/aux.jl")
 include("Core/Methods/align.jl")
 include("Core/Clustering/Clustering.jl")
 include("Core/Submodules/Builder/grammar.jl")

@@ -67,7 +67,7 @@ order of `items`. Return the altered `container`.
 # Examples
 ```jldoctest
 julia> push!(pose.graph[1][1], Atom("CA", -1, -1, "C"))
-Residue{/UNK:1/UNK:1/GLY:1}
+Residue{/UNK:1/UNK:1/SER:1}
 ```
 """
 Base.push!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer} = begin
@@ -129,7 +129,7 @@ keeps the order of `items`. Return the altered `container`.
 # Examples
 ```jldoctest
 julia> insert!(pose.graph[1][1], 3, Atom("CA", -1, -1, "C"))
-Residue{/UNK:1/UNK:1/GLY:1}
+Residue{/UNK:1/UNK:1/SER:1}
 ```
 """
 Base.insert!(container::ProtoSyn.AbstractContainer{T}, index::Integer, item::T) where {T <: AbstractContainer} = begin
@@ -220,7 +220,7 @@ julia> copy(pose.graph[1, 1, 1])
 Atom{/N:1}
 
 julia> copy(pose.graph[1, 1])
-Residue{/GLY:1}
+Residue{/SER:1}
 ```
 """
 @inline Base.copy(a0::Atom) = begin
@@ -356,8 +356,8 @@ will have different `:id` fields for the [Graph](@ref state-types) [`Topology`](
 # Examples
 ```jldoctest
 julia> copy(pose)
-Pose{Topology}(Topology{/2a3d:1195}, State{Float64}:
- Size: 1140
+Pose{Topology}(Topology{/UNK:9547}, State{Float64}:
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -390,7 +390,7 @@ fields. In the specific case of deleting an [`Atom`](@ref) instance from a
 # Examples
 ```jldoctest
 julia> delete!(pose.graph[1][1], pose.graph[1][1]["CA"])
-Residue{/UNK:1/UNK:1/GLY:1}
+Residue{/UNK:1/UNK:1/SER:1}
 ```
 """
 Base.delete!(container::AbstractContainer{T}, item::T) where {T <: AbstractContainer} = begin
@@ -454,7 +454,7 @@ Detach and return the given [`Segment`](@ref) from it's container
 # Examples
 ```jldoctest
 julia> detach(pose.graph[1])
-Topology{/2a3d:46790}
+Segment{/UNK:1}
 ```
 """
 Base.detach(segment::Segment) = begin

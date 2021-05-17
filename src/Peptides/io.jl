@@ -12,7 +12,7 @@ defined in ProtoSyn.bond_lengths. Infer parenthood and ascedence from bonds.
 
 # Examples
 ```jldoctest
-julia> Peptides.load("1ctf.pdb", bonds_by_distance = true)
+julia> ProtoSyn.Peptides.load("1ctf.pdb", bonds_by_distance = true)
 ...
 ```
 """

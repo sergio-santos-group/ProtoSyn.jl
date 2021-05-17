@@ -1,7 +1,4 @@
-export Opt
 export Atom, Residue, Segment, Topology
-
-const Opt = Union{Nothing, T} where T
 
 """
     AbstractContainer{T}
@@ -248,7 +245,7 @@ purpose of establishing an anchor for initial internal coordinates definition.
 # Examples
 ```jldoctest
 julia> root = ProtoSyn.Root()
-Residue{/ROOT:53033}
+Residue{/ROOT:17124}
 ```
 """
 function Root()::Residue
@@ -273,7 +270,7 @@ Topology `topology`. Returns the created `Segment` instance.
 
 # Examples
 ```jldoctest
-julia> seg = Segment!(topology, "UNK", 1)
+julia> seg = Segment!(pose.graph, "UNK", 1)
 Segment{/UNK:1/UNK:1}
 ```
 """
@@ -292,7 +289,7 @@ Segment `segment`. Returns the created `Residue` instance.
 
 # Examples
 ```jldoctest
-julia> res = Residue!(segment, "ALA", 1)
+julia> res = Residue!(pose.graph[1], "ALA", 1)
 Residue{/UNK:1/UNK:1/ALA:1}
 ```
 """
@@ -315,8 +312,8 @@ it to the given Residue `residue`. Returns the created `Atom` instance.
 
 # Examples
 ```jldoctest
-julia> atom = Atom!(residue, "H1", 1, 1, "H")
-Atom{/UNK:1/UNK:1/ALA:1/H1:1}
+julia> atom = Atom!(pose.graph[1][1], "H1", 1, 1, "H")
+Atom{/UNK:1/UNK:1/SER:1/H1:1}
 ```
 """
 function Atom!(r::Residue, name::String, id::Int, index::Int, symbol::String)::Atom

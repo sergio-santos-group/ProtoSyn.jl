@@ -15,8 +15,7 @@ graph contents are copied to the new [Pose](@ref). If no type
 `T <: AbstractFloat` is provided, the `Units.defaultFloat` will be used.
 
 # See also
-[Fragment](@ref)
-
+[`Fragment`](@ref)
 """
 mutable struct Pose{T <: AbstractContainer}
     graph::T
@@ -32,14 +31,13 @@ export Fragment
 """
     Fragment 
 
-A [Fragment](@ref) is a type overload for `Pose{Segment}` and therefore does not
+A [`Fragment`](@ref) is a type overload for `Pose{Segment}` and therefore does not
 contain a root/origin. These are usually used as temporary carriers of
 information, without the ability to be directly incorporated in simulations.
 
 
 # See also
-[fragment]
-
+[`fragment`](@ref)
 """
 const Fragment = Pose{Segment}
 

@@ -123,11 +123,11 @@ Base.show(io::IO, ds::DistanceSelection) = begin
     ProtoSyn.show(io, ds)
 end
 
-function show(io::IO, ds::DistanceSelection{M, T}, levels::Opt{BitArray} = nothing) where {M, T}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, ds::DistanceSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"DistanceSelection ❯ Within $(ds.distance) Å ($T)")
-    ProtoSyn.show(io, ds.sele, vcat(levels, false))
+    ProtoSyn.show(io, ds.sele, vcat(level_code, 4))
 end

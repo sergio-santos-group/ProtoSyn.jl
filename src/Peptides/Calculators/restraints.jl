@@ -25,7 +25,7 @@ module Restraints
 
     # Examples
     ```jldoctest
-    julia> Peptides.Calculators.Restraints.get_default_sidechain_clash_restraint()
+    julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_sidechain_clash_restraint()
          Name : Clash_Sidechain_Restraint
     Weight(α) : 1.0
      Settings :
@@ -76,16 +76,17 @@ module Restraints
     # Examples
     ```jldoctest
     julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_contact_restraint("contact_map_example.txt")
-             Name : Contact_Map
-       Weight (α) : 1.0
-    Update forces : false
-          Setings :
-           :d4 => 12.0
-    :selection => FieldSelection{ProtoSyn.Stateless,Atom}("CA", :name, isequal)
-           :d2 => 0.0
-         :mask => Matrix{Float64}((73, 73)
-           :d1 => 0.0
-           :d3 => 8.0
+    Name : Contact_Map
+    Weight (α) : 1.0
+ Update forces : false
+       Setings :
+            :d4 => 12.0
+     :selection => FieldSelection › Atom.name = CA
+
+            :d2 => 0.0
+          :mask => Matrix{Float64}((73, 73)
+            :d1 => 0.0
+            :d3 => 8.0
     ```
     """
     function get_default_contact_restraint(filename::String; α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
@@ -122,7 +123,7 @@ module Restraints
 
     # Examples
     ```jldoctest
-    julia> Peptides.Calculators.Restraints.get_default_ca_clash_restraint()
+    julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_ca_clash_restraint()
              Name : Cα-Cα_Clash_Restraint
        Weight (α) : 1.0
     Update forces : false

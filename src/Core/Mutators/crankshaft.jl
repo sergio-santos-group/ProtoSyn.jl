@@ -62,28 +62,31 @@ using the following signature, in which case only the provided list of
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 1.0, 1.0, nothing, nothing)
-  Crankshaft Mutator:
-+--------------------------------------------------------------------+
-| Index | Field                     | Value                          |
-+--------------------------------------------------------------------+
-| 1     | angle_sampler             | Function randn                 |
-| 2     | p_mut                     | 1.0000                         |
-| 3     | step_size                 | 1.0000                         |
-| 4     | selection                 | Not set                        |
-| 4     | inc_last_res              | Not set                        |
-+--------------------------------------------------------------------+
+⚙️  Crankshaft Mutator:
++----------------------------------------------------------------------+
+| Index | Field                       | Value                          |
++----------------------------------------------------------------------+
+| 1     | angle_sampler               | Function randn                 |
+| 2     | p_mut                       | 1.0000                         |
+| 3     | step_size                   | 1.0000                         |
++----------------------------------------------------------------------+
+ ○  Selection: Not Set
+ ○  Include on last residue: Not Set
 
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 0.01, 1.0, an"CA", !(an"^CA\$|^N\$|^C\$|^H\$|^O\$"r))
-  Crankshaft Mutator:
-+--------------------------------------------------------------------+
-| Index | Field                     | Value                          |
-+--------------------------------------------------------------------+
-| 1     | angle_sampler             | Function randn                 |
-| 2     | p_mut                     | 0.0100                         |
-| 3     | step_size                 | 1.0000                         |
-| 4     | selection                 | Set: FieldSelection            |
-| 4     | inc_last_res              | Set: FieldSelection            |
-+--------------------------------------------------------------------+
+⚙️  Crankshaft Mutator:
++----------------------------------------------------------------------+
+| Index | Field                       | Value                          |
++----------------------------------------------------------------------+
+| 1     | angle_sampler               | Function randn                 |
+| 2     | p_mut                       | 0.0100                         |
+| 3     | step_size                   | 1.0000                         |
++----------------------------------------------------------------------+
+ ● Selection: Set
+ └── FieldSelection › Atom.name = CA
+ ● Include on last residue: Set
+ └── UnarySelection ❯ ! "not" (Atom)
+      └── FieldSelection › Atom.name = r"^CA\$|^N\$|^C\$|^H\$|^O\$"
 ```
 """
 mutable struct CrankshaftMutator <: AbstractMutator
@@ -151,23 +154,42 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
     end
 end
 
-function Base.show(io::IO, cm::CrankshaftMutator)
-    println("  Crankshaft Mutator:")
-    println(io, "+"*repeat("-", 68)*"+")
-    @printf(io, "| %-5s | %-25s | %-30s |\n", "Index", "Field", "Value")
-    println(io, "+"*repeat("-", 68)*"+")
-    @printf(io, "| %-5d | %-25s | %-30s |\n", 1, "angle_sampler", "Function $(cm.angle_sampler)")
-    @printf(io, "| %-5d | %-25s | %-30.4f |\n", 2, "p_mut", cm.p_mut)
-    @printf(io, "| %-5d | %-25s | %-30.4f |\n", 3, "step_size", cm.step_size)
-    if cm.selection === nothing
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "selection", "Not set")
+Base.show(io::IO, cm::CrankshaftMutator) = begin
+    ProtoSyn.Mutators.show(io, cm)
+end
+
+function show(io::IO, cm::CrankshaftMutator, level_code::Opt{LevelCode} = nothing)
+    lead = ProtoSyn.get_lead(level_code)
+
+    if level_code === nothing
+        level_code = LevelCode()
+        inner_lead = lead
     else
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "selection", "Set: $(typeof(cm.selection).name.name)")
+        inner_level_code = copy(level_code)
+        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
+        inner_lead = ProtoSyn.get_lead(inner_level_code)
     end
-    if cm.inc_last_res === nothing
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "inc_last_res", "Not set")
+
+    println(io, lead*"⚙️  Crankshaft Mutator:")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "angle_sampler", "Function $(cm.angle_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 2, "p_mut", cm.p_mut)
+    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 3, "step_size", cm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    
+    if cm.selection !== nothing
+        println(io, inner_lead*" ● Selection: Set")
+        ProtoSyn.show(io, cm.selection, vcat(level_code, 4))
     else
-        @printf(io, "| %-5d | %-25s | %-30s |\n", 4, "inc_last_res", "Set: $(typeof(cm.selection).name.name)")
+        println(io, inner_lead*" ○  Selection: Not Set")
     end
-    println(io, "+"*repeat("-", 68)*"+")
+
+    if cm.inc_last_res !== nothing
+        println(io, inner_lead*" ● Include on last residue: Set")
+        ProtoSyn.show(io, cm.inc_last_res, vcat(level_code, 4))
+    else
+        println(io, inner_lead*" ○  Include on last residue: Not Set")
+    end
 end

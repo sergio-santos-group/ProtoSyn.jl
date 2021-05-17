@@ -51,13 +51,13 @@ Base.show(io::IO, ps::PromoteSelection) = begin
     ProtoSyn.show(io, ps)
 end
 
-function show(io::IO, ps::PromoteSelection{M}, levels::Opt{BitArray} = nothing) where {M}
-    lead = ProtoSyn.get_lead(levels)
-    if levels === nothing
-        levels = BitArray([])
+function show(io::IO, ps::PromoteSelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
     end
     println(io, lead*"PromoteSelection ❯ From $(selection_type(ps.sele)) to $(ps.T)")
-    ProtoSyn.show(io, ps.sele, vcat(levels, false))
+    ProtoSyn.show(io, ps.sele, vcat(level_code, 4))
 end
 
 # ------------------------------------------------------------------------------
@@ -74,7 +74,8 @@ use the given `aggregator` function (default: `any`).
 # Examples
 ```jldoctest
 julia> ProtoSyn.promote(rn"ALA", Atom)
-PromoteSelection{ProtoSyn.Stateless}(FieldSelection{ProtoSyn.Stateless,Residue}("ALA", :name, isequal), Atom, any)
+PromoteSelection ❯ From Residue to Atom
+ └── FieldSelection › Residue.name = ALA
 ```
 """
 function promote(sele::AbstractSelection, ::Type{T2}, aggregator::Function = any) where {T2 <: AbstractContainer}
@@ -109,12 +110,11 @@ Mask{Atom)`).
 
 # Examples
 ```jldoctest
-julia> m1 = an"CB"(pose)
+julia> m1 = an"CB"(pose);
 
-julia> m2 = rn"LEU"(pose)
+julia> m2 = rn"LEU"(pose);
 
-julia> ProtoSyn.promote(m1, m2, pose.graph)
-(ProtoSyn.Mask{Atom}(1140,), ProtoSyn.Mask{Atom}(1140,))
+julia> ProtoSyn.promote(m1, m2, pose.graph);
 ```
 """
 function promote(m1::Mask{T1}, m2::Mask{T2}, container::AbstractContainer) where {T1, T2}
@@ -142,21 +142,9 @@ occurrence (by default) or `all` occurrences of lower ranking type must be
 
 # Examples
 ```jldoctest
-julia> m1 = an"CB"(pose)
+julia> m1 = an"CB"(pose);
 
-julia> promote(m1, Residue, container)
-ProtoSyn.Mask{Residue}(73,)
-73-element BitArray{1}:
- 1
- 0
- 1
- 1
- 1
- ⋮
- 1
- 1
- 1
- 1
+julia> ProtoSyn.promote(m1, Residue, pose.graph);
 ```
 """
 function promote(mask::Mask{T1}, ::Type{T2}, container::AbstractContainer, f::Function = any)::Mask where {T1 <: AbstractContainer, T2 <: AbstractContainer}

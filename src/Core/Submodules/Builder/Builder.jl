@@ -13,15 +13,14 @@ provided [`LGrammar`](@ref) `grammar` instructions.
 [`fragment`](@ref)
 
 # Examples
-```jldoctest
-julia> res_lib = ProtoSyn.Peptides.grammar(Float64)
- ...
+```
+julia> res_lib = ProtoSyn.Peptides.grammar(Float64);
 
 julia> pose = ProtoSyn.build(res_lib, seq"GME")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
-Size: 39
-i2c: true | c2i: false
-Energy: Dict(:Total => Inf)
+ Size: 39
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
 )
 ```
 """
@@ -56,7 +55,7 @@ _derivation_ to any building method (such as [`build`](@ref)).
 # Examples
 ```jldoctest
 julia> seq"ABC"
-3-element Array{String,1}:
+3-element Vector{String}:
  "A"
  "B"
  "C"
@@ -115,11 +114,15 @@ return the altered [`Pose`](@ref) `pose`.
 # Examples
 ```jldoctest
 julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
- ...
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 39
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
 julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, seq"A")
-Pose{Topology}(Topology{/2a3d:58972}, State{Float64}:
- Size: 587
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 49
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )

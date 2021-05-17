@@ -396,13 +396,13 @@ the flat-bottom potential, please read:
 
 # Examples
 ```jldoctest
-julia> f = Calculators.get_flat_bottom_potential(1.0, 2.0, 3.0, 4.0)
+julia> f = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = 1.0, d2 = 2.0, d3 = 3.0, d4 = 4.0);
 
 julia> f(2.5)
 0.0
 
-julia> f(1.73, v = [1.0, 1.0, 1.0])
-(0.0729, [-0.54, -0.54, -0.54], [0.54, 0.54, 0.54])
+julia> f(1.73, v = (1.0, 1.0, 1.0))
+(0.0729, (0.54, 0.54, 0.54), (-0.54, -0.54, -0.54))
 ```
 """
 function get_flat_bottom_potential(;d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}

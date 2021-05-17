@@ -8,22 +8,6 @@ struct Stateless <: AbstractStateMode end # * Doesn't need state to get selectio
 
 export select
 
-# --- Show ---------------------------------------------------------------------
-
-function get_lead(levels::Opt{BitArray} = nothing)
-    lead = ""
-    levels === nothing && return lead
-
-    for level in levels[1:(end - 1)]
-        lead *= level ? " |  " : "   "
-    end
-
-    ending = levels[end] ? " ├── " : " └── "
-    return lead * ending
-end
-
-# ------------------------------------------------------------------------------
-
 include("masks.jl")
 include("promotion.jl")
 include("binary.jl")
@@ -74,9 +58,11 @@ marked as `true` in the given `mask`.
 # Examples
 ```jldoctest
 julia> ProtoSyn.gather(rn"ALA"(pose), pose.graph)
-2-element Array{Residue,1}:
- Residue{/UNK:1/UNK:1/ALA:1}
- Residue{/UNK:1/UNK:1/ALA:2}
+4-element Vector{Residue}:
+ Residue{/UNK:1/UNK:1/ALA:5}
+ Residue{/UNK:1/UNK:1/ALA:12}
+ Residue{/UNK:1/UNK:1/ALA:13}
+ Residue{/UNK:1/UNK:1/ALA:20}
 ```
 """
 function gather(mask::Mask{T}, container::AbstractContainer) where {T <: AbstractContainer}

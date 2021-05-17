@@ -8,7 +8,7 @@ coordinates are of type `T`. If not provided, the `ProtoSyn.Units.defaultFloat`
 type will be used.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.rand_vector_in_sphere()
 3-element Array{Float64,1}:
  0.4182585394795512
@@ -35,7 +35,7 @@ Return a rotation matrix based on the provided axis and angle (in radians).
 
 # Examples
 ```jldoctest
-julia rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
+julia ProtoSyn.rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
 3×3 Array{Float64, 2}:
   0.0714286  -0.658927  0.748808
   0.944641    0.285714  0.16131 
@@ -59,7 +59,7 @@ in radians.
 
 # Examples
 ```jldoctest
-julia ProtoSyn.unit_circle(-2pi)
+julia> ProtoSyn.unit_circle(-2pi)
 0.0
 
 julia> ProtoSyn.unit_circle(-(3/2)pi)
@@ -78,7 +78,7 @@ end
 Return the current fraction of the GPU memory allocated (in range [0, 1]).
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.gpu_allocation()
 0.07821749405343822
 ```
@@ -86,4 +86,86 @@ julia> ProtoSyn.gpu_allocation()
 function gpu_allocation()
     mem = (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
     return ProtoSyn.Units.defaultFloat(mem)
+end
+
+# --- Tree display 
+
+export LevelCode
+mutable struct LevelCode
+    levels::Vector{Int}
+    code_table::Dict{Int, String}
+    conv_table::Dict{Int, Int}
+
+    LevelCode(levels::Vector{Int}, code_table::Dict{Int, String}, conv_table::Dict{Int, Int}) = begin
+
+        code_table_keys = keys(code_table)
+        for value in levels
+            if !(value in code_table_keys)
+                error("Tried to create LevelCode instance with level type $value, which is not found in the current code table. Possible values: $code_table_keys")
+            end
+        end
+        for (key, value) in conv_table
+            if !(key in code_table_keys) | !(value in code_table_keys)
+                error("Tried to create LevelCode instance with conv_table $key => $value, which is not found in the current code table. Possible values: $code_table_keys")
+            end
+        end
+        new(levels, code_table, conv_table)
+    end
+end
+
+const default_code_table = Dict{Int, String}(
+    1 => " |   ",
+    2 => "     ",
+    3 => " ├── ",
+    4 => " └── ")
+
+const default_conv_table = Dict{Int, Int}(
+    3 => 1,
+    4 => 2,
+    1 => 1,
+    2 => 2
+)
+
+LevelCode() = LevelCode(Vector{Int}(), default_code_table, default_conv_table)
+LevelCode(levels::Vector{Int}) = LevelCode(levels, default_code_table, default_conv_table)
+
+Base.vcat(level_code::LevelCode, value::Int) = begin
+    code_table_keys = sort(collect(keys(level_code.code_table)))
+    if !(value in code_table_keys)
+        error("Tried to append level type $value to a LevelCode instance, but it was not found in the current code table. Possible values: $code_table_keys")
+    end
+    return LevelCode(vcat(level_code.levels, value), level_code.code_table, level_code.conv_table)
+end
+
+Base.copy(level_code::LevelCode) = begin
+    return LevelCode(
+        copy(level_code.levels),
+        copy(level_code.code_table),
+        copy(level_code.conv_table))
+end
+
+Base.getindex(level_code::LevelCode, i::Int) = level_code.levels[i]
+Base.setindex!(level_code::LevelCode, val::Int, i::Int) = begin
+    code_table_keys = sort(collect(keys(level_code.code_table)))
+    if !(val in code_table_keys)
+        error("Tried to append level type $val to a LevelCode instance, but it was not found in the current code table. Possible values: $code_table_keys")
+    end
+    level_code.levels[i] = val
+end
+Base.lastindex(level_code::LevelCode) = length(level_code.levels)
+
+
+"""
+    # TODO
+"""
+function get_lead(level_code::Opt{LevelCode} = nothing)
+    lead = ""
+    level_code === nothing && return lead
+    length(level_code.levels) === 0 && return lead
+
+    for level in level_code.levels[1:(end-1)]
+        lead *= level_code.code_table[level_code.conv_table[level]]
+    end
+
+    return lead * level_code.code_table[level_code.levels[end]]
 end
