@@ -170,8 +170,7 @@ module Restraints
     (0.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
 
     julia> ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint(pose, false, d1 = 10.0, d2 = 12.0)
-    (556449.1936070295, [-778.9805591574781 -825.1470308736925 … 859.923628825509 813.3028217924204; -274.69982546226254 -129.33437541724834 … 576.8115954145254 823.2632067523211; -6.007243771110971 -8.240806045628176 … 99.38231423439038 92.37075625998477])
-    ```
+    (556449.1936070402, [-711.7603616347209 -630.2662235401388 … 995.0284325254745 1153.572133762037; -419.1275359380875 -548.0506257124055 … 286.5285847489888 92.16862928705675; 6.007398880372552 8.2409631821887 … -99.38257889245355 -92.37110004070036])    ```
     """
     function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)

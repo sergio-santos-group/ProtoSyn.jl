@@ -147,7 +147,7 @@ or a large number of atoms.
 julia> StateMatrix(zeros(3, 3))
 StateMatrix{Float64}:
  Parent set: false
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  0.0  0.0  0.0
  0.0  0.0  0.0
  0.0  0.0  0.0
@@ -172,7 +172,7 @@ Base.getindex(x::ProtoSyn.StateMatrix{T}, i::Colon, j::Array{Int64,1}) where {T 
 function Base.show(io::IO, sm::StateMatrix{T}) where {T <: AbstractFloat}
     println(io, "StateMatrix{$T}:")
     println(io, " Parent set: $(sm.parent !== nothing)")
-    show(io, MIME"text/plain"(), sm.coords)
+    Base.show(io, MIME"text/plain"(), sm.coords)
 end
 
 function update_state_matrix(x::StateMatrix{T}, val, i::Colon, j::Int; update_items = true) where {T <: AbstractFloat}

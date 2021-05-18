@@ -1,6 +1,6 @@
 using ProtoSyn.Peptides
 
-@testset verbose = true "Builder" begin
+@testset verbose = true "Core.Builder" begin
 
     @testset verbose = true "Building a pose from derivation" begin
         res_lib = Peptides.grammar(Float64)
@@ -39,8 +39,8 @@ using ProtoSyn.Peptides
         pose = copy(backup)
         ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
         @test !(pose.graph[1][2]["N"] in pose.graph[1][1]["C"].bonds)
-        @test pose.graph[1][2].parent === root(pose.graph).container
-        @test pose.graph[1][2]["N"].parent === root(pose.graph)
+        @test pose.graph[1][2].parent === pose.graph[1][1]
+        @test pose.graph[1][2]["N"].parent === nothing
     end
 
     @testset verbose = true "Inserting from derivation" begin

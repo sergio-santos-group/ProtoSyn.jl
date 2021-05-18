@@ -23,7 +23,7 @@ end
 
 
 """
-    Atom <: AbstractAtom
+    Atom <: AbstractContainer{Nothing}
 
 An `Atom` type.
 
@@ -77,7 +77,7 @@ end
 
 
 """
-    Residue <: AbstractResidue
+    Residue <: AbstractContainer{Atom}
     Residue(name::String, id::Int)
     
 Construct a [`Residue`](@ref), with the given `name` and `id`. The created
@@ -131,7 +131,7 @@ end
 
 
 """
-    Segment <: AbstractSegment
+    Segment <: AbstractContainer{Residue}
     Segment(name::String, id::Int)
     
 Construct a [`Segment`](@ref), with the given `name` and `id`. The created
@@ -174,7 +174,7 @@ end
 
 """
 
-    Topology <: AbstractTopology
+    Topology <: AbstractContainer{Segment}
     Topology(name::String, id::Int)
     
 Construct a [`Topology`](@ref), with the given `name` and `id`. A

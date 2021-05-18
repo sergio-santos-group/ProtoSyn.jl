@@ -8,7 +8,7 @@ include("Core/builder-submodule.jl")
 
 # * The following code was previously tested on builder-submodule.jl and will be
 # * used in the remaining test sets
-res_lib = Peptides.grammar(Float64)
+res_lib = ProtoSyn.Peptides.grammar(Float64)
 pose    = ProtoSyn.build(res_lib, seq"GME"); sync!(pose)
 backup  = copy(pose)
 

@@ -30,7 +30,7 @@ The selection type of a [`Mask`](@ref) instance can be any
     employed with [`Mask`](@ref) instances.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Mask{Atom}()
 ProtoSyn.Mask{Atom}(0,)
 0-element BitArray{1}
@@ -133,7 +133,7 @@ of the input [`Mask`](@ref) with the output.
 [`tile`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> m = ProtoSyn.Mask{Atom}(4); m[1] = true; m
 ProtoSyn.Mask{Atom}(4,)
 4-element BitArray{1}:

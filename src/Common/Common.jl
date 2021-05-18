@@ -24,8 +24,13 @@ module Common
 
     # Examples
     ```jldoctest
-    julia> default_energy_step_callback(100)
-    ProtoSyn.Drivers.Callback(ProtoSyn.Common.var"#energy_step#4"(), 100)
+    julia> ProtoSyn.Common.default_energy_step_callback(100)
+    +----------------------------------------------------------+
+    | Index | Field           | Value                          |
+    +----------------------------------------------------------+
+    | 1     | Frequency       | 100                            |
+    | 2     | Event           | energy_step                    |
+    +----------------------------------------------------------+
     ```
     """
     function default_energy_step_callback(n::Int)::Callback
@@ -48,8 +53,13 @@ module Common
 
     # Examples
     ```jldoctest
-    julia> default_energy_step_frame_callback(100)
-    ProtoSyn.Drivers.Callback(ProtoSyn.Common.var"#energy_step_frame#4"(), 100)
+    julia> ProtoSyn.Common.default_energy_step_frame_callback(100, "test.pdb")
+    +----------------------------------------------------------+
+    | Index | Field           | Value                          |
+    +----------------------------------------------------------+
+    | 1     | Frequency       | 100                            |
+    | 2     | Event           | energy_step_frame              |
+    +----------------------------------------------------------+
     ```
     """
     function default_energy_step_frame_callback(n::Int, filename::String)::Callback

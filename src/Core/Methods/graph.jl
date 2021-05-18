@@ -244,6 +244,12 @@ is inter-residue, sets the downstream [`Residue`](@ref) to be the Root of the
     [`request_c2i!`](@ref) and [`sync!`](@ref), in order to _fixate_ the
     cartesian coordinates to the new [Graph](@ref state-types) organization.
 
+!!! ukw "Note:"
+    Unbonding two atoms also removes any parenthood relationship, therefore
+    making the returned [`Pose`](@ref) fro this function un-usable without
+    further changes (the internal coordinates graph is severed on the unbonding
+    site).
+
 # Examples
 ```jldoctest
 julia> unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"])
@@ -277,28 +283,28 @@ function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     j !== nothing && deleteat!(at1.bonds, j)
     
     # Detach from atom graph
-    #  Remove at2 from at1.children and set at2.parent to nothing
+    # Remove at2 from at1.children and set at2.parent to nothing
     # This assumes at1 is parent of at2
     popparent!(at2)
 
-    at1.container === at2.container && return pose
+    # at1.container === at2.container && return pose
 
-    # Case this is an inter-residue connection, the downstream residue needs to
-    # be coupled with the origin and detached from residue graph
-    # This assumes ROOT is always on the side of the parent
-    # This assumes at1 is parent of at2
-    #  Remove at2 from at1.children and set at2.parent to nothing
-    #  Add at2 to origin.children and set at2.parent to origin
-    _origin = ProtoSyn.root(at1)
+    # # Case this is an inter-residue connection, the downstream residue needs to
+    # # be coupled with the origin and detached from residue graph
+    # # This assumes ROOT is always on the side of the parent
+    # # This assumes at1 is parent of at2
+    # #  Remove at2 from at1.children and set at2.parent to nothing
+    # #  Add at2 to origin.children and set at2.parent to origin
+    # _origin = ProtoSyn.root(at1)
 
-    #  Remove at2.container from at1.containter.children and set
-    # at2.container.parent to nothing
-    hasparent(at2.container) && popparent!(at2.container)
-    setparent!(at2, _origin)
-    setparent!(at2.container, _origin.container)
+    # #  Remove at2.container from at1.containter.children and set
+    # # at2.container.parent to nothing
+    # hasparent(at2.container) && popparent!(at2.container)
+    # setparent!(at2, _origin)
+    # setparent!(at2.container, _origin.container)
     
-    # Reindex to set correct ascendents
-    reindex(pose.graph)
+    # # Reindex to set correct ascendents
+    # reindex(pose.graph)
 
     return pose
 end
@@ -404,9 +410,12 @@ be ignored in most cases.
  
 # Examples
 ```jldoctest
-julia> ProtoSyn.travel_graph(pose.graph[1][72][1])
-32-element Array{Atom,1}:
- ...
+julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
+4-element Vector{Atom}:
+ Atom{/UNK:1/UNK:1/LEU:21/CD1:334}
+ Atom{/UNK:1/UNK:1/LEU:21/HD13:337}
+ Atom{/UNK:1/UNK:1/LEU:21/HD12:336}
+ Atom{/UNK:1/UNK:1/LEU:21/HD11:335}
 ```
 """
 function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
@@ -436,10 +445,22 @@ Return a vector with the `:id` `Int` field for every [`Atom`](@ref) in the given
 [`travel_graph`](@ref)
 
 # Examples
-```jldoctest
-ProtoSyn.ids(atoms)
-32-element Array{Int64,1}:
- ...
+```
+julia> ProtoSyn.ids(an"CA"(pose, gather = true))
+21-element Vector{Int64}:
+   3
+  14
+  29
+  40
+  55
+  65
+   ⋮
+ 243
+ 257
+ 281
+ 300
+ 317
+ 327
 ```
 """
 function ids(atoms::Vector{Atom})::Vector{Int}

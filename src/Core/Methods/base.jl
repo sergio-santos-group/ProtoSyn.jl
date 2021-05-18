@@ -354,7 +354,7 @@ will have different `:id` fields for the [Graph](@ref state-types) [`Topology`](
 *This function is a Base module overload.*
 
 # Examples
-```jldoctest
+```
 julia> copy(pose)
 Pose{Topology}(Topology{/UNK:9547}, State{Float64}:
  Size: 343

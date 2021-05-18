@@ -48,7 +48,7 @@ Calculators.get_flat_bottom_potential
 
 Besides the currently [Available potentials](@ref), users can freely create custom and/or improved potential functions. In order to incorporate these potentials in [`EnergyFunctionComponent`](@ref) instances (and therefore in [`EnergyFunction`](@ref) instances), the following signature must be followed.
 
-```jldoctest
+```
 energy, force1, force2 = new_potential(d::T; v::Opt{Vector{T}} = nothing) where {T <: AbstractFloat}
 ```
 

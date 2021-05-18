@@ -93,11 +93,11 @@ pair of [`Atom`](@ref) instances as interacting, in the [`VerletList`](@ref), if
 both instances are selected. 
 
 # Examples
-```jldoctest
-julia> update!(verlet_list, pose)
+```
+julia> ProtoSyn.Calculators.update!(verlet_list, pose)
     ...
 
-julia> update!(verlet_list, pose, an"CA")
+julia> ProtoSyn.Calculators.update!(verlet_list, pose, an"CA")
     ...
 ```
 """
@@ -242,18 +242,18 @@ with `:index` `atom_index`, according to the provided [`VerletList`](@ref)
 # Examples
 ```jldoctest
 julia> ProtoSyn.Calculators.neighbours(vl, 1)
-22-element Array{Int64,1}:
+11-element Vector{Int64}:
   2
   3
   4
   5
   6
-  ⋮
- 23
- 24
- 25
- 26
- 30
+  7
+  8
+ 10
+ 11
+ 12
+ 13
 ```
 """
 function neighbours(verlet_list::VerletList, atom_index::Int)

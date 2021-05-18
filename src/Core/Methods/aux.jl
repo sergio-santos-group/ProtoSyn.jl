@@ -35,10 +35,10 @@ Return a rotation matrix based on the provided axis and angle (in radians).
 
 # Examples
 ```jldoctest
-julia ProtoSyn.rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
-3×3 Array{Float64, 2}:
+julia> ProtoSyn.rotation_matrix_from_axis_angle([1.1, 2.2, 3.3], π/2)
+3×3 Matrix{Float64}:
   0.0714286  -0.658927  0.748808
-  0.944641    0.285714  0.16131 
+  0.944641    0.285714  0.16131
  -0.320237    0.695833  0.642857
 ```
 """

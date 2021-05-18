@@ -109,7 +109,7 @@ other acceleration type will result in an error). If left undefined the default
 [`calc_torchani_ensemble`](@ref) [`calc_torchani_model`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose)
 (4.698066234588623, nothing)
 
@@ -175,13 +175,13 @@ new XMLRPC server (in parallel) if necessary.
 [`calc_torchani_model_xmlrpc`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc()
          Name : TorchANI_ML_Model_XMLRPC
    Weight (α) : 1.0
 Update forces : true
       Setings :
-        :model => 3
+         :model => 3
 ```
 """
 function get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}

@@ -17,7 +17,7 @@ module Lattices
     Creates a primitive lattice `Pose`.
 
     # Examples
-    ```jldoctest
+    ```
     julia> pose = ProtoSyn.Materials.Lattices.primitive()
     Pose{Topology}(Topology{/primitive:25216}, State{Float64}:
      Size: 1
@@ -61,7 +61,7 @@ module Lattices
     unit cell (in Angstrom).
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Materials.Lattices.body_centered()
     Pose{Topology}(Topology{/primitive:51728}, State{Float64}:
      Size: 2

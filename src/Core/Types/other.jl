@@ -5,8 +5,9 @@ A string overload to accomodate different known and expected denominations of
 certain residues ("HIS" == "HIE" for example).
 
 # Example
-```jldoctest
-julia> residue.name = ResidueName("HIS")
+```
+julia> ProtoSyn.ResidueName("HIS")
+HIS
 ```
 """
 mutable struct ResidueName <: AbstractString

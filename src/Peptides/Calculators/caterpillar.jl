@@ -51,11 +51,12 @@ the `update_forces` flag serves solely for uniformization with other
 energy-calculating functions.
 
 # See also
-`get_default_solvation_energy`
+[`get_default_solvation_energy`](@ref)
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.Calculators.Caterpillar.calc_solvation_energy(pose)
+(925.5142248612556, nothing)
 ```
 """
 function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; Ω::Int = 24, rmax::T = 24.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7) where {T <: AbstractFloat}
@@ -152,16 +153,16 @@ sets the component weight (on an `EnergyFunction`).
 `calc_solvation_energy`
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.Peptides.Calculators.Caterpillar.get_default_solvation_energy()
-Name : Caterpillar_Solvation
-Weight (α) : 1.0
+         Name : Caterpillar_Solvation
+   Weight (α) : 1.0
 Update forces : false
-   Setings :
-         :Ω => 24
-        :sc => 5.0
+      Setings :
+            :Ω => 24
+           :sc => 5.0
 :hydrophob_map => Dict("PHE" => 9.8, "GLN" => -3.5, "ASP" => -3.5, "LYS" => -3.9, "ILE" => 11.5, "TYR" => -1.3, "GLY" => -0.4, "HIE" => -3.2, "ASN" => -3.5, "ARG" => -4.5, "LEU" => 10.8, "TRP" => -0.9, "ALA" => 8.8, "THR" => -0.7, "VAL" => 11.2, "MET" => 8.9, "CYS" => 9.5, "SER" => -0.8, "PRO" => -1.6, "HIS" => -3.2, "GLU" => -3.5)
-      :rmax => 12.0
+        :rmax => 12.0
 ```
 """
 function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}

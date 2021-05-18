@@ -105,14 +105,16 @@ can be a`Function`, in which case it receives a [`Pose`](@ref) `pose` as input
     changed in future iterations.
 
 # Examples
-```jldoctest
-julia> fbr = ProtoSyn.Calculators.get_flat_bottom_potential(2.0, 5.0)
-...
+```
+julia> fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = 2.0, d2 = 5.0)
+ ...
 
 julia> sidechain = !an"^CA\$|^N\$|^C\$|^H\$|^O\$"r
-UnarySelection{ProtoSyn.Stateless}(!, FieldSelection{ProtoSyn.Stateless,Atom}(r"^CA\$|^N\$|^C\$|^H\$|^O\$", :name, occursin))
+UnarySelection ❯ ! "not" (Atom)
+ └── FieldSelection › Atom.name = r"^CA\$|^N\$|^C\$|^H\$|^O\$"
 
 julia> mask = ProtoSyn.Calculators.intra_residue_mask(pose, sidechain)
+ ...
 
 julia> e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.CUDA_2, pose, fbr, mask, sidechain)
 (2.1792609341377363, [11.380 … -74.232])
@@ -379,7 +381,7 @@ Where
 
 *The resulting function can be called with the following signature:*
     
-```jldoctest
+```
 flat_bottom_potential(d::T; v::Opt{Vector{T}} = nothing) where {T <: AbstractFloat}
 ```
 
@@ -489,7 +491,7 @@ not in the same residue selected.
 [`diagonal_mask`](@ref) [`get_intra_residue_mask`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Calculators.intra_residue_mask(pose, !an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)
 ProtoSyn.Mask{Atom}(Bool[1 1 … 0 0; 1 1 … 0 0; … ; 0 0 … 1 1; 0 0 … 1 1])
 ```
@@ -562,7 +564,7 @@ atom interaction artifacts).
 [`intra_residue_mask`](@ref) [`get_diagonal_mask`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Calculators.diagonal_mask(pose, an"CA")
 ProtoSyn.Mask{Atom}(3, 3)
 3×3 BitArray{2}:
@@ -590,7 +592,7 @@ should be updated each step/call.
 [`diagonal_mask`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Calculators.get_diagonal_mask(an"CA")
 (::ProtoSyn.Calculators.var"#_diagonal_mask#6"{FieldSelection{ProtoSyn.Stateless,Atom}}) (generic function with 1 method)
 ```
@@ -618,7 +620,7 @@ loaded map size matches the underlying peptide size, consider adding an entry of
 optional type `T` is provided, will use `ProtoSyn.Units.defaultFloat`.
 
 # Examples
-```jldoctest
+```
 julia> cmap = ProtoSyn.Calculators.load_map("contact_map_example.txt")
 73×73 Array{Float64,2}:
  ...

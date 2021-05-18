@@ -24,7 +24,7 @@ module Restraints
     `ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint`
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_sidechain_clash_restraint()
          Name : Clash_Sidechain_Restraint
     Weight(α) : 1.0
@@ -122,7 +122,7 @@ module Restraints
     `ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint`
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Peptides.Calculators.Restraints.get_default_ca_clash_restraint()
              Name : Cα-Cα_Clash_Restraint
        Weight (α) : 1.0

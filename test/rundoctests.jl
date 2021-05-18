@@ -16,6 +16,8 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     sync!(pose_mod);
     rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 0.4, an"CA" & an"CB")
     trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, nothing)
+    vl = ProtoSyn.Calculators.VerletList(pose.state.size); vl.cutoff = 4.0
+    ProtoSyn.Calculators.update!(ProtoSyn.SIMD_1, vl, pose)
 end); recursive=true)
 
 doctest(ProtoSyn)

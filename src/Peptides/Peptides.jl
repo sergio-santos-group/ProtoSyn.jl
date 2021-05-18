@@ -14,10 +14,10 @@ const resource_dir = let
     joinpath(ProtoSyn.resource_dir, modname)
 end
 
-# include("constants.jl")
-# include("Calculators/Calculators.jl")
+include("constants.jl")
+include("Calculators/Calculators.jl")
 # include("Rotamers/Rotamers.jl")
-# include("io.jl")
+include("io.jl")
 include("methods.jl")
 # include("Mutators/Mutators.jl")
 # include("Drivers/drivers.jl")

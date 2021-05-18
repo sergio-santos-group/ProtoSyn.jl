@@ -41,11 +41,15 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_ani_species(pose.graph[1][1])
-    7-element Vector{Int64}:
+    11-element Vector{Int64}:
      7
      1
      6
      1
+     6
+     1
+     1
+     8
      1
      6
      8
@@ -87,7 +91,7 @@ module TorchANI
     [`calc_torchani_ensemble`](@ref) [`calc_torchani_model_xmlrpc`](@ref)
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model(pose)
     (-0.12573561072349548, nothing)
 
@@ -148,7 +152,7 @@ module TorchANI
     [`calc_torchani_model`](@ref)
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Calculators.TorchANI.calc_torchani_ensemble(pose)
     (-0.12801790237426758, nothing)
 
@@ -202,11 +206,11 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
-             Name : TorchANI_ML_Model
-       Weight (α) : 1.0
-    Update forces : true
-          Setings :
-            :model => 3
+    Name : TorchANI_ML_Model
+    Weight (α) : 1.0
+ Update forces : true
+       Setings :
+         :model => 3
     ```
     """
     function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
@@ -229,10 +233,10 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
-             Name : TorchANI_ML_Ensemble
-       Weight (α) : 1.0
-    Update forces : true
-          Setings : -
+    Name : TorchANI_ML_Ensemble
+    Weight (α) : 1.0
+ Update forces : true
+       Setings : -
     ```
     """
     function get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}

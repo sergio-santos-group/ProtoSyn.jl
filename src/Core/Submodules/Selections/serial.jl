@@ -179,7 +179,7 @@ Base.parse(::Type{UnitRange{Int}}, string::String; base = 2) = begin
 
     s1 = s[1]
     s2 = s[2]
-    s2 < s1 && begin
+    parse(Int, s2) < parse(Int, s1) && begin
         s1 = s[2]
         s2 = s[1]
         @warn "Range should be ordered (\"x:y\" where x < y). The provided range (\"$string\") was inverted (to \"$s1:$s2\")."

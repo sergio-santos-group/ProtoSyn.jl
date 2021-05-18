@@ -115,14 +115,14 @@ return the altered [`Pose`](@ref) `pose`.
 ```jldoctest
 julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 39
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
 
 julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, seq"A")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 49
+ Size: 353
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )

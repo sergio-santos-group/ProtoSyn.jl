@@ -127,18 +127,18 @@ the current cartesian coordinates - make sure the [`Pose`](@ref) `pose` is
 synched, using the [`sync!`](@ref) method).
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.center_of_mass(pose)
-3×1 Array{Float64,2}:
- 3.749889807243829
- 3.118859185150233
- 0.8416667785693792
+3×1 Matrix{Float64}:
+ 39.85855147920603
+ 14.995282315671613
+ -0.016516024315774907
 
 julia> ProtoSyn.center_of_mass(pose, an"CA")
-3×1 Array{Float64,2}:
- 3.329659162004171
- 1.5509243805729065
- 2.4897904713792956e-8
+3×1 Matrix{Float64}:
+ 37.56949530961898
+ 14.249844760318357
+ -5.4078476622375185e-16
 ```
 """
 function center_of_mass(pose::Pose)

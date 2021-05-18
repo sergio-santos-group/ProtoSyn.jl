@@ -92,7 +92,7 @@ provided, calculate the RMSD values of only the selected subset of
 [`align!`](@ref) [`getdihedral`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.rmsd(pose, pose_mod)
 34.443215682826676
 

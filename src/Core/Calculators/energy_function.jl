@@ -39,8 +39,8 @@ given list of [`EnergyFunctionComponent`](@ref) instances `components`. The
 [`EnergyFunctionComponent`](@ref)
 
 # Examples
-```jldoctest
-julia> energy_function = Calculators.EnergyFunction()
+```
+julia> energy_function = ProtoSyn.Calculators.EnergyFunction()
 
 +----------------------------------------------------------+
 | Index | Component name                      | Weight (α) |

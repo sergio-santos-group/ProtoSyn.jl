@@ -11,9 +11,14 @@ default), print the loading status.
 
 # Examples
 ```jldoctest
-julia> g = Peptides.grammar();
-julia> pose = Peptides.build(grammar, seq"AAGASTASSE")
-...
+julia> pose = ProtoSyn.Peptides.build(res_lib, seq"AAGASTASSE")
+┌ Warning: Residue Residue{/UNK:1/UNK:1/GLU:10} has no psi angle
+└ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 109
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function grammar(::Type{T}; verbose::Bool = true) where {T <: AbstractFloat}
@@ -38,14 +43,20 @@ built pose (linear secondary structure, by default).
 
 # Examples
 ```jldoctest
-julia> pose = Peptides.build(grammar, seq"QQQ");
-...
+julia> pose = ProtoSyn.Peptides.build(res_lib, seq"QQQ")
+┌ Warning: Residue Residue{/UNK:1/UNK:1/GLN:3} has no psi angle
+└ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 51
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
     pose = ProtoSyn.build(grammar, derivation)
-    Peptides.setss!(pose, ss)
+    ProtoSyn.Peptides.setss!(pose, ss)
     sync!(pose)
     pose
 end
@@ -104,7 +115,7 @@ end
 
 
 """
-    append_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+    append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
 Based on the provided `grammar`, add the residue sequence from `derivation` to
 the given `pose`, appending it AFTER the given `residue`. This residue and the
@@ -114,20 +125,28 @@ default). Return the altered `pose`.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Peptides.append_residues!(pose, pose.graph[1][1], res_lib, seq"A")
+julia> ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][1], res_lib, seq"A")
+┌ Warning: Residue Residue{/UNK:1/UNK:1/ALA:2} has no psi angle
+└ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 353
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
-function append_residues!(pose::Pose{Topology}, residue::Residue,
+function append_fragment!(pose::Pose{Topology}, residue::Residue,
     grammar::LGrammar, derivation;
     ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
-    ProtoSyn.append_residues!(pose, residue, grammar, derivation; op = op)
+    ProtoSyn.append_fragment!(pose, residue, grammar, derivation; op = op)
     residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
     setss!(pose, ss, residues)
     return pose
 end
 
 """
+    Careful: Rotamer. 
 """
 function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; ss::Opt{NTuple{3,Number}} = nothing, op = "α")
     
@@ -161,7 +180,12 @@ default). Return the altered `pose`.
 
 # Examples
 ```jldoctest
-julia> insert_residues!(pose, pose.graph[1][2], reslib, seq"A")
+julia> ProtoSyn.Peptides.insert_residues!(pose, pose.graph[1][2], res_lib, seq"A")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 353
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
@@ -177,7 +201,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         ProtoSyn.unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
     end
     
-    ProtoSyn.insert_residues!(pose, residue, grammar, derivation; op = op,
+    ProtoSyn.insert_fragment!(pose, residue, grammar, derivation; op = op,
         connect_upstream = !connected_to_origin)
 
     if connected_to_origin
@@ -202,6 +226,11 @@ instead of this function, except for uncommon aminoacids.
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
@@ -256,6 +285,11 @@ regardless of being of the same type.
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 354
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
@@ -264,7 +298,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     
     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
 
-    same_aminoacid = string(Peptides.three_2_one[residue.name]) == derivation[1]
+    same_aminoacid = string(ProtoSyn.Peptides.three_2_one[residue.name]) == derivation[1]
     if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
         # println("No mutation required, residue already has sidechain of the requested type.")
         return pose
@@ -277,8 +311,8 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     frag = ProtoSyn.fragment(grammar, derivation)
     
     # Remove old sidechain
-    for atom in sidechain
-        ProtoSyn.pop_atom!(pose, atom)
+    for atom in reverse(sidechain)
+        ProtoSyn.Peptides.pop_atom!(pose, atom)
     end
     
     # Insert new sidechain
@@ -356,8 +390,13 @@ level), removes bonds, reindexes ascedents and sets position and parenthood to
 origin of downstream residues.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.pop_residue!(pose, pose.graph[1][3])
+Pose{Residue}(Residue{/SER:16610}, State{Float64}:
+ Size: 11
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function pop_residue!(pose::Pose{Topology}, residue::Residue)
@@ -389,7 +428,7 @@ can perform correctly.
 !!! note
     Proline residues are ignored.
 !!! note
-    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See `cap!` to recover from this.
+    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See [`cap!`](@ref) to recover from this.
 
 # See also
 `force_remove_sidechains!`
@@ -397,8 +436,18 @@ can perform correctly.
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 147
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
 julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib, rn"ALA")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 147
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
@@ -428,7 +477,7 @@ backbone atoms (may break Cα coordination).
 !!! note
     Proline residues are ignored.
 !!! note
-    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See `cap!` to recover from this.
+    Caping atoms (N-terminal -NH3 and C-terminal -CO2) are also removed by this function. See [`cap!`](@ref) to recover from this.
 
 # See also
 `remove_sidechains!`
@@ -436,8 +485,18 @@ backbone atoms (may break Cα coordination).
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.force_remove_sidechains!(pose)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 105
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
 julia> ProtoSyn.Peptides.force_remove_sidechains!(pose, rn"ALA")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 105
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
@@ -447,7 +506,7 @@ function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractS
     end
     sidechain = _selection(pose, gather = true)
     for atom in reverse(sidechain) # Note the reverse loop
-        ProtoSyn.pop_atom!(pose, atom)
+        ProtoSyn.Peptides.pop_atom!(pose, atom)
     end
 
     return pose
@@ -465,9 +524,19 @@ function.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Peptides.add_sidechains!(pose)
+julia> ProtoSyn.Peptides.add_sidechains!(pose, res_lib)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 
-julia> ProtoSyn.Peptides.add_sidechains!(pose, rn"ALA")
+julia> ProtoSyn.Peptides.add_sidechains!(pose, res_lib, rn"ALA")
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
@@ -503,31 +572,71 @@ Furthermore, since the peptidic nature is known:
 
 # Examples
 ```jldoctest
-julia> unbond(pose, pose.graph[1][2])
+julia> ProtoSyn.Peptides.unbond(pose, pose.graph[1][2], pose.graph[1][3])
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
 
-    isparent(residue_1, residue_2) && return _unbond(pose, residue_1, residue_2)
-    isparent(residue_2, residue_1) && return _unbond(pose, residue_2, residue_1)
+    isparent(residue_1, residue_2) && return _unbond(pose, residue_1["C"], residue_2["N"])
+    isparent(residue_2, residue_1) && return _unbond(pose, residue_2["C"], residue_1["N"])
 end
 
-function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
+function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
+    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
+    isparent(at1, at2) && return _unbond(pose, at1, at2)
+    isparent(at2, at1) && return _unbond(pose, at2, at1)
 
-    ProtoSyn.unbond(pose, residue_1["C"], residue_2["N"])
+    # The two atoms might be bonded but not have a parenthood relationship, in
+    # which case we just remove eachother from the bond list and return the pose
+    i = findfirst(at1, at2.bonds)
+    i !== nothing && deleteat!(at2.bonds, i)
+    j = findfirst(at2, at1.bonds)
+    j !== nothing && deleteat!(at1.bonds, j)
+    return pose
+end
+
+function _unbond(pose::Pose, at1::Atom, at2::Atom)
+
+    ProtoSyn.unbond(pose, at1, at2)
+
+    if at1.container !== at2.container
+
+        # Case this is an inter-residue connection, the downstream residue needs to
+        # be coupled with the origin and detached from residue graph
+        # This assumes ROOT is always on the side of the parent
+        # This assumes at1 is parent of at2
+        #  Remove at2 from at1.children and set at2.parent to nothing
+        #  Add at2 to origin.children and set at2.parent to origin
+        _origin = ProtoSyn.root(at1)
+
+        #  Remove at2.container from at1.containter.children and set
+        # at2.container.parent to nothing
+        hasparent(at2.container) && popparent!(at2.container)
+        setparent!(at2, _origin)
+        setparent!(at2.container, _origin.container)
+        
+        # Reindex to set correct ascendents
+        reindex(pose.graph)
+    end
+
     
     # Set correct positioning
     state = pose.state
     _origin = ProtoSyn.root(pose.graph)
     sync!(pose)
 
-    at_N = state[residue_2["N"]]
+    at_N = state[at2]
     at_N.b = ProtoSyn.distance(at_N, state[_origin])
     at_N.θ = ProtoSyn.angle(at_N, state[_origin], state[_origin.parent])
     v = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
-    at_N.ϕ += v - ProtoSyn.getdihedral(state, residue_2["N"])
+    at_N.ϕ += v - ProtoSyn.getdihedral(state, at2)
 
-    for child in residue_2["N"].children
+    for child in at2.children
         at_1 = state[child]
         at_1.θ = ProtoSyn.angle(at_1, at_N, state[_origin])
         v = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
@@ -540,7 +649,9 @@ function _unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
         end
     end
 
+
     ProtoSyn.request_i2c!(state, all = true)
+    return pose
 end
 
 
@@ -567,7 +678,7 @@ Return `true` if the provided `residue` has no children.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Peptides.is_N_terminal(pose.graph[1][end])
+julia> ProtoSyn.Peptides.is_C_terminal(pose.graph[1][end])
 true
 ```
 """
@@ -584,11 +695,16 @@ Remove all bonded atoms to the N- and C-terminal (except Cα) of the provided
 given residue. A terminal is identified based on the following criteria:
 - Is a child of the `pose` origin;
 - Has no children;
-Return the modified (in-place) `pose`.
+Return the modified (in-place) `pose`. Does not sync!
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.uncap!(pose)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 341
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
@@ -596,7 +712,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * (N-terminal residue has an atom named "N" and C-terminal has an atom
     # * named "C", both with a bond to a "CA" atom).
 
-    _selection = ProtoSyn.TerminalSelection{Residue}()
+    _selection = ProtoSyn.TerminalSelection()
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -613,7 +729,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    ProtoSyn.pop_atom!(pose, bond)
+                    ProtoSyn.Peptides.pop_atom!(pose, bond)
                 end
             end
         end
@@ -623,7 +739,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    ProtoSyn.pop_atom!(pose, bond)
+                    ProtoSyn.Peptides.pop_atom!(pose, bond)
                 end
             end
         end
@@ -646,6 +762,11 @@ Return the modified (in-place) `pose`.
 # Examples
 ```jldoctest
 julia> ProtoSyn.Peptides.cap!(pose)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
@@ -655,18 +776,18 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * Default terminal fragments
     T               = eltype(pose.state)
     n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
-    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
+    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename; verbose = false))
     n_term_atoms    = ["H1", "H2", "H3"]
 
     c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
-    c_term          = ProtoSyn.ProtoSyn.fragment(load(T, c_term_filename))
+    c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename; verbose = false))
     c_term_atoms    = ["O", "OXT"]
 
     # * Remove any existing caps
     uncap!(pose, selection)
 
     # * Search for terminals to cap
-    _selection = ProtoSyn.TerminalSelection{Residue}()
+    _selection = ProtoSyn.TerminalSelection()
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -708,6 +829,8 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             end
         end
     end
+
+    return pose
 end
 
 
@@ -718,7 +841,7 @@ Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
 as a string.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.sequence(pose)
 "SESEAEFKQRLAAIKTRLQAL"
 ```
@@ -738,3 +861,10 @@ function sequence(container::ProtoSyn.AbstractContainer)::String
 end
 
 sequence(pose::Pose) = sequence(pose.graph)
+
+"""
+    # TODO
+"""
+function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+    ProtoSyn.pop_atom!(pose, atom; unbond_f = ProtoSyn.Peptides.unbond)
+end

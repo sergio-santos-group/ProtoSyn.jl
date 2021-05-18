@@ -10,7 +10,7 @@ end
 Merge the two given poses, creating a new `Pose` in the process.
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.merge(pose, pose_mod)
 Pose{Topology}(Topology{/merged:32083}, State{Float64}:
  Size: 686
@@ -359,9 +359,9 @@ cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.append_fragment!(pose, pose.graph[1][36], res_lib, frag)
-Pose{Topology}(Topology{/2a3d:532}, State{Float64}:
- Size: 628
+julia> ProtoSyn.append_fragment!(pose, pose.graph[1][end], res_lib, frag)
+Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+ Size: 373
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -419,14 +419,14 @@ cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
 ```jldoctest
 julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 39
+ Size: 343
  i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
 
 julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, frag)
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 69
+ Size: 373
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -459,6 +459,7 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         # parent as being the origin
         _root = ProtoSyn.origin(frag.graph)
         setparent!(_root, pose_origin)
+        println("CAlled")
         setparent!(_root.container, pose_origin.container)
     end
 
@@ -481,7 +482,9 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         for child in pose_origin.children
             child in residue.container[residue_index].items && popparent!(child)
         end
-        popparent!(residue.container[residue_index])
+        hasparent(residue.container[residue_index]) && begin
+            popparent!(residue.container[residue_index])
+        end
 
         grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
     end
@@ -551,7 +554,7 @@ end
 """
     pop_atom!(pose::Pose{Topology}, atom::Atom)
 
-Pop and return the desired [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
+Pop and return the given [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 `pose`. In order to do this, perform the following actions:
 + Unset parenthood relationships;
 + Unbond neighbouring [`Atom`](@ref) instances;
@@ -560,11 +563,15 @@ Pop and return the desired [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 + Set new [`ascendents`](@ref);
 + Update the `container.itemsbyname`.
 
+The unbonding action is performed by the optional argument `unbond_f` (
+[ProtoSyn.unbond](@ref ProtoSyn.unbond) by default, other examples would be
+[ProtoSyn.Peptides.unbond](@ref ProtoSyn.Peptides.unbond), among others).
+
 # See also
 [`pop_residue!`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.pop_atom!(pose, pose.graph[1][1][2])
 Pose{Atom}(Atom{/H:6299}, State{Float64}:
  Size: 1
@@ -573,7 +580,7 @@ Pose{Atom}(Atom{/H:6299}, State{Float64}:
 )
 ```
 """
-function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
+function pop_atom!(pose::Pose{Topology}, atom::Atom; unbond_f::Function = ProtoSyn.unbond)::Pose{Atom}
 
     if atom.container.container.container !== pose.graph
         error("Given Atom does not belong to the provided topology.")
@@ -589,21 +596,25 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
     # (includes children and parent)
     for i = length(atom.bonds):-1:1   # Note the reverse loop
         other = atom.bonds[i]
-        ProtoSyn.unbond(pose, atom, other) # Already pops parent between the two
-        # and sets parent to origin if this is an inter-residue connection
+        unbond_f(pose, atom, other) # Already pops parent between the two
+        # but does not set parent to origin if this is an inter-residue
+        # connection
     end
 
     # During the last step, this atom might have been severed in an
     # inter-residue connection while being a child, therefore, it's parent was
-    # assigned to the root. We should remove it own parent, therefore, in case
-    # it happened
-    hasparent(atom) && popparent!(atom)
-    hasparent(atom.container) && popparent!(atom.container)
+    # assigned to the root. We should remove its own parent, therefore, in case
+    # it happened (so it does not appear on root.children)
+    _root = root(pose.graph)
+    hasparent(atom) && isparent(_root, atom) && popparent!(atom)
+    hasparent(atom.container) && isparent(_root.container, atom.container) && begin
+        popparent!(atom.container)
+    end
 
     # Using saved children and parent, set all child.parent to be the origin,
     # independent of this being an inter- or intra-residue connection
     for child in children
-        ProtoSyn.setparent!(child, root(pose.graph))
+        ProtoSyn.setparent!(child, _root)
     end
 
     # Remove from graph
@@ -638,9 +649,13 @@ Pop and return the desired [`Residue`](@ref) `residue` from the given
 [`pop_atom!`](@ref)
 
 # Examples
-```jldoctest
-julia> pop_residue!(pose, pose.graph[1][1])
- ...
+```
+julia> r = ProtoSyn.pop_residue!(pose, pose.graph[1][5])
+Pose{Residue}(Residue{/ALA:51397}, State{Float64}:
+ Size: 10
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
 function pop_residue!(pose::Pose{Topology}, residue::Residue)
@@ -649,13 +664,42 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
         error("Given Residue does not belong to the provided topology.")
     end
 
+    # Instantiate the Residue and State to return
+    popped_residue = Residue(residue.name.content, 1)
+    popped_state   = State()
+
+    # Copy residue to perserve parenthood and bonds information
+    residue_copy = copy(residue)
+
     # Remove internal atoms. Notice the inverse loop. Also removes atom-level
     # parenthood and bonds
     for atom in reverse(residue.items)
-        pop_atom!(pose, atom)
+        id = atom.id
+        insert!(popped_residue, 1, [pop_atom!(pose, atom).graph])
+        popped_residue[1].id = id
+        append!(popped_state, splice!(pose.state, atom.index))
+    end
+
+    # Recover intra-residue parenthoods and bonds
+    for (old_atom, new_atom) in zip(eachatom(residue_copy), eachatom(popped_residue))
+        for child in old_atom.children
+            child_id = child.id
+            new_child = [atom for atom in eachatom(popped_residue) if atom.id == child_id][1]
+            setparent!(new_child, new_atom)
+        end
+
+        for bond_atom in old_atom.bonds
+            bond_id = bond_atom.id
+            new_bond = [atom for atom in eachatom(popped_residue) if atom.id == bond_id][1]
+            bond(new_atom, new_bond)
+        end
     end
 
     # Remove from container.items
     deleteat!(residue.container.items, findfirst(residue, residue.container.items))
     residue.container.size -= 1
+
+    # Return the popped residue as a Fragment (no connection to root)
+    popped_residue.id = popped_state.id = genid()
+    return Pose(popped_residue, popped_state)
 end
