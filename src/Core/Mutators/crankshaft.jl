@@ -104,8 +104,8 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose)
     if crankshaft_mutator.selection === nothing
         atoms = collect(eachatom(pose.graph))
     else
-        if ProtoSyn.selection_type(crankshaft_mutator.sele) !== Atom
-            sele  = ProtoSyn.promote(crankshaft_mutator.sele, Atom) # default aggregator is `any`
+        if ProtoSyn.selection_type(crankshaft_mutator.selection) !== Atom
+            sele  = ProtoSyn.promote(crankshaft_mutator.selection, Atom) # default aggregator is `any`
             atoms = sele(pose, gather = true)
         else
             atoms = crankshaft_mutator.selection(pose, gather = true)
@@ -121,9 +121,11 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
     # CrankshaftMutator requires updated cartesian coordinates
     ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
 
-    for (i, atom_i) in enumerate(atoms)
+    for (i, atom_i) in enumerate(atoms[1:(end-1)])
         for atom_j in atoms[(i+1):end]
             if rand() < crankshaft_mutator.p_mut
+                println("Crankshaft between $atom_i and $atom_j")
+                println("Applying crankshaft movement to atoms:\n$(ProtoSyn.ids(travel_graph(atom_i, atom_j)))")
                 # 1) Get angle
                 ∠      = crankshaft_mutator.angle_sampler()
                 ∠     *= crankshaft_mutator.step_size

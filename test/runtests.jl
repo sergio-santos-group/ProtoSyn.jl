@@ -17,4 +17,5 @@ include("Core/state-methods.jl")
 include("Core/graph-methods.jl")
 include("Core/selections-submodule.jl")
 include("Core/calculators.jl")
+include("Core/mutators.jl")
 

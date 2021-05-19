@@ -84,8 +84,8 @@ function (dihedral_mutator::DihedralMutator)(pose::Pose)
     if dihedral_mutator.selection === nothing
         atoms = collect(eachatom(pose.graph))
     else
-        if ProtoSyn.selection_type(dihedral_mutator.sele) !== Atom
-            sele  = ProtoSyn.promote(dihedral_mutator.sele, Atom) # default aggregator is `any`
+        if ProtoSyn.selection_type(dihedral_mutator.selection) !== Atom
+            sele  = ProtoSyn.promote(dihedral_mutator.selection, Atom) # default aggregator is `any`
             atoms = sele(pose, gather = true)
         else
             atoms = dihedral_mutator.selection(pose, gather = true)
@@ -103,8 +103,7 @@ function (dihedral_mutator::DihedralMutator)(pose::Pose, atoms::Vector{Atom})
     for atom in atoms
         if rand() < dihedral_mutator.p_mut
             ∠ = dihedral_mutator.angle_sampler() * dihedral_mutator.step_size
-            pose.state[atom].Δϕ += ∠
-            ProtoSyn.request_i2c!(pose.state, all = true)
+            ProtoSyn.rotate_dihedral!(pose.state, atom, ∠) # Already requests i2c
         end
     end
 end
