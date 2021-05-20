@@ -25,7 +25,7 @@ Calculators.EnergyFunction
 
 An [`EnergyFunction`](@ref) instance is actually a __functor__, meaning it is callable in order to apply any energy function type to any [`Pose`](@ref) instance, using the following signature:
 
-```
+```julia
 (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = false)
 ```
 
@@ -62,7 +62,7 @@ As stated before, an [`EnergyFunctionComponent`](@ref) is mostly a smart wrapper
 
 When being called from an [`EnergyFunction`](@ref) instance, ProtoSyn expects the following `calc` `Function` signature.
 
-```
+```julia
 calc(pose::Pose, update_forces::Bool = false; kwarg1::Type{kwarg1} = default_value1, kwarg2::Type{kwarg2} = default_value2, ...)
 ```
 
@@ -71,7 +71,7 @@ these kwargs are passed from the [`EnergyFunctionComponent`](@ref)`.settings` di
 
 Examples:
 
-```
+```julia
 calc_torchani_ensemble(pose::Pose, update_forces::Bool = false)
 
 calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat}
@@ -83,7 +83,7 @@ As previously stated, the [`EnergyFunctionComponent`](@ref)`.settings` are optio
 
 Examples:
 
-```
+```julia
 Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.0, :d3 => Inf, :d4 => Inf, :selection => an"CA", :mask => Calculators.get_diagonal_mask(an"CA"))
 ```
 

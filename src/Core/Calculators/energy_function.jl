@@ -41,14 +41,14 @@ given list of [`EnergyFunctionComponent`](@ref) instances `components`. The
 # Examples
 ```
 julia> energy_function = ProtoSyn.Calculators.EnergyFunction()
-
+🗲  Energy Function (0 components):
 +----------------------------------------------------------+
 | Index | Component name                      | Weight (α) |
 +----------------------------------------------------------+
 +----------------------------------------------------------+
 
 julia> push!(energy_function, Calculators.Restraints.get_default_bond_distance_restraint())
-
+🗲  Energy Function (1 components):
 +----------------------------------------------------------+
 | Index | Component name                      | Weight (α) |
 +----------------------------------------------------------+
@@ -59,7 +59,7 @@ julia> energy_function["Bond_Distance_Restraint"].α = 0.5
 0.5
 
 julia> energy_function
-
+🗲  Energy Function (1 components):
 +----------------------------------------------------------+
 | Index | Component name                      | Weight (α) |
 +----------------------------------------------------------+
@@ -170,12 +170,21 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-function Base.show(io::IO, efc::EnergyFunction)
-    println(io, "+"*repeat("-", 58)*"+")
-    @printf(io, "| %-5s | %-35s | %-10s |\n", "Index", "Component name", "Weight (α)")
-    println(io, "+"*repeat("-", 58)*"+")
+Base.show(io::IO, efc::EnergyFunction) = begin
+    ProtoSyn.Calculators.show(io, efc)
+end
+
+function show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = nothing)
+    level_code = level_code === nothing ? LevelCode() : level_code
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
+
+    println(io, lead*"🗲  Energy Function ($(length(efc.components)) components):")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-45s | %-12s |\n", inner_lead, "Index", "Component name", "Weight (α)")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
     for (index, component) in enumerate(efc.components)
-        @printf(io, "| %-5d | %-35s | %-10.3f |\n", index, component.name, component.α)
+        @printf(io, "%s| %-5d | %-45s | %10.3f   |\n", inner_lead, index, component.name, component.α)
     end
-    println(io, "+"*repeat("-", 58)*"+")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
 end

@@ -62,7 +62,7 @@ using the following signature, in which case only the provided list of
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 1.0, 1.0, nothing, nothing)
-⚙️  Crankshaft Mutator:
+⚯  Crankshaft Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -74,7 +74,7 @@ julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 1.0, 1.0, nothing, nothing)
  ○  Include on last residue: Not Set
 
 julia> ProtoSyn.Mutators.CrankshaftMutator(randn, 0.01, 1.0, an"CA", !(an"^CA\$|^N\$|^C\$|^H\$|^O\$"r))
-⚙️  Crankshaft Mutator:
+⚯  Crankshaft Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -161,18 +161,11 @@ Base.show(io::IO, cm::CrankshaftMutator) = begin
 end
 
 function show(io::IO, cm::CrankshaftMutator, level_code::Opt{LevelCode} = nothing)
-    lead = ProtoSyn.get_lead(level_code)
+    level_code = level_code === nothing ? LevelCode() : level_code
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    if level_code === nothing
-        level_code = LevelCode()
-        inner_lead = lead
-    else
-        inner_level_code = copy(level_code)
-        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
-        inner_lead = ProtoSyn.get_lead(inner_level_code)
-    end
-
-    println(io, lead*"⚙️  Crankshaft Mutator:")
+    println(io, lead*"⚯  Crankshaft Mutator:")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")

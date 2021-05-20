@@ -48,7 +48,7 @@ Calculators.get_flat_bottom_potential
 
 Besides the currently [Available potentials](@ref), users can freely create custom and/or improved potential functions. In order to incorporate these potentials in [`EnergyFunctionComponent`](@ref) instances (and therefore in [`EnergyFunction`](@ref) instances), the following signature must be followed.
 
-```
+```julia
 energy, force1, force2 = new_potential(d::T; v::Opt{Vector{T}} = nothing) where {T <: AbstractFloat}
 ```
 
@@ -90,7 +90,7 @@ In addition to the [Available masks](@ref), users may wish to create and add cus
 
 * `Function` : A dynamic mask or map, calculated every step/call of [`apply_potential`](@ref). This function should have the following simple signature, receiving a [`Pose`](@ref) `pose` as input and returning either a [`Mask`](@ref) or a `Matrix{T}`.
 
-```
+```julia
 mask_or_map(pose::Pose)
 ```
 

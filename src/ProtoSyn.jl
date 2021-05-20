@@ -77,16 +77,6 @@ include("Core/Methods/pose.jl")
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
 
-"""
-    # TODO
-"""
-abstract type DriverState end
-
-"""
-    # TODO
-"""
-abstract type Driver end
-
 @info "Loading Mutators"
 include("Core/Mutators/Mutators.jl")
 

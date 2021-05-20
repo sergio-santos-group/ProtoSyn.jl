@@ -50,7 +50,7 @@ using the following signature, in which case only the provided list of
 # Examples
 ```jldoctest
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 1.0, nothing)
-⚙️  Dihedral Mutator:
+⚯  Dihedral Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -61,7 +61,7 @@ julia> ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 1.0, nothing)
  ○  Selection: Not Set
 
 julia> ProtoSyn.Mutators.DihedralMutator(randn, 0.05, 1.0, an"CA\$|C\$"r)
-⚙️  Dihedral Mutator:
+⚯  Dihedral Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -113,18 +113,11 @@ Base.show(io::IO, dm::DihedralMutator) = begin
 end
 
 function show(io::IO, dm::DihedralMutator, level_code::Opt{LevelCode} = nothing)
-    lead = ProtoSyn.get_lead(level_code)
+    level_code = level_code === nothing ? LevelCode() : level_code
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    if level_code === nothing
-        level_code = LevelCode()
-        inner_lead = lead
-    else
-        inner_level_code = copy(level_code)
-        inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
-        inner_lead = ProtoSyn.get_lead(inner_level_code)
-    end
-
-    println(io, lead*"⚙️  Dihedral Mutator:")
+    println(io, lead*"⚯  Dihedral Mutator:")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")

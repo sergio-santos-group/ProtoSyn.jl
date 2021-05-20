@@ -45,7 +45,7 @@ list of [`Atom`](@ref) instances will be considered for the application of this
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, rn"CBZ")
-⚙️  Translation Rigid Body Mutator:
+⚯  Translation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -106,7 +106,7 @@ function show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{LevelCo
     end
 
 
-    println(io, lead*"⚙️  Translation Rigid Body Mutator:")
+    println(io, lead*"⚯  Translation Rigid Body Mutator:")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
@@ -178,7 +178,7 @@ list of [`Atom`](@ref) instances will be considered for the application of this
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 1.0, rn"CBZ")
-⚙️  Rotation Rigid Body Mutator:
+⚯  Rotation Rigid Body Mutator:
 +----------------------------------------------------------------------+
 | Index | Field                       | Value                          |
 +----------------------------------------------------------------------+
@@ -247,7 +247,7 @@ function show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{LevelCode}
         inner_lead = ProtoSyn.get_lead(inner_level_code)
     end
 
-    println(io, lead*"⚙️  Rotation Rigid Body Mutator:")
+    println(io, lead*"⚯  Rotation Rigid Body Mutator:")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")

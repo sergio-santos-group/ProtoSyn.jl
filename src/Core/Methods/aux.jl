@@ -88,7 +88,7 @@ function gpu_allocation()
     return ProtoSyn.Units.defaultFloat(mem)
 end
 
-# --- Tree display 
+# --- Tree display -------------------------------------------------------------
 
 export LevelCode
 mutable struct LevelCode
@@ -168,4 +168,14 @@ function get_lead(level_code::Opt{LevelCode} = nothing)
     end
 
     return lead * level_code.code_table[level_code.levels[end]]
+end
+
+function get_inner_lead(level_code::Opt{LevelCode} = nothing)
+    lead = ""
+    level_code === nothing && return lead
+    length(level_code.levels) === 0 && return lead
+
+    inner_level_code = copy(level_code)
+    inner_level_code[end] = level_code.conv_table[level_code.levels[end]]
+    return ProtoSyn.get_lead(inner_level_code)
 end

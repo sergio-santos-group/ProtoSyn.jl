@@ -2,7 +2,23 @@ push!(LOAD_PATH, "../src")
 
 using Documenter, ProtoSyn, ProtoSyn.Peptides
 
-DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(using ProtoSyn); recursive=true)
+DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
+    using ProtoSyn;
+    using Random; Random.seed!(1);
+    res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false);
+    frag     = fragment(res_lib, seq"AAA");
+    pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL"); sync!(pose);
+    pose_mod = copy(pose);
+    ProtoSyn.setdihedral!(pose_mod.state, pose_mod.graph[1][2]["N"], deg2rad(90));
+    sync!(pose_mod);
+    rrbm = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 0.4, an"CA" & an"CB")
+    trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, nothing)
+    vl = ProtoSyn.Calculators.VerletList(pose.state.size); vl.cutoff = 4.0
+    ProtoSyn.Calculators.update!(ProtoSyn.SIMD_1, vl, pose)
+    driver_state = ProtoSyn.Drivers.MonteCarloState{Float64}()
+    dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, 0.01, 0.5, an"C|N"r)
+    energy_function = ProtoSyn.Common.default_energy_function()
+end); recursive=true)
 
 makedocs(
     sitename="ProtoSyn.jl",
@@ -53,7 +69,7 @@ makedocs(
             ]
         ]
     ],
-    doctest = false,
+    doctest = true,
 )
 
 deploydocs(

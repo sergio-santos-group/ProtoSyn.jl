@@ -18,6 +18,9 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     trbm = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 1.0, nothing)
     vl = ProtoSyn.Calculators.VerletList(pose.state.size); vl.cutoff = 4.0
     ProtoSyn.Calculators.update!(ProtoSyn.SIMD_1, vl, pose)
+    driver_state = ProtoSyn.Drivers.MonteCarloState{Float64}()
+    dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, 0.01, 0.5, an"C|N"r)
+    energy_function = ProtoSyn.Common.default_energy_function()
 end); recursive=true)
 
 doctest(ProtoSyn)

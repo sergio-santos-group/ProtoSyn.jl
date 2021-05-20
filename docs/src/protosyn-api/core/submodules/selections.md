@@ -1,12 +1,3 @@
-```@meta
-DocTestSetup = quote
-    using ProtoSyn
-    res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false)
-    pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL")
-    sync!(pose)
-end
-```
-
 # Selections
 
 > The [Selections](@ref) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
@@ -118,144 +109,46 @@ BinarySelection
 
 As stated in the [Masks](@ref) section, selections are applied to `AbstractContainer` instances, selecting all elements of the desired selection type in that container. This is known as _resolving_ the selection. All `AbstractSelection` instances are actually _functors_, meaning that selections are callable objects.
 
+```@setup selections
+using ProtoSyn
+using ProtoSyn.Peptides
+res_lib = Peptides.grammar(Float64)
+pose = ProtoSyn.build(res_lib, seq"GAME")
 ```
-julia> rn"ALA"(pose.graph)
-ProtoSyn.Mask{Residue}(21,)
-21-element BitVector:
- 0
- 0
- 0
- 0
- 1
- 0
- ⋮
- 0
- 0
- 0
- 0
- 1
- 0
+
+```@repl selections
+rn"ALA"(pose.graph)
 ```
 
 !!! ukw "Note:"
     When applying [`BinarySelection`](@ref) instances, note the need for parenthesis to highlight what is part of the selection, to avoid syntax errors. The same applies to compound selections, such as [`DistanceSelection`](@ref) instances, for example.
 
-```
-julia> (rn"ALA" & an"CA")(pose)
-ProtoSyn.Mask{Atom}(343,)
-343-element BitVector:
- 0
- 0
- 0
- 0
- 0
- 0
- ⋮
- 0
- 0
- 0
- 0
- 0
- 0
+```@repl selections
+(rn"ALA" & an"CA")(pose)
 ```
 
 As stated before, `Stateful` selections require a [State](@ref state-types) to calculate the selection. Given the syntax used, there are two ways of providing the [State](@ref state-types):
 
-```
-julia> (10:rn"ALA")(pose.graph)(pose.state)
-ProtoSyn.Mask{Atom}(343,)
-343-element BitVector:
- 0
- 0
- 0
- 0
- 0
- 0
- ⋮
- 1
- 1
- 1
- 1
- 1
- 1
-
-julia> (10:rn"ALA")(pose.graph, pose.state)
-ProtoSyn.Mask{Atom}(343,)
-343-element BitVector:
- 0
- 0
- 0
- 0
- 0
- 0
- ⋮
- 1
- 1
- 1
- 1
- 1
- 1
+```@repl selections
+(10:rn"ALA")(pose.graph)(pose.state)
+(10:rn"ALA")(pose.graph, pose.state)
 ```
 
 In such cases, the second syntax (`sele(pose.graph, pose.state)`) is recomended.
 
 Specific methods are available to apply selections to [Pose](@ref) instances, in particular. In this cases, the methods automatically calls `sele(pose.graph, pose.state)`
 
-```
-julia> (10:rn"ALA")(pose)
-ProtoSyn.Mask{Atom}(343,)
-343-element BitVector:
- 0
- 0
- 0
- 0
- 0
- 0
- ⋮
- 1
- 1
- 1
- 1
- 1
- 1
-
-julia> rn"ALA"(pose)
-ProtoSyn.Mask{Residue}(21,)
-21-element BitVector:
- 0
- 0
- 0
- 0
- 1
- 0
- ⋮
- 0
- 0
- 0
- 0
- 1
- 0
+```@repl selections
+(10:rn"ALA")(pose)
+rn"ALA"(pose)
 ```
 
 Finally, selections (and [`Mask`](@ref)) can be _gathered_. This, in essence, means looping over the _resolved_ [`Mask`](@ref) and appending the actual selected [`Atom`](@ref), [`Residue`](@ref) or [`Segment`](@ref) instances. This process can be done in one of two ways:
 
 **1 |** By using the optional flag `gather` when applying a selection to an `AbstractContainer` (recommended);
-```
-julia> an"^C.*$"r(pose, gather = true)
-104-element Vector{Atom}:
- Atom{/UNK:1/UNK:1/SER:1/CA:3}
- Atom{/UNK:1/UNK:1/SER:1/CB:5}
- Atom{/UNK:1/UNK:1/SER:1/C:10}
- Atom{/UNK:1/UNK:1/GLU:2/CA:14}
- Atom{/UNK:1/UNK:1/GLU:2/CB:16}
- Atom{/UNK:1/UNK:1/GLU:2/CG:19}
- ⋮
- Atom{/UNK:1/UNK:1/LEU:21/CA:327}
- Atom{/UNK:1/UNK:1/LEU:21/CB:329}
- Atom{/UNK:1/UNK:1/LEU:21/CG:332}
- Atom{/UNK:1/UNK:1/LEU:21/CD1:334}
- Atom{/UNK:1/UNK:1/LEU:21/CD2:338}
- Atom{/UNK:1/UNK:1/LEU:21/C:342}
+
+```@repl selections
+an"^C.*$"r(pose, gather = true)
 ```
 
 **2 |** By directly calling the function [`gather`](@ref).

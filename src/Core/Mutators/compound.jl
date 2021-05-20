@@ -47,9 +47,9 @@ using the following signature, in which case only the provided list of
 # Examples
 ```jldoctest
 julia> m = ProtoSyn.Mutators.CompoundMutator([rrbm, trbm], an"CBZ")
-⚙️  Compound Mutator:
+⚯  Compound Mutator:
  ├──  ● Inner Mutators (2 elements):
- |    ├── ⚙️  Rotation Rigid Body Mutator:
+ |    ├── ⚯  Rotation Rigid Body Mutator:
  |    |   +----------------------------------------------------------------------+
  |    |   | Index | Field                       | Value                          |
  |    |   +----------------------------------------------------------------------+
@@ -63,7 +63,7 @@ julia> m = ProtoSyn.Mutators.CompoundMutator([rrbm, trbm], an"CBZ")
  |    |         ├── FieldSelection › Atom.name = CA
  |    |         └── FieldSelection › Atom.name = CB
  |    |   
- |    └── ⚙️  Translation Rigid Body Mutator:
+ |    └── ⚯  Translation Rigid Body Mutator:
  |        +----------------------------------------------------------------------+
  |        | Index | Field                       | Value                          |
  |        +----------------------------------------------------------------------+
@@ -124,62 +124,45 @@ function (compound_mutator::CompoundMutator)(pose::Pose, atoms::Vector{Atom})
     end
 end
 
-
-# function Base.show(io::IO, cm::CompoundMutator)
-#     println(io, "  Compound Mutator:\n   ↘ Mutators:\n")
-#     for mutator in cm.mutators
-#         println(io, mutator)
-#     end
-#     println(io, "   ↘ Selection:")
-#     println(io, cm.selection)
-# end
-
 Base.show(io::IO, cm::CompoundMutator) = begin
     ProtoSyn.Mutators.show(io, cm)
 end
 
 function show(io::IO, cm::CompoundMutator, level_code::Opt{LevelCode} = nothing)
-    lead = ProtoSyn.get_lead(level_code)
-    if level_code === nothing
-        level_code = LevelCode()
-    end
+    init_level_code = level_code === nothing ? LevelCode() : level_code
+    init_lead       = ProtoSyn.get_lead(level_code)
+    init_inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    println(io, lead*"⚙️  Compound Mutator:")
+    println(io, init_lead*"⚯  Compound Mutator:")
 
-    # Mutators -----------------------------------------------------------------
-    mutators_level_code = vcat(level_code, 3)
-    mutators_lead = ProtoSyn.get_lead(mutators_level_code)
-    inner_mutators_level_code = copy(mutators_level_code)
-    inner_mutators_level_code[end] = mutators_level_code.conv_table[mutators_level_code.levels[end]]
-    inner_mutators_lead = ProtoSyn.get_lead(inner_mutators_level_code)
+    level_code = vcat(init_level_code, 3)
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
 
     N = length(cm.mutators)
     if N > 0
-        println(io, mutators_lead*" ● Inner Mutators ($N elements):")
+        println(io, lead*" ● Inner Mutators ($N elements):")
         for mutator in cm.mutators[1:(end-1)]
-            ProtoSyn.Mutators.show(io, mutator, vcat(inner_mutators_level_code, 3))
-            println(io, inner_mutators_lead*level_code.code_table[1])
+            ProtoSyn.Mutators.show(io, mutator, vcat(level_code, 3))
+            println(io, inner_lead*level_code.code_table[1])
         end
-        ProtoSyn.Mutators.show(io, cm.mutators[end], vcat(inner_mutators_level_code, 4))
+        ProtoSyn.Mutators.show(io, cm.mutators[end], vcat(level_code, 4))
 
     else
-        println(io, mutators_lead*" ○  Inner Mutators: None")
+        println(io, lead*" ○  Inner Mutators: None")
     end
 
-    println(io, lead*level_code.code_table[1])
+    println(io, init_inner_lead*level_code.code_table[1])
 
-    # Selection ----------------------------------------------------------------
-    selection_level_code = vcat(level_code, 4)
-    selection_lead = ProtoSyn.get_lead(selection_level_code)
-    inner_selection_level_code = copy(selection_level_code)
-    inner_selection_level_code[end] = selection_level_code.conv_table[selection_level_code.levels[end]]
-    inner_selection_lead = ProtoSyn.get_lead(inner_selection_level_code)
+    level_code = vcat(init_level_code, 4)
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
 
     if cm.selection !== nothing
-        println(io, selection_lead*" ● Selection: Set")
-        ProtoSyn.show(io, cm.selection, vcat(inner_selection_level_code, 4))
+        println(io, lead*" ● Selection: Set")
+        ProtoSyn.show(io, cm.selection, vcat(level_code, 4))
 
     else
-        println(io, selection_lead*" ○  Selection: Not Set")
+        println(io, lead*" ○  Selection: Not Set")
     end
 end
