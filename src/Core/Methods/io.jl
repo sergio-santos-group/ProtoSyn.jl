@@ -44,19 +44,19 @@ end
 
 load(filename::AbstractString; bonds_by_distance = false) = begin
     @info "Consider using Peptides.load when dealing with peptide chains."
-    load(Float64, filename, bonds_by_distance = bonds_by_distance)
+    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance)
 end
 
 
 load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T <: AbstractFloat, K} = begin
     
     pose = load(T, open(filename), K)
-    name, ext = splitext(basename(filename))
+    name, _ = splitext(basename(filename))
     pose.graph.name = name
 
     if bonds_by_distance
         dm        = ProtoSyn.Calculators.full_distance_matrix(pose)
-        threshold = T(0.1)
+        threshold = T(0.1) # Wiggle room for distance based connect inference
 
         atoms   = collect(eachatom(pose.graph))
         for (i, atom_i) in enumerate(atoms)
@@ -77,9 +77,28 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
         end
     end
 
+    # Set parenthood of atoms (infered)
+    atoms   = collect(eachatom(pose.graph))
+    n_atoms = length(atoms)
+    visited = ProtoSyn.Mask{Atom}(n_atoms)
+
+    for atom_i in atoms
+        visited[atom_i.index] = true
+        for atom_j in atom_i.bonds
+            if visited[atom_j.index]
+            else
+                !hasparent(atom_j) && ProtoSyn.setparent!(atom_j, atom_i)
+            end
+        end
+    end
+
+    _root = ProtoSyn.root(pose.graph)
+    for atom in atoms
+        !hasparent(atom) && ProtoSyn.setparent!(atom, _root)
+    end
+
+    reindex(pose.graph) # Sets ascedents
     ProtoSyn.request_c2i!(pose.state)
-    # println()
-    # sync!(pose)
     pose
 end
 
@@ -151,7 +170,9 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     state = State{T}(natoms)
     
-    segid = atmindex = 1
+    segid = atmindex = 1 # ! segment and atom index are overwritten by default 
+
+    er = r"\w+\s+(?<aid>\d+)\s+(?<an>\w+)\s+(?<rn>\w+)\s+(?<sn>\w*)\s+(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+\d+\.\d+\s+\d+\.\d+\s+\w*\s+(?<as>\w+)"
     
     seekstart(io)
     for line in eachline(io)
@@ -161,9 +182,8 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 
         elseif startswith(line, "ATOM") || startswith(line, "HETATM")
             
-            resname = string(strip(line[18:20]))
-            segname = string(strip(string(line[22])))
-            resid = parse(Int, line[23:26])
+            atom = match(er, line)
+            segname = atom["sn"] == "" ? "A" : atom["sn"] # * Default segname
 
             if seg.name != segname
                 seg = Segment!(top, segname, segid)
@@ -171,26 +191,26 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
                 segid += 1
             end
 
+            resid = parse(Int, atom["rid"])
+            resname = string(atom["rn"])
+
             if res.id != resid || res.name != resname
                 res = Residue!(seg, resname, resid)
                 setparent!(res, ProtoSyn.root(top).container)
             end
 
-            atsymbol = length(line)>77 ? string(strip(line[77:78])) : "?"
-            atname = string(strip(line[13:16]))
-            atid = parse(Int, line[7:11])
-
-            atom = Atom!(res, atname, atid, atmindex, atsymbol)
-            id2atom[atid] = atom
+            new_atom = Atom!(res,
+                string(atom["an"]),
+                parse(Int, atom["aid"]),
+                atmindex,
+                string(atom["as"]))
+            id2atom[parse(Int, atom["aid"])] = new_atom
             
             s = state[atmindex]
-            xi = parse(T, line[31:38])
-            s.t[1] = xi
-            yi = parse(T, line[39:46])
-            s.t[2] = yi
-            zi = parse(T, line[47:54])
-            s.t[3] = zi
-            x[:, atmindex] = [xi, yi, zi]
+            s.t[1] = parse(T, atom["x"])
+            s.t[2] = parse(T, atom["y"])
+            s.t[3] = parse(T, atom["z"])
+            x[:, atmindex] = [s.t[1], s.t[2], s.t[3]]
             atmindex += 1
 
         elseif startswith(line, "CONECT")
@@ -205,7 +225,6 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     state.x = StateMatrix(state, x)
     top.id = state.id = genid()
     
-    # request conversion from cartesian to internal ?
     Pose(top, state)
 end
 

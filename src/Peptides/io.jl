@@ -26,7 +26,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 
     pose = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance)
 
-    # Set parenthood pf residues
+    # Set parenthood of residues
     for segment in eachsegment(pose.graph)
         setparent!(segment[1][1], ProtoSyn.root(pose.graph))
 
@@ -44,7 +44,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     atoms   = collect(eachatom(pose.graph))
     n_atoms = length(atoms)
     visited = ProtoSyn.Mask{Atom}(n_atoms)
-    for (i, atom_i) in enumerate(atoms)
+    for atom_i in atoms
         visited[atom_i.index] = true
         for atom_j in atom_i.bonds
             if visited[atom_j.index]
