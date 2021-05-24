@@ -21,6 +21,8 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     driver_state = ProtoSyn.Drivers.MonteCarloState{Float64}()
     dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(randn, 0.01, 0.5, an"C|N"r)
     energy_function = ProtoSyn.Common.default_energy_function()
+    monte_carlo = ProtoSyn.Drivers.MonteCarlo(energy_function, dihedral_mutator, nothing, 10, ProtoSyn.Drivers.get_linear_quench(1.0, 10))
+    cb = ProtoSyn.Common.default_energy_step_frame_callback(10, "teste.pdb")
 end); recursive=true)
 
 doctest(ProtoSyn)

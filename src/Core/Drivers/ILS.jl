@@ -184,7 +184,7 @@ function (driver::ILS)(pose::Pose)
         driver.callback !== nothing && driver.callback(pose, driver_state)
 
         # Jump
-        driver.jump!(pose)
+         driver_state.step < driver.max_steps && driver.jump!(pose)
     end
 
     driver_state.completed = true
