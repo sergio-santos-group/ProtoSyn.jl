@@ -49,6 +49,40 @@ const three_2_one = Dict{String, Char}(
 )
 
 
+"""
+    Dihedral
+
+An auxiliary struct for [`Dihedral`](@ref) selection by name. Each of the
+available dihedrals (under the abstract type `DihedralType`, see bellow) can be
+called using the following signature, returning the respective representative
+atom:
+
+```julia
+(dihedral::DihedralType)(residue::Residue)
+```
+
+# Available dihedrals
+
+`Dihedral.phi` `Dihedral.psi` `Dihedral.omega`
+`Dihedral.chi1` `Dihedral.chi2` `Dihedral.chi3` `Dihedral.chi4`
+
+# See also
+[`getdihedral`](@ref ProtoSyn.getdihedral)
+[`setdihedral!`](@ref ProtoSyn.setdihedral!)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Peptides.Dihedral.phi(pose.graph[1][1])
+Atom{/UNK:1/UNK:1/SER:1/C:10}
+
+julia> atom = ProtoSyn.Peptides.Dihedral.chi2(pose.graph[1][2])
+Atom{/UNK:1/UNK:1/GLU:2/CD:22}
+
+julia> ProtoSyn.getdihedral(pose.state, atom)
+-3.141165
+```
+
+"""
 module Dihedral
 
     using ProtoSyn: Residue
@@ -81,7 +115,7 @@ module Dihedral
     function get_chi(residue::Residue, chi::Int)
         available_chis = chi_dict[residue.name.content]
         @assert chi <= length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis)) chi angles defined"
-        chi_atom = available_chis[chi + 1]
+        chi_atom = available_chis[chi + 1] # Note the "+ 1"
         @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
         
         return residue[chi_atom]
@@ -110,7 +144,7 @@ module Dihedral
         "ILE" => ["CB", "CG1", "CD", "HD1"],
         "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
         "LEU" => ["CB", "CG", "CD1"],
-        "MET" => ["CB", "CG", "SD", "CE", "NZ"],
+        "MET" => ["CB", "CG", "SD", "CE"],
         "ASN" => ["CB", "CG", "OD1", "HD21"],
         "PRO" => ["CB", "CG", "CD", "HD1"], # Attention
         "GLN" => ["CB", "CG", "CD", "NE2"],
@@ -123,14 +157,33 @@ module Dihedral
     )
 end
 
+# --- Secondary Structure ------------------------------------------------------
 
 export SecondaryStructure
-#                                           phi,   psi, omega
-const SecondaryStructure = Dict{Symbol, NTuple{3, Number}}(
-    :antiparallel_sheet => map(deg2rad, (-130.0, 145.0, 180.0)),
-    :parallel_sheet     => map(deg2rad, (-110.0, 120.0, 180.0)),
-    :linear             => map(deg2rad, ( 180.0, 180.0, 180.0)),
-    :helix              => map(deg2rad, ( -60.0, -45.0, 180.0))
+export SecondaryStructureTemplate
+
+"""
+    WIP
+"""
+struct SecondaryStructureTemplate{T <: AbstractFloat}
+    ϕ::T
+    ψ::T
+    ω::T
+end
+
+SecondaryStructureTemplate(template::Tuple{T, T, T}) where {T <: AbstractFloat} = begin
+    return SecondaryStructureTemplate(template[1], template[2], template[3])
+end
+
+"""
+    WIP
+"""
+const SecondaryStructure = Dict{Symbol, SecondaryStructureTemplate}(
+    #                                                                  phi,   psi, omega
+    :antiparallel_sheet => SecondaryStructureTemplate(map(deg2rad, (-130.0, 145.0, 180.0))),
+    :parallel_sheet     => SecondaryStructureTemplate(map(deg2rad, (-110.0, 120.0, 180.0))),
+    :linear             => SecondaryStructureTemplate(map(deg2rad, ( 180.0, 180.0, 180.0))),
+    :helix              => SecondaryStructureTemplate(map(deg2rad, ( -60.0, -45.0, 180.0)))
 )
 
 const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(

@@ -74,7 +74,7 @@ structure. An example is when a Segment is severed via [`unbond`](@ref), in
 which case, updating the origin children will move one of the parts in an big
 arm movement.
 """
-function setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}, residues::Vector{Residue})
+function setss!(container::Pose, ss::SecondaryStructureTemplate, residues::Vector{Residue})
     state = container.state
     T = eltype(state)
     for r in residues

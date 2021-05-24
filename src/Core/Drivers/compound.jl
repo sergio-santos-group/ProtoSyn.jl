@@ -16,7 +16,7 @@ and custom functions, calling each of the components sequentially. Does not
 `AbstractMutator` instance.
 
 !!! ukw "Note:"
-    In contrast with [`CompoundMutator`](@ref ProtoSyn.Drivers.CompoundMutator),
+    In contrast with [`CompoundMutator`](@ref ProtoSyn.Mutators.CompoundMutator),
     this `Driver` does not accept an `AbstractSelection` modifier. This may
     change in future versions of ProtoSyn.
 

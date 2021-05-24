@@ -1,6 +1,6 @@
 # Builder
 
-> The [Builder](@ref) is a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new [Types](@ref) and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Builder](@ref) is a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
 
 The following sections offer a more in-depth view of the available types and methods for building molecular structures from template libraries:
 

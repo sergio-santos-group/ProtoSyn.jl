@@ -69,7 +69,8 @@ makedocs(
                 ],
             ],
             "Peptides" => [
-                "Introduction" => "protosyn-api/peptides/introduction.md"
+                "Introduction" => "protosyn-api/peptides/introduction.md",
+                "Types" => "protosyn-api/peptides/types.md"
             ]
         ]
     ],

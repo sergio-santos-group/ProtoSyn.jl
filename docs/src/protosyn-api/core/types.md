@@ -5,7 +5,7 @@ using ProtoSyn.Mutators
 using ProtoSyn.Peptides
 ```
 
-# Types
+# [Types] (@id core-types)
 
 In this section we will explore the main `struct` instances that compose the core of ProtoSyn's engine, divided in the following topics, for organization purposes:
 
