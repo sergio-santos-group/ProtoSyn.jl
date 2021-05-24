@@ -44,7 +44,7 @@ addprocs(n_workers)
     crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
         randn, p_mut, 0.05, selection, !(an"^CA$|^N$|^C$|^H$|^O$"r))
 
-    compound_driver = ProtoSyn.Drivers.CompoundDriver(
+    compound_driver = ProtoSyn.Drivers.Compound(
         [crankshaft_mutator, dihedral_mutator])
 
     # function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState, other...)

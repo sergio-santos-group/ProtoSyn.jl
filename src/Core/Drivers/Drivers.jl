@@ -9,7 +9,7 @@ abstract type Driver end
 include("callback.jl")
 include("steepest_descent.jl")
 include("monte_carlo.jl")
-include("ILSRR.jl")
+include("ILS.jl")
 include("compound.jl")
 include("thermostats.jl")
 

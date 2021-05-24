@@ -215,6 +215,11 @@ end
 # * Selection / Mask
 apply_potential(::Type{ProtoSyn.CUDA_2}, pose::Pose, potential::Function, selection::AbstractSelection, mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {T <: AbstractFloat, C <: ProtoSyn.AbstractContainer} = begin
     sele = ProtoSyn.promote(selection, Atom)(pose).content
+    N = count(sele)
+    if N == 0
+        @warn "The provided selection resulted in 0 atoms selected to apply potential."
+        return 0.0, nothing
+    end
     coords = pose.state.x.coords[:, sele][:]
     e, _f = apply_potential(ProtoSyn.CUDA_2, coords, potential, mask)
     f = zeros(eltype(pose.state), 3, pose.state.size)

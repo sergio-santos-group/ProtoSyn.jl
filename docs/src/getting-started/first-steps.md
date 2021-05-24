@@ -32,7 +32,7 @@ In order to initialize the internal coordinate system, each [Topology] has an ex
 
 ![organization](../assets/ProtoSyn-drivers.png)
 
-ProtoSyn.jl offers some quick simulation functionalities, such as [MonteCarlo], [ILSRR] and [SteepestDescent] simulations, using [Driver] instances. A Driver is a function which _drives_ the pose from one state to the next. As a general rule, these Drivers are usually comprised of two important components: [Mutator] instances and an [EnergyFunction].
+ProtoSyn.jl offers some quick simulation functionalities, such as [MonteCarlo], [ILS] and [SteepestDescent] simulations, using [Driver] instances. A Driver is a function which _drives_ the pose from one state to the next. As a general rule, these Drivers are usually comprised of two important components: [Mutator] instances and an [EnergyFunction].
 
 A [Mutator] is a function that performs a single change in the system. For example, a [DihedralMutator] will rotate a random dihedral by a random amount. These can be parametrized for more specific needs.
 

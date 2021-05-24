@@ -58,6 +58,10 @@ makedocs(
                 ],
                 "Drivers" => [
                     "Drivers Section" => "protosyn-api/core/drivers/drivers-section.md",
+                    "Monte Carlo" => "protosyn-api/core/drivers/drivers-monte-carlo.md",
+                    "Steepest Descent" => "protosyn-api/core/drivers/drivers-steepest-descent.md",
+                    "ILS" => "protosyn-api/core/drivers/drivers-ils.md",
+                    "Compound Driver" => "protosyn-api/core/drivers/drivers-compound.md",
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",

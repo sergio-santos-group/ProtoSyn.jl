@@ -49,7 +49,7 @@ begin
     inner_crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
         randn, p_mut, 0.1, selection, !(an"^CA$|^N$|^C$|^H$|^O$"r))
 
-    inner_compound_driver    = ProtoSyn.Drivers.CompoundDriver(
+    inner_compound_driver    = ProtoSyn.Drivers.Compound(
         [inner_crankshaft_mutator, inner_dihedral_mutator])
 
     function inner_callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
@@ -73,7 +73,7 @@ begin
 end
 
 
-# Define the outer ILSRR driver
+# Define the outer ILS driver
 begin
     selection              = (rid"21:26" | rid"45:51") & an"C$|N$"r
     outer_dihedral_mutator = ProtoSyn.Mutators.DihedralMutator(
@@ -88,7 +88,7 @@ begin
     steepest_descent         = ProtoSyn.Drivers.SteepestDescent(
         sd_energy_function, cb, 3000, 0.001, 0.1) # Note the energy function
 
-    outer_compound_driver    = ProtoSyn.Drivers.CompoundDriver(
+    outer_compound_driver    = ProtoSyn.Drivers.Compound(
         [outer_crankshaft_mutator, outer_dihedral_mutator, steepest_descent])
 
     function outer_callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
@@ -103,7 +103,7 @@ begin
 
     outer_callback    = ProtoSyn.Drivers.Callback(outer_callback_function, 1)
     outer_n_steps     = 100
-    outer_ILSRR = ProtoSyn.Drivers.ILSRR(
+    outer_ILS = ProtoSyn.Drivers.ILS(
         energy_function,
         outer_compound_driver,
         inner_monte_carlo,
@@ -124,7 +124,7 @@ begin
     steepest_descent(pose)
     ProtoSyn.append(pose, "ilsrr.pdb")
     ProtoSyn.write(pose, "ilsrr_best.pdb")
-    outer_ILSRR(pose)
+    outer_ILS(pose)
     # inner_monte_carlo(pose)
     println("Seed: $seed")
 end

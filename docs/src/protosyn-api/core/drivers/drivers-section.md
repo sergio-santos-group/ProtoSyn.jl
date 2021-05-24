@@ -16,7 +16,7 @@ A `Driver` is a piece of code that _drives_ the simulation forward. Usually, it 
 ![ProtoSyn driver](../../../assets/ProtoSyn-driver.png)
 
 **Figure 1 |** A diagram of a [`MonteCarlo`](@ref) `Driver`. This `Driver` type
-requests an `eval!` component (in this case, an [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction), with a TorchANI Ensmeble as the single component - see [`get_default_torchani_ensemble`](@ref Calculators.TorchANI.get_default_torchani_ensemble)) and a `sample!` component (in this example, a single [`DihedralMutator`](@ref ProtoSyn.Mutators.DihedralMutator)). As the naming implies, an `eval!` component evaluates the system's energy at any given moment in the simulation, while the `sample!` component _drives_ the system from a [`State`](@ref ProtoSyn.State) to the next. Optionally, a [`Callback`](@ref) `callback` can be provided, whose purpose is to periodically return information to the user about the current state of the simulation (i.e.: current step, temperature, energy, etc). In this example, as defined in the [`MonteCarlo`](@ref) `Driver` settings, the simulation will run for 5000 steps, with a constant temperature (see [Available thermostats](@ref) and [Creating custom thermostats](@ref) on how to control the temperature of a simulation).
+requests an `eval!` component (in this case, an [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction), with a TorchANI Ensmeble as the single component - see [`get_default_torchani_ensemble`](@ref ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble)) and a `sample!` component (in this example, a single [`DihedralMutator`](@ref ProtoSyn.Mutators.DihedralMutator)). As the naming implies, an `eval!` component evaluates the system's energy at any given moment in the simulation, while the `sample!` component _drives_ the system from a [`State`](@ref ProtoSyn.State) to the next. Optionally, a [`Callback`](@ref) `callback` can be provided, whose purpose is to periodically return information to the user about the current state of the simulation (i.e.: current step, temperature, energy, etc). In this example, as defined in the [`MonteCarlo`](@ref) `Driver` settings, the simulation will run for 5000 steps, with a constant temperature (see [Available thermostats](@ref) and [Creating custom thermostats](@ref) on how to control the temperature of a simulation).
 
 # Callbacks
 
@@ -84,14 +84,30 @@ In this seb-section, the default `Driver` instances made available by the Core m
 
 + [`MonteCarlo`](@ref)
 + [`SteepestDescent`](@ref)
-+ [`ILSRR`](@ref)
-+ [`Compound`](@ref)
++ [`ILS`](@ref)
++ [`CompoundDriver`](@ref)
 
-```@docs
-MonteCarlo
-MonteCarloState
+# Creating custom thermostats
+
+Some `Driver` instances have a `:temperature::Function` field, where the `temperature` function takes the current `:step` of the simulation. This function is often referred to as a _thermostat_, since it regulates the temperature of the simulation, thus controlling the likelihood of acceptance of higher energy states, etc. As such, in order to create a custom thermostat, the following signature should be followed (taking a `step``Int as the single input argument and returning a temperature value, usually as a Float):
+
+```julia
+return function custom_thermostat(step::Int)
+
+    # content
+
+    return temperature_value
+end
 ```
 
-![ProtoSyn monte-carlo-driver](../../../assets/ProtoSyn-monte-carlo-driver.png)
+# Available thermostats
 
-**Figure 2 |** A schematic overview of the different stages in a [`MonteCarlo`](@ref) `Driver`: **(1)** - Sampling a new conformation; **(2)** - Evaluating the new [`Pose`](@ref); **(3)** - Metropolis Criterion, the new [`Pose`](@ref) conformation is either accepted (in which case it is saved as a reference for further steps in the simulation) or rejected (where the current state is recovered from a saved [`Pose`](@ref) to the previous step).
++ [`get_constant_temperature`](@ref)
++ [`get_linear_quench`](@ref)
++ [`get_quadratic_quench`](@ref)
+
+```@docs
+get_constant_temperature
+get_linear_quench
+get_quadratic_quench
+```

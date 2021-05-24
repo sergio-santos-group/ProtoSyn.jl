@@ -89,10 +89,10 @@ for replica in 1:N
         crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
             randn, p_mut, 0.05, selection, !(an"^CA$|^N$|^C$|^H$|^O$"r))
 
-        # The two defined Mutators can now be combined in a CompoundDriver. This is
+        # The two defined Mutators can now be combined in a Compound. This is
         # simply an auxiliary object that iterates and calls any Function, Mutator or
         # Driver in its body.
-        compound_driver = ProtoSyn.Drivers.CompoundDriver(
+        compound_driver = ProtoSyn.Drivers.Compound(
             [crankshaft_mutator, dihedral_mutator])
 
         # 4) Define the Monte Carlo Driver

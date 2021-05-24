@@ -164,7 +164,7 @@ crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
 
 trb_mutator = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, 0.2, rn"CBZ")
 rrb_mutator = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sphere, randn, 0.2, nothing, rn"CBZ")
-compound_mutator = ProtoSyn.Drivers.CompoundDriver([trb_mutator, rrb_mutator])
+compound_mutator = ProtoSyn.Drivers.Compound([trb_mutator, rrb_mutator])
 
 
 T = Float64
@@ -215,7 +215,7 @@ crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(randn, p_mut, 2.0, sele
 
 rotamer_blitz = ProtoSyn.Drivers.RotamerBlitz(energy_function, rl, 3, 1)
 
-compound_driver = ProtoSyn.Drivers.CompoundDriver([dihedral_mutator2, rotamer_blitz])
+compound_driver = ProtoSyn.Drivers.Compound([dihedral_mutator2, rotamer_blitz])
 
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
     @printf("STEP %-5d E= %-10.4f AR= %-5.2f%% T= -%7.5f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature)

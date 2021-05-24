@@ -2,12 +2,12 @@ using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn.Mutators: AbstractMutator
 
 """
-    MonteCarloState{T <: AbstractFloat}(step::Int = 0, converged::Bool = false, completed::Bool = false, stalled::Bool = false, acceptance_count = 0, temperature::T   = T(0.0))
+    MonteCarloState{T <: AbstractFloat}(step::Int = 0, converged::Bool = false, completed::Bool = false, stalled::Bool = false, acceptance_count = 0, temperature::T = T(0.0))
     MonteCarloState{T <: AbstractFloat}()
 
 A [`MonteCarloState`](@ref) instance is a `DriverState` that keeps track of a
 [`MonteCarlo`](@ref) simulation status. Besides the default `:step`,
-`:converged`, `:completed` and `:stalled` fields, A [`MonteCarloState`](@ref)
+`:converged`, `:completed` and `:stalled` fields, a [`MonteCarloState`](@ref)
 instance adds the following tracking fields specific for [`MonteCarlo`](@ref)
 simulations:
 
@@ -50,10 +50,11 @@ given `sample!` method (this is an `AbstractMutator`, `Driver` or a custom
 sampling function). Note that the [`Pose`](@ref) is synched (using the
 [`sync!`](@ref) method) after each `sample!` call. The two [`Pose`](@ref)
 instances are evaluated by calling the `eval!` method (an
-[`EnergyFunction`](@ref) or custom evaluator function). Following the Metropolis
-criterion, the new [`Pose`](@ref) is accepted if the evaluated energy is lower
-than the previous [`Pose`](@ref), or, otherwise, with a given probability based
-on the `temperature` of the simulation:
+[`EnergyFunction`](@ref) or custom evaluator function). Following the
+[Metropolis Criterion](https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm),
+the new [`Pose`](@ref) is accepted if the evaluated energy is lower than the
+previous [`Pose`](@ref), or, otherwise, with a given probability based on the
+`temperature` of the simulation:
 
 \$\\;\\;\\;\\;\\;\\; rand()<e^{-\\frac{E_{n+1}-E_{n}}{T}} \\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\\;\$
 
@@ -169,7 +170,6 @@ function show(io::IO, mcd::MonteCarlo, level_code::Opt{LevelCode} = nothing)
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-
     println(io, init_lead*"⚒  Monte Carlo Driver:")
 
     level_code = vcat(init_level_code, 3)
@@ -195,11 +195,21 @@ function show(io::IO, mcd::MonteCarlo, level_code::Opt{LevelCode} = nothing)
         println(io, lead*" ●  Sampler: $(mcd.sample!)")
     end
 
+    println(io, init_inner_lead*level_code.code_table[1])
+
+    if mcd.callback !== nothing
+        println(io, lead*" ● Callback:")
+        ProtoSyn.Drivers.show(io, mcd.callback, vcat(level_code, 4))
+    else
+        println(io, lead*" ○  Callback: Not set")
+    end
+
     level_code = vcat(init_level_code, 4)
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
 
     println(io, init_inner_lead*level_code.code_table[1])
+
     println(io, lead*" ● Settings:")
     println(io, inner_lead*"  Max steps: $(mcd.max_steps)")
     println(io, inner_lead*"Temperature: $(mcd.temperature)")

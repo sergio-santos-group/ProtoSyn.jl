@@ -160,6 +160,9 @@ end
 
 StateMatrix(x::Matrix{T}) where {T <: AbstractFloat} = StateMatrix{T}(nothing, x)
 
+Base.length(x::StateMatrix{T}) where {T <: AbstractFloat} = length(x.coords)
+Base.size(x::StateMatrix{T}) where {T <: AbstractFloat} = size(x.coords)
+
 Base.getindex(x::StateMatrix{T}, i::Int) where {T <: AbstractFloat} = x.coords[i]
 Base.getindex(x::StateMatrix{T}, i::UnitRange{<: Real}) where {T <: AbstractFloat} = x.coords[i]
 Base.getindex(x::StateMatrix{T}, i::UnitRange{<: Real}, j::Int) where {T <: AbstractFloat} = x.coords[i, j]
@@ -201,6 +204,13 @@ end
 
 Base.lastindex(x::StateMatrix{T}, i::Int64) where {T <: AbstractFloat} = begin
     return size(x.coords)[2]
+end
+
+Base.iterate(x::StateMatrix{T}, (a,)=(1,)) where {T <: AbstractFloat} = begin
+    if a > size(x)[2]
+        return nothing
+    end
+    (x.coords[:, a], (a+1,))
 end
 
 #region State ------------------------------------------------------------------

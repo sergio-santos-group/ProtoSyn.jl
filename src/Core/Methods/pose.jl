@@ -564,8 +564,8 @@ Pop and return the given [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 + Update the `container.itemsbyname`.
 
 The unbonding action is performed by the optional argument `unbond_f` (
-[ProtoSyn.unbond](@ref ProtoSyn.unbond) by default, other examples would be
-[ProtoSyn.Peptides.unbond](@ref ProtoSyn.Peptides.unbond), among others).
+[`ProtoSyn.unbond`](@ref ProtoSyn.unbond) by default, other examples would be
+[`ProtoSyn.Peptides.unbond`](@ref ProtoSyn.Peptides.unbond), among others).
 
 # See also
 [`pop_residue!`](@ref)

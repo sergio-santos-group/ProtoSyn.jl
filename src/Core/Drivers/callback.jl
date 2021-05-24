@@ -44,10 +44,19 @@ function (callback::Callback)(pose::Pose, driver_state::ProtoSyn.Drivers.DriverS
 end
 
 function Base.show(io::IO, cb::Callback)
-    println(io, "+"*repeat("-", 58)*"+")
-    @printf(io, "| %-5s | %-15s | %-30s |\n", "Index", "Field", "Value")
-    println(io, "+"*repeat("-", 58)*"+")
-    @printf(io, "| %-5d | %-15s | %-30d |\n", 1, "Frequency", cb.frequency)
-    @printf(io, "| %-5d | %-15s | %-30s |\n", 2, "Event", "$(cb.event)")
-    println(io, "+"*repeat("-", 58)*"+")
+    ProtoSyn.Drivers.show(io, cb)
+end
+
+function show(io::IO, cb::Callback, level_code::Opt{LevelCode} = nothing)
+    level_code = level_code === nothing ? LevelCode() : level_code
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
+
+    println(io, lead*"✉  Callback:")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5s | %-25s | %-32s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    @printf(io, "%s| %-5d | %-25s | %-30s   |\n", inner_lead, 1, "Event", cb.event)
+    @printf(io, "%s| %-5d | %-25s | %-30s   |\n", inner_lead, 2, "Frequency", cb.frequency)
+    println(io, inner_lead*"+"*repeat("-", 70)*"+")
 end

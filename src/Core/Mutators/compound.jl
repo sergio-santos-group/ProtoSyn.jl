@@ -42,7 +42,7 @@ using the following signature, in which case only the provided list of
 * `selection::Union{AbstractSelection, Nothing}` - If provided, all inner `AbstractMutator` instances will be applied to each individual selection (if present) merged with this common selection.
 
 # See also
-[`CompoundDriver`](@ref)
+[`CompoundDriver`](@ref ProtoSyn.Drivers.CompoundDriver)
 
 # Examples
 ```jldoctest

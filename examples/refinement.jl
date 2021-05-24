@@ -49,7 +49,7 @@ crankshaft_mutator = ProtoSyn.Mutators.CrankshaftMutator(
     randn, p_mut, 0.005, selection, !(an"^CA$|^N$|^C$|^H$|^O$"r))
 
 # 7) Define the dihedral + crankshaft compound driver
-compound_driver_1 = ProtoSyn.Drivers.CompoundDriver(
+compound_driver_1 = ProtoSyn.Drivers.Compound(
     [dihedral_mutator, crankshaft_mutator, rotamer_blitz])
 
 # 8) Define the stage 1 callback
@@ -93,9 +93,9 @@ cb = ProtoSyn.Common.default_energy_step_callback(100)
 sd = ProtoSyn.Drivers.SteepestDescent(energy_function_2, cb, 1000, 0.001, 0.1)
 brm = ProtoSyn.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 0.3, 0.3, [rid"1:20", rid"27:44", rid"50:end"], nothing)
 btm = ProtoSyn.Mutators.BlockTransMutator(ProtoSyn.rand_vector_in_sphere, 0.3, 0.3, [rid"1:20", rid"27:44", rid"50:end"], sd)
-blockrot_driver = ProtoSyn.Drivers.CompoundDriver([brm, btm])
+blockrot_driver = ProtoSyn.Drivers.Compound([brm, btm])
 
-compound_driver_2 = ProtoSyn.Drivers.CompoundDriver(
+compound_driver_2 = ProtoSyn.Drivers.Compound(
     [blockrot_driver, rotamer_blitz])
 
 # 12) Define the Stage 1 Monte Carlo Driver
@@ -215,7 +215,7 @@ sd = ProtoSyn.Drivers.SteepestDescent(sd_energy_function, cb, 1000, 0.001, 0.1)
 brm = ProtoSyn.Mutators.BlockRotMutator(ProtoSyn.rand_vector_in_sphere, randn, ProtoSyn.center_of_mass, 0.3, 0.3, [rid"1:20", rid"27:44", rid"50:end"], nothing)
 btm = ProtoSyn.Mutators.BlockTransMutator(ProtoSyn.rand_vector_in_sphere, 0.3, 0.3, [rid"1:20", rid"27:44", rid"50:end"], sd)
 
-compound_driver = ProtoSyn.Drivers.CompoundDriver([brm, btm])
+compound_driver = ProtoSyn.Drivers.Compound([brm, btm])
 
 function callback_function(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
     s = @sprintf(" INNER STEP %-6d | E(total)= %-10.4f | AR= %-5.1f%%  | T= %-7.4f | E(ani)= %-10.4f | E(sol)= %-10.4f | E(cmp)= %-10.4f | E(cls)= %-10.4f\n", driver_state.step, pose.state.e[:Total], (driver_state.acceptance_count/driver_state.step)*100, driver_state.temperature, pose.state.e[:TorchANI_ML_Model], pose.state.e[:Caterpillar_Solvation], pose.state.e[:Contact_Map_Restraint], pose.state.e[:Clash_Restraint])
