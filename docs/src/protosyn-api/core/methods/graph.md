@@ -2,7 +2,7 @@
 CurrentModule = ProtoSyn
 ```
 
-# [Graph](@id graph-methods)
+# [Graph](@id core-graph-methods)
 
 This section lists functions that work on the system [Graph](@ref state-types), such as functions that deal with parent/child relations, indexes and bonds, among
 others. These are subdivided by topics, for organization purposes:
@@ -10,7 +10,7 @@ others. These are subdivided by topics, for organization purposes:
 + [Root vs Origin](@ref)
 + [Parenthood relationships](@ref)
 + [Container manipulation](@ref)
-+ [Indexation](@ref graph-methods-indexation)
++ [Indexation](@ref core-graph-methods-indexation)
 + [Counters and Iterators](@ref)
 + [Bonds](@ref)
 
@@ -54,9 +54,9 @@ Base.delete!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.copy(::Atom)
 ```
 
-## [Indexation](@id graph-methods-indexation)
+## [Indexation](@id core-graph-methods-indexation)
 
-An important initial detail when describing the [Graph](@ref graph-methods) methods is describing the family of `getindex` methods overloaded by ProtoSyn when dealing with [Graph](@ref graph-types) structures. There is, in essence, 4 ways to access a specific instance in the [Graph](@ref graph-types):
+An important initial detail when describing the [Graph](@ref core-graph-methods) methods is describing the family of `getindex` methods overloaded by ProtoSyn when dealing with [Graph](@ref graph-types) structures. There is, in essence, 4 ways to access a specific instance in the [Graph](@ref graph-types):
 
 * Using the regular syntax;
 
@@ -133,6 +133,6 @@ The following methods deal with the bonding/unbonding of atoms (and respective
 
 ```@docs
 bond
-unbond
+unbond!
 join
 ```

@@ -2,7 +2,7 @@
 CurrentModule = ProtoSyn
 ```
 
-# Input and Output (IO)
+# [Input and Output (IO)](@id core-io)
 
 The following methods allow the user to load and export models and data from and to files.
 

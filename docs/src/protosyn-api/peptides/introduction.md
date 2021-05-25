@@ -6,6 +6,10 @@ In sum, the [Peptides](@ref) module makes available several methods, types and s
 
 In order to use this module, including the following call is often useful:
 
-```@example
-using Protosyn.Peptides
+```@setup peptides
+using ProtoSyn
+```
+
+```@example peptides
+using ProtoSyn.Peptides
 ```

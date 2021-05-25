@@ -386,7 +386,7 @@ end
 
 
 # Peptides.append_residues!(pose, pose.graph[1][end], res_lib, seq"GGG");
-# unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
+# unbond!(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
 # sync!(pose);
 # println("Outside angle: $(pose.state[pose.graph[1][3]["N"]].ϕ) $(ProtoSyn.dihedral(pose.state[pose.graph[1][3]["N"]], pose.state[ProtoSyn.root(pose.graph)], pose.state[ProtoSyn.root(pose.graph).parent], pose.state[ProtoSyn.root(pose.graph).parent.parent]))")
 # Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"LLL");
@@ -544,7 +544,7 @@ Peptides.uncap!(pose, pose.graph[1][1]);
 io = open("../teste2.pdb", "w"); ProtoSyn.write(io, pose); close(io);
 Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"LLL");
 io = open("../teste3.pdb", "w"); ProtoSyn.write(io, pose); close(io);
-# Peptides.unbond(pose, pose.graph[1][4], pose.graph[1][5]);
+# Peptides.unbond!(pose, pose.graph[1][4], pose.graph[1][5]);
 # Peptides.setss!(pose, SecondaryStructure[:linear], pose.graph[1].items[1:4]);
 # Peptides.append_residues!(pose, pose.graph[1][4], res_lib, seq"LLL");
 
@@ -580,7 +580,7 @@ res_lib = grammar();
 pose = Peptides.build(res_lib, seq"AAAA");
 Peptides.setdihedral!(pose, pose.graph[1][2], Peptides.Dihedral.phi, deg2rad(90));
 
-# unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
+# unbond!(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]);
 # ProtoSyn.bond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"], res_lib);
 # pop!(pose, pose.graph[1][1])
 # Peptides.insert_residues!(pose, pose.graph[1][1], res_lib, seq"KKK");

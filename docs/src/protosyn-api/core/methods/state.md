@@ -2,14 +2,14 @@
 CurrentModule = ProtoSyn
 ```
 
-# [State](@id state-methods)
+# [State](@id core-state-methods)
 
 This section lists functions that work on the system [State](@ref state-types). These methods are subdivided by topics, for organization purposes:
 
 + [Cartesian and internal coordinates conversion](@ref)
 + [Dihedral rotations](@ref)
 + [Measuring distances, angles and dihedrals](@ref)
-+ [Indexation](@ref state-methods-indexation)
++ [Indexation](@ref core-state-methods-indexation)
 
 ## Cartesian and internal coordinates conversion
 
@@ -62,7 +62,7 @@ angle
 dihedral
 ```
 
-## [Indexation](@id state-methods-indexation)
+## [Indexation](@id core-state-methods-indexation)
 
 In order to access an [`AtomState`](@ref) instance in a [State](@ref state-types), ProtoSyn makes available, essentially, three methods:
 

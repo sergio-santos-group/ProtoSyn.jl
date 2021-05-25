@@ -1,8 +1,5 @@
-```@setup general
-using ProtoSyn
-using ProtoSyn.Calculators
-using ProtoSyn.Mutators
-using ProtoSyn.Peptides
+```@meta
+CurrentModule = ProtoSyn
 ```
 
 # [Types] (@id core-types)

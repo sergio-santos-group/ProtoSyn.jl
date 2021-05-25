@@ -4,6 +4,7 @@ using Documenter, ProtoSyn, ProtoSyn.Peptides
 
 DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
+    using ProtoSyn.Units;
     using Random; Random.seed!(1);
     res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false);
     frag     = fragment(res_lib, seq"AAA");
@@ -70,7 +71,12 @@ makedocs(
             ],
             "Peptides" => [
                 "Introduction" => "protosyn-api/peptides/introduction.md",
-                "Types" => "protosyn-api/peptides/types.md"
+                "Types" => "protosyn-api/peptides/types.md",
+                "Methods" => [
+                    "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
+                    "Graph" => "protosyn-api/peptides/methods/graph.md",
+                    "State" => "protosyn-api/peptides/methods/state.md"
+                ]
             ]
         ]
     ],

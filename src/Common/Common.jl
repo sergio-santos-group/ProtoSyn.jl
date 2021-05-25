@@ -25,12 +25,13 @@ module Common
     # Examples
     ```jldoctest
     julia> ProtoSyn.Common.default_energy_step_callback(100)
-    +----------------------------------------------------------+
-    | Index | Field           | Value                          |
-    +----------------------------------------------------------+
-    | 1     | Frequency       | 100                            |
-    | 2     | Event           | energy_step                    |
-    +----------------------------------------------------------+
+    ✉  Callback:
+    +----------------------------------------------------------------------+
+    | Index | Field                     | Value                            |
+    +----------------------------------------------------------------------+
+    | 1     | Event                     | energy_step                      |
+    | 2     | Frequency                 | 100                              |
+    +----------------------------------------------------------------------+
     ```
     """
     function default_energy_step_callback(n::Int)::Callback
@@ -54,12 +55,13 @@ module Common
     # Examples
     ```jldoctest
     julia> ProtoSyn.Common.default_energy_step_frame_callback(100, "test.pdb")
-    +----------------------------------------------------------+
-    | Index | Field           | Value                          |
-    +----------------------------------------------------------+
-    | 1     | Frequency       | 100                            |
-    | 2     | Event           | energy_step_frame              |
-    +----------------------------------------------------------+
+    ✉  Callback:
+    +----------------------------------------------------------------------+
+    | Index | Field                     | Value                            |
+    +----------------------------------------------------------------------+
+    | 1     | Event                     | energy_step_frame                |
+    | 2     | Frequency                 | 100                              |
+    +----------------------------------------------------------------------+
     ```
     """
     function default_energy_step_frame_callback(n::Int, filename::String)::Callback

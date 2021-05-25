@@ -19,7 +19,7 @@ deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance.
 [`distance`](@ref)
 
 !!! ukw "Note:"
-    This function does not infer any data of parenthood or ascendents. To calculate that information, specific implementations of this function are provided in other modules (such as [`Peptides.load`](@ref)). For this reason, the returned [`Pose`](@ref) instance does not have internal coordinates information and cannot be synched using the [`sync!`](@ref) method.
+    This function tries to infer information of the parenthood and ascendents of each atom, using the CONECT records of infered `bonds_by_distance`. The parents are arbitrarily defined as the first bond found, by order, and any atom without parent is connected to the [`root`](@ref ProtoSyn.root). All [`Residue`](@ref) instances have the [`root`](@ref ProtoSyn.root)`.container` as parent. Note that this infered information may need to be manually corrected.
 
 # Examples
 ```
@@ -55,7 +55,7 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
     pose.graph.name = name
 
     if bonds_by_distance
-        dm        = ProtoSyn.Calculators.full_distance_matrix(pose)
+        dm        = collect(ProtoSyn.Calculators.full_distance_matrix(pose))
         threshold = T(0.1) # Wiggle room for distance based connect inference
 
         atoms   = collect(eachatom(pose.graph))
@@ -99,6 +99,7 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
 
     reindex(pose.graph) # Sets ascedents
     ProtoSyn.request_c2i!(pose.state)
+    sync!(pose)
     pose
 end
 
@@ -183,7 +184,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
         elseif startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
-            segname = atom["sn"] == "" ? "A" : atom["sn"] # * Default segname
+            segname = atom["sn"] == "" ? "A" : string(atom["sn"]) # * Default
 
             if seg.name != segname
                 seg = Segment!(top, segname, segid)
@@ -248,7 +249,7 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1)
 
     for atom in eachatom(top)
        print(io, @sprintf("CONECT%5d", atom.index))
-       foreach(n->print(io, @sprintf("%5d",n.index)), atom.bonds)
+       foreach(n->print(io, @sprintf("%5d", n.index)), atom.bonds)
        println(io,"")
     end
     println(io, "ENDMDL")

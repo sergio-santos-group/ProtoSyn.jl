@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = ProtoSyn.Calculators
+CurrentModule = ProtoSyn.Calculators.Restraints
 ```
 
 # Bond Distance Restraint
 
-The [Bond Distance Restraint](@ref) is a potential restraint. However, in contrast with other [Potential Restraints](@ref calculators-potential-restraints) in ProtoSyn, a [`distance_matrix`](@ref) is not calculated. Instead, the [`Pose`](@ref)'s [Graph](@ref graph-types) is iterated (See [Counters and Iterators](@ref)), and all bonds of an [`Atom`](@ref) are measured and evaluated according to a given potential.
+The [Bond Distance Restraint](@ref) is a potential restraint. However, in contrast with other [Potential Restraints](@ref calculators-potential-restraints) in ProtoSyn, a [`distance_matrix`](@ref ProtoSyn.Calculators.distance_matrix) is not calculated. Instead, the [`Pose`](@ref)'s [Graph](@ref graph-types) is iterated (See [Counters and Iterators](@ref)), and all bonds of an [`Atom`](@ref) are measured and evaluated according to a given potential.
 
 ```@docs
-Calculators.Restraints.calc_bond_distance_restraint
-Calculators.Restraints.get_default_bond_distance_restraint
+calc_bond_distance_restraint
+get_default_bond_distance_restraint
 ```
 
 ![ProtoSyn Bond Distance Restraint](../../../assets/ProtoSyn-bond-distance-restraint.png)

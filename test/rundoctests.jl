@@ -7,6 +7,7 @@
 using Test, Documenter, ProtoSyn
 DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
+    using ProtoSyn.Units;
     using Random; Random.seed!(1);
     res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false);
     frag     = fragment(res_lib, seq"AAA");

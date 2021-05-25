@@ -22,16 +22,17 @@ includes the following terms:
     If no Type{T} is provided, will use ProtoSyn.Units.defaultFloat;
 
 # Examples
-```
+```jldoctest
 julia> ProtoSyn.Common.default_energy_function()
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | TorchANI_ML_Model                   | 1.000      |
-| 2     | Caterpillar_Solvation               | 0.010      |
-| 3     | Bond_Distance_Restraint             | 1.000      |
-| 4     | Cα-Cα_Clash_Restraint               | 100.000    |
-+----------------------------------------------------------+
+🗲  Energy Function (4 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
+| 1     | TorchANI_ML_Model                             |      1.000   |
+| 2     | Caterpillar_Solvation                         |      0.010   |
+| 3     | Bond_Distance_Restraint                       |      1.000   |
+| 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
++----------------------------------------------------------------------+
 ```
 """
 default_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
@@ -75,14 +76,15 @@ includes the following terms:
 # Examples
 ```jldoctest
 julia> ProtoSyn.Common.xmlrpc_energy_function()
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | TorchANI_ML_Model_XMLRPC            | 1.000      |
-| 2     | Caterpillar_Solvation               | 0.010      |
-| 3     | Bond_Distance_Restraint             | 1.000      |
-| 4     | Cα-Cα_Clash_Restraint               | 100.000    |
-+----------------------------------------------------------+
+🗲  Energy Function (4 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
+| 1     | TorchANI_ML_Model_XMLRPC                      |      1.000   |
+| 2     | Caterpillar_Solvation                         |      0.010   |
+| 3     | Bond_Distance_Restraint                       |      1.000   |
+| 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
++----------------------------------------------------------------------+
 
 ```
 

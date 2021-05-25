@@ -7,7 +7,8 @@ using ..ProtoSyn.Units: tonumber
     build(grammar::LGrammar{T}, derivation)
 
 Build a new [`Pose`](@ref) instance using the given `derivation` sequence on the
-provided [`LGrammar`](@ref) `grammar` instructions.
+provided [`LGrammar`](@ref) `grammar` instructions. Return the generated
+[`Pose`](@ref) after synching (using the [`sync!`](@ref) method).
 
 # See Also
 [`fragment`](@ref)
@@ -19,7 +20,7 @@ julia> res_lib = ProtoSyn.Peptides.grammar(Float64);
 julia> pose = ProtoSyn.build(res_lib, seq"GME")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 39
- i2c: true | c2i: false
+ i2c: false | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ```
@@ -37,6 +38,8 @@ function build(grammar::LGrammar{T}, derivation) where {T<:AbstractFloat}
         
         ProtoSyn.request_i2c!(state; all=true)
     end
+
+    sync!(pose)
     pose
 end
 
@@ -113,7 +116,7 @@ return the altered [`Pose`](@ref) `pose`.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
+julia> ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 343
  i2c: false | c2i: false

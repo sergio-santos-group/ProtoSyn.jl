@@ -9,7 +9,7 @@ module Restraints
     using ProtoSyn.Calculators: EnergyFunctionComponent
 
     """
-        Calculators.calc_bond_distance_restraint([::Type{A}], pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+        calc_bond_distance_restraint([::Type{A}], pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         
     Calculate the [`Pose`](@ref) `pose` bond distance restraint energy according
     to a quadratic potential, based on the cartesian coordinates (make sure the
@@ -27,7 +27,7 @@ module Restraints
     default), also return the calculated forces based on this potential. Note
     that this function assumes [`Atom`](@ref)`.id` entries are synched between
     the [Graph](@ref graph-types) and [State](@ref state-types) (See
-    [Indexation](@ref graph-methods-indexation)). An optional parameter
+    [Indexation](@ref core-graph-methods-indexation)). An optional parameter
     `Type{<: AbstractAccelerationType}` can be provided, stating the
     acceleration type used to calculate this energetic contribution (See
     [ProtoSyn acceleration types](@ref)).
@@ -102,8 +102,10 @@ module Restraints
 
     Return the default bond distance restraint
     [`EnergyFunctionComponent`](@ref). `α` sets the component weight (on an
-    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0` by default). This function employs
-    [`calc_bond_distance_restraint`](@ref) as the `:calc` function.
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
+    by default). This function employs
+    [`calc_bond_distance_restraint`](@ref)
+    as the `:calc` function.
 
     # Settings
     * `x0::Float64` - The maximum allowed bond distance. Any bond with a longer distance will be subjected to a quadratic energy penalty. This value is normally extracted from `ProtoSyn.Units.max_bond_lengths`. If the pair of [`Atom`](@ref) instances identified in a bond is not found in this table, use this default `x0` value (Default: `2.0`).

@@ -59,7 +59,7 @@ insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Any; ::Any, ::Bool)
 ```
 
 !!! ukw "Note:"
-    The [`insert_fragment!`](@ref) function does not have access to the picked [`Atom`](@ref) instances for connection, in the operator `op` (for example atoms C and N, for the [Peptides](@ref) [`LGrammar`](@ref) `α` operator). Therefore, it cannot unbond and remove parenthood relationships before attempting to [`join`](@ref ProtoSyn.join) the existing [`Pose`](@ref) and the new [`Fragment`](@ref), resulting in an error (since [`Atom`](@ref) and [`Residue`](@ref) instances cannot have more than 1 parent). In order to prevent this, either manually [`unbond`](@ref) the place of insertion of the new [`Fragment`](@ref) or consider using more specific methods, such as [`Peptides.insert_residues!`](@ref).
+    The [`insert_fragment!`](@ref) function does not have access to the picked [`Atom`](@ref) instances for connection, in the operator `op` (for example atoms C and N, for the [Peptides](@ref) [`LGrammar`](@ref) `α` operator). Therefore, it cannot unbond and remove parenthood relationships before attempting to [`join`](@ref ProtoSyn.join) the existing [`Pose`](@ref) and the new [`Fragment`](@ref), resulting in an error (since [`Atom`](@ref) and [`Residue`](@ref) instances cannot have more than 1 parent). In order to prevent this, either manually [`unbond!`](@ref) the place of insertion of the new [`Fragment`](@ref) or consider using more specific methods, such as [`Peptides.insert_residues!`](@ref).
 
 
 ![ProtoSyn Manipulation](../../../assets/ProtoSyn-manipulation.png)

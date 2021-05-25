@@ -417,7 +417,7 @@ cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
+julia> ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 343
  i2c: false | c2i: false
@@ -552,7 +552,7 @@ end
 
 
 """
-    pop_atom!(pose::Pose{Topology}, atom::Atom)
+    pop_atom!(pose::Pose{Topology}, atom::Atom; [keep_downstream_position::Bool = false])
 
 Pop and return the given [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 `pose`. In order to do this, perform the following actions:
@@ -563,9 +563,9 @@ Pop and return the given [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 + Set new [`ascendents`](@ref);
 + Update the `container.itemsbyname`.
 
-The unbonding action is performed by the optional argument `unbond_f` (
-[`ProtoSyn.unbond`](@ref ProtoSyn.unbond) by default, other examples would be
-[`ProtoSyn.Peptides.unbond`](@ref ProtoSyn.Peptides.unbond), among others).
+If `keep_downstream_position` is set to `true` (`false` by default), the
+downstream [`Residue`](@ref) position is maintained (by calling
+[`request_c2i!`](@ref) and [`sync!`](@ref) methods).
 
 # See also
 [`pop_residue!`](@ref)
@@ -580,7 +580,7 @@ Pose{Atom}(Atom{/H:6299}, State{Float64}:
 )
 ```
 """
-function pop_atom!(pose::Pose{Topology}, atom::Atom; unbond_f::Function = ProtoSyn.unbond)::Pose{Atom}
+function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::Bool = false)::Pose{Atom}
 
     if atom.container.container.container !== pose.graph
         error("Given Atom does not belong to the provided topology.")
@@ -596,9 +596,9 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; unbond_f::Function = ProtoS
     # (includes children and parent)
     for i = length(atom.bonds):-1:1   # Note the reverse loop
         other = atom.bonds[i]
-        unbond_f(pose, atom, other) # Already pops parent between the two
-        # but does not set parent to origin if this is an inter-residue
-        # connection
+        # ProtoSyn.unbond already pops parenthood relationship between the two
+        # atoms and sets parent of downstream atom to origin
+        ProtoSyn.unbond!(pose, atom, other, keep_downstream_position = keep_downstream_position)
     end
 
     # During the last step, this atom might have been severed in an
@@ -614,7 +614,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; unbond_f::Function = ProtoS
     # Using saved children and parent, set all child.parent to be the origin,
     # independent of this being an inter- or intra-residue connection
     for child in children
-        ProtoSyn.setparent!(child, _root)
+        !hasparent(child) && ProtoSyn.setparent!(child, _root)
     end
 
     # Remove from graph
@@ -627,6 +627,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; unbond_f::Function = ProtoS
     # Reindex and set ascendents
     reindex(pose.graph)
     reindex(pose.state)
+    ProtoSyn.request_i2c!(pose.state)
 
     # Update container 'itemsbyname'
     pop!(atom.container.itemsbyname, atom.name)

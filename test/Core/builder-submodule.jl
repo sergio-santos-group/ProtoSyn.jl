@@ -37,7 +37,7 @@ using ProtoSyn.Peptides
 
     @testset verbose = true "Unbonding two atoms" begin
         pose = copy(backup)
-        ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
+        ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
         @test !(pose.graph[1][2]["N"] in pose.graph[1][1]["C"].bonds)
         @test pose.graph[1][2].parent === pose.graph[1][1]
         @test pose.graph[1][2]["N"].parent === nothing
@@ -45,7 +45,7 @@ using ProtoSyn.Peptides
 
     @testset verbose = true "Inserting from derivation" begin
         pose = copy(backup)
-        ProtoSyn.unbond(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
+        ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
         ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, seq"MMM")
         @test pose.graph[1][2] in pose.graph[1][1].children
         @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].children

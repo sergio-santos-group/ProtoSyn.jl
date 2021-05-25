@@ -228,31 +228,26 @@ function ascendents(container::AbstractContainer, level::Int)
 end
 
 
-export unbond
+export unbond!
 """
-    unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
+    unbond!(pose::Pose, at1::Atom, at2::Atom; [keep_downstream_position::Bool = false])::Pose
     
 Return a [Pose](@ref) instance with both given [`Atom`](@ref) instances unbonded
-(removed from eachother `bonds` list; pops parenthood - if parent - and, if bond
-is inter-residue, sets the downstream [`Residue`](@ref) to be the Root of the
-[`Topology`](@ref). 
-
-!!! ukw "Note:"
-    This function does not maintain the  same relative position as measured from
-    internal coordinates, after [`sync!`](@ref) is called. In order to keep the
-    position of the downstream [`Residue`](@ref) instances, call
-    [`request_c2i!`](@ref) and [`sync!`](@ref), in order to _fixate_ the
-    cartesian coordinates to the new [Graph](@ref state-types) organization.
+(removed from eachother `bonds` list, pops parenthood and sets the downstream
+[`Residue`](@ref)`.parent` field to be the Root of the upstream
+[`Topology`](@ref)). If `keep_downstream_position` is set to `true` (`false` by
+default), the downstream [`Residue`](@ref) position is maintained (by calling
+[`request_c2i!`](@ref) and [`sync!`](@ref) methods). 
 
 !!! ukw "Note:"
     Unbonding two atoms also removes any parenthood relationship, therefore
-    making the returned [`Pose`](@ref) fro this function un-usable without
+    making the returned [`Pose`](@ref) from this function un-usable without
     further changes (the internal coordinates graph is severed on the unbonding
     site).
 
 # Examples
 ```jldoctest
-julia> unbond(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"])
+julia> unbond!(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 343
  i2c: false | c2i: false
@@ -260,10 +255,10 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
-    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
-    isparent(at1, at2) && return _unbond(pose, at1, at2)
-    isparent(at2, at1) && return _unbond(pose, at2, at1)
+function unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = false)::Pose
+    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbond!ed."
+    isparent(at1, at2) && return _unbond!(pose, at1, at2; keep_downstream_position = keep_downstream_position)
+    isparent(at2, at1) && return _unbond!(pose, at2, at1; keep_downstream_position = keep_downstream_position)
     
     # The two atoms might be bonded but not have a parenthood relationship, in
     # which case we just remove eachother from the bond list and return the pose
@@ -274,7 +269,7 @@ function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     return pose
 end
 
-function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
+function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = false)::Pose
     
     i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
@@ -283,29 +278,17 @@ function _unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
     j !== nothing && deleteat!(at1.bonds, j)
     
     # Detach from atom graph
-    # Remove at2 from at1.children and set at2.parent to nothing
+    # Remove at2 from at1.children and set at2.parent to be the root of at1
     # This assumes at1 is parent of at2
     popparent!(at2)
-
-    # at1.container === at2.container && return pose
-
-    # # Case this is an inter-residue connection, the downstream residue needs to
-    # # be coupled with the origin and detached from residue graph
-    # # This assumes ROOT is always on the side of the parent
-    # # This assumes at1 is parent of at2
-    # #  Remove at2 from at1.children and set at2.parent to nothing
-    # #  Add at2 to origin.children and set at2.parent to origin
-    # _origin = ProtoSyn.root(at1)
-
-    # #  Remove at2.container from at1.containter.children and set
-    # # at2.container.parent to nothing
-    # hasparent(at2.container) && popparent!(at2.container)
-    # setparent!(at2, _origin)
-    # setparent!(at2.container, _origin.container)
+    setparent!(at2, ProtoSyn.root(at1.container.container.container))
+    reindex(pose.graph) # To set new ascendents
     
-    # # Reindex to set correct ascendents
-    # reindex(pose.graph)
-
+    if keep_downstream_position
+        ProtoSyn.request_c2i!(pose.state)
+        sync!(pose)
+    end
+    
     return pose
 end
 
@@ -318,7 +301,7 @@ vice-versa). Both [`Atom`](@ref) instances need to be in the same
 [`Segment`](@ref).
 
 # See also
-[`join`](@ref) [`unbond`](@ref)
+[`join`](@ref) [`unbond!`](@ref)
 
 # Examples
 ```jldoctest
@@ -350,7 +333,7 @@ of both the [`Atom`](@ref) instances and respective `atom.container`
 (and `at2.container` [`Residue`](@ref) will become parent of `at1.container`).
 
 # See also
-[`bond`](@ref) [`unbond`](@ref)
+[`bond`](@ref) [`unbond!`](@ref)
 
 # Examples
 ```jldoctest

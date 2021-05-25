@@ -72,7 +72,7 @@
     @testset verbose = true "Bonds" begin
         pose = copy(backup)
 
-        @test unbond(pose, pose.graph[1][1]["C"], pose.graph[1][2]["N"]) === pose
+        @test unbond!(pose, pose.graph[1][1]["C"], pose.graph[1][2]["N"]) === pose
         @test !(pose.graph[1][2]["N"] in pose.graph[1][1]["C"].bonds)
         ProtoSyn.bond(pose.graph[1][2]["N"], pose.graph[1][1]["C"])
         @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].bonds

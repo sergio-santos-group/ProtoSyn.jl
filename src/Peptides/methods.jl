@@ -61,58 +61,6 @@ function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = Secondar
     pose
 end
 
-"""
-    setss!(pose::Pose, (ϕ, ψ, ω)::NTuple{3,Number})
-
-Set the `ϕ`, `ψ` and `ω` backbone angles of all residues in the given `pose`.
-This function is usefull for setting the secondary structure of a pose. This
-function acts on the internal coordinates and does not update cartesian
-coordinates, although a request for conversion is made. It is up to the calling
-function/user to explicitly synchornize coordinates via [`sync!`](@ref). In
-certain cases it might be useful to not set the origin.children secondary
-structure. An example is when a Segment is severed via [`unbond`](@ref), in
-which case, updating the origin children will move one of the parts in an big
-arm movement.
-"""
-function setss!(container::Pose, ss::SecondaryStructureTemplate, residues::Vector{Residue})
-    state = container.state
-    T = eltype(state)
-    for r in residues
-        if r.name == "PRO"
-            # Proline is restricted to TRANS conformation
-            # This conformation is most abundant (~95%) in globular proteins.
-            # https://pubs.acs.org/doi/10.1021/jacs.0c02263
-            # PHI: -75° | PSI: 145° | OMEGA: 180°
-            ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), T(-1.308997))
-            # Last residues of chain might not have a psi angle.
-            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  T(2.5307274))
-            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  ψ)
-            ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), T(3.1415927))
-            continue
-        end
-        ProtoSyn.setdihedral!(container.state, Dihedral.phi(r), ϕ)
-        # Last residues of chain might not have a psi angle.
-        Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(container.state, Dihedral.psi(r),  ψ)
-        ProtoSyn.setdihedral!(container.state, Dihedral.omega(r), ω)
-    end
-
-    return container
-end
-
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3, Number}) = begin
-    residues::Vector{Residue} = collect(eachresidue(container.graph))
-    Peptides.setss!(container, (ϕ, ψ, ω), residues)
-end
-
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, sele::ProtoSyn.AbstractSelection) = begin
-    residues = ProtoSyn.PromoteSelection(sele, Residue, any)(container, gather = true)
-    Peptides.setss!(container, (ϕ, ψ, ω), residues)
-end
-
-setss!(container::Pose, (ϕ, ψ, ω)::NTuple{3,Number}, residue::Residue) = begin
-    Peptides.setss!(container, (ϕ, ψ, ω), [residue])
-end
-
 
 """
     append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
@@ -198,7 +146,7 @@ function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         i = residue.index       # This is the residue index
         (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
     else
-        ProtoSyn.unbond(pose, residue.container[residue.index - 1]["C"], residue["N"])
+        ProtoSyn.unbond!(pose, residue.container[residue.index - 1]["C"], residue["N"])
     end
     
     ProtoSyn.insert_fragment!(pose, residue, grammar, derivation; op = op,
@@ -340,7 +288,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
             atom_dihedral  = ProtoSyn.unit_circle(_atom_dihedral)
             objective_change = atom_dihedral - ϕ
             push!(objective_changes, objective_change)
-            ProtoSyn.unbond(frag, atom, atom.parent)
+            ProtoSyn.unbond!(frag, atom, atom.parent)
         end
 
         # Insert into the graph
@@ -403,10 +351,10 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
     # 1) Since we are calling Peptides, we know that we should unbond this
     # residue and the next (children).
-    # * Note: Peptides.unbond sets the position of the child residue, while
+    # * Note: Peptides.unbond!sets the position of the child residue, while
     # * connecting it to the root
     for child in residue.children
-        Peptides.unbond(pose, residue, child) # Order is important
+        Peptides.unbond!(pose, residue, child) # Order is important
     end
 
     # 2) Now we can safelly pop the residue, while maintaining the positions of
@@ -552,105 +500,6 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
             ignore_existing_sidechain = true)
     end
 
-    return pose
-end
-
-
-"""
-    unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
-
-Unbond the two provided residues. In order to do this, perform the following
-steps, as in ProtoSyn.unbond:
- - Unset parents/children
- - Unbond neighbours
- - Remove from graph
- - Remove from state
- - Set new ascendents
- - Update the container itemsbyname
-Furthermore, since the peptidic nature is known:
- - Set correct positioning of downstream residues
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Peptides.unbond(pose, pose.graph[1][2], pose.graph[1][3])
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 343
- i2c: true | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function unbond(pose::Pose, residue_1::Residue, residue_2::Residue)
-
-    isparent(residue_1, residue_2) && return _unbond(pose, residue_1["C"], residue_2["N"])
-    isparent(residue_2, residue_1) && return _unbond(pose, residue_2["C"], residue_1["N"])
-end
-
-function unbond(pose::Pose, at1::Atom, at2::Atom)::Pose
-    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
-    isparent(at1, at2) && return _unbond(pose, at1, at2)
-    isparent(at2, at1) && return _unbond(pose, at2, at1)
-
-    # The two atoms might be bonded but not have a parenthood relationship, in
-    # which case we just remove eachother from the bond list and return the pose
-    i = findfirst(at1, at2.bonds)
-    i !== nothing && deleteat!(at2.bonds, i)
-    j = findfirst(at2, at1.bonds)
-    j !== nothing && deleteat!(at1.bonds, j)
-    return pose
-end
-
-function _unbond(pose::Pose, at1::Atom, at2::Atom)
-
-    ProtoSyn.unbond(pose, at1, at2)
-
-    if at1.container !== at2.container
-
-        # Case this is an inter-residue connection, the downstream residue needs to
-        # be coupled with the origin and detached from residue graph
-        # This assumes ROOT is always on the side of the parent
-        # This assumes at1 is parent of at2
-        #  Remove at2 from at1.children and set at2.parent to nothing
-        #  Add at2 to origin.children and set at2.parent to origin
-        _origin = ProtoSyn.root(at1)
-
-        #  Remove at2.container from at1.containter.children and set
-        # at2.container.parent to nothing
-        hasparent(at2.container) && popparent!(at2.container)
-        setparent!(at2, _origin)
-        setparent!(at2.container, _origin.container)
-        
-        # Reindex to set correct ascendents
-        reindex(pose.graph)
-    end
-
-    
-    # Set correct positioning
-    state = pose.state
-    _origin = ProtoSyn.root(pose.graph)
-    sync!(pose)
-
-    at_N = state[at2]
-    at_N.b = ProtoSyn.distance(at_N, state[_origin])
-    at_N.θ = ProtoSyn.angle(at_N, state[_origin], state[_origin.parent])
-    v = ProtoSyn.dihedral(at_N, state[_origin], state[_origin.parent], state[_origin.parent.parent])
-    at_N.ϕ += v - ProtoSyn.getdihedral(state, at2)
-
-    for child in at2.children
-        at_1 = state[child]
-        at_1.θ = ProtoSyn.angle(at_1, at_N, state[_origin])
-        v = ProtoSyn.dihedral(at_1, at_N, state[_origin], state[_origin.parent])
-        at_1.ϕ += v - ProtoSyn.getdihedral(state, child)
-
-        for grandchild in child.children
-            at_2 = state[grandchild]
-            v = ProtoSyn.dihedral(at_2, at_1, at_N, state[_origin])
-            at_2.ϕ += v - ProtoSyn.getdihedral(state, grandchild)
-        end
-    end
-
-
-    ProtoSyn.request_i2c!(state, all = true)
     return pose
 end
 
@@ -835,36 +684,8 @@ end
 
 
 """
-    sequence(container::ProtoSyn.AbstractContainer)::String
-
-Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
-as a string.
-
-# Examples
-```
-julia> ProtoSyn.Peptides.sequence(pose)
-"SESEAEFKQRLAAIKTRLQAL"
-```
-"""
-function sequence(container::ProtoSyn.AbstractContainer)::String
-
-    sequence = ""
-    for residue in eachresidue(container)
-        try
-            sequence *= three_2_one[residue.name]
-        catch KeyError
-            sequence *= '?'
-        end
-    end
-
-    return sequence
-end
-
-sequence(pose::Pose) = sequence(pose.graph)
-
-"""
     # TODO
 """
 function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
-    ProtoSyn.pop_atom!(pose, atom; unbond_f = ProtoSyn.Peptides.unbond)
+    ProtoSyn.pop_atom!(pose, atom; unbond_f = ProtoSyn.Peptides.unbond!)
 end
