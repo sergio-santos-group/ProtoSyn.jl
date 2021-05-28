@@ -260,7 +260,24 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     segment.items  = residues
     segment.size   = length(segment.items)
 
-    popparent!(residue[1])
+    # Pop parent of any Atom instance connected outside the new fragment (and
+    # corresponding Residue container)
+    atoms = collect(eachatom(segment))
+    for atom in atoms
+        for bond in atom.bonds
+            !(bond in atoms) && begin
+                ProtoSyn.unbond!(pose, atom, bond)
+                ProtoSyn.isparent(bond.container, atom.container) && begin
+                    ProtoSyn.popparent!(atom.container) 
+                end
+                ProtoSyn.isparent(atom.container, bond.container) && begin
+                    ProtoSyn.popparent!(bond.container) 
+                end
+               
+            end
+        end
+    end
+
     for residue in segment.items
         residue.container = segment
     end
@@ -280,6 +297,51 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     reindex(state)
 
     return Pose(segment, state)
+end
+
+
+"""
+    fragment!(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; [keep_downstream_position::Bool = true])
+
+Return a [Fragment](@ref) from a list of residues retrieved from the given
+`AbstractSelection` `selection` when applied to the provided [Pose](@ref)
+`pose`. If not yet of selection type [`Residue`](@ref), the `selection` will be
+promoted to [`Residue`](@ref) selection type (with the default `any` aggregating
+function). The resulting list of residues must be contiguous (a connected graph
+of [`Residue`](@ref) instances parenthoods). These will constitute the unique
+[`Segment`](@ref) of the resulting [Fragment](@ref). In opposition to the
+[`fragment`](@ref) method, this function will remove the fragmented
+[`Residue`](@ref) instances (using the [`pop_residue`](@ref) method). If
+`keep_downstream_position` is set to `true` (is, by default), the downstream
+[`Residue`](@ref) position is maintained (by calling [`request_c2i!`](@ref) and
+[`sync!`](@ref) methods).
+
+!!! ukw "Note:"
+    A [Fragment](@ref) is a `Pose{Segment}`, without a root/origin. These are
+    usually used as temporary carriers of information, without the ability to be
+    directly incorporated in simulations.
+
+# Examples
+```
+julia> frag = fragment!(pose, rid"19:26")
+Fragment(Segment{/UNK:9547}, State{Float64}:
+ Size: 343
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function fragment!(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection;
+    keep_downstream_position::Bool = true)
+    
+    frag = ProtoSyn.fragment(pose, selection)
+    residues = promote(selection, Residue)(pose, gather = true)
+    for residue in reverse(residues)
+        ProtoSyn.pop_residue!(pose, residue,
+            keep_downstream_position = keep_downstream_position)
+    end
+
+    return frag
 end
 
 
@@ -369,14 +431,16 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 """
 function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α")
 
-    # Remove any old parent, if it exists
-    if hasparent(ProtoSyn.origin(frag.graph).container)
-        ProtoSyn.origin(frag.graph).container.parent = nothing
+    sync!(pose)
+
+    # Soft `uncap!` if is C terminal. Might change in future versions.
+    if ProtoSyn.Peptides.is_C_terminal(residue) && residue["OXT"] !== nothing
+        ProtoSyn.pop_atom!(pose, residue["OXT"])
     end
 
     # Insert the fragment residues in the pose.graph and set
     # frag_residue.container (of each residue in the fragment) to be the segment
-    # of the "parent" residue
+    # of the "parent" residue (automatically on `insert!`)
     insert!(residue.container, residue.index + 1, frag.graph.items)
 
     # Inserts the fragment atoms state in the pose.state
@@ -394,37 +458,32 @@ function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Reindex to define new ascendents
     reindex(pose.graph)
     
-    ProtoSyn.request_i2c!(pose.state; all=true)
+    ProtoSyn.request_i2c!(pose.state; all = true)
     return pose
 end
 
 
 export insert_fragment!
 """
-    insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α", connect_upstream::Bool = true)
+    insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α")
 
 Insert the [`Fragment`](@ref) `frag` in the given `pose`, on the position of the
 provided [`Residue`](@ref) instance `residue` (the `residue` gets shifted
-downstream). The first downstream [`Residue`](@ref) and the new
+downstream). This first downstream [`Residue`](@ref) and the new
 [`Fragment`](@ref) will be connected using operation `op` ("α" by default) from
-[`LGrammar`] `grammar`. If `connect_upstream` is set to true (is, by default),
-also connect to the upstream [`Residue`](@ref) instances. Request internal to
-cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
+[`LGrammar`] `grammar`. Also connects to the upstream [`Residue`](@ref)
+instance, using the same operation. Request internal to cartesian coordinate
+conversion and return the altered [`Pose`](@ref) `pose`.
+
+!!! ukw "Note:"
+    Consider using more specific versions of this function, see [`Peptides.insert_fragment!`](@ref Peptides.insert_fragment!)
 
 # See also
 [`append_fragment!`](@ref ProtoSyn.append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Any))
 
-
 # Examples
 ```jldoctest
-julia> ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 343
- i2c: false | c2i: false
- Energy: Dict(:Total => Inf)
-)
-
-julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][2], res_lib, frag)
+julia> ProtoSyn.insert_fragment!(pose, pose.graph[1][1], res_lib, frag)
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 373
  i2c: true | c2i: false
@@ -432,69 +491,79 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α", connect_upstream::Bool = true)
+function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; op = "α")
 
-    residue_index = residue.index
-    ϕN = pose.state[residue["N"]].ϕ
+    # Setup
+    sync!(pose)
+    r_index         = residue.index
+    frag_size       = length(eachresidue(frag.graph))
+    anchor_id       = residue.parent.id
+    connect_to_root = false
+    if residue.parent == ProtoSyn.root(pose.graph).container
+        connect_to_root = true
+    end
+
+    # Remove any bonds to the parent residue (if not connected to root)
+    !connect_to_root && begin
+        for atom in residue.items
+            for bond in atom.bonds
+                if bond in residue.parent.items
+                    ProtoSyn.verbose.mode && @info "Unbonding upstream connection ... $atom - $bond"
+                    ProtoSyn.unbond!(pose, atom, bond)
+                end
+            end
+        end
+    end
 
     # Insert the fragment residues in the pose.graph and set
     # frag_residue.container (of each residue in the fragment) to be the segment
-    # of the "parent" residue
-    ProtoSyn.insert!(residue.container, residue.index, frag.graph.items)
-
-    # Inserts the fragment atoms state in the pose.state
+    # of the "parent" residue (automatically on `insert!`)
+    ProtoSyn.verbose.mode && @info "Shifting $residue downstream by $frag_size residues ..."
+    insert!(residue.container, residue.index, frag.graph.items)
     insert!(pose.state, residue.items[1].index, frag.state)
-
-    # Remove all references of the origin as the parent of any of its children
-    # (if said children belong to the residue that is being displaced)
-    # and remove said children from origin.children
-    pose_origin = ProtoSyn.root(pose.graph) # This is an Atom
-    parent_is_origin = residue.parent == pose_origin.container
-    if parent_is_origin
-        for child in pose_origin.children
-            child in residue.items && popparent!(child)
-        end
-        
-        # Add the first atom of the appendage as a child of origin AND set its
-        # parent as being the origin
-        _root = ProtoSyn.origin(frag.graph)
-        setparent!(_root, pose_origin)
-        println("CAlled")
-        setparent!(_root.container, pose_origin.container)
-    end
-
-    # Pop the current parent of the first downstream residue after the appendage
-    popparent!(residue)
 
     # Perform link operation. Requires correct indexes. Set ascendents is set to
     # false because some residues are still orphan (would cause error/bug). Set:
-    # - Distance/angle/dihedrals in the fragment first downstream residue
+    # - Distance/angle/dihedrals in the fragment first residue
     # - Parent/children in the newly bonded atoms
     # - Parent/children in the newly bonded residues
     # - Atom bonds in the newly bonded atoms
     reindex(pose.graph, set_ascendents = false)
-    grammar.operators[op](frag.graph[end], pose, residue_index = residue_index + length(frag.graph))
+    reindex(pose.state)
 
-    # Case we are inserting between two pre-existing residues (so far, the same
-    # operation will be used in both cases. Might be useful to differentiate
-    # between left and right operation.)
-    if connect_upstream
-        for child in pose_origin.children
-            child in residue.container[residue_index].items && popparent!(child)
+    if connect_to_root
+        # Case needs to be connected to root
+        _root = ProtoSyn.root(pose.graph)
+        ProtoSyn.verbose.mode && @info "Joining upstream $(_root.container) - $(pose.graph[1][r_index]) ..."
+        for atom in pose.graph[1][r_index].items
+            atom.parent === nothing && ProtoSyn.setparent!(atom, _root)
         end
-        hasparent(residue.container[residue_index]) && begin
-            popparent!(residue.container[residue_index])
-        end
-
-        grammar.operators[op](residue.container[residue_index - 1], pose, residue_index = residue_index)
+        ProtoSyn.setparent!(pose.graph[1][r_index], _root.container)
+    else
+        anchor = residue.container[anchor_id]
+        ProtoSyn.verbose.mode && @info "Joining upstream $anchor - $(pose.graph[1][r_index]) ..."
+        grammar.operators[op](anchor, pose, residue_index = r_index)
     end
-    pose.state[residue.parent["N"]].ϕ = ϕN
 
-    # Reindex to set correct ascendents
-    reindex(pose.graph)
+    ProtoSyn.verbose.mode && @info "Connecting downstream ..."
+    anchor = residue.container[r_index + frag_size - 1]
     
-    ProtoSyn.request_i2c!(pose.state; all=true)
+    # Remove all inter-residue parenthood relationships to upstream residue
+    for atom in residue.items
+        if !(atom.parent in residue.items)
+            ProtoSyn.verbose.mode && @info "Removing downstream parenthoods ... $atom & $residue"
+            ProtoSyn.popparent!(atom)
+            ProtoSyn.popparent!(residue)
+        end
+    end
 
+    ProtoSyn.verbose.mode && @info "Joining downstream $anchor - $(pose.graph[1][residue.index])"
+    grammar.operators[op](anchor, pose, residue_index = residue.index)
+
+    # Set correct ascedents
+    reindex(pose.graph)
+
+    ProtoSyn.request_i2c!(pose.state, all = true)
     return pose
 end
 
@@ -552,20 +621,22 @@ end
 
 
 """
-    pop_atom!(pose::Pose{Topology}, atom::Atom; [keep_downstream_position::Bool = false])
+    pop_atom!(pose::Pose{Topology}, atom::Atom; [keep_downstream_position::Bool = true])
 
 Pop and return the given [`Atom`](@ref) `atom` from the given [`Pose`](@ref)
 `pose`. In order to do this, perform the following actions:
-+ Unset parenthood relationships;
++ Unset parenthood relationships (On [`Atom`](@ref) level only);
 + Unbond neighbouring [`Atom`](@ref) instances;
 + Remove from [Graph](@ref graph-types);
 + Remove from [State](@ref state-types);
 + Set new [`ascendents`](@ref);
 + Update the `container.itemsbyname`.
 
-If `keep_downstream_position` is set to `true` (`false` by default), the
+If `keep_downstream_position` is set to `true` (is, by default), the
 downstream [`Residue`](@ref) position is maintained (by calling
-[`request_c2i!`](@ref) and [`sync!`](@ref) methods).
+[`request_c2i!`](@ref) and [`sync!`](@ref) methods). In either case, this method
+requests internal to cartesian coordinates conversion at the end (using the
+[`request_i2c!`](@ref) method).
 
 # See also
 [`pop_residue!`](@ref)
@@ -575,22 +646,20 @@ downstream [`Residue`](@ref) position is maintained (by calling
 julia> ProtoSyn.pop_atom!(pose, pose.graph[1][1][2])
 Pose{Atom}(Atom{/H:6299}, State{Float64}:
  Size: 1
- i2c: false | c2i: false
+ i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ```
 """
-function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::Bool = false)::Pose{Atom}
+function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::Bool = true)::Pose{Atom}
 
+    ProtoSyn.verbose.mode && @info "Removing atom $atom ..."
     if atom.container.container.container !== pose.graph
-        error("Given Atom does not belong to the provided topology.")
+        error("Atom $atom does not belong to the provided topology.")
     end
 
     # Save information to return
     popped_atom = Atom(atom.name, 1, 1, atom.symbol)
-
-    # Save children and parent of this atom (will be removed in next step)
-    children    = copy(atom.children)
 
     # Unset parents/children and unbond neighbours
     # (includes children and parent)
@@ -604,17 +673,11 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     # During the last step, this atom might have been severed in an
     # inter-residue connection while being a child, therefore, it's parent was
     # assigned to the root. We should remove its own parent, therefore, in case
-    # it happened (so it does not appear on root.children)
+    # it happened (so it does not appear on root.children).
     _root = root(pose.graph)
-    hasparent(atom) && isparent(_root, atom) && popparent!(atom)
-    hasparent(atom.container) && isparent(_root.container, atom.container) && begin
-        popparent!(atom.container)
-    end
-
-    # Using saved children and parent, set all child.parent to be the origin,
-    # independent of this being an inter- or intra-residue connection
-    for child in children
-        !hasparent(child) && ProtoSyn.setparent!(child, _root)
+    hasparent(atom) && isparent(_root, atom) && begin
+        popparent!(atom)
+        # hasparent(atom.container) && popparent!(atom.container)
     end
 
     # Remove from graph
@@ -625,8 +688,8 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     popped_state = splice!(pose.state, atom.index)
 
     # Reindex and set ascendents
-    reindex(pose.graph)
-    reindex(pose.state)
+    reindex(pose.graph) # Since we removed an atom, needs to be reindexed
+    reindex(pose.state) # Since we removed an atom, needs to be reindexed
     ProtoSyn.request_i2c!(pose.state)
 
     # Update container 'itemsbyname'
@@ -640,11 +703,20 @@ end
 
 
 """
-    pop_residue!(pose::Pose{Topology}, residue::Residue)
+    pop_residue!(pose::Pose{Topology}, residue::Residue; keep_downstream_position::Bool = false)
 
 Pop and return the desired [`Residue`](@ref) `residue` from the given
 [`Pose`](@ref) `pose`. This is peformed by popping each [`Atom`](@ref) of the
-[`Residue`](@ref) `residue` individually.
+[`Residue`](@ref) `residue` individually. If `keep_downstream_position` is set
+to `true` (is, by default), the downstream [`Residue`](@ref) position is
+maintained (by calling [`request_c2i!`](@ref) and [`sync!`](@ref) methods). In
+either case, this method requests internal to cartesian coordinates conversion
+at the end (using the [`request_i2c!`](@ref) method).
+
+!!! ukw "Note:"
+    The resulting [`Pose`](@ref) is re-indexed, therefore [`Residue`](@ref)
+    `N + 1` becomes [`Residue`](@ref) `N`. When removing multiple
+    [`Residue`](@ref) instances, consider performing a reversed loop.
 
 # See also
 [`pop_atom!`](@ref)
@@ -654,12 +726,12 @@ Pop and return the desired [`Residue`](@ref) `residue` from the given
 julia> r = ProtoSyn.pop_residue!(pose, pose.graph[1][5])
 Pose{Residue}(Residue{/ALA:51397}, State{Float64}:
  Size: 10
- i2c: false | c2i: false
+ i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ```
 """
-function pop_residue!(pose::Pose{Topology}, residue::Residue)
+function pop_residue!(pose::Pose{Topology}, residue::Residue; keep_downstream_position::Bool = true)
 
     if residue.container.container !== pose.graph
         error("Given Residue does not belong to the provided topology.")
@@ -671,17 +743,19 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
 
     # Copy residue to perserve parenthood and bonds information
     residue_copy = copy(residue)
+    downstream = residue.children
 
     # Remove internal atoms. Notice the inverse loop. Also removes atom-level
     # parenthood and bonds
     for atom in reverse(residue.items)
         id = atom.id
-        insert!(popped_residue, 1, [pop_atom!(pose, atom).graph])
+        popped_atom = pop_atom!(pose, atom, keep_downstream_position = keep_downstream_position)
+        insert!(popped_residue, 1, [popped_atom.graph]) # Save popped graph
         popped_residue[1].id = id
-        append!(popped_state, splice!(pose.state, atom.index))
+        append!(popped_state, popped_atom.state)        # Save popped state
     end
 
-    # Recover intra-residue parenthoods and bonds
+    # Recover intra-residue parenthoods and bonds in the popped_residue
     for (old_atom, new_atom) in zip(eachatom(residue_copy), eachatom(popped_residue))
         for child in old_atom.children
             child_id = child.id
@@ -699,6 +773,23 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue)
     # Remove from container.items
     deleteat!(residue.container.items, findfirst(residue, residue.container.items))
     residue.container.size -= 1
+
+    # Remove parenthood to parent residue
+    ProtoSyn.popparent!(residue)
+
+    # Set downstream residue(s) parent to root
+    _root = ProtoSyn.root(pose.graph).container
+    for residue in downstream
+        ProtoSyn.popparent!(residue)
+        ProtoSyn.setparent!(residue, _root)
+    end
+
+    # Reindex
+    reindex(pose.graph) # Since we removed a residue, needs to be reindexed.
+    # Note that there's no need to reindex the state, it was reindexed in
+    # pop_atom! and no state changes have occured since. The same occurs for
+    # request_i2c! - this was performed in pop_atom! and no sync! call has
+    # occured since, pose.state.i2c should be set to `true`.
 
     # Return the popped residue as a Fragment (no connection to root)
     popped_residue.id = popped_state.id = genid()

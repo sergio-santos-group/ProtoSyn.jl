@@ -69,7 +69,27 @@
         @test ids(pose.graph[1][1].items) ==  [1, 2, 3, 4, 5, 6, 7]
     end
 
-    @testset verbose = true "Bonds" begin
+    @testset verbose = true "Unbonding (intra-residue)" begin
+        pose = copy(backup)
+
+        @test unbond!(pose, pose.graph[1][3]["N"], pose.graph[1][3]["H"]) === pose
+        @test !(pose.graph[1][3]["H"] in pose.graph[1][3]["N"].bonds)
+        @test pose.graph[1][3]["H"].parent == ProtoSyn.root(pose.graph)
+        @test pose.graph[1][3].parent == pose.graph[1][2]
+        @test pose.state.i2c == true
+    end
+
+    @testset verbose = true "Unbonding (inter-residues)" begin
+        pose = copy(backup)
+
+        @test unbond!(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"]) === pose
+        @test !(pose.graph[1][2]["C"] in pose.graph[1][3]["N"].bonds)
+        @test pose.graph[1][3]["N"].parent == ProtoSyn.root(pose.graph)
+        @test pose.graph[1][3].parent == ProtoSyn.root(pose.graph).container
+        @test pose.state.i2c == true
+    end
+
+    @testset verbose = true "Re-bonding" begin
         pose = copy(backup)
 
         @test unbond!(pose, pose.graph[1][1]["C"], pose.graph[1][2]["N"]) === pose
@@ -77,6 +97,19 @@
         ProtoSyn.bond(pose.graph[1][2]["N"], pose.graph[1][1]["C"])
         @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].bonds
         @test ProtoSyn.bond(pose.graph[1][2]["N"], pose.graph[1][1]["C"]) === nothing
+    end
+
+    @testset verbose = true "Unbonding + Dihedral rotation" begin
+        pose = copy(backup)
+        
+        @test length(pose.graph[1][2]["CB"].children) == 3
+        @test pose.graph[1][2]["CG"].parent == pose.graph[1][2]["CB"]
+        ProtoSyn.setdihedral!(pose.state, pose.graph[1][2]["CG"], deg2rad(90))
+        ProtoSyn.unbond!(pose, pose.graph[1][2]["CG"], pose.graph[1][2]["CB"])
+        @test pose.graph[1][2]["CG"].parent == ProtoSyn.root(pose.graph)
+        @test pose.state.i2c == false
+        @test length(pose.graph[1][2]["CB"].children) == 2
+        @test collect(pose.state[pose.graph[1][2]["CG"]].t) == [4.800701090587441, -4.607782270435299, -2.3619776332006834]
     end
 
 end

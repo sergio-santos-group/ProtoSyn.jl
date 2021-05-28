@@ -86,6 +86,7 @@ Set `parent` as the parent of `child`, while adding `child` to
 [`popparent!`](@ref)
 """
 function setparent!(child::T, parent::T) where {T <: AbstractContainer}
+    ProtoSyn.verbose.mode && @info "Setting $parent as the parent of $child ..."
     hasparent(child) && begin
         error("unable to setparent! of non-orphan item")
     end
@@ -106,6 +107,7 @@ from `parent.children` (only if `child` is a child of `parent`).
 [`setparent!`](@ref)
 """
 function popparent!(child::AbstractContainer)
+    ProtoSyn.verbose.mode && @info "Popping the parent of $child ..."
     if hasparent(child)
         parent = child.parent
         i = findfirst(x -> x === child, parent.children)
@@ -167,6 +169,7 @@ Segment{/UNK:1/UNK:1}
 ```
 """
 function reindex(topology::Topology; set_ascendents::Bool = true)
+    ProtoSyn.verbose.mode && @info "Re-indexing topology. Set ascendents = $(set_ascendents)."
     aid = rid = sid = 0
     for segment in topology.items
         segment.id    = (sid += 1)
@@ -230,12 +233,12 @@ end
 
 export unbond!
 """
-    unbond!(pose::Pose, at1::Atom, at2::Atom; [keep_downstream_position::Bool = false])::Pose
+    unbond!(pose::Pose, at1::Atom, at2::Atom; [keep_downstream_position::Bool = true])::Pose
     
 Return a [Pose](@ref) instance with both given [`Atom`](@ref) instances unbonded
 (removed from eachother `bonds` list, pops parenthood and sets the downstream
 [`Residue`](@ref)`.parent` field to be the Root of the upstream
-[`Topology`](@ref)). If `keep_downstream_position` is set to `true` (`false` by
+[`Topology`](@ref)). If `keep_downstream_position` is set to `true` (is, by
 default), the downstream [`Residue`](@ref) position is maintained (by calling
 [`request_c2i!`](@ref) and [`sync!`](@ref) methods). 
 
@@ -255,7 +258,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = false)::Pose
+function unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = true)::Pose
     @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbond!ed."
     isparent(at1, at2) && return _unbond!(pose, at1, at2; keep_downstream_position = keep_downstream_position)
     isparent(at2, at1) && return _unbond!(pose, at2, at1; keep_downstream_position = keep_downstream_position)
@@ -269,7 +272,15 @@ function unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Boo
     return pose
 end
 
-function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = false)::Pose
+function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = true)::Pose
+    
+    # Following this two step example:
+    # 1) ProtoSyn.setdihedral!(pose.state, pose.graph[1][10]["CG"], 90°)
+    # 2) ProtoSyn.unbond!(pose, pose.graph[1][10]["CG"],pose.graph[1][10]["CB"])
+    # If the pending internal to cartesian changes were not synched at the
+    # beginning of `unbond!`, the saved position (if `keep_downstream_position`
+    # is set to true) would be the pre-rotation position.
+    sync!(pose) # Sync any pending internal to cartesian changes
     
     i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
@@ -281,14 +292,25 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
     # Remove at2 from at1.children and set at2.parent to be the root of at1
     # This assumes at1 is parent of at2
     popparent!(at2)
-    setparent!(at2, ProtoSyn.root(at1.container.container.container))
+    _root = ProtoSyn.root(at1.container.container.container)
+    at1.container.container.container !== nothing && begin
+        setparent!(at2, _root)
+    end
     reindex(pose.graph) # To set new ascendents
-    
-    if keep_downstream_position
-        ProtoSyn.request_c2i!(pose.state)
-        sync!(pose)
+
+    # ? Should `unbond!` remove Residue level parenthood relationships in
+    # ? inter-residue bonds, and connect the downstream residue to Root?
+    if at1.container !== at2.container
+        ProtoSyn.popparent!(at2.container)
+        ProtoSyn.setparent!(at2.container, _root.container)
     end
     
+    if keep_downstream_position
+        ProtoSyn.request_c2i!(pose.state, all = true)
+        sync!(pose)
+    end
+
+    ProtoSyn.request_i2c!(pose.state)    
     return pose
 end
 
@@ -519,3 +541,37 @@ function is_contiguous(pose::Pose, selection::ProtoSyn.AbstractSelection)
     # Compare number of found marks with the number of selected residues
     return marks == length(selected_residues)
 end
+
+# --- Visualize ----------------------------------------------------------------
+# Note: This functions are incomplete, as they cannot work with ramifications.
+# This may change in future iterations of ProtoSyn.
+
+function visualize(io::IO, topology::ProtoSyn.Topology)
+    _root = ProtoSyn.root(topology)
+    for child in _root.container.children[1:(end - 1)]
+        println(io, " ├── ", ProtoSyn.visualize(child))
+    end
+    child = _root.container.children[end]
+    print(io, " └── ", ProtoSyn.visualize(child))
+end
+
+visualize(topology::Topology) = visualize(stdout, topology)
+visualize(pose::Pose{Topology}) = visualize(stdout, pose.graph)
+
+function visualize(residue::Residue)
+    s = "|$(residue.id)"
+    length(residue.children) == 0 && return s * "|"
+    for child in [residue.children[1]]
+        s *= visualize(child)
+    end
+    return s
+end
+
+visualize(segment::Segment) = visualize(ProtoSyn.origin(segment).container)
+
+visualize(io::IO, frag::Fragment) = begin
+    println(io, " ○ No Root")
+    print(io, " └── ", ProtoSyn.visualize(frag.graph))
+end
+
+visualize(frag::Fragment) = visualize(stdout, frag)

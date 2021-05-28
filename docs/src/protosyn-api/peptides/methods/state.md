@@ -11,6 +11,8 @@ as expansions to the Core methods (See [State](@ref core-state-methods)). These 
 
 # Applying a Secondary Structure
 
+Making use of the [Secondary Structure](@ref) types (in specific, the [`SecondaryStructureTemplate`](@ref) instance), the [`setss!`](@ref) method allows a user to quickly apply a given [Secondary Structure](@ref) to a [`Pose`](@ref) or a subset of selected [`Residue`](@ref) instances.
+
 ```@docs
 setss!
 ```

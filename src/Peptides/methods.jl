@@ -62,105 +62,84 @@ function build(grammar::LGrammar{T}, derivation, ss::NTuple{3,Number} = Secondar
 end
 
 
-"""
-    append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+# """
+#     append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
-Based on the provided `grammar`, add the residue sequence from `derivation` to
-the given `pose`, appending it AFTER the given `residue`. This residue and the
-new fragment will be connected using operation `op` ("α" by default). Set the
-secondary structure of the added residue to match the given `ss` (linear, by
-default). Return the altered `pose`.
+# Based on the provided `grammar`, add the residue sequence from `derivation` to
+# the given `pose`, appending it AFTER the given `residue`. This residue and the
+# new fragment will be connected using operation `op` ("α" by default). Set the
+# secondary structure of the added residue to match the given `ss` (linear, by
+# default). Return the altered `pose`.
 
-# Examples
-```jldoctest
-julia> ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][1], res_lib, seq"A")
-┌ Warning: Residue Residue{/UNK:1/UNK:1/ALA:2} has no psi angle
-└ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 353
- i2c: true | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function append_fragment!(pose::Pose{Topology}, residue::Residue,
-    grammar::LGrammar, derivation;
-    ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+# # Examples
+# ```jldoctest
+# julia> ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][1], res_lib, seq"A")
+# ┌ Warning: Residue Residue{/UNK:1/UNK:1/ALA:2} has no psi angle
+# └ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
+# Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+#  Size: 353
+#  i2c: true | c2i: false
+#  Energy: Dict(:Total => Inf)
+# )
+# ```
+# """
+# function append_fragment!(pose::Pose{Topology}, residue::Residue,
+#     grammar::LGrammar, derivation;
+#     ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
 
-    ProtoSyn.append_fragment!(pose, residue, grammar, derivation; op = op)
-    residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
-    setss!(pose, ss, residues)
-    return pose
-end
+#     ProtoSyn.append_fragment!(pose, residue, grammar, derivation; op = op)
+#     residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
+#     setss!(pose, ss, residues)
+#     return pose
+# end
 
-"""
-    Careful: Rotamer. 
-"""
-function append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, frag::Pose{Segment}; ss::Opt{NTuple{3,Number}} = nothing, op = "α")
+
+# """
+#     insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+
+# Based on the provided `grammar`, add the residue sequence from `derivation` to
+# the given `pose`, inserting it ON THE POSITION of the given `residue` (the
+# `residue` gets shifted downstream). The first downstream residue and the new
+# fragment will be connected using operation `op` ("α" by default). Upstream
+# residues are also connected using this operation if they are not origin. Set the
+# secondary structure of the added residue to match the given `ss` (linear, by
+# default). Return the altered `pose`.
+
+# # Examples
+# ```jldoctest
+# julia> ProtoSyn.Peptides.insert_residues!(pose, pose.graph[1][2], res_lib, seq"A")
+# Pose{Topology}(Topology{/UNK:1}, State{Float64}:
+#  Size: 353
+#  i2c: true | c2i: false
+#  Energy: Dict(:Total => Inf)
+# )
+# ```
+# """
+# function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
+#     ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+
+#     connected_to_origin = residue.parent == ProtoSyn.root(pose.graph).container
+#     if connected_to_origin
+#         state = pose.state
+#         N = state[residue["N"]] # This is the N atom state
+#         i = residue.index       # This is the residue index
+#         (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
+#     else
+#         ProtoSyn.unbond!(pose, residue.container[residue.index - 1]["C"], residue["N"])
+#     end
     
-    residue_selection = SerialSelection{Residue}(residue.id, :id)
-    rotamer = Rotamers.get_rotamer(pose, residue)
-    ProtoSyn.append_fragment!(pose, residue, grammar, frag, op = op)
-    
-    if ss !== nothing
-        residues = residue.container.items[(residue.index + 1):(residue.index + length(frag.graph))]
-        setss!(pose, ss, residues)
-    end
+#     ProtoSyn.insert_fragment!(pose, residue, grammar, derivation; op = op,
+#         connect_upstream = !connected_to_origin)
 
-    derivation = [string(Peptides.three_2_one[residue.name.content])]
-    Peptides.force_mutate!(pose, residue, grammar, derivation)
-    residue = residue_selection(pose, gather = true)[1]
-    Rotamers.apply!(pose.state, rotamer, residue)
-    return pose
-end
+#     if connected_to_origin
+#         N = state[residue.container[i]["N"]]
+#         (N.b, N.θ, N.ϕ) = (b, θ, ϕ)
+#         ProtoSyn.request_i2c!(state; all = true)
+#     end
 
-
-"""
-    insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
-
-Based on the provided `grammar`, add the residue sequence from `derivation` to
-the given `pose`, inserting it ON THE POSITION of the given `residue` (the
-`residue` gets shifted downstream). The first downstream residue and the new
-fragment will be connected using operation `op` ("α" by default). Upstream
-residues are also connected using this operation if they are not origin. Set the
-secondary structure of the added residue to match the given `ss` (linear, by
-default). Return the altered `pose`.
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Peptides.insert_residues!(pose, pose.graph[1][2], res_lib, seq"A")
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 353
- i2c: true | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
-    ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
-
-    connected_to_origin = residue.parent == ProtoSyn.root(pose.graph).container
-    if connected_to_origin
-        state = pose.state
-        N = state[residue["N"]] # This is the N atom state
-        i = residue.index       # This is the residue index
-        (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
-    else
-        ProtoSyn.unbond!(pose, residue.container[residue.index - 1]["C"], residue["N"])
-    end
-    
-    ProtoSyn.insert_fragment!(pose, residue, grammar, derivation; op = op,
-        connect_upstream = !connected_to_origin)
-
-    if connected_to_origin
-        N = state[residue.container[i]["N"]]
-        (N.b, N.θ, N.ϕ) = (b, θ, ϕ)
-        ProtoSyn.request_i2c!(state; all = true)
-    end
-
-    # residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
-    setss!(pose, ss, residue.parent)
-end
+#     # residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
+#     setss!(pose, ss, residue.parent)
+# end
 
 
 """
@@ -687,5 +666,5 @@ end
     # TODO
 """
 function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
-    ProtoSyn.pop_atom!(pose, atom; unbond_f = ProtoSyn.Peptides.unbond!)
+    ProtoSyn.pop_atom!(pose, atom)
 end

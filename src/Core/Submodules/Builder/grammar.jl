@@ -290,12 +290,12 @@ Return the `operation` function (as a closure) given the input arguments `args`
 function opfactory(args::Any)
     # Note: residue_index is the index on the fragment/pose ('f2') used to
     # actually connect to 'r1'
-    return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1)
+    return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1, segment_index = 1)
         # residue_index is of f2
         if typeof(f2) == Fragment
             r2 = f2.graph[residue_index]
         else
-            r2 = f2.graph[1][residue_index]
+            r2 = f2.graph[segment_index][residue_index]
         end
         ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state

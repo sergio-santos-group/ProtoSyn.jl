@@ -276,11 +276,11 @@ Base.copy(s0::Segment) = begin
     # deal with atom graph and bonds
     for at0 in eachatom(s0)
         at1 = old2new[at0]
-        if hasparent(at0) && !isparent(root, at0)
+        if hasparent(at0) && !isparent(root, at0) && at0.parent in keys(old2new)
             setparent!(at1, old2new[at0.parent])
         end
         for other0 in at0.bonds
-            push!(at1.bonds, old2new[other0])
+            other0 in keys(old2new) && push!(at1.bonds, old2new[other0])
         end
     end
 

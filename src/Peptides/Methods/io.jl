@@ -40,6 +40,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             residue = segment[residue_index]
             popparent!(residue) # Was root before.
             C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
+            C_bond_index == nothing && error("No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds)).")
             parent_residue = residue["N"].bonds[C_bond_index].container
             setparent!(residue, parent_residue)
         end

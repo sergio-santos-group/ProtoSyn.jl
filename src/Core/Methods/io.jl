@@ -305,7 +305,7 @@ writting to file, as only the cartesian coordinates are used.
 julia> ProtoSyn.write(pose, "new_file.pdb")
 ```
 """
-function write(pose::Pose, filename::String)
+function write(pose::Pose{Topology}, filename::String)
     sync!(pose)
     io = open(filename, "w")
     if endswith(filename, ".pdb") 
@@ -316,6 +316,10 @@ function write(pose::Pose, filename::String)
         error("Unable to write to '$filename': unsupported file type")
     end
     close(io)
+end
+
+function write(pose::Pose{Segment}, filename::String)
+    error("MethodError: no method ProtoSyn.write is available for Fragment instances.")
 end
 
 

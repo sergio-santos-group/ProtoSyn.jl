@@ -150,8 +150,9 @@ Secondary Structure Template:
 ```
 """
 const SecondaryStructure = Dict{Symbol, SecondaryStructureTemplate}(
+    # Values taken from https://proteopedia.org/
     #                                                     phi,    psi,  omega
-    :antiparallel_sheet => SecondaryStructureTemplate(-130.0°, 145.0°, 180.0°),
-    :parallel_sheet     => SecondaryStructureTemplate(-110.0°, 120.0°, 180.0°),
+    :antiparallel_sheet => SecondaryStructureTemplate(-139.0°, 135.0°, 180.0°),
+    :parallel_sheet     => SecondaryStructureTemplate(-119.0°, 113.0°, 180.0°),
     :linear             => SecondaryStructureTemplate( 180.0°, 180.0°, 180.0°),
     :helix              => SecondaryStructureTemplate( -60.0°, -45.0°, 180.0°))

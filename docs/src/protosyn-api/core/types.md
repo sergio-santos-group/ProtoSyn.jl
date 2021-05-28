@@ -20,6 +20,7 @@ Pose
 ## Fragment
 
 ProtoSyn.jl package uses a pose of a single [`Segment`](@ref) (therefore without a Root) to carry information during certain processes (such as [Building a new peptide from a sequence]).
+
 ```@docs
 Fragment
 ```

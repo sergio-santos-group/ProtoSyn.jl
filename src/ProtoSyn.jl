@@ -2,6 +2,12 @@ module ProtoSyn
 
 const _version = 0.4
 
+mutable struct Verbose
+    mode::Bool
+end
+
+verbose = Verbose(false)
+
 @info "Loading required packages"
 using CpuId
 using Printf

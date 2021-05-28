@@ -22,6 +22,7 @@ State{Float64}:
 ```
 """
 function request_c2i!(state::State; all::Bool = false)
+    ProtoSyn.verbose.mode && @info "Requesting cartesian to internal conversion."
     state.c2i = true
     if all
         for atomstate in state.items
@@ -53,6 +54,7 @@ State{Float64}:
 ```
 """
 function request_i2c!(s::State; all::Bool=false)
+    ProtoSyn.verbose.mode && @info "Requesting internal to cartesian conversion."
     s[0].changed = all
     s.i2c = true
     s
@@ -95,8 +97,10 @@ function sync!(state::State, topology::Topology)::State
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
+        ProtoSyn.verbose.mode && @info "Applying pending cartesian to internal changes ..." 
         c2i!(state, topology)
     elseif state.i2c
+        ProtoSyn.verbose.mode && @info "Applying pending internal to cartesian changes ..." 
         i2c!(state, topology)
     end
 
@@ -136,6 +140,9 @@ function c2i!(state::State{T}, top::Topology) where T
     state.c2i == false && return state
     for atom in eachatom(top)
         istate = state[atom.id]
+        # ? Contrarily to i2c! function, c2i! does not automatically set the
+        # ? ascedents :changed field to true. Is this by design or should it be
+        # ? altered in future versions?
         !(istate.changed) && continue
         (i, j, k, l) = atom.ascendents
         jstate = state[j]
