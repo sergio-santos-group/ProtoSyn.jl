@@ -1,12 +1,12 @@
 """
-    unbond!(pose::Pose, residue_1::Residue, residue_2::Residue; [keep_downstream_position::Bool = false])
+    unbond!(pose::Pose, residue_1::Residue, residue_2::Residue; [keep_downstream_position::Bool = true])
 
 Unbond the two provided residues by severing the peptidic bond between the C
 atom of `residue_1` and the N atom of `residue_2`. In order to do this, perform
 the following steps: unset parent/children, unbond neighbours, remove from
 [Graph](@ref graph-types), remove from [State](@ref state-types), update the
 containers `itemsbyname` field. If `keep_downstream_position` is set to `true`
-(`false` by default), the downstream [`Residue`](@ref) position is maintained
+(is, by default), the downstream [`Residue`](@ref) position is maintained
 (by calling [`request_c2i!`](@ref ProtoSyn.request_c2i!) and
 [`sync!`](@ref ProtoSyn.sync!) methods).
 
@@ -20,7 +20,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function unbond!(pose::Pose, residue_1::Residue, residue_2::Residue; keep_downstream_position::Bool = false)
+function unbond!(pose::Pose, residue_1::Residue, residue_2::Residue; keep_downstream_position::Bool = true)
 
     if isparent(residue_1, residue_2)
         return ProtoSyn._unbond!(pose, residue_1["C"], residue_2["N"], keep_downstream_position = keep_downstream_position)

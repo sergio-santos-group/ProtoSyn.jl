@@ -78,7 +78,7 @@ include("Core/Methods/align.jl")
 # include("Core/Clustering/Clustering.jl") # ! <- Location ?
 include("Core/Submodules/Builder/grammar.jl")
 include("Core/Submodules/Builder/Builder.jl")
-include("Core/Methods/pose.jl")
+include("Core/Methods/pose.jl") # Requires grammar.jl
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")

@@ -7,29 +7,42 @@ CurrentModule = ProtoSyn.Peptides
 Included in the [Peptides](@ref) are a set of methods who primarily act on a [`Pose`](@ref) instance, expanding on the list of availabe Core functions (See [Pose](@ref pose-methods) methods). These are subdivided by topics, for organization purposes:
 
 + [Appending and inserting fragments](@ref)
-+ [Removing Atom and Residue instances](@ref)
 + [Mutating an aminoacid](@ref)
 + [Removing and adding sidechains](@ref)
 + [Removing and adding N- and C- terminals](@ref)
 
 # Appending and inserting fragments
 
-Expanding on the homologous Core functions, the next methods allow the user to append and insert [`Fragment`](@ref) instances in [`Pose`](@ref) instances, adding the possibility to set the [Secondary Structure](@ref) of the appendage (using the [`setss!`](@ref) method).
+Expanding on the homologous Core functions, the next methods allow the user to append and insert [`Fragment`](@ref) instances in [`Pose`](@ref) instances (from [`Fragment`](@ref) instances or from a derivation (for example, `seq"AAA"`, a triplet of alanine aminoacids)). These expanded methods all add the possibility to set the [Secondary Structure](@ref) of the appendage (using the [`setss!`](@ref) method) and correct certain bond orientation artifacts introduced by the Core functions, specific to peptidic structures.
 
 ```@docs
 append_fragment!
+```
+
+![ProtoSyn Peptides Append](../../../assets/ProtoSyn-Peptides-append.png)
+
+**Figure 1 |** Two example applications of the [`append_fragment!`](@ref) method. **1 -** Appending a new [`Fragment`](@ref ProtoSyn.Fragment) (which can be one or more aminoacids) to the end of a peptidic structure (the [`Fragment`](@ref ProtoSyn.Fragment) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)). **2 -** A [`Fragment`](@ref ProtoSyn.Fragment) can also be appended to a severed cut (using the [`unbond!`](@ref ProtoSyn.unbond!) method or the [`fragment!`](@ref ProtoSyn.fragment!) method, for example). In this case, naturally, the downstream [`Residue`](@ref) instances are connected to the [`Pose`](@ref) [`root`](@ref ProtoSyn.root). Note that the appended aminoacids are ordered in such a way as to continue numerate (on index) from the [`Residue`](@ref) instance appended to.
+
+```@docs
 insert_fragment!
 ```
 
-WIP
+![ProtoSyn Peptides Insert](../../../assets/ProtoSyn-Peptides-insert.png)
 
-# Removing Atom and Residue instances
-
-WIP
+**Figure 2 |** Two example applications of the [`insert_fragment!`](@ref) method. **1 -** Inserting a new [`Fragment`](@ref ProtoSyn.Fragment) (which can be one or more aminoacids) to the middle of a peptidic structure (the [`Fragment`](@ref ProtoSyn.Fragment) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)), while being connected in both upstream and downstream ends. **2 -** A [`Fragment`](@ref ProtoSyn.Fragment) can also be inserted at position 1 of the peptidic chain (in the beginning).
 
 # Mutating an aminoacid
 
-WIP
+In a design effort, the objetive is to change the nature of an aminoacid (i.e.: change its sidechain), in order to stabilize a given interaction or conformation. Naturally, the main component necessary in such an algorithm is the ability to mutate an aminoacid, as explored in the next section.
+
+```@docs
+mutate!
+force_mutate!
+```
+
+![ProtoSyn Mutate](../../../assets/ProtoSyn-mutate.gif)
+
+**Figure 3 |** Example of an aminoacid mutation cycle.
 
 # Removing and adding sidechains
 

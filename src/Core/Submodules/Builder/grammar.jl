@@ -315,6 +315,28 @@ function opfactory(args::Any)
                 setoffset!(state, r2[atname], offset)
             end
         end
+
+        if haskey(args, "dependents")
+            for (atname, entry) in args["dependents"]
+                !(atname in r2) && continue # Proline has no H
+                atomstate = state[r2[atname]]
+                parent = state[r2[atname].parent]
+
+                for (key, dependence) in entry
+                    !haskey(dependence, "measure") && begin
+                        error("No 'measure' key found in dependence record")
+                    end
+                    measured_atom = dependence["measure"]
+                    value = state[r1[measured_atom]].ϕ + state[r1[measured_atom].parent].Δϕ
+
+                    haskey(dependence, "offset") && begin
+                        value += dependence["offset"]
+                    end
+
+                    setproperty!(atomstate, Symbol(key), value - parent.Δϕ)
+                end
+            end
+        end
     end
 end
 
@@ -362,6 +384,16 @@ function lgfactory(::Type{T}, template::Dict; verbose::Bool = true) where T
             offsets = opargs["offsets"]
             for (k,v) in offsets
                 offsets[k] = ProtoSyn.Units.tonumber(T, v)
+            end
+        end
+
+        if haskey(opargs, "dependents")
+            dependents = opargs["dependents"]
+            for (k, v) in dependents
+                for (_k, _v) in v
+                    !haskey(dependents[k][_k], "offset") && continue
+                    dependents[k][_k]["offset"] = ProtoSyn.Units.tonumber(T, _v["offset"])
+                end
             end
         end
 

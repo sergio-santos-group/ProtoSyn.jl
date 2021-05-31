@@ -75,7 +75,8 @@ makedocs(
                 "Methods" => [
                     "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
                     "Graph" => "protosyn-api/peptides/methods/graph.md",
-                    "State" => "protosyn-api/peptides/methods/state.md"
+                    "State" => "protosyn-api/peptides/methods/state.md",
+                    "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ]
             ]
         ]

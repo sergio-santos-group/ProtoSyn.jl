@@ -63,283 +63,171 @@ end
 
 
 # """
-#     append_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+#     force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
 
-# Based on the provided `grammar`, add the residue sequence from `derivation` to
-# the given `pose`, appending it AFTER the given `residue`. This residue and the
-# new fragment will be connected using operation `op` ("α" by default). Set the
-# secondary structure of the added residue to match the given `ss` (linear, by
-# default). Return the altered `pose`.
+# Mutate the given `pose` at `residue`, changing it's aminoacid to be
+# `derivation`, as given by the template at `grammar`. This function changes the
+# whole residue (backbone included). By default, the user should use `mutate!`
+# instead of this function, except for uncommon aminoacids.
 
 # # Examples
 # ```jldoctest
-# julia> ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][1], res_lib, seq"A")
-# ┌ Warning: Residue Residue{/UNK:1/UNK:1/ALA:2} has no psi angle
-# └ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/constants.jl:67
+# julia> ProtoSyn.Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
 # Pose{Topology}(Topology{/UNK:1}, State{Float64}:
-#  Size: 353
+#  Size: 343
 #  i2c: true | c2i: false
 #  Energy: Dict(:Total => Inf)
 # )
 # ```
 # """
-# function append_fragment!(pose::Pose{Topology}, residue::Residue,
-#     grammar::LGrammar, derivation;
-#     ss::NTuple{3,Number} = SecondaryStructure[:linear], op = "α")
+# function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
 
-#     ProtoSyn.append_fragment!(pose, residue, grammar, derivation; op = op)
-#     residues = residue.container.items[(residue.index + 1):(residue.index + length(derivation))]
-#     setss!(pose, ss, residues)
+#     # 1) Insert new residue in position R, shifting all downstream residues + 1
+#     # The inserted residue backbone dihedrals should match the secondary
+#     # structure pre-existent in the pose
+#     phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+#     psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
+#     omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
+#     ss    = ProtoSyn.Peptides.SecondaryStructureTemplate(phi, psi, omega)
+#     old_r_pos = findfirst(residue, residue.container.items)
+#     Peptides.insert_residues!(pose, residue, grammar, derivation,
+#         ss = ss, op = op)
+#     new_residue = residue.container.items[old_r_pos]
+
+#     # 2) Remove old residue (now in position R + 1)
+#     old_r_pos += 1
+#     N = residue.container.items[old_r_pos]["N"]
+#     ProtoSyn.pop_residue!(pose, residue.container.items[old_r_pos])
+#     # i = findall(a -> a == N, ProtoSyn.root(pose.graph).children)
+#     # deleteat!(ProtoSyn.root(pose.graph).children, i)
+
+#     # 3) Remove downstream residue parents (now in position R + 1, since we
+#     # deleted the R + 1 old residue). Current parents (after pop_residue! are
+#     # the root).
+#     downstream_r_pos = old_r_pos
+#     ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
+#     ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
+
+#     # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
+#     # position, based on the peptidic bond
+#     grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+
+#     # 5) Re-set ascedents
+#     ProtoSyn.reindex(pose.graph)
 #     return pose
 # end
 
 
 # """
-#     insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+#     mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
 
-# Based on the provided `grammar`, add the residue sequence from `derivation` to
-# the given `pose`, inserting it ON THE POSITION of the given `residue` (the
-# `residue` gets shifted downstream). The first downstream residue and the new
-# fragment will be connected using operation `op` ("α" by default). Upstream
-# residues are also connected using this operation if they are not origin. Set the
-# secondary structure of the added residue to match the given `ss` (linear, by
-# default). Return the altered `pose`.
+# Mutate the given `pose` at `residue`, changing it's aminoacid to be
+# `derivation`, as given by the template at `grammar`. This function changes the
+# sidechain only (± 7x faster than `force_mutate!`). When mutating to Proline,
+# falls back to `force_mutate!`. If `ignore_existing_sidechain` is set to `true`
+# (`false` by default), existing sidechains are first removed and then re-added,
+# regardless of being of the same type.
+# !!! note
+#     Sidechains are selected based on the atom name (backbone atoms must be named N, H, CA, C and O, exclusively. Non backbone atoms should have other names, such as H1, H2, etc.)
 
 # # Examples
 # ```jldoctest
-# julia> ProtoSyn.Peptides.insert_residues!(pose, pose.graph[1][2], res_lib, seq"A")
+# julia> ProtoSyn.Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
 # Pose{Topology}(Topology{/UNK:1}, State{Float64}:
-#  Size: 353
+#  Size: 354
 #  i2c: true | c2i: false
 #  Energy: Dict(:Total => Inf)
 # )
 # ```
 # """
-# function insert_residues!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation;
-#     ss::NTuple{3, Number} = SecondaryStructure[:linear], op = "α")
+# function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
 
-#     connected_to_origin = residue.parent == ProtoSyn.root(pose.graph).container
-#     if connected_to_origin
-#         state = pose.state
-#         N = state[residue["N"]] # This is the N atom state
-#         i = residue.index       # This is the residue index
-#         (b, θ, ϕ) = (N.b, N.θ, N.ϕ)
-#     else
-#         ProtoSyn.unbond!(pose, residue.container[residue.index - 1]["C"], residue["N"])
+#     @assert length(derivation) == 1 "Derivation must have length = 1."
+    
+#     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
+
+#     same_aminoacid = string(ProtoSyn.Peptides.three_2_one[residue.name]) == derivation[1]
+#     if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
+#         # println("No mutation required, residue already has sidechain of the requested type.")
+#         return pose
+#     end
+
+#     if derivation[1] == "P"
+#         return Peptides.force_mutate!(pose, residue, grammar, derivation)
+#     end
+
+#     frag = ProtoSyn.fragment(grammar, derivation)
+    
+#     # Remove old sidechain
+#     for atom in reverse(sidechain)
+#         ProtoSyn.pop_atom!(pose, atom)
 #     end
     
-#     ProtoSyn.insert_fragment!(pose, residue, grammar, derivation; op = op,
-#         connect_upstream = !connected_to_origin)
+#     # Insert new sidechain
+#     frag_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(frag, gather = true)
+#     poseCA = residue["CA"]
+    
+#     # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
+#     # the index in the whole pose
+#     poseCA_index = findfirst(x -> x === poseCA, residue.items)
+    
+#     objective_changes = []
+#     # The ϕ is the Phi of the fragment, reduced to be in [0, 360] degrees range.
+#     # All CA child atom's dihedrals will be placed in relationship (relative) to
+#     # the corresponding residue Phi dihedral.
+#     # Here we are measuring the default difference between those two angles in
+#     # the template fragment. This value could, in a later version of ProtoSyn,
+#     # be parametrized somewhere.
+#     _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
+#     ϕ  = ProtoSyn.unit_circle(_ϕ)
+#     for (index, atom) in enumerate(frag_sidechain)
+#         parent_is_CA = false
+#         if atom.parent.name == "CA"
+#             parent_is_CA = true
+#             _atom_dihedral = ProtoSyn.getdihedral(frag.state, atom)
+#             atom_dihedral  = ProtoSyn.unit_circle(_atom_dihedral)
+#             objective_change = atom_dihedral - ϕ
+#             push!(objective_changes, objective_change)
+#             ProtoSyn.unbond!(frag, atom, atom.parent)
+#         end
 
-#     if connected_to_origin
-#         N = state[residue.container[i]["N"]]
-#         (N.b, N.θ, N.ϕ) = (b, θ, ϕ)
-#         ProtoSyn.request_i2c!(state; all = true)
+#         # Insert into the graph
+#         # Note: insert! already sets the residue.itemsbyname
+#         insert!(residue, poseCA_index + index, atom)
+
+#         # Since now atom is already in the graph, we can bond and add parents
+#         if parent_is_CA
+#             ProtoSyn.bond(atom, poseCA)
+#             setparent!(atom, poseCA)
+#         end
 #     end
 
-#     # residues = residue.container.items[(residue.index - length(derivation)):(residue.index)]
-#     setss!(pose, ss, residue.parent)
+#     _start = frag_sidechain[1].index
+#     _end   = frag_sidechain[end].index
+#     insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
+    
+#     reindex(pose.graph)
+#     reindex(pose.state)
+
+#     # Fix CA children positions
+#     pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
+#     Δϕ             = pose.state[residue["CA"]].Δϕ
+#     index          = 1
+#     _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+#     ϕ  = ProtoSyn.unit_circle(_ϕ)
+#     for child in residue["CA"].children
+#         if child in pose_sidechain
+#             objective = ϕ + objective_changes[index]
+#             pose.state[child].ϕ = ProtoSyn.unit_circle(objective - Δϕ)
+#             index += 1
+#         end
+#     end
+    
+#     residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
+#     ProtoSyn.request_i2c!(pose.state)
+
+#     return pose
 # end
-
-
-"""
-    force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
-
-Mutate the given `pose` at `residue`, changing it's aminoacid to be
-`derivation`, as given by the template at `grammar`. This function changes the
-whole residue (backbone included). By default, the user should use `mutate!`
-instead of this function, except for uncommon aminoacids.
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Peptides.force_mutate!(pose, pose.graph[1][3], res_lib, seq"K")
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 343
- i2c: true | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation, op = "α")
-
-    # 1) Insert new residue in position R, shifting all downstream residues + 1
-    # The inserted residue backbone dihedrals should match the secondary
-    # structure pre-existent in the pose
-    phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
-    omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
-    old_r_pos = findfirst(residue, residue.container.items)
-    Peptides.insert_residues!(pose, residue, grammar, derivation,
-        ss = (phi, psi, omega), op = op)
-    new_residue = residue.container.items[old_r_pos]
-
-    # 2) Remove old residue (now in position R + 1)
-    old_r_pos += 1
-    N = residue.container.items[old_r_pos]["N"]
-    Peptides.pop_residue!(pose, residue.container.items[old_r_pos])
-    # i = findall(a -> a == N, ProtoSyn.root(pose.graph).children)
-    # deleteat!(ProtoSyn.root(pose.graph).children, i)
-
-    # 3) Remove downstream residue parents (now in position R + 1, since we
-    # deleted the R + 1 old residue). Current parents (after pop_residue! are
-    # the root).
-    downstream_r_pos = old_r_pos
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
-
-    # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
-    # position, based on the peptidic bond
-    grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
-
-    # 5) Re-set ascedents
-    ProtoSyn.reindex(pose.graph)
-    return pose
-end
-
-
-"""
-    mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation)
-
-Mutate the given `pose` at `residue`, changing it's aminoacid to be
-`derivation`, as given by the template at `grammar`. This function changes the
-sidechain only (± 7x faster than `force_mutate!`). When mutating to Proline,
-falls back to `force_mutate!`. If `ignore_existing_sidechain` is set to `true`
-(`false` by default), existing sidechains are first removed and then re-added,
-regardless of being of the same type.
-!!! note
-    Sidechains are selected based on the atom name (backbone atoms must be named N, H, CA, C and O, exclusively. Non backbone atoms should have other names, such as H1, H2, etc.)
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Peptides.mutate!(pose, pose.graph[1][3], res_lib, seq"K")
-Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 354
- i2c: true | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
-
-    @assert length(derivation) == 1 "Derivation must have length = 1."
-    
-    sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
-
-    same_aminoacid = string(ProtoSyn.Peptides.three_2_one[residue.name]) == derivation[1]
-    if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
-        # println("No mutation required, residue already has sidechain of the requested type.")
-        return pose
-    end
-
-    if derivation[1] == "P"
-        return Peptides.force_mutate!(pose, residue, grammar, derivation)
-    end
-
-    frag = ProtoSyn.fragment(grammar, derivation)
-    
-    # Remove old sidechain
-    for atom in reverse(sidechain)
-        ProtoSyn.Peptides.pop_atom!(pose, atom)
-    end
-    
-    # Insert new sidechain
-    frag_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(frag, gather = true)
-    poseCA = residue["CA"]
-    
-    # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
-    # the index in the whole pose
-    poseCA_index = findfirst(x -> x === poseCA, residue.items)
-    
-    objective_changes = []
-    # The ϕ is the Phi of the fragment, reduced to be in [0, 360] degrees range.
-    # All CA child atom's dihedrals will be placed in relationship (relative) to
-    # the corresponding residue Phi dihedral.
-    # Here we are measuring the default difference between those two angles in
-    # the template fragment. This value could, in a later version of ProtoSyn,
-    # be parametrized somewhere.
-    _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
-    ϕ  = ProtoSyn.unit_circle(_ϕ)
-    for (index, atom) in enumerate(frag_sidechain)
-        parent_is_CA = false
-        if atom.parent.name == "CA"
-            parent_is_CA = true
-            _atom_dihedral = ProtoSyn.getdihedral(frag.state, atom)
-            atom_dihedral  = ProtoSyn.unit_circle(_atom_dihedral)
-            objective_change = atom_dihedral - ϕ
-            push!(objective_changes, objective_change)
-            ProtoSyn.unbond!(frag, atom, atom.parent)
-        end
-
-        # Insert into the graph
-        # Note: insert! already sets the residue.itemsbyname
-        insert!(residue, poseCA_index + index, atom)
-
-        # Since now atom is already in the graph, we can bond and add parents
-        if parent_is_CA
-            ProtoSyn.bond(atom, poseCA)
-            setparent!(atom, poseCA)
-        end
-    end
-
-    _start = frag_sidechain[1].index
-    _end   = frag_sidechain[end].index
-    insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
-    
-    reindex(pose.graph)
-    reindex(pose.state)
-
-    # Fix CA children positions
-    pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
-    Δϕ             = pose.state[residue["CA"]].Δϕ
-    index          = 1
-    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    ϕ  = ProtoSyn.unit_circle(_ϕ)
-    for child in residue["CA"].children
-        if child in pose_sidechain
-            objective = ϕ + objective_changes[index]
-            pose.state[child].ϕ = ProtoSyn.unit_circle(objective - Δϕ)
-            index += 1
-        end
-    end
-    
-    residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
-    ProtoSyn.request_i2c!(pose.state)
-
-    return pose
-end
-
-
-"""
-    pop_residue!(pose::Pose{Topology}, residue::Residue)
-
-Delete `residue` from the given `pose`. Removes parenthood (at residue and atom
-level), removes bonds, reindexes ascedents and sets position and parenthood to
-origin of downstream residues.
-
-# Examples
-```
-julia> ProtoSyn.Peptides.pop_residue!(pose, pose.graph[1][3])
-Pose{Residue}(Residue{/SER:16610}, State{Float64}:
- Size: 11
- i2c: false | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
-function pop_residue!(pose::Pose{Topology}, residue::Residue)
-
-    # 1) Since we are calling Peptides, we know that we should unbond this
-    # residue and the next (children).
-    # * Note: Peptides.unbond!sets the position of the child residue, while
-    # * connecting it to the root
-    for child in residue.children
-        Peptides.unbond!(pose, residue, child) # Order is important
-    end
-
-    # 2) Now we can safelly pop the residue, while maintaining the positions of
-    # downstream residues
-    ProtoSyn.pop_residue!(pose, residue)
-end
 
 
 """
@@ -433,7 +321,7 @@ function force_remove_sidechains!(pose::Pose{Topology}, selection::Opt{AbstractS
     end
     sidechain = _selection(pose, gather = true)
     for atom in reverse(sidechain) # Note the reverse loop
-        ProtoSyn.Peptides.pop_atom!(pose, atom)
+        ProtoSyn.pop_atom!(pose, atom)
     end
 
     return pose
@@ -557,7 +445,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    ProtoSyn.Peptides.pop_atom!(pose, bond)
+                    ProtoSyn.pop_atom!(pose, bond)
                 end
             end
         end
@@ -567,7 +455,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
-                    ProtoSyn.Peptides.pop_atom!(pose, bond)
+                    ProtoSyn.pop_atom!(pose, bond)
                 end
             end
         end
@@ -659,12 +547,4 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     end
 
     return pose
-end
-
-
-"""
-    # TODO
-"""
-function pop_atom!(pose::Pose{Topology}, atom::Atom)::Pose{Atom}
-    ProtoSyn.pop_atom!(pose, atom)
 end

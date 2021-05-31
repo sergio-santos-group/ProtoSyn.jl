@@ -280,7 +280,11 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
     # If the pending internal to cartesian changes were not synched at the
     # beginning of `unbond!`, the saved position (if `keep_downstream_position`
     # is set to true) would be the pre-rotation position.
-    sync!(pose) # Sync any pending internal to cartesian changes
+
+    # Sync any pending internal to cartesian changes (except if it's a fragment)
+    if keep_downstream_position && !isfragment(pose)
+        sync!(pose)
+    end
     
     i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
@@ -290,13 +294,16 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
     
     # Detach from atom graph
     # Remove at2 from at1.children and set at2.parent to be the root of at1
+    # (only if this this not a fragment)
     # This assumes at1 is parent of at2
     popparent!(at2)
-    _root = ProtoSyn.root(at1.container.container.container)
-    at1.container.container.container !== nothing && begin
-        setparent!(at2, _root)
+    !isfragment(pose) && begin
+        _root = ProtoSyn.root(at1.container.container.container)
+        at1.container.container.container !== nothing && begin
+            setparent!(at2, _root)
+        end
+        reindex(pose.graph) # To set new ascendents
     end
-    reindex(pose.graph) # To set new ascendents
 
     # ? Should `unbond!` remove Residue level parenthood relationships in
     # ? inter-residue bonds, and connect the downstream residue to Root?
@@ -307,7 +314,7 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
     
     if keep_downstream_position
         ProtoSyn.request_c2i!(pose.state, all = true)
-        sync!(pose)
+        !isfragment(pose) && sync!(pose)
     end
 
     ProtoSyn.request_i2c!(pose.state)    

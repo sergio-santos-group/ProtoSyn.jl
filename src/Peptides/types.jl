@@ -133,6 +133,7 @@ end
 Base.show(io::IO, sst::SecondaryStructureTemplate) = begin
     println(io, "Secondary Structure Template:")
     println(io, @sprintf " └─ Phi (ϕ): %7.3f rad | Psi (ψ): %7.3f rad | Omega (ω): %7.3f rad" sst.ϕ sst.ψ sst.ω)
+    println(io, @sprintf "             %7.3f deg |          %7.3f deg |            %7.3f deg" rad2deg(sst.ϕ) rad2deg(sst.ψ) rad2deg(sst.ω))
 end
 
 """

@@ -17,6 +17,7 @@ The next methods allow a user to create a new [Fragment](@ref) from a [Pose](@re
 
 ```@docs
 fragment(::Pose{Topology})
+fragment!
 isfragment
 append_fragment_as_new_segment!(::Pose{Topology}, ::Fragment)
 append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Any)

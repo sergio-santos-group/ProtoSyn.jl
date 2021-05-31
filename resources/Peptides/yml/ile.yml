@@ -19,7 +19,7 @@ atoms:
   - {name: HD2, id:  16, symbol:  H, b:   1.089863, theta:   1.911228, phi:   3.140674}
   - {name: HD3, id:  17, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046288}
   - {name:   C, id:  18, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
-  - {name:   O, id:  19, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+  - {name:   O, id:  19, symbol:  O, b:   1.228850, theta:   2.103163, phi:   3.141593}
 bonds:
   N: [H, CA]
   H: [N]

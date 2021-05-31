@@ -309,12 +309,12 @@ Return a [Fragment](@ref) from a list of residues retrieved from the given
 promoted to [`Residue`](@ref) selection type (with the default `any` aggregating
 function). The resulting list of residues must be contiguous (a connected graph
 of [`Residue`](@ref) instances parenthoods). These will constitute the unique
-[`Segment`](@ref) of the resulting [Fragment](@ref). In opposition to the
+[`Segment`](@ref) of the resulting [Fragment](@ref). **In opposition to the
 [`fragment`](@ref) method, this function will remove the fragmented
-[`Residue`](@ref) instances (using the [`pop_residue`](@ref) method). If
-`keep_downstream_position` is set to `true` (is, by default), the downstream
-[`Residue`](@ref) position is maintained (by calling [`request_c2i!`](@ref) and
-[`sync!`](@ref) methods).
+[`Residue`](@ref) instances from the original [`Pose`](@ref) (using the
+[`pop_residue!`](@ref) method).** If `keep_downstream_position` is set to `true`
+(is, by default), the downstream [`Residue`](@ref) position is maintained (by
+calling [`request_c2i!`](@ref) and [`sync!`](@ref) methods).
 
 !!! ukw "Note:"
     A [Fragment](@ref) is a `Pose{Segment}`, without a root/origin. These are
@@ -359,9 +359,14 @@ Return `true` if the given `pose` [Graph](@ref state-types) is a single non-empt
 ```jldoctest
 julia> isfragment(frag)
 true
+
+julia> isfragment(pose)
+false
 ```
 """
-@inline isfragment(pose::Pose) = !(hascontainer(pose.graph) || isempty(pose.graph))
+@inline isfragment(pose::Pose) = begin
+    return !(hascontainer(pose.graph) || isempty(pose.graph)) && typeof(pose.graph) === Segment
+end
 
 
 """
@@ -417,7 +422,7 @@ default) of the given [`LGrammar`](@ref) `grammar`. Request internal to
 cartesian coordinate conversion and return the altered [`Pose`](@ref) `pose`.
 
 # See also
-[`insert_fragment!`](@ref ProtoSyn.insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Any, ::Bool))
+[`insert_fragment!`](@ref ProtoSyn.insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Any))
 
 # Examples
 ```jldoctest
@@ -509,7 +514,8 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
             for bond in atom.bonds
                 if bond in residue.parent.items
                     ProtoSyn.verbose.mode && @info "Unbonding upstream connection ... $atom - $bond"
-                    ProtoSyn.unbond!(pose, atom, bond)
+                    ProtoSyn.unbond!(pose, atom, bond,
+                        keep_downstream_position = false)
                 end
             end
         end
