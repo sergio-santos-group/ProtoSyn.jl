@@ -258,4 +258,80 @@
         @test pose.graph[1][4]["N"].parent == pose.graph[1][3]["C"]
         @test collect(pose.state[pose.graph[1][5]["N"]].t) ≈ [12.262986826440596, -9.010268073403653, -3.764224971305979e-6]
     end
+
+    # --------------------------------------------------------------------------
+    # Mutation
+
+    @testset verbose = true "Mutate" begin
+        pose = copy(backup)
+        @test pose.graph[1][2].name == "MET"
+        @test pose.state.size == 39
+        @test length(pose.graph[1].items) == 3
+        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.7922803002732848, -4.787107925441947, -1.2320027833649587]
+        @test pose.graph[1][3] in pose.graph[1][2].children
+        @test pose.graph[1][3].parent == pose.graph[1][2]
+        @test pose.graph[1][3]["N"] in pose.graph[1][2]["C"].children
+        @test pose.graph[1][3]["N"].parent == pose.graph[1][2]["C"]
+        @test pose.graph[1][2] in pose.graph[1][1].children
+        @test pose.graph[1][2].parent == pose.graph[1][1]
+        @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].children
+        @test pose.graph[1][2]["N"].parent == pose.graph[1][1]["C"]
+        @test pose.graph[1][3]["N"].ascendents == (25, 23, 10, 8)
+
+        ProtoSyn.Peptides.mutate!(pose, pose.graph[1][2], res_lib, seq"I")
+
+        @test pose.state.i2c == true
+        @test pose.graph[1][2].name == "ILE"
+        @test pose.state.size == 41
+        @test length(pose.graph[1].items) == 3
+        @test pose.graph[1][3] in pose.graph[1][2].children
+        @test pose.graph[1][3].parent == pose.graph[1][2]
+        @test pose.graph[1][3]["N"] in pose.graph[1][2]["C"].children
+        @test pose.graph[1][3]["N"].parent == pose.graph[1][2]["C"]
+        @test pose.graph[1][2] in pose.graph[1][1].children
+        @test pose.graph[1][2].parent == pose.graph[1][1]
+        @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].children
+        @test pose.graph[1][2]["N"].parent == pose.graph[1][1]["C"]
+        @test pose.graph[1][3]["N"].ascendents == (27, 25, 10, 8)
+
+        sync!(pose)
+        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.770863352158185, -4.75167702051048, -1.2450030977749311]
+    end
+
+    @testset verbose = true "Force mutate" begin
+        pose = copy(backup)
+        @test pose.graph[1][2].name == "MET"
+        @test pose.state.size == 39
+        @test length(pose.graph[1].items) == 3
+        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.7922803002732848, -4.787107925441947, -1.2320027833649587]
+        @test pose.graph[1][3] in pose.graph[1][2].children
+        @test pose.graph[1][3].parent == pose.graph[1][2]
+        @test pose.graph[1][3]["N"] in pose.graph[1][2]["C"].children
+        @test pose.graph[1][3]["N"].parent == pose.graph[1][2]["C"]
+        @test pose.graph[1][2] in pose.graph[1][1].children
+        @test pose.graph[1][2].parent == pose.graph[1][1]
+        @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].children
+        @test pose.graph[1][2]["N"].parent == pose.graph[1][1]["C"]
+        @test pose.graph[1][3]["N"].ascendents == (25, 23, 10, 8)
+
+        ProtoSyn.Peptides.force_mutate!(pose, pose.graph[1][2], res_lib, seq"I")
+
+        @test pose.state.i2c == true
+        @test pose.graph[1][2].name == "ILE"
+        @test pose.state.size == 41
+        @test length(pose.graph[1].items) == 3
+        @test pose.graph[1][3] in pose.graph[1][2].children
+        @test pose.graph[1][3].parent == pose.graph[1][2]
+        @test pose.graph[1][3]["N"] in pose.graph[1][2]["C"].children
+        @test pose.graph[1][3]["N"].parent == pose.graph[1][2]["C"]
+        @test pose.graph[1][2] in pose.graph[1][1].children
+        @test pose.graph[1][2].parent == pose.graph[1][1]
+        @test pose.graph[1][2]["N"] in pose.graph[1][1]["C"].children
+        @test pose.graph[1][2]["N"].parent == pose.graph[1][1]["C"]
+        @test pose.graph[1][3]["N"].ascendents == (27, 25, 10, 8)
+
+        sync!(pose)
+        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.770863352158185, -4.75167702051048, -1.2450030977749311]
+    end
+
 end
