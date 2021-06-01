@@ -608,9 +608,9 @@ function insert_atom_as_children!(pose::Pose, parent_atom::Atom, atom::Atom, ato
     setparent!(atom, parent_atom)
     ProtoSyn.bond(atom, parent_atom)
 
-    # * 3- Add atom to the pose state (all internal and cartesian coordinates
-    # * are set to zero). Note that pose.state.items includes the origin, while
-    # * pose.state.x doesn't (and therefore the index for insertion must be -3).
+    # * 3- Add atom to the pose state. Note that pose.state.items includes the
+    # * origin, while pose.state.x doesn't (and therefore the index for
+    # * insertion must be -3).
     p_atom_index_in_state = findfirst(pose.state[parent_atom], pose.state.items)
     if atomstate === nothing
         insert!(pose.state, p_atom_index_in_state - 2, State(1))

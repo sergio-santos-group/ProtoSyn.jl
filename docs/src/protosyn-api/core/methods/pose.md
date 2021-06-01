@@ -13,7 +13,7 @@ As previously stated, a [Pose](@ref) is the main object of ProtoSyn and brings t
 
 ## Creating, appending and inserting Fragments
 
-The next methods allow a user to create a new [Fragment](@ref) from a [Pose](@ref) instance and append or insert in in an existing structure. Note: creation of a new [Fragment](@ref) from a sequence of [`Residue`](@ref) instances is available at the [Builder](@ref) submodule.
+The next methods allow a user to create a new [Fragment](@ref) from a [Pose](@ref) instance and append or insert in in an existing structure. Note: creation of a new [Fragment](@ref) from a sequence of [`Residue`](@ref) _codes_ is available at the [Builder](@ref core-builder) submodule.
 
 ```@docs
 fragment(::Pose{Topology})

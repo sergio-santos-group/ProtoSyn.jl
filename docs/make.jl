@@ -77,6 +77,9 @@ makedocs(
                     "Graph" => "protosyn-api/peptides/methods/graph.md",
                     "State" => "protosyn-api/peptides/methods/state.md",
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
+                ],
+                "Submodules" => [
+                    "Builder" => "protosyn-api/peptides/submodules/builder.md"
                 ]
             ]
         ]

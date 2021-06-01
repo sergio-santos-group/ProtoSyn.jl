@@ -1,16 +1,16 @@
-# Builder
+# [Builder](@id core-builder)
 
-> The [Builder](@ref) is a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Builder](@ref peptides-builder) is a submodule of `ProtoSyn.Core` module. As such, the following core introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
 
 The following sections offer a more in-depth view of the available types and methods for building molecular structures from template libraries:
 
-* [Defining and loading a Stochastic L-Grammar](@ref)
-* [Building a molecular structure](@ref)
-* [Manipulating a molecular structure by adding new residues from templates](@ref)
++ [Defining and loading a Stochastic L-Grammar](@ref core-builder-1)
++ [Building a molecular structure](@ref core-builder-2)
++ [Manipulating a molecular structure by adding new residues from templates](@ref core-builder-3)
 
-## Defining and loading a Stochastic L-Grammar
+# [Defining and loading a Stochastic L-Grammar](@id core-builder-1)
 
-A core feature of ProtoSyn is the generation of structures from scratch, using residue templates as building blocks for complex structures. The [Builder](@ref) submodule introduces this functionality by providing support for Stochastic [L-grammars](https://en.wikipedia.org/wiki/L-system). As a succint summary, L-grammar systems provide a simple syntax to encode rather complex structures, supporting ramifications (as in carbohydrates and glycoproteins) and random generation of compositions by stochastic rules.
+A core feature of ProtoSyn is the generation of structures from scratch, using residue templates as building blocks for complex structures. The [Builder](@ref core-builder) submodule introduces this functionality by providing support for Stochastic [L-grammars](https://en.wikipedia.org/wiki/L-system). As a succint summary, L-grammar systems provide a simple syntax to encode rather complex structures, supporting ramifications (as in carbohydrates and glycoproteins) and random generation of compositions by stochastic rules.
 
 In ProtoSyn, several different L-Grammar systems are provided, based on the type of variables. For example, in the [Peptides](@ref) module, a peptide-based L-Grammar is made available, where the alphabet/variables are the 20 natural aminoacids. In this case, since peptides are a linear chain, there isn't a stochastic rule: each aminoacid, when expanded, simply returns itself. Finally, the main operator (`α`) is a peptidic bond generator, connecting two residues in a row.
 Therefore, as an example of employment of [Peptides](@ref) L-Grammar, the string `"GME"` could be easily expanded and built into a 3D structure of 3 aminoacids: `Glycine-Methionine-Glutamic Acid`, connected by peptidic bonds.
@@ -39,7 +39,7 @@ lgfactory
 ProtoSyn.opfactory
 ```
 
-## Building a molecular structure
+# [Building a molecular structure](@id core-builder-2)
 
 The main goal of an L-Grammar in ProtoSyn is to facilitate building a molecular structure from a sequence by joining together template variables as building blocks. A vector of _codes_ describes the desired structure. In the case of [Peptides](@ref), for example, this is simply a linear sequence of aminoacids, while more complex structures, such as ramified carbohydrates or glycoproteins might have an equally more complex vector of _codes_. The following methods explore further on how to use ProtoSyn's L-Grammar system to build new molecular structures from a template libraries.
 
@@ -49,9 +49,9 @@ fragment(::LGrammar{T, K, V}, ::Any) where {T <: AbstractFloat, K, V}
 build
 ```
 
-## Manipulating a molecular structure by adding new residues from templates
+# [Manipulating a molecular structure by adding new residues from templates](@id core-builder-3)
 
-Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the following section. The [Builder](@ref) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.
+Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the following section. The [Builder](@ref core-builder) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.
 
 ```@docs
 append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Any; ::Any)
