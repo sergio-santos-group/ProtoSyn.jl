@@ -23,7 +23,7 @@ include("Submodules/Selections/secondary-structure.jl") # Requires types.jl
 
 include("constants.jl")
 include("Calculators/Calculators.jl")
-# include("Rotamers/Rotamers.jl")
+include("Submodules/Rotamers/Rotamers.jl")
 include("Methods/io.jl")
 include("Methods/graph.jl")
 include("Methods/state.jl")
