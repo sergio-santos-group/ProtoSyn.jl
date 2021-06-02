@@ -79,6 +79,7 @@ makedocs(
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ],
                 "Submodules" => [
+                    "Selections" => "protosyn-api/peptides/submodules/selections.md",
                     "Builder" => "protosyn-api/peptides/submodules/builder.md"
                 ]
             ]

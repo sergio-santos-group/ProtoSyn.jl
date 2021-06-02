@@ -15,7 +15,8 @@ ProtoSyn.eval(:(begin
     [`Residue`](@ref) instances where the residues are marked as true if the
     current `phi` and `psi` dihedrals are within the `threshold` angular
     distance (in radians, 50° by default) of the reference values for the
-    requested `ss` [`SecondaryStructure`](@ref) type.
+    requested `ss`
+    [`SecondaryStructure`](@ref ProtoSyn.Peptides.SecondaryStructure) type.
 
     # State mode
     The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateful
