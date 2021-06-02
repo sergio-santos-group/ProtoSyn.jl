@@ -46,7 +46,7 @@ force_mutate!
 
 # Removing and adding sidechains
 
-Certain coarse-grain [`EnergyFunctionComponent`](@ref) instances might not require an explicit sidechain. In certain algorithms, it might be, therefore, useful to remove the sidechains, lowering the degrees of freedom of a system and reducing the amount of particles simulated. In the next section, the methods used in ProtoSyn to remove and add sidechains in peptidic systems are explored.
+Certain coarse-grain [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) instances might not require an explicit sidechain. In certain algorithms, it might be, therefore, useful to remove the sidechains, lowering the degrees of freedom of a system and reducing the amount of particles simulated. In the next section, the methods used in ProtoSyn to remove and add sidechains in peptidic systems are explored.
 
 ```@docs
 remove_sidechains!

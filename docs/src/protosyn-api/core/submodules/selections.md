@@ -1,8 +1,8 @@
-# Selections
+# [Selections](@id core-selections)
 
-> The [Selections](@ref) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
+> The [Selections](@ref core-selections) are a submodule of `ProtoSyn.Core` module. As such, the following section introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
  
-ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref) is an `AbstractSelection`, which is parametrized by 2 different static types:
+ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref core-selections) is an `AbstractSelection`, which is parametrized by 2 different static types:
 
 * First, a `StateMode` indicates whether an `AbstractSelection` is `Stateful` or `Stateless`.
     * `Stateful` selections require a [`State`](@ref) in order to correctly calculate the Selection. An example would be a Selection that selects all residues within 10Å of a given residue.
@@ -13,7 +13,7 @@ ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular 
 !!! ukw "Note:"
     Some `AbstractSelection` types can use regular expressions (Regex) to search for the desired parameter. Such cases are discussed individually.
 
-[Selections](@ref), when applied to an `AbstractContainer`, return a binary [`Mask`](@ref) \(see [Masks](@ref) section). These can be combined with others [Masks](@ref) \(see [Combining selections](@ref)), used directly in [Methods] or gathered to a list of the actual instances of `AbstractContainer` (see [Applying selections](@ref) section).
+[Selections](@ref core-selections), when applied to an `AbstractContainer`, return a binary [`Mask`](@ref) \(see [Masks](@ref) section). These can be combined with others [Masks](@ref) \(see [Combining selections](@ref)), used directly in [Methods] or gathered to a list of the actual instances of `AbstractContainer` (see [Applying selections](@ref) section).
 
 
 # Available selection functions

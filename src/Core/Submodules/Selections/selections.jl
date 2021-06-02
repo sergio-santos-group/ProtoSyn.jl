@@ -76,30 +76,6 @@ function gather(mask::Mask{T}, container::AbstractContainer) where {T <: Abstrac
 end
 
 
-# ---
-
-# --- Polarity
-# export PolarSelection
-# mutable struct PolarSelection{M, T} <: AbstractSelection
-#     PolarSelection{}() = new{Stateless, Residue}(true)
-# end
-
-# # --- Select -------------------------------------------------------------------
-# function select(::PolarSelection, container::AbstractContainer)
-
-#     n_residues = count_residues(container)
-#     mask = Mask{Residue}(n_residues)
-
-#     for residue in eachresidue(container)
-#         if residue.name in ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]
-#             mask[residue.index] = true
-#         end
-#     end
-#     return mask
-# end
-
-# state_mode_type(::PolarSelection{M, T}) where {M, T} = M
-
 export print_selection
 function print_selection(pose::Pose{Topology}, mask::Mask{T}, filename::String) where {T <: AbstractContainer}
 
@@ -113,16 +89,16 @@ function print_selection(pose::Pose{Topology}, mask::Mask{T}, filename::String) 
     for (atom_index, atom) in enumerate(eachatom(pose.graph))
         sti = pose.state[atom.index] # returns and AtomState instance
 
-        # In this file, selected atoms will be displayed in red while
-        # non-selected atoms will be displayed in blue
-        atom_symbol = mask[atom_index] ? "O" : "N"
+        # In this file, selected atoms will be displayed in chain A while
+        # non-selected atoms will be displayed in chain B
+        chain = mask[atom_index] ? "A" : "B"
 
         s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s\n",
-            atom.index, atom_symbol,
-            atom.container.name, atom.container.container.code,
+            atom.index, atom.name,
+            atom.container.name, chain,
             atom.container.id,
             sti.t[1], sti.t[2], sti.t[3],
-            atom_symbol)
+            atom.symbol)
             Base.write(io, s)
     end
 

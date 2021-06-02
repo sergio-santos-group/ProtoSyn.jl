@@ -34,7 +34,7 @@ julia> ProtoSyn.getdihedral(pose.state, atom)
 """
 module Dihedral
 
-    using ProtoSyn: Residue
+    using ProtoSyn
 
     abstract type DihedralType end
 
@@ -44,15 +44,29 @@ module Dihedral
     struct Psi <: DihedralType end; const psi = Psi()
     struct Omega <: DihedralType end; const omega = Omega()
 
-    (phi::Phi)(residue::Residue)     = residue["C"]
-    (psi::Psi)(residue::Residue)     = begin
-        if length(residue.children) == 0 
-            @warn "Residue $residue has no psi angle"
+    (phi::Phi)(residue::Residue)     = begin
+        if residue.parent == ProtoSyn.root(residue)
+            ProtoSyn.verbose.mode && @warn "Residue $residue has no phi angle"
             return nothing
         end
-        residue.children[1]["N"]
+        return residue["C"]
     end
-    (omega::Omega)(residue::Residue) = residue["CA"]
+
+    (psi::Psi)(residue::Residue)     = begin
+        if length(residue.children) == 0 
+            ProtoSyn.verbose.mode && @warn "Residue $residue has no psi angle"
+            return nothing
+        end
+        return residue.children[1]["N"]
+    end
+
+    (omega::Omega)(residue::Residue) = begin
+        if residue.parent == ProtoSyn.root(residue)
+            ProtoSyn.verbose.mode && @warn "Residue $residue has no omega angle"
+            return nothing
+        end
+        return residue["CA"]
+    end
 
     # --- Chi dihedral angles
 

@@ -122,3 +122,5 @@ const doolitle_hydrophobicity_mod7 = Dict{String, ProtoSyn.Units.defaultFloat}(
 )
 
 available_aminoacids = ['M', 'K', 'P', 'Q', 'I', 'H', 'E', 'W', 'S', 'T', 'C', 'D', 'A', 'L', 'Y', 'V', 'R', 'G', 'F', 'N']
+
+const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]
