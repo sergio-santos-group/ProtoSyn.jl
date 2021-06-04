@@ -104,12 +104,12 @@ module Dihedral
         "GLY" => [],
         "HIS" => ["CB", "CG", "ND1"],
         "HIE" => ["CB", "CG", "ND1"],
-        "ILE" => ["CB", "CG1", "CD", "HD1"],
+        "ILE" => ["CB", "CG1", "CD1", "HD1"],
         "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
         "LEU" => ["CB", "CG", "CD1"],
         "MET" => ["CB", "CG", "SD", "CE"],
         "ASN" => ["CB", "CG", "OD1", "HD21"],
-        "PRO" => ["CB", "CG", "CD", "HD1"], # Attention
+        "PRO" => ["CB", "CG", "CD", "HD2"], # Attention
         "GLN" => ["CB", "CG", "CD", "NE2"],
         "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
         "SER" => ["CB", "OG"],

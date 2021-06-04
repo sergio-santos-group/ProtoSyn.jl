@@ -45,6 +45,7 @@ function sample(rs::RotamerStack{T}, n::Int = -1) where {T <: AbstractFloat}
     if n <= 0
         return StatsBase.sample(rs.rotamers, rs.weights)
     else
+        n = min(n, length(rs.rotamers))
         return StatsBase.sample(rs.rotamers[1:n], rs.weights[1:n])
     end
 end

@@ -10,7 +10,7 @@ _functor_, called with the following signature:
 (crankshaft_mutator::CrankshaftMutator)(pose::Pose)
 ```
 
-The [`CrankshaftMutator`](@ref) `AbstractMutator` loop through all pairs of two
+The [`CrankshaftMutator`](@ref) `AbstractMutator` loops through all pairs of two
 atoms possible, in the given [`Pose`](@ref). For each pair, if a random number
 (`rand()`) is bellow a given probability of mutation `p_mut`, both atoms are
 selected for a crankshaft movement (therefore a higher `p_mut` value applies a

@@ -211,7 +211,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # Here we are measuring the default difference between those two angles in
     # the template fragment. This value could, in a later version of ProtoSyn,
     # be parametrized somewhere.
-    _ϕ = ProtoSyn.getdihedral(frag.state, Peptides.Dihedral.phi(frag.graph[1]))
+    _ϕ = ProtoSyn.getdihedral(frag.state, frag.graph[1]["C"])
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
         parent_is_CA = false

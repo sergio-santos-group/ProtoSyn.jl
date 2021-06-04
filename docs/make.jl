@@ -80,6 +80,10 @@ makedocs(
                     "State" => "protosyn-api/peptides/methods/state.md",
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ],
+                "Mutators" => [
+                    "Rotamer Mutator" => "protosyn-api/peptides/mutators/rotamer.md",
+                    "Design Mutator" => "protosyn-api/peptides/mutators/design.md",
+                ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/peptides/submodules/selections.md",
                     "Builder" => "protosyn-api/peptides/submodules/builder.md",
