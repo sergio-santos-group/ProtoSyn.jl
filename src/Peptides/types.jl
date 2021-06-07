@@ -79,6 +79,7 @@ module Dihedral
         available_chis = chi_dict[residue.name.content]
         @assert chi <= length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis)) chi angles defined"
         chi_atom = available_chis[chi + 1] # Note the "+ 1"
+        residue[chi_atom] === nothing
         @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
         
         return residue[chi_atom]
@@ -104,7 +105,7 @@ module Dihedral
         "GLY" => [],
         "HIS" => ["CB", "CG", "ND1"],
         "HIE" => ["CB", "CG", "ND1"],
-        "ILE" => ["CB", "CG1", "CD1", "HD1"],
+        "ILE" => ["CB", "CG1", "CD1", "HD11"],
         "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
         "LEU" => ["CB", "CG", "CD1"],
         "MET" => ["CB", "CG", "SD", "CE"],

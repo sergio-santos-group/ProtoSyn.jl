@@ -15,9 +15,9 @@ atoms:
   - {name: HG11, id:  12, symbol:  H, b:   1.089901, theta:   1.911026, phi:  -1.047094}
   - {name: HG12, id:  13, symbol:  H, b:   1.089872, theta:   1.911080, phi:   1.046787}
   - {name:  CD1, id:  14, symbol:  C, b:   1.524918, theta:   1.910668, phi:   3.141593}
-  - {name:  HD1, id:  15, symbol:  H, b:   1.090962, theta:   1.910901, phi:   1.047427}
-  - {name:  HD2, id:  16, symbol:  H, b:   1.089863, theta:   1.911228, phi:   3.140674}
-  - {name:  HD3, id:  17, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046288}
+  - {name:  HD11, id:  15, symbol:  H, b:   1.090962, theta:   1.910901, phi:   1.047427}
+  - {name:  HD12, id:  16, symbol:  H, b:   1.089863, theta:   1.911228, phi:   3.140674}
+  - {name:  HD13, id:  17, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046288}
   - {name:    C, id:  18, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
   - {name:    O, id:  19, symbol:  O, b:   1.228850, theta:   2.103163, phi:   3.141593}
 bonds:
@@ -34,10 +34,10 @@ bonds:
   CG1: [CB, HG11, HG12, CD1]
   HG11: [CG1]
   HG12: [CG1]
-  CD1: [CG1, HD1, HD2, HD3]
-  HD1: [CD1]
-  HD2: [CD1]
-  HD3: [CD1]
+  CD1: [CG1, HD11, HD12, HD13]
+  HD11: [CD1]
+  HD12: [CD1]
+  HD13: [CD1]
   C: [CA, O]
   O: [C]
 graph:
@@ -48,5 +48,5 @@ graph:
     CB: [HB, CG2, CG1]
     CG2: [HG21, HG22, HG23]
     CG1: [HG11, HG12, CD1]
-    CD1: [HD1, HD2, HD3]
+    CD1: [HD11, HD12, HD13]
     C: [O]

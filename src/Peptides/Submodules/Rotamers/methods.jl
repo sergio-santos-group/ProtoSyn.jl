@@ -3,7 +3,8 @@
 
 Apply the given [`Rotamer`](@ref) `rotamer` to the sidechain of
 [`Residue`](@ref) `residue`, on the provided [`State`](@ref) `state`. Return the
-applied [`Rotamer`](@ref) `rotamer`.
+applied [`Rotamer`](@ref) `rotamer`, without applying the
+[`sync!`](@ref ProtoSyn.sync!) method to the [`State`](@ref) `state`.
 
 # Examples
 ```
