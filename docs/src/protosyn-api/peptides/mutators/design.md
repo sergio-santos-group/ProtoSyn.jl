@@ -10,6 +10,10 @@ One of the `AbstractMutator` types made available by the ProtoSyn.Peptides modul
 DesignMutator
 ```
 
+![ProtoSyn Design Mutator Card](../../../assets/ProtoSyn-design-mutator-card.png)
+
+**Figure 1 |** Schematic description of the [`DesignMutator`](@ref). 
+
 ![ProtoSyn Design Mutator](../../../assets/ProtoSyn-design-mutator.gif)
 
-**Figure 1 |** Example of the application of [`DesignMutator`](@ref) to simulateously mutate of all [`Residue`](@ref) instances. 
+**Figure 2 |** Example of the application of [`DesignMutator`](@ref) to simulateously mutate of all [`Residue`](@ref) instances. 

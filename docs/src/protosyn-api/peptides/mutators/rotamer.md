@@ -10,6 +10,10 @@ One of the `AbstractMutator` types made available by the ProtoSyn.Peptides modul
 RotamerMutator
 ```
 
+![ProtoSyn Rotamer Mutator Card](../../../assets/ProtoSyn-rotamer-mutator-card.png)
+
+**Figure 1 |** Schematic description of the [`RotamerMutator`](@ref). 
+
 ![ProtoSyn Rotamer Mutator](../../../assets/ProtoSyn-rotamer-mutator.gif)
 
-**Figure 1 |** Example of the application of [`RotamerMutator`](@ref) to simulateously change the conformation of all sidechain [`Atom`](@ref) instances (except in Proline [`Residue`](@ref) instances). 
+**Figure 2 |** Example of the application of [`RotamerMutator`](@ref) to simulateously change the conformation of all sidechain [`Atom`](@ref) instances (except in Proline [`Residue`](@ref) instances). 
