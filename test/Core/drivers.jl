@@ -66,7 +66,7 @@ println("-----------\n Mutators:")
         @test pose.state.e[:Total] === Inf
         @test pose.state[pose.graph[1][2]["CA"]].Δϕ === 0.0
         @test pose.state[pose.graph[1][2]["CA"]].ϕ === 3.141592653589793
-        @test pose.state[pose.graph[1][2]["N"]].t == MVector{3, T}([3.762615121185313, -2.6664117066805666, -8.203956756092598e-7])
+        @test pose.state[pose.graph[1][2]["N"]].t ≈ [3.762615121185313, -2.6664117066805666, -8.203956756092598e-7]
         pose = sd(pose)
         @test pose.state[pose.graph[1][2]["N"]].t[1] ≈ 3.6981331962060873 atol = 1e-5
         @test pose.state[pose.graph[1][2]["N"]].t[2] ≈ -2.7050704999395263 atol = 1e-5

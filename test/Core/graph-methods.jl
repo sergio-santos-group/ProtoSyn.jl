@@ -107,6 +107,8 @@
         ProtoSyn.setdihedral!(pose.state, pose.graph[1][2]["CG"], deg2rad(90))
         ProtoSyn.unbond!(pose, pose.graph[1][2]["CG"], pose.graph[1][2]["CB"])
         @test pose.graph[1][2]["CG"].parent == ProtoSyn.root(pose.graph)
+        @test pose.state.i2c == true
+        sync!(pose)
         @test pose.state.i2c == false
         @test length(pose.graph[1][2]["CB"].children) == 2
         @test collect(pose.state[pose.graph[1][2]["CG"]].t) == [4.800701090587441, -4.607782270435299, -2.3619776332006834]

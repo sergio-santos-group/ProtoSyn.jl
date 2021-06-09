@@ -80,9 +80,18 @@ makedocs(
                     "State" => "protosyn-api/peptides/methods/state.md",
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ],
+                "Calculators" => [
+                    "Sidechain Clash Restraint" => "protosyn-api/peptides/calculators/sidechain-clash-restraint.md",
+                    "Contact Restraint" => "protosyn-api/peptides/calculators/contact-restraint.md",
+                    "Cα-Cα Clash Restraint" => "protosyn-api/peptides/calculators/ca-ca-clash-restraint.md",
+                    "Caterpillar Solvation" => "protosyn-api/peptides/calculators/caterpillar-solvation.md",
+                ],
                 "Mutators" => [
                     "Rotamer Mutator" => "protosyn-api/peptides/mutators/rotamer.md",
-                    "Design Mutator" => "protosyn-api/peptides/mutators/design.md",
+                    "Design Mutator" => "protosyn-api/peptides/mutators/design.md"
+                ],
+                "Drivers" => [
+                    "Rotamer Blitz" => "protosyn-api/peptides/drivers/rotamer-blitz-driver.md"
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/peptides/submodules/selections.md",
