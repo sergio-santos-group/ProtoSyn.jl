@@ -524,8 +524,10 @@ end
 
 Provides the [`intra_residue_mask`](@ref) function as a _functor_, which will
 calculate the intra residue mask for the given `AbstractSelection` `selection`.
-Useful when creating a new [`EnergyFunctionComponent`](@ref) or when the
-[`Mask`](@ref) should be updated each step/call.
+(Only the [`Atom`](@ref) instances in the selection are considered, all other
+atoms are not included in the [`Mask`](@ref)). Useful when creating a new
+[`EnergyFunctionComponent`](@ref) or when the [`Mask`](@ref) should be updated
+each step/call.
 
 # See also
 [`intra_residue_mask`](@ref)

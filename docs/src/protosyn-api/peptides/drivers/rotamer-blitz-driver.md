@@ -2,9 +2,9 @@
 CurrentModule = ProtoSyn.Peptides.Drivers
 ```
 
-# Drivers
+# Rotamer Blitz Driver
 
-Each module in ProtoSyn may include a [Drivers section](@ref), adding new `Driver` types and methods. In the next sections, a closer look at the `Driver` instances introduced in the Peptides module is provided.
+The [Rotamer Blitz Driver](@ref) is an algorithm for sidechain packaging, exhaustively looping through all [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) possibilities and setting the most stable conformation for the [`Residue`](@ref) sidechain.
 
 ```@docs
 RotamerBlitz

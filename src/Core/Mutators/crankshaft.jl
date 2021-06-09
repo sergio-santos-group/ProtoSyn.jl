@@ -124,8 +124,6 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
     for (i, atom_i) in enumerate(atoms[1:(end-1)])
         for atom_j in atoms[(i+1):end]
             if rand() < crankshaft_mutator.p_mut
-                println("Crankshaft between $atom_i and $atom_j")
-                println("Applying crankshaft movement to atoms:\n$(ProtoSyn.ids(travel_graph(atom_i, atom_j)))")
                 # 1) Get angle
                 ∠      = crankshaft_mutator.angle_sampler()
                 ∠     *= crankshaft_mutator.step_size

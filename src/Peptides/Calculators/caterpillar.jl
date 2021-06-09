@@ -36,19 +36,24 @@ end
 """
     Calculators.calc_solvation_energy([::A], pose::Pose, update_forces::Bool = false; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0) where {A, T <: AbstractFloat}
     
-Calculate the pose solvation energy according to the Caterpillar model. The
-model can be fine-tuned: `Ω` defines the minimum number of Cɑ-Cɑ contacts to
-consider a residue 'burried'; `rmax` defines the minimum distance between
-Cɑ's for a contact to be considered (in Angstrom Å); `sc` defines the 'slope
-control' (a higher value defines more sharply when to consider a contact).
-Finally, an hydrophobic map can be provided (`hydrophob_map`), with the
-penalty/reward for correct burial/exposal of hydrophobic/hydrophilic residues,
-respectively. Other map examples can be found in `Peptides.constants.jl`. The
-optional `A` parameter defines the acceleration mode used (SISD_0, SIMD_1 or
-CUDA_2). If left undefined the default ProtoSyn.acceleration.active mode will be
-used. This function does not calculate forces (not applicable), and therefore
-the `update_forces` flag serves solely for uniformization with other
-energy-calculating functions.
+Calculate the given [`Pose`](@ref) `pose` solvation energy according to the
+[Caterpillar model](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020853).
+In this model, a [`Residue`](@ref) is considered buried if more than N other
+[`Residue`](@ref) instances (their Cα [`Atom`](@ref) instances) are within a
+defined cut-off value. Buried hydrophobic aminoacids receive an energetic
+reward, while exposed hydrophobic [`Residue`](@ref) instances receive a penalty
+(and vice-versa for hydrophylic aminoacids).  The model can be fine-tuned: `Ω`
+defines the minimum number of Cɑ-Cɑ contacts to consider a residue 'burried';
+`rmax` defines the minimum distance between Cɑ's for a contact to be considered
+(in Angstrom Å); `sc` defines the 'slope control' (a higher value defines more
+sharply when to consider a contact). Finally, an hydrophobic map can be provided
+(`hydrophob_map`), with the penalty/reward for correct burial/exposal of
+hydrophobic/hydrophilic residues, respectively. Other map examples can be found
+in `Peptides.constants.jl`. The optional `A` parameter defines the acceleration
+mode used (SISD_0, SIMD_1 or CUDA_2). If left undefined the default
+`ProtoSyn.acceleration.active` mode will be used. This function does not
+calculate forces (not applicable), and therefore the `update_forces` flag serves
+solely for uniformization with other energy-calculating functions.
 
 # See also
 [`get_default_solvation_energy`](@ref)
@@ -140,17 +145,19 @@ end
 """
     get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
 
-Return the default Caterpillar solvation `EnergyFunctionComponent`. `α`
-sets the component weight (on an `EnergyFunction`).
+Return the default Caterpillar solvation
+[`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent).
+`α` sets the component weight (on an
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction)).
 
 # Solvation energy settings
-- :Ω -> defines the minimum number of Cα-Cα contacts to consider a residue 'burried';
+- :Ω -> defines the minimum number of Cα-Cα contacts to consider a [`Residue`](@ref) 'burried';
 - :sc -> defines the 'slope control' (a higher value defines more sharply when to consider a contact);
-- :hydrophob_map -> `Dict{Symbol, Any}` with the reward/penalty for correct burial/exposal of hydrophobic/hydrophilic residues;
+- :hydrophob_map -> `Dict{Symbol, Any}` with the reward/penalty for correct burial/exposal of hydrophobic/hydrophilic [`Residue`](@ref) instances;
 - :rmax -> defines the minimum distance between Cα's for a contact to be considered (in Angstrom Å).
 
 # See also
-`calc_solvation_energy`
+[`calc_solvation_energy`](@ref)
 
 # Examples
 ```
@@ -173,4 +180,5 @@ function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
         α,
         false)
 end
+
 end
