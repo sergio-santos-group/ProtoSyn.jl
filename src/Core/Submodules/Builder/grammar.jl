@@ -155,7 +155,7 @@ end
 
 hasrule(g::LGrammar, r) = haskey(g.rules, r)
 
-Base.push!(g::LGrammar{T, K, V}, r::StochasticRule{K,V}) where {T <: AbstractFloat, K, V} = begin
+Base.push!(g::LGrammar{T, K, V}, r::StochasticRule{T, K,V}) where {T <: AbstractFloat, K, V} = begin
     push!(
         get!(g.rules, r.source, []),
         r
@@ -242,9 +242,9 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
         if isop(grammar, letter)
             op = getop(grammar, letter)
             push!(opstack, op)
-        elseif letter == '['
+        elseif letter == "["
             push!(stack, parent)
-        elseif letter == ']'
+        elseif letter == "]"
             parent = pop!(stack)
         elseif isvar(grammar, letter)
             frag = getvar(grammar, letter)
@@ -367,6 +367,7 @@ function lgfactory(::Type{T}, template::Dict; verbose::Bool = true) where T
         filename = joinpath(ProtoSyn.resource_dir, name)
         verbose && @info "Loading variable '$key' from $filename"
         pose = ProtoSyn.load(T, filename)
+        pose.graph.name = pose.graph[1].name # ! Hack for long filenames
         grammar[key] = fragment(pose)
     end
 

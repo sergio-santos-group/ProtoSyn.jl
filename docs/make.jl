@@ -98,6 +98,21 @@ makedocs(
                     "Builder" => "protosyn-api/peptides/submodules/builder.md",
                     "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md"
                 ]
+            ],
+            "Materials" => [
+                "Introduction" => "protosyn-api/materials/introduction.md",
+                "Methods" => [
+                    "Lattices" => "protosyn-api/materials/methods/lattices.md"
+                ]
+            ],
+            "Sugars" => [
+                "Introduction" => "protosyn-api/sugars/introduction.md",
+                "Submodules" => [
+                    "Builder" => "protosyn-api/sugars/submodules/builder.md",
+                ]
+            ],
+            "Common" => [
+                "Introduction" => "protosyn-api/common/introduction.md"
             ]
         ]
     ],

@@ -1,0 +1,55 @@
+name: GLU
+atoms:
+  - {name:  C1, id:   1, symbol:  C, b:   1.530703, theta:   1.905169, phi:  -0.994004}
+  - {name:  C2, id:   2, symbol:  C, b:   1.532218, theta:   1.902874, phi:   0.993692}
+  - {name:  C3, id:   3, symbol:  C, b:   1.531839, theta:   1.905827, phi:  -3.099851}
+  - {name:  C4, id:   4, symbol:  C, b:   1.530123, theta:   1.911086, phi:  -3.053657}
+  - {name:  C5, id:   5, symbol:  C, b:   1.529514, theta:   1.911351, phi:  -0.124850}
+  - {name:  C6, id:   6, symbol:  C, b:   1.429174, theta:   0.713532, phi:  -2.787587}
+  - {name:  O2, id:   7, symbol:  O, b:   1.428786, theta:   1.911699, phi:  -3.086768}
+  - {name:  O3, id:   8, symbol:  O, b:   1.428991, theta:   1.912178, phi:   3.085792}
+  - {name:  O4, id:   9, symbol:  O, b:   1.429072, theta:   1.912298, phi:   1.090184}
+  - {name:  O5, id:  10, symbol:  O, b:   1.428557, theta:   1.910959, phi:   1.135141}
+  - {name:  O6, id:  11, symbol:  O, b:   3.567938, theta:   2.954991, phi:   0.052901}
+  - {name:  H1, id:  12, symbol:  H, b:   1.090487, theta:   1.910201, phi:   3.099271}
+  - {name:  H2, id:  13, symbol:  H, b:   1.090692, theta:   1.911248, phi:   1.099218}
+  - {name:  H3, id:  14, symbol:  H, b:   1.090061, theta:   1.912419, phi:  -1.097281}
+  - {name:  H4, id:  15, symbol:  H, b:   1.090874, theta:   1.911049, phi:  -1.007838}
+  - {name:  H5, id:  16, symbol:  H, b:   1.091013, theta:   1.910636, phi:  -0.958905}
+  - {name: H61, id:  17, symbol:  H, b:   1.089466, theta:   1.909804, phi:  -2.220086}
+  - {name: H62, id:  18, symbol:  H, b:   1.089811, theta:   1.910404, phi:   1.969777}
+  - {name: HO2, id:  19, symbol:  H, b:   0.967282, theta:   1.990237, phi:   3.137328}
+  - {name: HO3, id:  20, symbol:  H, b:   0.967387, theta:   1.989542, phi:  -3.134115}
+bonds:
+  C1: [C2, O5, H1]
+  C2: [C1, C3, O2, H2]
+  C3: [C2, C4, O3, H3]
+  C4: [C3, C5, O4, H4]
+  C5: [C4, C6, O5, H5]
+  C6: [C5, O6, H61, H62]
+  O2: [C2, HO2]
+  O3: [C3, HO3]
+  O4: [C4]
+  O5: [C1, C5]
+  O6: [C6]
+  H1: [C1]
+  H2: [C2]
+  H3: [C3]
+  H4: [C4]
+  H5: [C5]
+  H61: [C6]
+  H62: [C6]
+  HO2: [O2]
+  HO3: [O3]
+graph:
+  root: O6
+  adjacency:
+    C1: [H1]
+    C2: [H2, O2, C1]
+    C3: [O3, H3, C2]
+    C4: [H4, O4, C3]
+    C5: [H5, O5, C4]
+    C6: [H61, H62, C5]
+    O2: [HO2]
+    O3: [HO3]
+    O6: [C6]

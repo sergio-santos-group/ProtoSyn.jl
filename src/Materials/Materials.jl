@@ -6,5 +6,5 @@ materials (such as atomic lattices, etc).
 """
 module Materials
 
-    include("lattices.jl")
+    include("Methods/lattices.jl")
 end

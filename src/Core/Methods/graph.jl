@@ -582,3 +582,4 @@ visualize(io::IO, frag::Fragment) = begin
 end
 
 visualize(frag::Fragment) = visualize(stdout, frag)
+

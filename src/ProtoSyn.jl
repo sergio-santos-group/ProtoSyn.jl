@@ -95,6 +95,9 @@ include("Peptides/Peptides.jl")
 @info "Loading Materials"
 include("Materials/Materials.jl")
 
+@info "Loading Sugars"
+include("Sugars/Sugars.jl")
+
 @info "Loading Common"
 include("Common/Common.jl")
 

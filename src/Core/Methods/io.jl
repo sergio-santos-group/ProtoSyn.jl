@@ -276,10 +276,10 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     end
 
     println(io, "graph:")
-    println(io, "  root: N")
+    println(io, "  root: $(ProtoSyn.root(top).children[1].name)")
     println(io, "  adjacency:")
     for at in byatom
-        if !isempty(c.children)
+        if !isempty(at.children)
             print(io, "    ", at.name, ": [")
             print(io, Base.join(map(a->a.name, at.children), ", "))
             println(io, "]")
