@@ -6,6 +6,7 @@ const one_2_three = Dict{Char,String}(
     'E' => "GLU",
     'F' => "PHE",
     'G' => "GLY",
+    'H' => "HIS",
     'H' => "HIE",
     'I' => "ILE",
     'K' => "LYS",
@@ -22,44 +23,124 @@ const one_2_three = Dict{Char,String}(
     'Y' => "TYR",
 )
 
-const three_2_one = Dict{String,Char}(v=>k for (k,v) in one_2_three)
-
-baremodule DihedralTypes
-    phi = ϕ = "CA"
-    psi = ψ = "C"
-    omega = ω = "N"
-    
-    chi1 = χ1 = "CB"
-
-    # using Base: @enum
-    # @enum Type begin
-    #     undef = 0
-    #     phi   = 1
-    #     psi   = 2
-    #     omega = 3
-    #     chi1  = 4
-    #     chi2  = 5
-    #     chi3  = 6
-    #     chi4  = 7
-    #     chi5  = 8
-        
-    #     # ϕ = 1
-    #     # ψ = 2
-    #     # ω = 3
-    #     # χ1 = 4
-    #     # χ2 = 5
-    #     # χ3 = 6
-    #     # χ4 = 7
-    #     # χ5 = 8
-    # end
-end
-
-
-export SecondaryStructure
-# phi, psi, omega
-const SecondaryStructure = Dict{Symbol, NTuple{3,Number}}(
-    :antiparallel_sheet => map(deg2rad, (-139.0, 135.0, 180.0)),
-    :parallel_sheet     => map(deg2rad, (-119.0, 113.0, 180.0)),
-    :linear             => map(deg2rad, ( 180.0, 180.0, 180.0)),
-    :helix              => map(deg2rad, ( -60.0, -45.0, 180.0))
+const three_2_one = Dict{String, Char}(
+    "BKB" => '?',
+    "ALA" => 'A',
+    "CYS" => 'C',
+    "ASP" => 'D',
+    "GLU" => 'E',
+    "PHE" => 'F',
+    "GLY" => 'G',
+    "HIS" => 'H',
+    "HIE" => 'H',
+    "ILE" => 'I',
+    "LYS" => 'K',
+    "LEU" => 'L',
+    "MET" => 'M',
+    "ASN" => 'N',
+    "PRO" => 'P',
+    "GLN" => 'Q',
+    "ARG" => 'R',
+    "SER" => 'S',
+    "THR" => 'T',
+    "VAL" => 'V',
+    "TRP" => 'W',
+    "TYR" => 'Y',
 )
+
+
+const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ALA" =>  1.8,
+    "CYS" =>  2.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "PHE" =>  2.8,
+    "GLY" => -0.4,
+    "HIS" => -3.2,
+    "HIE" => -3.2,
+    "ILE" =>  4.5,
+    "LYS" => -3.9,
+    "LEU" =>  3.8,
+    "MET" =>  1.9,
+    "ASN" => -3.5,
+    "PRO" => -1.6,
+    "GLN" => -3.5,
+    "ARG" => -4.5,
+    "SER" => -0.8,
+    "THR" => -0.7,
+    "VAL" =>  4.2,
+    "TRP" => -0.9,
+    "TYR" => -1.3
+)
+
+const doolitle_hydrophobicity_mod3 = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" =>  7.5,
+    "VAL" =>  7.2,
+    "LEU" =>  6.8,
+    "PHE" =>  5.8,
+    "CYS" =>  5.5,
+    "MET" =>  4.9,
+    "ALA" =>  4.8,
+    "GLY" => -0.4,
+    "THR" => -0.7,
+    "SER" => -0.8,
+    "TRP" => -0.9,
+    "TYR" => -1.3,
+    "PRO" => -1.6,
+    "HIS" => -3.2,
+    "HIE" => -3.2,
+    "ASN" => -3.5,
+    "GLN" => -3.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "LYS" => -3.9,
+    "ARG" => -4.5
+)
+
+const doolitle_hydrophobicity_mod7 = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" =>  11.5,
+    "VAL" =>  11.2,
+    "LEU" =>  10.8,
+    "PHE" =>  9.8,
+    "CYS" =>  9.5,
+    "MET" =>  8.9,
+    "ALA" =>  8.8,
+    "GLY" => -0.4,
+    "THR" => -0.7,
+    "SER" => -0.8,
+    "TRP" => -0.9,
+    "TYR" => -1.3,
+    "PRO" => -1.6,
+    "HIS" => -3.2,
+    "HIE" => -3.2,
+    "ASN" => -3.5,
+    "GLN" => -3.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "LYS" => -3.9,
+    "ARG" => -4.5
+)
+
+available_aminoacids = Dict{Char, Bool}(
+    'M' => true,
+    'K' => true,
+    'P' => true,
+    'Q' => true,
+    'I' => true,
+    'H' => true,
+    'E' => true,
+    'W' => true,
+    'S' => true,
+    'T' => true,
+    'C' => true,
+    'D' => true,
+    'A' => true,
+    'L' => true,
+    'Y' => true,
+    'V' => true,
+    'R' => true,
+    'G' => true,
+    'F' => true,
+    'N' => true)
+
+const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]

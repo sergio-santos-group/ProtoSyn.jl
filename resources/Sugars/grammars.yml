@@ -5,7 +5,9 @@ amylose:
       # - {p: 0.75, production: [A,α,A]}
       # - {p: 0.25, production: [B,"[",α,A,"]",β,A]}
   variables:
-    A: resources/Sugars/yml/glu14.yml
+    A: Sugars/yml/glu-O4-rooted.yml
+    B: Sugars/yml/glu-O6-rooted.yml
+    C: Sugars/yml/glu-C1-rooted.yml
   defop: α
   operators:
     α:
@@ -21,3 +23,49 @@ amylose:
           ϕ: -1.8059794435011325  # -103.475 deg
       offsets:
         H4: 0
+    β:
+      residue1: C1
+      residue2: O6
+      presets:
+        O6:
+          θ:  2.0420352248333655  # 127 deg
+          ϕ: -1.5832230710690962  # -90.712 deg
+          b:  1.43
+        C6:
+          θ:  1.7453292519943295  # 100 deg
+          ϕ: -1.8059794435011325  # -103.475 deg
+        C5: 
+          ϕ:  1.8321070224034874  # 104.972 deg
+    ɣ:
+      residue1: O4
+      residue2: C1
+      presets:
+        C1:
+          b: 1.43
+          θ: 100°
+          ϕ: 120°
+        C2:
+          θ: 127°
+          ϕ: -103°
+        H1: 
+          θ: 80°
+          ϕ: 3°
+        C3: 
+          ϕ: -90°
+        H2: 
+          ϕ: 150°
+        O2: 
+          ϕ: 29°
+    δ:
+      residue1: O6
+      residue2: C1
+      presets:
+        O6:
+          θ:  2.0420352248333655  # 127 deg
+          ϕ: -1.5832230710690962  # -90.712 deg
+          b:  1.43
+        C6:
+          θ:  1.7453292519943295  # 100 deg
+          ϕ: -1.8059794435011325  # -103.475 deg
+        C5: 
+          ϕ:  1.8321070224034874  # 104.972 deg
