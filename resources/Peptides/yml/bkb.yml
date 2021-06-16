@@ -1,8 +1,8 @@
 name: BKB
 code: B
 atoms:
-  - {name:   H, id:   1, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:   N, id:   2, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
   - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
   - {name:   C, id:   4, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
   - {name:   O, id:   5, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
