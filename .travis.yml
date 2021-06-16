@@ -16,7 +16,7 @@ git:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.4
+      julia: 1.6.1
       os: linux
       script:
         - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'

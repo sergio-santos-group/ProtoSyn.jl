@@ -1,0 +1,38 @@
+# ALL: &base
+improper: &improper
+- [-C, CA, N, H]
+- [CA, +N, C, O]
+ALA:
+  # <<: *base
+  atoms:
+    C:   {charge:  0.570224, type:  C}
+    CA:  {charge: -0.027733, type: CT}
+    CB:  {charge: -0.229951, type: CT}
+    H:   {charge:  0.294276, type:  H}
+    HA:  {charge:  0.120802, type: H1}
+    HB1: {charge:  0.077428, type: HC}
+    HB2: {charge:  0.077428, type: HC}
+    HB3: {charge:  0.077428, type: HC}
+    N:   {charge: -0.404773, type:  N}
+    O:   {charge: -0.555129, type:  O}
+  improper: *improper
+BKB:
+  #<<: *base
+  atoms:
+    C:   {charge:  0.594851, type:  C}
+    CA:  {charge: -0.003106, type: CT}
+    H:   {charge:  0.318903, type:  H}
+    N:   {charge: -0.380146, type:  N}
+    O:   {charge: -0.530502, type:  O}
+  #bonds:
+  #- [C, N]
+  improper: *improper
+UNK:
+  atoms:
+    H:   {charge:  0.318903, type:  H}
+    N:   {charge: -0.380146, type:  N}
+XPT:
+  atoms:
+    C:   {charge:  0.594851, type:  C}
+    CA:  {charge: -0.003106, type: CT}
+    O:   {charge: -0.530502, type:  O}

@@ -4,9 +4,13 @@
 *.DS_STORE
 *.zip
 *.txt
+*.pdb
+*.forces
 
 docs/build/
 .vscode/
 .ipynb_checkpoints/
 *.zip
-
+*.png
+*.dat
+dev/
