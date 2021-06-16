@@ -1,0 +1,124 @@
+MODEL        1
+ATOM      1    N ALA A   1       0.600  -1.039  -0.000                       N
+ATOM      2    H ALA A   1      -0.170  -1.692  -0.000                       H
+ATOM      3   CA ALA A   1       2.049  -1.039  -0.000                       C
+ATOM      4   HA ALA A   1       2.413  -0.028  -0.179                       H
+ATOM      5   CB ALA A   1       2.598  -1.526   1.337                       C
+ATOM      6  HB1 ALA A   1       2.250  -2.541   1.526                       H
+ATOM      7  HB2 ALA A   1       3.687  -1.516   1.308                       H
+ATOM      8  HB3 ALA A   1       2.250  -0.869   2.134                       H
+ATOM      9    C ALA A   1       2.596  -1.952  -1.088                       C
+ATOM     10    O ALA A   1       2.011  -2.992  -1.383                       O
+ATOM     11    N ALA A   2       3.607  -1.659  -1.666                       N
+ATOM     12    H ALA A   2       4.093  -0.807  -1.430                       H
+ATOM     13   CA ALA A   2       4.128  -2.528  -2.702                       C
+ATOM     14   HA ALA A   2       3.581  -3.471  -2.694                       H
+ATOM     15   CB ALA A   2       3.982  -1.890  -4.079                       C
+ATOM     16  HB1 ALA A   2       4.531  -0.949  -4.104                       H
+ATOM     17  HB2 ALA A   2       4.381  -2.564  -4.836                       H
+ATOM     18  HB3 ALA A   2       2.928  -1.700  -4.281                       H
+ATOM     19    C ALA A   2       5.605  -2.821  -2.479                       C
+ATOM     20    O ALA A   2       6.347  -1.962  -2.008                       O
+ATOM     21    N ALA A   3       6.053  -3.897  -2.763                       N
+ATOM     22    H ALA A   3       5.450  -4.608  -3.151                       H
+ATOM     23   CA ALA A   3       7.459  -4.176  -2.551                       C
+ATOM     24   HA ALA A   3       7.979  -3.252  -2.300                       H
+ATOM     25   CB ALA A   3       7.656  -5.171  -1.413                       C
+ATOM     26  HB1 ALA A   3       7.148  -6.105  -1.654                       H
+ATOM     27  HB2 ALA A   3       8.720  -5.362  -1.276                       H
+ATOM     28  HB3 ALA A   3       7.240  -4.759  -0.493                       H
+ATOM     29    C ALA A   3       8.095  -4.767  -3.802                       C
+ATOM     30    O ALA A   3       7.453  -5.519  -4.532                       O
+ATOM     31    N ALA A   4       9.231  -4.500  -4.081                       N
+ATOM     32    H ALA A   4       9.765  -3.884  -3.487                       H
+ATOM     33   CA ALA A   4       9.836  -5.063  -5.271                       C
+ATOM     34   HA ALA A   4       9.182  -5.832  -5.683                       H
+ATOM     35   CB ALA A   4      10.058  -3.992  -6.333                       C
+ATOM     36  HB1 ALA A   4      10.718  -3.220  -5.939                       H
+ATOM     37  HB2 ALA A   4      10.513  -4.443  -7.215                       H
+ATOM     38  HB3 ALA A   4       9.101  -3.547  -6.606                       H
+ATOM     39    C ALA A   4      11.186  -5.692  -4.954                       C
+ATOM     40    O ALA A   4      11.627  -5.677  -3.807                       O
+ATOM     41    N GLY A   5      11.828  -6.207  -5.827                       N
+ATOM     42    H GLY A   5      11.473  -6.224  -6.772                       H
+ATOM     43   CA GLY A   5      13.113  -6.805  -5.526                       C
+ATOM     44  HA1 GLY A   5      13.782  -6.045  -5.121                       H
+ATOM     45  HA2 GLY A   5      12.981  -7.600  -4.793                       H
+ATOM     46    C GLY A   5      13.734  -7.391  -6.786                       C
+ATOM     47    O GLY A   5      13.147  -7.316  -7.863                       O
+ATOM     48    N GLY A   6      14.804  -7.931  -6.732                       N
+ATOM     49    H GLY A   6      15.293  -7.996  -5.851                       H
+ATOM     50   CA GLY A   6      15.396  -8.489  -7.931                       C
+ATOM     51  HA1 GLY A   6      14.736  -9.254  -8.340                       H
+ATOM     52  HA2 GLY A   6      15.537  -7.699  -8.668                       H
+ATOM     53    C GLY A   6      16.746  -9.117  -7.614                       C
+ATOM     54    O GLY A   6      17.186  -9.101  -6.467                       O
+ATOM     55    N GLY A   7      17.388  -9.632  -8.487                       N
+ATOM     56    H GLY A   7      17.033  -9.649  -9.432                       H
+ATOM     57   CA GLY A   7      18.673 -10.230  -8.186                       C
+ATOM     58  HA1 GLY A   7      19.341  -9.470  -7.781                       H
+ATOM     59  HA2 GLY A   7      18.540 -11.026  -7.453                       H
+ATOM     60    C GLY A   7      19.294 -10.816  -9.446                       C
+ATOM     61    O GLY A   7      18.706 -10.741 -10.523                       O
+CONECT    1    3    2
+CONECT    2    1
+CONECT    3    1    4    5    9
+CONECT    4    3
+CONECT    5    6    3    7    8
+CONECT    6    5
+CONECT    7    5
+CONECT    8    5
+CONECT    9   10    3   11
+CONECT   10    9
+CONECT   11   13   12    9
+CONECT   12   11
+CONECT   13   11   14   15   19
+CONECT   14   13
+CONECT   15   16   13   17   18
+CONECT   16   15
+CONECT   17   15
+CONECT   18   15
+CONECT   19   20   13   21
+CONECT   20   19
+CONECT   21   23   22   19
+CONECT   22   21
+CONECT   23   21   24   25   29
+CONECT   24   23
+CONECT   25   26   23   27   28
+CONECT   26   25
+CONECT   27   25
+CONECT   28   25
+CONECT   29   30   23   31
+CONECT   30   29
+CONECT   31   33   32   29
+CONECT   32   31
+CONECT   33   31   34   35   39
+CONECT   34   33
+CONECT   35   36   33   37   38
+CONECT   36   35
+CONECT   37   35
+CONECT   38   35
+CONECT   39   40   33   41
+CONECT   40   39
+CONECT   41   43   42   39
+CONECT   42   41
+CONECT   43   44   41   45   46
+CONECT   44   43
+CONECT   45   43
+CONECT   46   43   47   48
+CONECT   47   46
+CONECT   48   50   49   46
+CONECT   49   48
+CONECT   50   51   48   52   53
+CONECT   51   50
+CONECT   52   50
+CONECT   53   50   54   55
+CONECT   54   53
+CONECT   55   57   56   53
+CONECT   56   55
+CONECT   57   58   55   59   60
+CONECT   58   57
+CONECT   59   57
+CONECT   60   57   61
+CONECT   61   60
+ENDMDL

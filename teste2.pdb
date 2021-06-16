@@ -1,0 +1,86 @@
+MODEL        1
+ATOM      1   C1 GLU ?   1       4.508   0.307  -0.280                       C
+ATOM      2   C2 GLU ?   1       3.920   1.711  -0.446                       C
+ATOM      3   C3 GLU ?   1       2.403   1.647  -0.241                       C
+ATOM      4   C4 GLU ?   1       1.806   0.645  -1.233                       C
+ATOM      5   C5 GLU ?   1       2.476  -0.717  -1.037                       C
+ATOM      6   C6 GLU ?   1       1.927  -1.708  -2.065                       C
+ATOM      7   O2 GLU ?   1       4.497   2.588   0.522                       O
+ATOM      8   O3 GLU ?   1       1.836   2.939  -0.467                       O
+ATOM      9   O4 GLU ?   1       0.401   0.524  -1.002                       O
+ATOM     10   O5 GLU ?   1       3.887  -0.582  -1.212                       O
+ATOM     11   O6 GLU ?   1       2.465  -3.008  -1.808                       O
+ATOM     12   H1 GLU ?   1       5.582   0.339  -0.468                       H
+ATOM     13   H2 GLU ?   1       4.136   2.081  -1.449                       H
+ATOM     14   H3 GLU ?   1       2.187   1.326   0.778                       H
+ATOM     15   H4 GLU ?   1       1.980   0.993  -2.252                       H
+ATOM     16   H5 GLU ?   1       2.268  -1.083  -0.031                       H
+ATOM     17  H61 GLU ?   1       0.841  -1.745  -1.991                       H
+ATOM     18  H62 GLU ?   1       2.213  -1.389  -3.066                       H
+ATOM     19  HO2 GLU ?   1       5.458   2.673   0.454                       H
+ATOM     20  HO3 GLU ?   1       2.174   3.626   0.124                       H
+ATOM     21  HO6 GLU ?   1       2.160  -3.688  -2.423                       H
+ATOM     22   C1 GLU ?   2       9.095  -0.695   1.603                       C
+ATOM     23   C2 GLU ?   2       8.542   0.732   1.625                       C
+ATOM     24   C3 GLU ?   2       7.024   0.679   1.825                       C
+ATOM     25   C4 GLU ?   2       6.402  -0.169   0.711                       C
+ATOM     26   C5 GLU ?   2       7.039  -1.560   0.722                       C
+ATOM     27   C6 GLU ?   2       6.466  -2.393  -0.426                       C
+ATOM     28   O2 GLU ?   2       9.140   1.458   2.700                       O
+ATOM     29   O3 GLU ?   2       6.489   2.003   1.774                       O
+ATOM     30   O4 GLU ?   2       4.995  -0.284   0.927                       O
+ATOM     31   O5 GLU ?   2       8.453  -1.437   0.563                       O
+ATOM     32   O6 GLU ?   2       6.971  -3.727  -0.345                       O
+ATOM     33   H1 GLU ?   2      10.169  -0.665   1.418                       H
+ATOM     34   H2 GLU ?   2       8.768   1.226   0.680                       H
+ATOM     35   H3 GLU ?   2       6.800   0.230   2.793                       H
+ATOM     36   H4 GLU ?   2       6.586   0.307  -0.254                       H
+ATOM     37   H5 GLU ?   2       6.821  -2.051   1.672                       H
+ATOM     38  H61 GLU ?   2       5.379  -2.412  -0.355                       H
+ATOM     39  H62 GLU ?   2       6.760  -1.950  -1.377                       H
+ATOM     40  HO2 GLU ?   2      10.103   1.528   2.640                       H
+ATOM     41  HO3 GLU ?   2       6.844   2.597   2.449                       H
+ATOM     42  HO6 GLU ?   2       6.650  -4.313  -1.044                       H
+CONECT    1    2   10   12   30
+CONECT    2    3    1    7   13
+CONECT    3    2    4    8   14
+CONECT    4    3    9   15    5
+CONECT    5   16    4    6   10
+CONECT    6   18    5   11   17
+CONECT    7    2   19
+CONECT    8    3   20
+CONECT    9    4
+CONECT   10    1    5
+CONECT   11    6   21
+CONECT   12    1
+CONECT   13    2
+CONECT   14    3
+CONECT   15    4
+CONECT   16    5
+CONECT   17    6
+CONECT   18    6
+CONECT   19    7
+CONECT   20    8
+CONECT   21   11
+CONECT   22   23   31   33
+CONECT   23   24   22   28   34
+CONECT   24   23   25   29   35
+CONECT   25   24   30   36   26
+CONECT   26   37   25   27   31
+CONECT   27   39   26   32   38
+CONECT   28   23   40
+CONECT   29   24   41
+CONECT   30   25    1
+CONECT   31   22   26
+CONECT   32   27   42
+CONECT   33   22
+CONECT   34   23
+CONECT   35   24
+CONECT   36   25
+CONECT   37   26
+CONECT   38   27
+CONECT   39   27
+CONECT   40   28
+CONECT   41   29
+CONECT   42   32
+ENDMDL

@@ -1,0 +1,414 @@
+MODEL        1
+ATOM      1   C1 GLU ?   1       4.508   0.307  -0.280                       C
+ATOM      2   C2 GLU ?   1       3.920   1.711  -0.446                       C
+ATOM      3   C3 GLU ?   1       2.403   1.647  -0.241                       C
+ATOM      4   C4 GLU ?   1       1.806   0.645  -1.233                       C
+ATOM      5   C5 GLU ?   1       2.476  -0.717  -1.037                       C
+ATOM      6   C6 GLU ?   1       1.927  -1.708  -2.065                       C
+ATOM      7   O2 GLU ?   1       4.497   2.588   0.522                       O
+ATOM      8   O3 GLU ?   1       1.836   2.939  -0.467                       O
+ATOM      9   O4 GLU ?   1       0.401   0.524  -1.002                       O
+ATOM     10   O5 GLU ?   1       3.887  -0.582  -1.212                       O
+ATOM     11   O6 GLU ?   1       2.465  -3.008  -1.808                       O
+ATOM     12   H1 GLU ?   1       5.582   0.339  -0.468                       H
+ATOM     13   H2 GLU ?   1       4.136   2.081  -1.449                       H
+ATOM     14   H3 GLU ?   1       2.187   1.326   0.778                       H
+ATOM     15   H4 GLU ?   1       1.980   0.993  -2.252                       H
+ATOM     16   H5 GLU ?   1       2.268  -1.083  -0.031                       H
+ATOM     17  H61 GLU ?   1       0.841  -1.745  -1.991                       H
+ATOM     18  H62 GLU ?   1       2.213  -1.389  -3.066                       H
+ATOM     19  HO2 GLU ?   1       5.458   2.673   0.454                       H
+ATOM     20  HO3 GLU ?   1       2.174   3.626   0.124                       H
+ATOM     21  HO6 GLU ?   1       2.160  -3.688  -2.423                       H
+ATOM     22   C1 GLU ?   2       9.095  -0.695   1.603                       C
+ATOM     23   C2 GLU ?   2       8.542   0.732   1.625                       C
+ATOM     24   C3 GLU ?   2       7.024   0.679   1.825                       C
+ATOM     25   C4 GLU ?   2       6.402  -0.169   0.711                       C
+ATOM     26   C5 GLU ?   2       7.039  -1.560   0.722                       C
+ATOM     27   C6 GLU ?   2       6.466  -2.393  -0.426                       C
+ATOM     28   O2 GLU ?   2       9.140   1.458   2.700                       O
+ATOM     29   O3 GLU ?   2       6.489   2.003   1.774                       O
+ATOM     30   O4 GLU ?   2       4.995  -0.284   0.927                       O
+ATOM     31   O5 GLU ?   2       8.453  -1.437   0.563                       O
+ATOM     32   O6 GLU ?   2       6.971  -3.727  -0.345                       O
+ATOM     33   H1 GLU ?   2      10.169  -0.665   1.418                       H
+ATOM     34   H2 GLU ?   2       8.768   1.226   0.680                       H
+ATOM     35   H3 GLU ?   2       6.800   0.230   2.793                       H
+ATOM     36   H4 GLU ?   2       6.586   0.307  -0.254                       H
+ATOM     37   H5 GLU ?   2       6.821  -2.051   1.672                       H
+ATOM     38  H61 GLU ?   2       5.379  -2.412  -0.355                       H
+ATOM     39  H62 GLU ?   2       6.760  -1.950  -1.377                       H
+ATOM     40  HO2 GLU ?   2      10.103   1.528   2.640                       H
+ATOM     41  HO3 GLU ?   2       6.844   2.597   2.449                       H
+ATOM     42  HO6 GLU ?   2       6.650  -4.313  -1.044                       H
+ATOM     43   C1 GLU ?   3      13.656  -2.051   3.322                       C
+ATOM     44   C2 GLU ?   3      13.138  -0.626   3.535                       C
+ATOM     45   C3 GLU ?   3      11.619  -0.668   3.731                       C
+ATOM     46   C4 GLU ?   3      10.977  -1.344   2.516                       C
+ATOM     47   C5 GLU ?   3      11.579  -2.740   2.341                       C
+ATOM     48   C6 GLU ?   3      10.987  -3.400   1.095                       C
+ATOM     49   O2 GLU ?   3      13.754  -0.063   4.695                       O
+ATOM     50   O3 GLU ?   3      11.117   0.664   3.857                       O
+ATOM     51   O4 GLU ?   3       9.567  -1.453   2.720                       O
+ATOM     52   O5 GLU ?   3      12.996  -2.632   2.195                       O
+ATOM     53   O6 GLU ?   3      11.459  -4.745   0.996                       O
+ATOM     54   H1 GLU ?   3      14.731  -2.022   3.139                       H
+ATOM     55   H2 GLU ?   3      13.376  -0.017   2.663                       H
+ATOM     56   H3 GLU ?   3      11.384  -1.235   4.631                       H
+ATOM     57   H4 GLU ?   3      11.172  -0.750   1.622                       H
+ATOM     58   H5 GLU ?   3      11.349  -3.348   3.218                       H
+ATOM     59  H61 GLU ?   3       9.900  -3.401   1.166                       H
+ATOM     60  H62 GLU ?   3      11.291  -2.842   0.209                       H
+ATOM     61  HO2 GLU ?   3      14.718  -0.009   4.642                       H
+ATOM     62  HO3 GLU ?   3      11.486   1.155   4.604                       H
+ATOM     63  HO6 GLU ?   3      11.124  -5.225   0.227                       H
+ATOM     64   C1 GLU ?   4      16.207  -1.250   7.733                       C
+ATOM     65   C2 GLU ?   4      17.718  -1.034   7.614                       C
+ATOM     66   C3 GLU ?   4      18.040  -0.486   6.220                       C
+ATOM     67   C4 GLU ?   4      17.507  -1.461   5.165                       C
+ATOM     68   C5 GLU ?   4      16.005  -1.660   5.379                       C
+ATOM     69   C6 GLU ?   4      15.476  -2.678   4.366                       C
+ATOM     70   O2 GLU ?   4      18.146  -0.099   8.606                       O
+ATOM     71   O3 GLU ?   4      19.455  -0.352   6.075                       O
+ATOM     72   O4 GLU ?   4      17.738  -0.925   3.861                       O
+ATOM     73   O5 GLU ?   4      15.772  -2.141   6.703                       O
+ATOM     74   O6 GLU ?   4      14.056  -2.777   4.487                       O
+ATOM     75   H1 GLU ?   4      15.977  -1.680   8.708                       H
+ATOM     76   H2 GLU ?   4      18.235  -1.984   7.761                       H
+ATOM     77   H3 GLU ?   4      17.565   0.486   6.093                       H
+ATOM     78   H4 GLU ?   4      18.019  -2.419   5.263                       H
+ATOM     79   H5 GLU ?   4      15.488  -0.709   5.242                       H
+ATOM     80  H61 GLU ?   4      15.915  -3.673   4.423                       H
+ATOM     81  H62 GLU ?   4      15.867  -2.062   5.176                       H
+ATOM     82  HO2 GLU ?   4      17.970  -0.380   9.515                       H
+ATOM     83  HO3 GLU ?   4      19.862   0.247   6.717                       H
+ATOM     84   C1 GLU ?   5      18.385   0.303   4.208                       C
+ATOM     85   C2 GLU ?   5      17.767   1.703   4.202                       C
+ATOM     86   C3 GLU ?   5      17.972   2.337   2.822                       C
+ATOM     87   C4 GLU ?   5      19.470   2.360   2.501                       C
+ATOM     88   C5 GLU ?   5      20.022   0.935   2.573                       C
+ATOM     89   C6 GLU ?   5      21.529   0.958   2.312                       C
+ATOM     90   O2 GLU ?   5      16.365   1.608   4.460                       O
+ATOM     91   O3 GLU ?   5      17.464   3.673   2.830                       O
+ATOM     92   O4 GLU ?   5      19.668   2.884   1.186                       O
+ATOM     93   O5 GLU ?   5      19.771   0.393   3.871                       O
+ATOM     94   O6 GLU ?   5      22.025  -0.382   2.264                       O
+ATOM     95   H1 GLU ?   5      18.258  -0.132   5.200                       H
+ATOM     96   H2 GLU ?   5      18.249   2.318   4.962                       H
+ATOM     97   H3 GLU ?   5      17.446   1.749   2.070                       H
+ATOM     98   H4 GLU ?   5      19.988   2.989   3.226                       H
+ATOM     99   H5 GLU ?   5      19.531   0.316   1.820                       H
+ATOM    100  H61 GLU ?   5      21.726   1.452   1.362                       H
+ATOM    101  H62 GLU ?   5      22.028   1.501   3.114                       H
+ATOM    102  HO2 GLU ?   5      16.148   1.205   5.313                       H
+ATOM    103  HO3 GLU ?   5      16.520   3.734   3.033                       H
+ATOM    104   C1 GLU ?   6      20.479   4.021   1.491                       C
+ATOM    105   C2 GLU ?   6      20.034   5.485   1.538                       C
+ATOM    106   C3 GLU ?   6      20.212   6.110   0.151                       C
+ATOM    107   C4 GLU ?   6      21.675   5.960  -0.280                       C
+ATOM    108   C5 GLU ?   6      22.057   4.479  -0.256                       C
+ATOM    109   C6 GLU ?   6      23.533   4.327  -0.628                       C
+ATOM    110   O2 GLU ?   6      18.653   5.552   1.899                       O
+ATOM    111   O3 GLU ?   6      19.869   7.496   0.204                       O
+ATOM    112   O4 GLU ?   6      21.838   6.476  -1.603                       O
+ATOM    113   O5 GLU ?   6      21.838   3.952   1.054                       O
+ATOM    114   O6 GLU ?   6      23.861   2.939  -0.720                       O
+ATOM    115   H1 GLU ?   6      20.375   3.590   2.487                       H
+ATOM    116   H2 GLU ?   6      20.640   6.027   2.265                       H
+ATOM    117   H3 GLU ?   6      19.567   5.599  -0.564                       H
+ATOM    118   H4 GLU ?   6      22.315   6.513   0.409                       H
+ATOM    119   H5 GLU ?   6      21.443   3.933  -0.974                       H
+ATOM    120  H61 GLU ?   6      23.718   4.808  -1.588                       H
+ATOM    121  H62 GLU ?   6      24.151   4.795   0.138                       H
+ATOM    122  HO2 GLU ?   6      18.452   5.166   2.763                       H
+ATOM    123  HO3 GLU ?   6      18.956   7.665   0.477                       H
+ATOM    124   C1 GLU ?   7      22.799   7.504  -1.352                       C
+ATOM    125   C2 GLU ?   7      22.536   9.009  -1.263                       C
+ATOM    126   C3 GLU ?   7      22.686   9.629  -2.657                       C
+ATOM    127   C4 GLU ?   7      24.085   9.314  -3.195                       C
+ATOM    128   C5 GLU ?   7      24.289   7.797  -3.208                       C
+ATOM    129   C6 GLU ?   7      25.705   7.477  -3.688                       C
+ATOM    130   O2 GLU ?   7      21.202   9.235  -0.801                       O
+ATOM    131   O3 GLU ?   7      22.514  11.045  -2.571                       O
+ATOM    132   O4 GLU ?   7      24.212   9.825  -4.523                       O
+ATOM    133   O5 GLU ?   7      24.105   7.281  -1.889                       O
+ATOM    134   O6 GLU ?   7      25.858   6.061  -3.813                       O
+ATOM    135   H1 GLU ?   7      22.716   7.075  -0.353                       H
+ATOM    136   H2 GLU ?   7      23.253   9.466  -0.581                       H
+ATOM    137   H3 GLU ?   7      21.934   9.209  -3.325                       H
+ATOM    138   H4 GLU ?   7      24.835   9.776  -2.552                       H
+ATOM    139   H5 GLU ?   7      23.564   7.339  -3.882                       H
+ATOM    140  H61 GLU ?   7      25.876   7.946  -4.657                       H
+ATOM    141  H62 GLU ?   7      26.428   7.858  -2.967                       H
+ATOM    142  HO2 GLU ?   7      21.020   8.863   0.073                       H
+ATOM    143  HO3 GLU ?   7      21.651  11.317  -2.230                       H
+ATOM    144   C1 GLU ?   8      13.540  -0.711  11.997                       C
+ATOM    145   C2 GLU ?   8      15.019  -0.319  11.952                       C
+ATOM    146   C3 GLU ?   8      15.352   0.226  10.559                       C
+ATOM    147   C4 GLU ?   8      14.999  -0.834   9.511                       C
+ATOM    148   C5 GLU ?   8      13.521  -1.206   9.651                       C
+ATOM    149   C6 GLU ?   8      13.175  -2.307   8.647                       C
+ATOM    150   O2 GLU ?   8      15.276   0.688  12.933                       O
+ATOM    151   O3 GLU ?   8      16.747   0.526  10.485                       O
+ATOM    152   O4 GLU ?   8      15.238  -0.309   8.203                       O
+ATOM    153   O5 GLU ?   8      13.273  -1.676  10.977                       O
+ATOM    154   O6 GLU ?   8      11.772  -2.573   8.695                       O
+ATOM    155   H1 GLU ?   8      13.307  -1.139  12.973                       H
+ATOM    156   H2 GLU ?   8      15.635  -1.195  12.158                       H
+ATOM    157   H3 GLU ?   8      14.773   1.130  10.374                       H
+ATOM    158   H4 GLU ?   8      15.614  -1.720   9.668                       H
+ATOM    159   H5 GLU ?   8      12.904  -0.328   9.455                       H
+ATOM    160  H61 GLU ?   8      13.448  -1.983   7.643                       H
+ATOM    161  H62 GLU ?   8      13.725  -3.214   8.898                       H
+ATOM    162  HO2 GLU ?   8      15.083   0.413  13.840                       H
+ATOM    163  HO3 GLU ?   8      17.043   1.186  11.127                       H
+ATOM    164  HO6 GLU ?   8      11.480  -3.263   8.084                       H
+ATOM    165   C1 GLU ?   9      10.589  -0.380  16.094                       C
+ATOM    166   C2 GLU ?   9      12.012   0.185  16.114                       C
+ATOM    167   C3 GLU ?   9      12.357   0.728  14.723                       C
+ATOM    168   C4 GLU ?   9      12.191  -0.395  13.694                       C
+ATOM    169   C5 GLU ?   9      10.763  -0.938  13.768                       C
+ATOM    170   C6 GLU ?   9      10.607  -2.099  12.784                       C
+ATOM    171   O2 GLU ?   9      12.092   1.242  17.072                       O
+ATOM    172   O3 GLU ?   9      13.709   1.191  14.713                       O
+ATOM    173   O4 GLU ?   9      12.441   0.119  12.384                       O
+ATOM    174   O5 GLU ?   9      10.497  -1.398  15.094                       O
+ATOM    175   O6 GLU ?   9       9.245  -2.531  12.767                       O
+ATOM    176   H1 GLU ?   9      10.354  -0.807  17.069                       H
+ATOM    177   H2 GLU ?   9      12.715  -0.604  16.381                       H
+ATOM    178   H3 GLU ?   9      11.686   1.551  14.477                       H
+ATOM    179   H4 GLU ?   9      12.898  -1.196  13.913                       H
+ATOM    180   H5 GLU ?   9      10.058  -0.146  13.510                       H
+ATOM    181  H61 GLU ?   9      10.896  -1.772  11.786                       H
+ATOM    182  H62 GLU ?   9      11.246  -2.926  13.094                       H
+ATOM    183  HO2 GLU ?   9      11.882   0.970  17.976                       H
+ATOM    184  HO3 GLU ?   9      13.887   1.899  15.347                       H
+ATOM    185  HO6 GLU ?   9       9.072  -3.267  12.165                       H
+ATOM    186   C1 GLU ?  10       7.393  -0.295  20.014                       C
+ATOM    187   C2 GLU ?  10       8.735   0.437  20.091                       C
+ATOM    188   C3 GLU ?  10       9.092   0.979  18.703                       C
+ATOM    189   C4 GLU ?  10       9.119  -0.182  17.705                       C
+ATOM    190   C5 GLU ?  10       7.763  -0.891  17.721                       C
+ATOM    191   C6 GLU ?  10       7.802  -2.089  16.770                       C
+ATOM    192   O2 GLU ?  10       8.635   1.521  21.016                       O
+ATOM    193   O3 GLU ?  10      10.378   1.601  18.748                       O
+ATOM    194   O4 GLU ?  10       9.380   0.322  16.393                       O
+ATOM    195   O5 GLU ?  10       7.479  -1.343  19.046                       O
+ATOM    196   O6 GLU ?  10       6.503  -2.681  16.696                       O
+ATOM    197   H1 GLU ?  10       7.156  -0.720  20.990                       H
+ATOM    198   H2 GLU ?  10       9.510  -0.255  20.422                       H
+ATOM    199   H3 GLU ?  10       8.343   1.709  18.394                       H
+ATOM    200   H4 GLU ?  10       9.902  -0.887  17.988                       H
+ATOM    201   H5 GLU ?  10       6.986  -0.197  17.399                       H
+ATOM    202  H61 GLU ?  10       8.106  -1.757  15.779                       H
+ATOM    203  H62 GLU ?  10       8.515  -2.824  17.142                       H
+ATOM    204  HO2 GLU ?  10       8.408   1.251  21.916                       H
+ATOM    205  HO3 GLU ?  10      10.435   2.343  19.367                       H
+ATOM    206  HO6 GLU ?  10       6.454  -3.449  16.110                       H
+CONECT    1    2   10   12   30
+CONECT    2    3    1    7   13
+CONECT    3    2    4    8   14
+CONECT    4    3    9   15    5
+CONECT    5   16    4    6   10
+CONECT    6   18    5   11   17
+CONECT    7    2   19
+CONECT    8    3   20
+CONECT    9    4
+CONECT   10    1    5
+CONECT   11    6   21
+CONECT   12    1
+CONECT   13    2
+CONECT   14    3
+CONECT   15    4
+CONECT   16    5
+CONECT   17    6
+CONECT   18    6
+CONECT   19    7
+CONECT   20    8
+CONECT   21   11
+CONECT   22   23   31   33   51
+CONECT   23   24   22   28   34
+CONECT   24   23   25   29   35
+CONECT   25   24   30   36   26
+CONECT   26   37   25   27   31
+CONECT   27   39   26   32   38
+CONECT   28   23   40
+CONECT   29   24   41
+CONECT   30   25    1
+CONECT   31   22   26
+CONECT   32   27   42
+CONECT   33   22
+CONECT   34   23
+CONECT   35   24
+CONECT   36   25
+CONECT   37   26
+CONECT   38   27
+CONECT   39   27
+CONECT   40   28
+CONECT   41   29
+CONECT   42   32
+CONECT   43   44   52   54   74
+CONECT   44   45   43   49   55
+CONECT   45   44   46   50   56
+CONECT   46   45   51   57   47
+CONECT   47   58   46   48   52
+CONECT   48   60   47   53   59
+CONECT   49   44   61
+CONECT   50   45   62
+CONECT   51   46   22
+CONECT   52   43   47
+CONECT   53   48   63
+CONECT   54   43
+CONECT   55   44
+CONECT   56   45
+CONECT   57   46
+CONECT   58   47
+CONECT   59   48
+CONECT   60   48
+CONECT   61   49
+CONECT   62   50
+CONECT   63   53
+CONECT   64   65   73   75  152
+CONECT   65   66   64   70   76
+CONECT   66   65   67   71   77
+CONECT   67   66   72   78   68
+CONECT   68   79   67   69   73
+CONECT   69   81   68   74   80
+CONECT   70   65   82
+CONECT   71   66   83
+CONECT   72   67   84
+CONECT   73   64   68
+CONECT   74   69   43
+CONECT   75   64
+CONECT   76   65
+CONECT   77   66
+CONECT   78   67
+CONECT   79   68
+CONECT   80   69
+CONECT   81   69
+CONECT   82   70
+CONECT   83   71
+CONECT   84   85   93   95   72
+CONECT   85   86   84   90   96
+CONECT   86   85   87   91   97
+CONECT   87   86   92   98   88
+CONECT   88   99   87   89   93
+CONECT   89  101   88   94  100
+CONECT   90   85  102
+CONECT   91   86  103
+CONECT   92   87  104
+CONECT   93   84   88
+CONECT   94   89
+CONECT   95   84
+CONECT   96   85
+CONECT   97   86
+CONECT   98   87
+CONECT   99   88
+CONECT  100   89
+CONECT  101   89
+CONECT  102   90
+CONECT  103   91
+CONECT  104  105  113  115   92
+CONECT  105  106  104  110  116
+CONECT  106  105  107  111  117
+CONECT  107  106  112  118  108
+CONECT  108  119  107  109  113
+CONECT  109  121  108  114  120
+CONECT  110  105  122
+CONECT  111  106  123
+CONECT  112  107  124
+CONECT  113  104  108
+CONECT  114  109
+CONECT  115  104
+CONECT  116  105
+CONECT  117  106
+CONECT  118  107
+CONECT  119  108
+CONECT  120  109
+CONECT  121  109
+CONECT  122  110
+CONECT  123  111
+CONECT  124  125  133  135  112
+CONECT  125  126  124  130  136
+CONECT  126  125  127  131  137
+CONECT  127  126  132  138  128
+CONECT  128  139  127  129  133
+CONECT  129  141  128  134  140
+CONECT  130  125  142
+CONECT  131  126  143
+CONECT  132  127
+CONECT  133  124  128
+CONECT  134  129
+CONECT  135  124
+CONECT  136  125
+CONECT  137  126
+CONECT  138  127
+CONECT  139  128
+CONECT  140  129
+CONECT  141  129
+CONECT  142  130
+CONECT  143  131
+CONECT  144  145  153  155  173
+CONECT  145  146  144  150  156
+CONECT  146  145  147  151  157
+CONECT  147  146  152  158  148
+CONECT  148  159  147  149  153
+CONECT  149  161  148  154  160
+CONECT  150  145  162
+CONECT  151  146  163
+CONECT  152  147   64
+CONECT  153  144  148
+CONECT  154  149  164
+CONECT  155  144
+CONECT  156  145
+CONECT  157  146
+CONECT  158  147
+CONECT  159  148
+CONECT  160  149
+CONECT  161  149
+CONECT  162  150
+CONECT  163  151
+CONECT  164  154
+CONECT  165  166  174  176  194
+CONECT  166  167  165  171  177
+CONECT  167  166  168  172  178
+CONECT  168  167  173  179  169
+CONECT  169  180  168  170  174
+CONECT  170  182  169  175  181
+CONECT  171  166  183
+CONECT  172  167  184
+CONECT  173  168  144
+CONECT  174  165  169
+CONECT  175  170  185
+CONECT  176  165
+CONECT  177  166
+CONECT  178  167
+CONECT  179  168
+CONECT  180  169
+CONECT  181  170
+CONECT  182  170
+CONECT  183  171
+CONECT  184  172
+CONECT  185  175
+CONECT  186  187  195  197
+CONECT  187  188  186  192  198
+CONECT  188  187  189  193  199
+CONECT  189  188  194  200  190
+CONECT  190  201  189  191  195
+CONECT  191  203  190  196  202
+CONECT  192  187  204
+CONECT  193  188  205
+CONECT  194  189  165
+CONECT  195  186  190
+CONECT  196  191  206
+CONECT  197  186
+CONECT  198  187
+CONECT  199  188
+CONECT  200  189
+CONECT  201  190
+CONECT  202  191
+CONECT  203  191
+CONECT  204  192
+CONECT  205  193
+CONECT  206  196
+ENDMDL

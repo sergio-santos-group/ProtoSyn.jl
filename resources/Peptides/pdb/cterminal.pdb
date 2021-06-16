@@ -1,0 +1,11 @@
+ATOM      1  N   CTL A   1      52.240  -3.056 -17.496  1.00  0.00      A    N
+ATOM      2  CA  CTL A   1      50.754  -2.938 -17.526  1.00  0.00      A    C
+ATOM      3  C   CTL A   1      50.333  -1.766 -18.417  1.00  0.00      A    C
+ATOM      4  O   CTL A   1      49.248  -1.249 -18.209  1.00  0.00      A    O
+ATOM      5  OXT CTL A   1      51.103  -1.408 -19.294  1.00  0.00      A    O
+TER
+CONECT    1    2
+CONECT    2    1    3
+CONECT    3    2    4    5
+CONECT    4    3
+CONECT    5    3

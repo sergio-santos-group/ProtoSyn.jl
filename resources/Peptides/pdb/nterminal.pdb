@@ -1,0 +1,13 @@
+ATOM      1  N   NTL A   1      55.881   8.038  16.840  1.00  0.00      A    N
+ATOM      2  CA  NTL A   1      56.203   9.492  16.942  1.00  0.00      A    C
+ATOM      3  C   NTL A   1      56.556  10.053  15.560  1.00  0.00      A    C
+ATOM      4  H1  NTL A   1      56.492   7.595  16.126  1.00  0.00      A    H
+ATOM      5  H2  NTL A   1      56.037   7.580  17.760  1.00  0.00      A    H
+ATOM      6  H3  NTL A   1      54.884   7.924  16.561  1.00  0.00      A    H
+TER
+CONECT    1    2    4    5    6
+CONECT    2    1    3
+CONECT    3    2
+CONECT    4    1
+CONECT    5    1
+CONECT    6    1
