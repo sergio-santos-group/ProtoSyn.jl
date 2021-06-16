@@ -126,6 +126,7 @@ deploydocs(
     #deps = nothing,
     #make = nothing,
     #target = "build",
-    branch = "use-cases",
+    #devbranch = "refactoring",
     devurl = "dev",
+    versions = ["stable" => "v^", "v#.#", "dev" => "dev", "v0.2-alpha"=>"v0.2-alpha"],
 )
