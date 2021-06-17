@@ -71,7 +71,13 @@ function show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode} = no
     if level_code === nothing
         level_code = LevelCode()
     end
-    println(io, lead*"RandomSelection › $T.id")
+    
+    if rs.sele !== nothing
+        println(io, lead*"RandomSelection › $T.id › From")
+        ProtoSyn.show(io, rs.sele, vcat(level_code, 4))
+    else
+        println(io, lead*"RandomSelection › $T.id")
+    end
 end
 
 # ------------------------------------------------------------------------------
