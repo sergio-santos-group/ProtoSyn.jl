@@ -16,9 +16,9 @@ the loading status.
 julia> res_lib = ProtoSyn.Peptides.grammar()
 ```
 """
-function grammar(::Type{T}; verbose::Bool = true) where {T <: AbstractFloat}
+function grammar(::Type{T}) where {T <: AbstractFloat}
     filename = joinpath(Peptides.resource_dir, "grammars.yml")
-    ProtoSyn.load_grammar_from_file(T, filename, "peptide", verbose = verbose)
+    ProtoSyn.load_grammar_from_file(T, filename, "peptide")
 end
 
-grammar(;verbose::Bool = true) = grammar(ProtoSyn.Units.defaultFloat; verbose = verbose)
+grammar(;verbose::Bool = true) = grammar(ProtoSyn.Units.defaultFloat)

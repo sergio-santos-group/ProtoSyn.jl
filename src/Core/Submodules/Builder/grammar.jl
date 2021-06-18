@@ -248,7 +248,7 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             parent = pop!(stack)
         elseif isvar(grammar, letter)
             frag = getvar(grammar, letter)
-            
+
             frag2 = copy(frag)
 
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
@@ -260,6 +260,7 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             parent = frag2
         end
     end
+
     reindex(seg)
     seg.id = state.id = ProtoSyn.genid()
 
@@ -359,13 +360,13 @@ status.
     This is an internal method of ProtoSyn and shouldn't normally be used
     directly.
 """
-function lgfactory(::Type{T}, template::Dict; verbose::Bool = true) where T
+function lgfactory(::Type{T}, template::Dict) where T
     grammar = LGrammar{T, String, Vector{String}}()
 
     vars = template["variables"]
     for (key, name) in vars
         filename = joinpath(ProtoSyn.resource_dir, name)
-        verbose && @info "Loading variable '$key' from $filename"
+        ProtoSyn.verbose.mode && @info "Loading variable '$key' from $filename"
         pose = ProtoSyn.load(T, filename)
         pose.graph.name = pose.graph[1].name # ! Hack for long filenames
         grammar[key] = fragment(pose)
@@ -398,14 +399,14 @@ function lgfactory(::Type{T}, template::Dict; verbose::Bool = true) where T
             end
         end
 
-        verbose && @info "Loading operator $opname"
+        ProtoSyn.verbose.mode && @info "Loading operator $opname"
         grammar[opname] = opfactory(opargs)
     end
     grammar.defop = getop(grammar, template["defop"])
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]
-            verbose && @info "Loading productions for rule $key"
+            ProtoSyn.verbose.mode && @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
@@ -440,14 +441,14 @@ julia> lgrammar = load_grammar_from_file(Float64, filename, "peptide")
 julia> lgrammar = load_grammar_from_file(filename, "peptide")
 ```
 """
-function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String; verbose::Bool = true) where {T <: AbstractFloat}
+function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     open(filename) do io
-        verbose && @info "loading grammar from file $filename"
+        ProtoSyn.verbose.mode && @info "loading grammar from file $filename"
         yml = YAML.load(io)
-        return lgfactory(T, yml[key], verbose = verbose)
+        return lgfactory(T, yml[key])
     end
 end
 
-load_grammar_from_file(filename::AbstractString, key::String; verbose::Bool = true) = begin
-    return load_grammar_from_file(Units.defaultFloat, filename, key; verbose = verbose)
+load_grammar_from_file(filename::AbstractString, key::String) = begin
+    return load_grammar_from_file(Units.defaultFloat, filename, key)
 end
