@@ -1,5 +1,5 @@
 """
-    load([::Type{T}], filename::AbstractString; bonds_by_distance::Bool = false, verbose::Bool = true) where {T <: AbstractFloat}
+    load([::Type{T}], filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
 Load the given `filename` into a [`Pose`](@ref), parametrized by `T`. If this is
 not provided, the default `ProtoSyn.Units.defaultFloat` is used instead. The
@@ -8,8 +8,7 @@ file format is infered from the extension (Supported: .pdb, .yml). If
 will be complemented with bonds infered by distance. The threshold distances for
 each pair of atoms is defined in `ProtoSyn.bond_lengths`. Infers parenthood and
 ascedence from bonds (N-[`Residue`](@ref) instances have the connected
-C-[`Residue`](@ref) as child). If `verbose` is set to `true` (is, by default),
-print the loading status.
+C-[`Residue`](@ref) as child).
 
 !!! ukw "Note:"
     This function is an extension of [`ProtoSyn.load`](@ref).
@@ -24,9 +23,9 @@ Pose{Topology}(Topology{/2a3d:61708}, State{Float64}:
 )
 ```
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, verbose::Bool = true) where {T <: AbstractFloat}
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
 
-    if !bonds_by_distance && verbose
+    if !bonds_by_distance && ProtoSyn.verbose.mode
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
     end
 

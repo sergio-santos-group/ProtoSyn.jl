@@ -43,7 +43,9 @@ end
 
 
 load(filename::AbstractString; bonds_by_distance = false) = begin
-    @info "Consider using Peptides.load when dealing with peptide chains."
+    ProtoSyn.verbose.mode && begin
+        @info "Consider using Peptides.load when dealing with peptide chains."
+    end
     load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance)
 end
 
