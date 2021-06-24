@@ -79,7 +79,7 @@ end
 
 function (rotamer_mutator::RotamerMutator)(pose::Pose)
     if rotamer_mutator.selection === nothing
-        atoms = collect(eachatom(pose.graph))
+        atoms = Vector{Atom}(collect(eachatom(pose.graph)))
     else
         sele = rotamer_mutator.selection
         atoms = ProtoSyn.promote(sele, Atom)(pose, gather = true)
