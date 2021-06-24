@@ -133,11 +133,7 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-Base.show(io::IO, drv::CompoundDriver) = begin
-    ProtoSyn.Drivers.show(io, drv)
-end
-
-function show(io::IO, drv::CompoundDriver, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, drv::CompoundDriver, level_code::Opt{LevelCode} = nothing)
     init_level_code = level_code === nothing ? LevelCode() : level_code
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -146,10 +142,10 @@ function show(io::IO, drv::CompoundDriver, level_code::Opt{LevelCode} = nothing)
 
     for driver in drv.drivers[1:(end-1)]
         if isa(driver, AbstractMutator)
-            ProtoSyn.Mutators.show(io, driver, vcat(init_level_code, 3))
+            Base.show(io, driver, vcat(init_level_code, 3))
             println(io, init_inner_lead*init_level_code.code_table[1])
         elseif isa(driver, Driver)
-            ProtoSyn.Drivers.show(io, driver, vcat(init_level_code, 3))
+            Base.show(io, driver, vcat(init_level_code, 3))
             println(io, init_inner_lead*init_level_code.code_table[1])
         else
             f_lead = ProtoSyn.get_lead(vcat(init_level_code, 3))
@@ -159,9 +155,9 @@ function show(io::IO, drv::CompoundDriver, level_code::Opt{LevelCode} = nothing)
     end
 
     if isa(drv.drivers[end], AbstractMutator)
-        ProtoSyn.Mutators.show(io, drv.drivers[end], vcat(init_level_code, 4))
+        Base.show(io, drv.drivers[end], vcat(init_level_code, 4))
     elseif isa(drv.drivers[end], Driver)
-        ProtoSyn.Drivers.show(io, drv.drivers[end], vcat(init_level_code, 4))
+        Base.show(io, drv.drivers[end], vcat(init_level_code, 4))
     else
         f_lead = ProtoSyn.get_lead(vcat(init_level_code, 4))
         println(io, f_lead*" ●  Function: $(drv.drivers[end])")

@@ -46,18 +46,13 @@ state_mode_type(::PromoteSelection{M}) where {M} = M
 selection_type(sele::PromoteSelection{M})  where {M} = sele.T
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, ps::PromoteSelection) = begin
-    ProtoSyn.show(io, ps)
-end
-
-function show(io::IO, ps::PromoteSelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
+function Base.show(io::IO, ps::PromoteSelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
     end
     println(io, lead*"PromoteSelection ❯ From $(selection_type(ps.sele)) to $(ps.T)")
-    ProtoSyn.show(io, ps.sele, vcat(level_code, 4))
+    Base.show(io, ps.sele, vcat(level_code, 4))
 end
 
 # ------------------------------------------------------------------------------

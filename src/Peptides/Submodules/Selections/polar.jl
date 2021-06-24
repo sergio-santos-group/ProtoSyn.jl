@@ -58,12 +58,7 @@ ProtoSyn.eval(:(begin
     selection_type(::PolarSelection{M, T}) where {M, T} = T
 
     # --- Show -----------------------------------------------------------------
-
-    Base.show(io::IO, ps::PolarSelection) = begin
-        ProtoSyn.show(io, ps)
-    end
-
-    function show(io::IO, ps::PolarSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    function Base.show(io::IO, ps::PolarSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
         lead = ProtoSyn.get_lead(level_code)
         if level_code === nothing
             level_code = LevelCode()

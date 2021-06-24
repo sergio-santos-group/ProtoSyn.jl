@@ -193,11 +193,7 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-Base.show(io::IO, ilsrrd::ILS) = begin
-    ProtoSyn.Drivers.show(io, ilsrrd)
-end
-
-function show(io::IO, ilsrrd::ILS, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, ils::ILS, level_code::Opt{LevelCode} = nothing)
     init_level_code = level_code === nothing ? LevelCode() : level_code
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -208,35 +204,35 @@ function show(io::IO, ilsrrd::ILS, level_code::Opt{LevelCode} = nothing)
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    if typeof(ilsrrd.eval!) === ProtoSyn.Calculators.EnergyFunction
+    if typeof(ils.eval!) === ProtoSyn.Calculators.EnergyFunction
         println(io, lead*" ●  Evaluator:")
-        ProtoSyn.Calculators.show(io, ilsrrd.eval!, vcat(level_code, 4))
+        Base.show(io, ils.eval!, vcat(level_code, 4))
     else
-        println(io, lead*" ●  Evaluator: $(ilsrrd.eval!)")
+        println(io, lead*" ●  Evaluator: $(ils.eval!)")
     end
 
     println(io, init_inner_lead*level_code.code_table[1])
 
-    if isa(ilsrrd.jump!, AbstractMutator)
+    if isa(ils.jump!, AbstractMutator)
         println(io, lead*" ● Jump:")
-        ProtoSyn.Mutators.show(io, ilsrrd.jump!, vcat(level_code, 4))
-    elseif isa(ilsrrd.jump!, Driver)
+        Base.show(io, ils.jump!, vcat(level_code, 4))
+    elseif isa(ils.jump!, Driver)
         println(io, lead*" ● Jump:")
-        ProtoSyn.Drivers.show(io, ilsrrd.jump!, vcat(level_code, 4))
+        Base.show(io, ils.jump!, vcat(level_code, 4))
     else
-        println(io, lead*" ●  Jump: $(ilsrrd.jump!)")
+        println(io, lead*" ●  Jump: $(ils.jump!)")
     end
 
     println(io, init_inner_lead*level_code.code_table[1])
 
     println(io, lead*" ● Inner Driver:")
-    ProtoSyn.Drivers.show(io, ilsrrd.inner_driver!, vcat(level_code, 4))
+    Base.show(io, ils.inner_driver!, vcat(level_code, 4))
 
     println(io, init_inner_lead*level_code.code_table[1])
 
-    if ilsrrd.callback !== nothing
+    if ils.callback !== nothing
         println(io, lead*" ● Callback:")
-        ProtoSyn.Drivers.show(io, ilsrrd.callback, vcat(level_code, 4))
+        Base.show(io, ils.callback, vcat(level_code, 4))
     else
         println(io, lead*" ○  Callback: Not set")
     end
@@ -248,6 +244,6 @@ function show(io::IO, ilsrrd::ILS, level_code::Opt{LevelCode} = nothing)
     println(io, init_inner_lead*level_code.code_table[1])
 
     println(io, lead*" ● Settings:")
-    println(io, inner_lead*"  Max steps: $(ilsrrd.max_steps)")
-    println(io, inner_lead*"Temperature: $(ilsrrd.temperature)")
+    println(io, inner_lead*"  Max steps: $(ils.max_steps)")
+    println(io, inner_lead*"Temperature: $(ils.temperature)")
 end

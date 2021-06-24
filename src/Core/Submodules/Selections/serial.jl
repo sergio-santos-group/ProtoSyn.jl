@@ -71,12 +71,7 @@ function select(sele::SerialSelection{Stateless, T}, container::AbstractContaine
 end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, ss::SerialSelection) = begin
-    ProtoSyn.show(io, ss)
-end
-
-function show(io::IO, ss::SerialSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, ss::SerialSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
@@ -196,12 +191,7 @@ macro aid_str(p); occursin(":", p) && return RangeSelection{Atom}(parse(UnitRang
 macro aix_str(p); occursin(":", p) && return RangeSelection{Atom}(parse(UnitRange{Int}, p), :index); SerialSelection{Atom}(parse(Int, p), :index); end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, rs::RangeSelection) = begin
-    ProtoSyn.show(io, rs)
-end
-
-function show(io::IO, rs::RangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, rs::RangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()

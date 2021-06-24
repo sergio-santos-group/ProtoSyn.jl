@@ -61,17 +61,12 @@ function select(sele::UnarySelection{Stateful}, container::AbstractContainer)
 end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, us::UnarySelection) = begin
-    ProtoSyn.show(io, us)
-end
-
-function show(io::IO, us::UnarySelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
+function Base.show(io::IO, us::UnarySelection{M}, level_code::Opt{LevelCode} = nothing) where {M}
     lead = ProtoSyn.get_lead(level_code)
     dict = Dict((!) => "not")
     if level_code === nothing
         level_code = LevelCode()
     end
     println(io, lead*"UnarySelection ❯ $(us.op) \"$(dict[us.op])\" ($(selection_type(us)))")
-    ProtoSyn.show(io, us.sele, vcat(level_code, 4))
+    Base.show(io, us.sele, vcat(level_code, 4))
 end

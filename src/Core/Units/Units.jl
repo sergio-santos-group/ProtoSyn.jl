@@ -41,7 +41,9 @@ const max_bond_lengths = Dict{String, defaultFloat}( # in Å
     "OC" => 2.2,
     "SC" => 2.6,
     "HN" => 1.2,
-    "HO" => 1.2
+    "HO" => 1.2,
+    "HS" => 1.4,
+    "SH" => 1.4,
 )
 
 const bond_lengths = Dict{String, defaultFloat}(

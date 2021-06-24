@@ -1,3 +1,60 @@
+using ProtoSyn
+
+# Load a peptide
+pose      = ProtoSyn.Peptides.load("2a3d.pdb")
+
+# Create a peptide from a sequence
+res_lib   = ProtoSyn.Peptides.grammar()
+appendage = ProtoSyn.Peptides.build(residue_library, seq"ALHYGME",
+    ss = ProtoSyn.Peptides.SecondaryStructure[:helix])
+
+# Append both peptides
+ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][end], res_lib, appendage)
+
+# Remove loop
+for residue in reverse(rid"29:35"(pose, gather = true))
+    ProtoSyn.pop_residue!(pose, residue)
+end
+
+# Extrar loop from loaded pose
+loop_source_pose = ProtoSyn.Peptides.load("1ctf.pdb")
+loop             = fragment(loop_source_pose, rid"40:48")
+
+# Append new loop
+ProtoSyn.Peptides.append_fragment!(pose, pose.graph[1][28], res_lib, loop)
+
+# Close the loop with a Monte Carlo simulation
+evaluator  = ProtoSyn.Common.default_energy_function()
+mutator    = ProtoSyn.Mutators.DihedralMutator(randn, 0.1, 1.0, rid"29:37")
+callback   = ProtoSyn.Common.default_energy_step_frame_callback(10, "out.pdb")
+thermostat = ProtoSyn.Drivers.get_linear_quench(1.0, 100)
+
+sim = ProtoSyn.Drivers.MonteCarlo(evaluator, mutator, callback, 100, thermostat)
+sim(pose)
+
+
+
+
+
+
+# ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 push!(LOAD_PATH, "../src")
 
 using ProtoSyn

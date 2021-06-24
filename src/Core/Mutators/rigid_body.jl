@@ -90,11 +90,7 @@ function (rigid_body_mutator::TranslationRigidBodyMutator)(pose::Pose, atoms::Ve
     ProtoSyn.request_c2i!(pose.state)
 end
 
-Base.show(io::IO, trbm::TranslationRigidBodyMutator) = begin
-    ProtoSyn.Mutators.show(io, trbm)
-end
-
-function show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
@@ -116,7 +112,7 @@ function show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{LevelCo
     
     if trbm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
-        ProtoSyn.show(io, trbm.selection, vcat(level_code, 4))
+        Base.show(io, trbm.selection, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Selection: Not Set")
     end
@@ -231,11 +227,7 @@ function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose, atoms::Vecto
     ProtoSyn.request_c2i!(pose.state)
 end
 
-Base.show(io::IO, rrbm::RotationRigidBodyMutator) = begin
-    ProtoSyn.Mutators.show(io, rrbm)
-end
-
-function show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{LevelCode} = nothing)
     lead = ProtoSyn.get_lead(level_code)
 
     if level_code === nothing
@@ -259,7 +251,7 @@ function show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{LevelCode}
     
     if rrbm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
-        ProtoSyn.show(io, rrbm.selection, vcat(level_code, 4))
+        Base.show(io, rrbm.selection, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Selection: Not Set")
     end

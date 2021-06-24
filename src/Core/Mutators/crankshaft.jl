@@ -154,11 +154,7 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
     end
 end
 
-Base.show(io::IO, cm::CrankshaftMutator) = begin
-    ProtoSyn.Mutators.show(io, cm)
-end
-
-function show(io::IO, cm::CrankshaftMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, cm::CrankshaftMutator, level_code::Opt{LevelCode} = nothing)
     level_code = level_code === nothing ? LevelCode() : level_code
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -174,14 +170,14 @@ function show(io::IO, cm::CrankshaftMutator, level_code::Opt{LevelCode} = nothin
     
     if cm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
-        ProtoSyn.show(io, cm.selection, vcat(level_code, 4))
+        Base.show(io, cm.selection, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Selection: Not Set")
     end
 
     if cm.inc_last_res !== nothing
         println(io, inner_lead*" ● Include on last residue: Set")
-        ProtoSyn.show(io, cm.inc_last_res, vcat(level_code, 4))
+        Base.show(io, cm.inc_last_res, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Include on last residue: Not Set")
     end

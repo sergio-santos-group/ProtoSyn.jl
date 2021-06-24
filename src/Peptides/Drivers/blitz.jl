@@ -166,12 +166,7 @@ function (driver::RotamerBlitz)(pose::Pose)
 end
 
 # * Show -----------------------------------------------------------------------
-
-Base.show(io::IO, rbd::RotamerBlitz) = begin
-    ProtoSyn.Peptides.Drivers.show(io, rbd)
-end
-
-function show(io::IO, rbd::RotamerBlitz, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, rbd::RotamerBlitz, level_code::Opt{LevelCode} = nothing)
     init_level_code = level_code === nothing ? LevelCode() : level_code
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -184,7 +179,7 @@ function show(io::IO, rbd::RotamerBlitz, level_code::Opt{LevelCode} = nothing)
 
     if typeof(rbd.eval!) === ProtoSyn.Calculators.EnergyFunction
         println(io, lead*" ●  Evaluator:")
-        ProtoSyn.Calculators.show(io, rbd.eval!, vcat(level_code, 4))
+        Base.show(io, rbd.eval!, vcat(level_code, 4))
     else
         println(io, lead*" ●  Evaluator: $(rbd.eval!)")
     end
@@ -193,7 +188,7 @@ function show(io::IO, rbd::RotamerBlitz, level_code::Opt{LevelCode} = nothing)
 
     if rbd.callback !== nothing
         println(io, lead*" ● Callback:")
-        ProtoSyn.Drivers.show(io, rbd.callback, vcat(level_code, 4))
+        Base.show(io, rbd.callback, vcat(level_code, 4))
     else
         println(io, lead*" ○  Callback: Not set")
     end
@@ -202,7 +197,7 @@ function show(io::IO, rbd::RotamerBlitz, level_code::Opt{LevelCode} = nothing)
 
     if rbd.selection !== nothing
         println(io, lead*" ● Selection:")
-        ProtoSyn.show(io, rbd.selection, vcat(level_code, 4))
+        Base.show(io, rbd.selection, vcat(level_code, 4))
     else
         println(io, lead*" ○  Selection: Not set")
     end

@@ -58,12 +58,7 @@ ProtoSyn.eval(:(begin
     selection_type(::SidechainSelection{M, T}) where {M, T} = T
 
     # --- Show -----------------------------------------------------------------
-
-    Base.show(io::IO, scs::SidechainSelection) = begin
-        ProtoSyn.show(io, scs)
-    end
-
-    function show(io::IO, scs::SidechainSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    function Base.show(io::IO, scs::SidechainSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
         lead = ProtoSyn.get_lead(level_code)
         if level_code === nothing
             level_code = LevelCode()

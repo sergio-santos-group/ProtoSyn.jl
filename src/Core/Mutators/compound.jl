@@ -124,11 +124,7 @@ function (compound_mutator::CompoundMutator)(pose::Pose, atoms::Vector{Atom})
     end
 end
 
-Base.show(io::IO, cm::CompoundMutator) = begin
-    ProtoSyn.Mutators.show(io, cm)
-end
-
-function show(io::IO, cm::CompoundMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, cm::CompoundMutator, level_code::Opt{LevelCode} = nothing)
     init_level_code = level_code === nothing ? LevelCode() : level_code
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -143,10 +139,10 @@ function show(io::IO, cm::CompoundMutator, level_code::Opt{LevelCode} = nothing)
     if N > 0
         println(io, lead*" ● Inner Mutators ($N elements):")
         for mutator in cm.mutators[1:(end-1)]
-            ProtoSyn.Mutators.show(io, mutator, vcat(level_code, 3))
+            Base.show(io, mutator, vcat(level_code, 3))
             println(io, inner_lead*level_code.code_table[1])
         end
-        ProtoSyn.Mutators.show(io, cm.mutators[end], vcat(level_code, 4))
+        Base.show(io, cm.mutators[end], vcat(level_code, 4))
 
     else
         println(io, lead*" ○  Inner Mutators: None")
@@ -160,8 +156,7 @@ function show(io::IO, cm::CompoundMutator, level_code::Opt{LevelCode} = nothing)
 
     if cm.selection !== nothing
         println(io, lead*" ● Selection: Set")
-        ProtoSyn.show(io, cm.selection, vcat(level_code, 4))
-
+        Base.show(io, cm.selection, vcat(level_code, 4))
     else
         println(io, lead*" ○  Selection: Not Set")
     end

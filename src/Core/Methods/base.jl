@@ -83,6 +83,9 @@ Base.push!(container::AbstractContainer{T}, items::Vector{T}) where {T <: Abstra
 end
 
 Base.push!(residue::Residue, atom::Atom) = begin
+    if atom.name in keys(residue.itemsbyname)
+        @warn "Atom named $(atom.name) already found in residue $residue. Please check for the existance of duplicates."
+    end
     residue.itemsbyname[atom.name] = atom
     if !in(atom, residue)
         _push!(residue, atom)

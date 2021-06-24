@@ -118,12 +118,7 @@ ProtoSyn.eval(:(begin
     end
 
     # --- Show -----------------------------------------------------------------
-
-    Base.show(io::IO, sss::SecondaryStructureSelection) = begin
-        ProtoSyn.show(io, sss)
-    end
-
-    function show(io::IO, sss::SecondaryStructureSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    function Base.show(io::IO, sss::SecondaryStructureSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
         lead = ProtoSyn.get_lead(level_code)
         if level_code === nothing
             level_code = LevelCode()

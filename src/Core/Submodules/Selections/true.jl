@@ -42,11 +42,8 @@ selection_type(::TrueSelection{M, T})  where {M, T} = T
 # --- Select -------------------------------------------------------------------
 select(::TrueSelection{Stateless, T}, container::AbstractContainer) where {T <: AbstractContainer} = Mask{T}(trues(counter(T)(container)))
 
-Base.show(io::IO, ts::TrueSelection) = begin
-    ProtoSyn.show(io, ts)
-end
-
-function show(io::IO, ts::TrueSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+# --- Show ---------------------------------------------------------------------
+function Base.show(io::IO, ts::TrueSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()

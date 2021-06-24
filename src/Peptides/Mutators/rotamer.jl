@@ -125,11 +125,7 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
     end
 end
 
-Base.show(io::IO, rm::RotamerMutator) = begin
-    ProtoSyn.Peptides.Mutators.show(io, rm)
-end
-
-function show(io::IO, rm::RotamerMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, rm::RotamerMutator, level_code::Opt{LevelCode} = nothing)
     level_code = level_code === nothing ? LevelCode() : level_code
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -145,7 +141,7 @@ function show(io::IO, rm::RotamerMutator, level_code::Opt{LevelCode} = nothing)
     
     if rm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
-        ProtoSyn.show(io, rm.selection, vcat(level_code, 4))
+        Base.show(io, rm.selection, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Selection: Not Set")
     end

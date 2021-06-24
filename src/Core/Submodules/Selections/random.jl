@@ -61,12 +61,7 @@ function select(sele::RandomSelection{Stateless, T}, container::AbstractContaine
 end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, rs::RandomSelection) = begin
-    ProtoSyn.show(io, rs)
-end
-
-function show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
@@ -74,7 +69,7 @@ function show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode} = no
     
     if rs.sele !== nothing
         println(io, lead*"RandomSelection › $T.id › From")
-        ProtoSyn.show(io, rs.sele, vcat(level_code, 4))
+        Base.show(io, rs.sele, vcat(level_code, 4))
     else
         println(io, lead*"RandomSelection › $T.id")
     end
@@ -138,12 +133,7 @@ function select(::RandomRangeSelection{Stateless, T}, container::AbstractContain
 end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, rrs::RandomRangeSelection) = begin
-    ProtoSyn.show(io, rrs)
-end
-
-function show(io::IO, rrs::RandomRangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, rrs::RandomRangeSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
@@ -211,19 +201,14 @@ function select(rsfl::RandomSelectionFromList{M, T}, container::AbstractContaine
 end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, rsfl::RandomSelectionFromList) = begin
-    ProtoSyn.show(io, rsfl)
-end
-
-function show(io::IO, rsfl::RandomSelectionFromList{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, rsfl::RandomSelectionFromList{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()
     end
     println(io, lead*"RandomSelectionFromList ❯ ($T)")
     for selection in rsfl.selections[1:(end-1)]
-        ProtoSyn.show(io, selection, vcat(level_code, 3))
+        Base.show(io, selection, vcat(level_code, 3))
     end
-    ProtoSyn.show(io, rsfl.selections[end], vcat(level_code, 4))
+    Base.show(io, rsfl.selections[end], vcat(level_code, 4))
 end

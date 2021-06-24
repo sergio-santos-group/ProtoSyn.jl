@@ -170,11 +170,7 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-Base.show(io::IO, efc::EnergyFunction) = begin
-    ProtoSyn.Calculators.show(io, efc)
-end
-
-function show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = nothing)
     level_code = level_code === nothing ? LevelCode() : level_code
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)

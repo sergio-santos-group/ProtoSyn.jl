@@ -43,11 +43,7 @@ function (callback::Callback)(pose::Pose, driver_state::ProtoSyn.Drivers.DriverS
     end
 end
 
-function Base.show(io::IO, cb::Callback)
-    ProtoSyn.Drivers.show(io, cb)
-end
-
-function show(io::IO, cb::Callback, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, cb::Callback, level_code::Opt{LevelCode} = nothing)
     level_code = level_code === nothing ? LevelCode() : level_code
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)

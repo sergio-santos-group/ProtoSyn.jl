@@ -83,12 +83,7 @@ macro an_str(p, flags...); FieldSelection{Atom}(p, :name; is_regex = parse_flags
 macro as_str(p, flags...); FieldSelection{Atom}(p, :symbol; is_regex = parse_flags(flags)); end
 
 # --- Show ---------------------------------------------------------------------
-
-Base.show(io::IO, fs::FieldSelection) = begin
-    ProtoSyn.show(io, fs)
-end
-
-function show(io::IO, fs::FieldSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+function Base.show(io::IO, fs::FieldSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
     lead = ProtoSyn.get_lead(level_code)
     if level_code === nothing
         level_code = LevelCode()

@@ -213,11 +213,7 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-Base.show(io::IO, sdd::SteepestDescent) = begin
-    ProtoSyn.Drivers.show(io, sdd)
-end
-
-function show(io::IO, sdd::SteepestDescent, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, sdd::SteepestDescent, level_code::Opt{LevelCode} = nothing)
     init_level_code = level_code === nothing ? LevelCode() : level_code
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -230,7 +226,7 @@ function show(io::IO, sdd::SteepestDescent, level_code::Opt{LevelCode} = nothing
 
     if typeof(sdd.eval!) === ProtoSyn.Calculators.EnergyFunction
         println(io, lead*" ●  Evaluator:")
-        ProtoSyn.Calculators.show(io, sdd.eval!, vcat(level_code, 4))
+        Base.show(io, sdd.eval!, vcat(level_code, 4))
     else
         println(io, lead*" ●  Evaluator: $(sdd.eval!)")
     end
@@ -239,7 +235,7 @@ function show(io::IO, sdd::SteepestDescent, level_code::Opt{LevelCode} = nothing
 
     if sdd.callback !== nothing
         println(io, lead*" ● Callback:")
-        ProtoSyn.Drivers.show(io, sdd.callback, vcat(level_code, 4))
+        Base.show(io, sdd.callback, vcat(level_code, 4))
     else
         println(io, lead*" ○  Callback: Not set")
     end

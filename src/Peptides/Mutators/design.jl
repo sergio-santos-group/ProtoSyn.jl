@@ -108,11 +108,7 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
     end
 end
 
-Base.show(io::IO, dm::DesignMutator) = begin
-    ProtoSyn.Peptides.Mutators.show(io, dm)
-end
-
-function show(io::IO, dm::DesignMutator, level_code::Opt{LevelCode} = nothing)
+function Base.show(io::IO, dm::DesignMutator, level_code::Opt{LevelCode} = nothing)
     level_code = level_code === nothing ? LevelCode() : level_code
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
@@ -133,7 +129,7 @@ function show(io::IO, dm::DesignMutator, level_code::Opt{LevelCode} = nothing)
     
     if dm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
-        ProtoSyn.show(io, dm.selection, vcat(level_code, 4))
+        Base.show(io, dm.selection, vcat(level_code, 4))
     else
         println(io, inner_lead*" ○  Selection: Not Set")
     end
