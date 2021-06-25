@@ -1,5 +1,7 @@
+import os
 import json
 from collections import OrderedDict
+from utils import dumpException
 from node_serializable import Serializable
 from node_graphics_scene import QDMGraphicsScene
 from node_node import Node
@@ -7,18 +9,93 @@ from node_edge import Edge
 from node_scene_history import SceneHistory
 from node_scene_clipboard import SceneClipboard
 
+class InvalidFile(Exception): pass
+
 class Scene(Serializable):
     def __init__(self):
         super().__init__()
-        self.nodes = []
-        self.edges = []
+        self.nodes                        = []
+        self.edges                        = []
 
-        self.scene_width = 64000
-        self.scene_height = 64000
+        self.scene_width                  = 64000
+        self.scene_height                 = 64000
+
+        self._has_been_modified           = False
+        self._last_selected_items = []
+
+        # initialize all listeners
+        self._has_been_modified_listeners = []
+        self._item_selected_listeners     = []
+        self._items_deselected_listeners  = []
+
 
         self.initUI()
-        self.history = SceneHistory(self)
-        self.clipboard = SceneClipboard(self)
+        self.history                      = SceneHistory(self)
+        self.clipboard                    = SceneClipboard(self)
+
+        self.grScene.itemSelected.connect(self.onItemSelected)
+        self.grScene.itemsDeselected.connect(self.onItemsDeselected)
+
+    def initUI(self):
+        self.grScene = QDMGraphicsScene(self)
+        self.grScene.setGrScene(self.scene_width, self.scene_height)
+
+    def onItemSelected(self):
+        current_selected_items = self.getSelectedItems()
+        if current_selected_items != self._last_selected_items:
+            self._last_selected_items = current_selected_items
+            self.history.storeHistory("Selection Changed")
+            for callback in self._item_selected_listeners: callback()
+
+
+    def onItemsDeselected(self):
+        self.resetLastSelectedStates()
+        if self._last_selected_items != []:
+            self._last_selected_items = []
+            self.history.storeHistory("Deselected Everything")
+            for callback in self._items_deselected_listeners: callback()
+
+    def isModified(self):
+        return self.has_been_modified
+
+    def getSelectedItems(self):
+        return self.grScene.selectedItems()
+
+    @property
+    def has_been_modified(self):
+        return self._has_been_modified
+
+    @has_been_modified.setter
+    def has_been_modified(self, value):
+        if not self._has_been_modified and value:
+            self._has_been_modified = value
+
+            # call all registered listeners
+            for callback in self._has_been_modified_listeners: callback()
+
+        self._has_been_modified = value
+
+    def addHasBeenModifiedListener(self, callback):
+        self._has_been_modified_listeners.append(callback)
+
+    def addItemSelectedListener(self, callback):
+        self._item_selected_listeners.append(callback)
+
+    def addItemsDeselectedListener(self, callback):
+        self._items_deselected_listeners.append(callback)
+
+    def addDragEnterListener(self, callback):
+        self.grScene.views()[0].addDragEnterListener(callback)
+
+    def addDropListener(self, callback):
+        self.grScene.views()[0].addDropListener(callback)
+
+    # custom flag to detect node or edge has been selected....
+    def resetLastSelectedStates(self):
+        for node in self.nodes:
+            node.grNode._last_selected_state = False
+        for edge in self.edges:
+            edge.grEdge._last_selected_state = False
 
     def initUI(self):
         self.grScene = QDMGraphicsScene(self)
@@ -34,23 +111,32 @@ class Scene(Serializable):
         while len(self.nodes) > 0:
             self.nodes[0].remove()
 
+        self.has_been_modified = False
+
     def removeNode(self, node):
-        self.nodes.remove(node)
+        if node in self.nodes: self.nodes.remove(node)
 
     def removeEdge(self, edge):
-        if edge in self.edges:
-            self.edges.remove(edge)
+        if edge in self.edges: self.edges.remove(edge)
 
     def saveToFile(self, filename):
         with open(filename, "w") as file:
             file.write( json.dumps( self.serialize(), indent=4 ) )
         print("saving to", filename, "was successfull.")
 
+        self._has_been_modified = False
+
     def loadFromFile(self, filename):
         with open(filename, "r") as file:
             raw_data = file.read()
-            data = json.loads(raw_data, encoding='utf-8')
-            self.deserialize(data)
+            try:
+                data = json.loads(raw_data, encoding='utf-8')
+                self.deserialize(data)
+                self.has_been_modified = False
+            except json.JSONDecodeError:
+                raise InvalidFile("%s is not a valid JSON file" % os.path.basename(filename))
+            except Exception as e:
+                dumpException(e)
 
     def serialize(self):
         nodes, edges = [], []

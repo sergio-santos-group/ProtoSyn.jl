@@ -2,6 +2,7 @@ from collections import OrderedDict
 from node_serializable import Serializable
 from node_graphics_node import QDMGraphicsNode
 from node_content_widget import QDMNodeContentWidget
+from utils import dumpException
 from node_socket import *
 
 class Node(Serializable):
@@ -11,29 +12,54 @@ class Node(Serializable):
         self._title = title
         self.scene = scene
 
-
-        self.content = QDMNodeContentWidget(self)
-        self.grNode = QDMGraphicsNode(self)
+        self.initInnerClasses()
+        self.initSettings()
         self.title = title
 
         self.scene.addNode(self)
         self.scene.grScene.addItem(self.grNode)
 
-        self.socket_spacing = 22
-        self.init_socket_spacing = 18
-
         self.inputs = []
         self.outputs = []
+        
+        self.initSockets(inputs, outputs)
+
+    def initInnerClasses(self):
+        self.content = QDMNodeContentWidget(self)
+        self.grNode = QDMGraphicsNode(self)
+
+    def initSettings(self):
+        self.socket_spacing = 22
+
+        self.input_socket_position  = LEFT_BOTTOM
+        self.output_socket_position = RIGHT_TOP
+        self.input_multi_edged      = False
+        self.output_multi_edged     = True
+
+    def initSockets(self, inputs, outputs, reset=True):
+        """ Create sockets for inputs and outputs"""
+
+        if reset:
+            # clear old sockets
+            if hasattr(self, 'inputs') and hasattr(self, 'outputs'):
+                # remove grSockets from scene
+                for socket in (self.inputs+self.outputs):
+                    self.scene.grScene.removeItem(socket.grSocket)
+                self.inputs = []
+                self.outputs = []
+
+        # create new sockets
+
 
         counter = 0
         for item in inputs:
-            socket = Socket(node=self, index=counter, position=LEFT_BOTTOM, socket_type = item)
+            socket = Socket(node=self, index=counter, position=self.input_socket_position, socket_type=item, multi_edges=self.input_multi_edged)
             counter += 1
             self.inputs.append(socket)
 
         counter = 0
         for item in outputs:
-            socket = Socket(node=self, index=counter, position=RIGHT_BOTTOM, socket_type = item)
+            socket = Socket(node=self, index=counter, position=self.output_socket_position, socket_type=item, multi_edges=self.output_multi_edged)
             counter += 1
             self.outputs.append(socket)
 
@@ -63,23 +89,25 @@ class Node(Serializable):
 
         if position in (LEFT_BOTTOM, RIGHT_BOTTOM):
             # start from bottom
-            y = self.grNode.height - self.grNode.edge_size - self.grNode._padding - index * self.socket_spacing - self.init_socket_spacing
+            y = self.grNode.height - self.grNode.edge_size - self.grNode._padding - index * self.socket_spacing
         else :
             # start from top
-            y = self.grNode.title_height + self.grNode._padding + self.grNode.edge_size + index * self.socket_spacing + self.init_socket_spacing
+            y = self.grNode.title_height + self.grNode._padding + self.grNode.edge_size + index * self.socket_spacing
 
         return [x, y]
 
 
     def updateConnectedEdges(self):
         for socket in self.inputs + self.outputs:
-            if socket.hasEdge():
-                socket.edge.updatePositions()
+            for edge in socket.edges:
+                edge.updatePositions()
+
 
     def remove(self):
         for socket in (self.inputs+self.outputs):
-            if socket.hasEdge():
-                socket.edge.remove()
+            for edge in socket.edges:
+                edge.remove()
+
         self.scene.grScene.removeItem(self.grNode)
         self.grNode = None
         self.scene.removeNode(self)
@@ -99,30 +127,31 @@ class Node(Serializable):
         ])
 
     def deserialize(self, data, hashmap={}, restore_id=True):
-        if restore_id: self.id = data['id']
+        try:
+            if restore_id: self.id = data['id']
+            hashmap[data['id']] = self
 
-        self.id = data['id']
-        hashmap[data['id']] = self
+            self.setPos(data['pos_x'], data['pos_y'])
+            self.title = data['title']
 
-        self.setPos(data['pos_x'], data['pos_y'])
-        self.title = data['title']
+            data['inputs'].sort(key=lambda socket: socket['index'] + socket['position'] * 10000 )
+            data['outputs'].sort(key=lambda socket: socket['index'] + socket['position'] * 10000 )
 
-        data['inputs'].sort(key=lambda socket: socket['index'] + socket['position'] * 10000 )
-        data['outputs'].sort(key=lambda socket: socket['index'] + socket['position'] * 10000 )
+            self.inputs = []
+            for socket_data in data['inputs']:
+                new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'],
+                                    socket_type=socket_data['socket_type'])
+                new_socket.deserialize(socket_data, hashmap, restore_id)
+                self.inputs.append(new_socket)
 
-        self.inputs = []
-        for socket_data in data['inputs']:
-            new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'],
-                                socket_type=socket_data['socket_type'])
-            new_socket.deserialize(socket_data, hashmap, restore_id)
-            self.inputs.append(new_socket)
+            self.outputs = []
+            for socket_data in data['outputs']:
+                new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'],
+                                    socket_type=socket_data['socket_type'])
+                new_socket.deserialize(socket_data, hashmap, restore_id)
+                self.outputs.append(new_socket)
+        except Exception as e: dumpException(e)
 
-        self.outputs = []
-        for socket_data in data['outputs']:
-            new_socket = Socket(node=self, index=socket_data['index'], position=socket_data['position'],
-                                socket_type=socket_data['socket_type'])
-            new_socket.deserialize(socket_data, hashmap, restore_id)
-            self.outputs.append(new_socket)
 
         return True
 

@@ -10,24 +10,23 @@ end
 
 
 """
-    grammar([::Type{T}], polyname::String; [verbose::Bool = true]) where {T <: AbstractFloat}
+    grammar([::Type{T}, polyname::String]) where {T <: AbstractFloat}
 
 Build a [`LGrammar`](@ref ProtoSyn.LGrammar) for polysaccharide `polyname` from
-the `grammars.yml` file available in the `Sugars` resource directory.
-The returned [`LGrammar`](@ref ProtoSyn.LGrammar) can then be used by the
-[`ProtoSyn.build`](@ref) function to build the polymer. If `verbose` is set to
-`true` (is, by default), print the loading status.
+the `grammars.yml` file available in the `Sugars` resource directory ("amylose",
+by default). The returned [`LGrammar`](@ref ProtoSyn.LGrammar) can then be used
+by the [`ProtoSyn.build`](@ref) function to build the polymer.
 
 # Examples
 ```
-julia> g = Sugars.grammar("amylose");
+julia> g = Sugars.grammar();
 
 julia> pose = ProtoSyn.build(g, seq"AAAβB[ɣCɣCɣC]AAA")
 ```
 """
-function grammar(::Type{T}, polyname::String; verbose::Bool = true) where {T <: AbstractFloat}
+function grammar(::Type{T}, polyname::String) where {T <: AbstractFloat}
     filename = joinpath(resource_dir, "grammars.yml")
-    ProtoSyn.load_grammar_from_file(T, filename, polyname, verbose = verbose)
+    ProtoSyn.load_grammar_from_file(T, filename, polyname)
 end
 
-grammar(polyname::String; verbose::Bool = true) = grammar(ProtoSyn.Units.defaultFloat, polyname; verbose = verbose)
+grammar() = grammar(ProtoSyn.Units.defaultFloat, "amylose")

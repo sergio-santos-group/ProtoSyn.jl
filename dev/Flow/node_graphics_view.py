@@ -8,9 +8,9 @@ from node_edge import Edge, EDGE_TYPE_BEZIER
 from node_graphics_cutline import QDMCutLine
 
 
-MODE_NOOP = 1
+MODE_NOOP      = 1
 MODE_EDGE_DRAG = 2
-MODE_EDGE_CUT = 3
+MODE_EDGE_CUT  = 3
 
 EDGE_DRAG_START_THRESHOLD = 10
 
@@ -40,6 +40,11 @@ class QDMGraphicsView(QGraphicsView):
         self.cutline = QDMCutLine()
         self.grScene.addItem(self.cutline)
 
+        # listeners
+        self._drag_enter_listeners = []
+        self._drop_listeners = []
+
+
 
     def initUI(self):
         self.setRenderHints(QPainter.Antialiasing | QPainter.HighQualityAntialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform)
@@ -51,6 +56,22 @@ class QDMGraphicsView(QGraphicsView):
 
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QGraphicsView.RubberBandDrag)
+
+        # enable dropping
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        for callback in self._drag_enter_listeners: callback(event)
+
+    def dropEvent(self, event):
+        for callback in self._drop_listeners: callback(event)
+
+    def addDragEnterListener(self, callback):
+        self._drag_enter_listeners.append(callback)
+
+    def addDropListener(self, callback):
+        self._drop_listeners.append(callback)
+
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MiddleButton:
@@ -78,6 +99,7 @@ class QDMGraphicsView(QGraphicsView):
         releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
                                    Qt.LeftButton, Qt.NoButton, event.modifiers())
         super().mouseReleaseEvent(releaseEvent)
+        QApplication.setOverrideCursor(Qt.ClosedHandCursor)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         fakeEvent = QMouseEvent(event.type(), event.localPos(), event.screenPos(),
                                 Qt.LeftButton, event.buttons() | Qt.LeftButton, event.modifiers())
@@ -89,6 +111,7 @@ class QDMGraphicsView(QGraphicsView):
                                 Qt.LeftButton, event.buttons() & ~Qt.LeftButton, event.modifiers())
         super().mouseReleaseEvent(fakeEvent)
         self.setDragMode(QGraphicsView.RubberBandDrag)
+        QApplication.restoreOverrideCursor()
 
 
     def leftMouseButtonPress(self, event):
@@ -120,7 +143,15 @@ class QDMGraphicsView(QGraphicsView):
             if res: return
 
         if item is None:
-            self.rubberBandDraggingRectangle = True
+            if event.modifiers() & Qt.ControlModifier:
+                self.mode = MODE_EDGE_CUT
+                fakeEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
+                                        Qt.LeftButton, Qt.NoButton, event.modifiers())
+                super().mouseReleaseEvent(fakeEvent)
+                QApplication.setOverrideCursor(Qt.CrossCursor)
+                return
+            else:
+                self.rubberBandDraggingRectangle = True
 
         super().mousePressEvent(event)
 
@@ -142,32 +173,7 @@ class QDMGraphicsView(QGraphicsView):
         if self.mode == MODE_EDGE_DRAG:
             if self.distanceBetweenClickAndReleaseIsOff(event):
                 res = self.edgeDragEnd(item)
-                print("res:", res)
                 if res: return
-
-        if self.rubberBandDraggingRectangle:
-            # self.grScene.scene.history.storeHistory("Selection changed")
-            self.rubberBandDraggingRectangle = False
-
-        super().mouseReleaseEvent(event)
-
-
-    def rightMouseButtonPress(self, event):
-
-        item = self.getItemAtClick(event)
-
-        if item is None:
-            self.mode = MODE_EDGE_CUT
-            fakeEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
-                                    Qt.LeftButton, Qt.NoButton, event.modifiers())
-            super().mouseReleaseEvent(fakeEvent)
-            QApplication.setOverrideCursor(Qt.CrossCursor)
-            return
-
-        super().mousePressEvent(event)
-
-
-    def rightMouseButtonRelease(self, event):
 
         if self.mode == MODE_EDGE_CUT:
             self.cutIntersectingEdges()
@@ -177,17 +183,40 @@ class QDMGraphicsView(QGraphicsView):
             self.mode = MODE_NOOP
             return
 
-        # if self.dragMode() == QGraphicsView.RubberBandDrag:
-            # self.grScene.scene.history.storeHistory("Selection changed")
+        if self.rubberBandDraggingRectangle:
+            self.rubberBandDraggingRectangle = False
+            current_selected_items = self.grScene.selectedItems()
 
+            if current_selected_items != self.grScene.scene._last_selected_items:
+                if current_selected_items == []:
+                    self.grScene.itemsDeselected.emit()
+                else:
+                    self.grScene.itemSelected.emit()
+                self.grScene.scene._last_selected_items = current_selected_items
+
+            return
+
+        # otherwise deselect everything
+        if item is None:
+            self.grScene.itemsDeselected.emit()
+
+
+        super().mouseReleaseEvent(event)
+
+
+    def rightMouseButtonPress(self, event):
+        super().mousePressEvent(event)
+
+
+    def rightMouseButtonRelease(self, event):
         super().mouseReleaseEvent(event)
 
 
     def mouseMoveEvent(self, event):
         if self.mode == MODE_EDGE_DRAG:
             pos = self.mapToScene(event.pos())
-            self.dragEdge.grEdge.setDestination(pos.x(), pos.y())
-            self.dragEdge.grEdge.update()
+            self.drag_edge.grEdge.setDestination(pos.x(), pos.y())
+            self.drag_edge.grEdge.update()
 
         if self.mode == MODE_EDGE_CUT:
             pos = self.mapToScene(event.pos())
@@ -230,7 +259,7 @@ class QDMGraphicsView(QGraphicsView):
             for edge in self.grScene.scene.edges:
                 if edge.grEdge.intersectsWith(p1, p2):
                     edge.remove()
-        self.grScene.scene.history.storeHistory("Delete cutted edges")
+        self.grScene.scene.history.storeHistory("Delete cutted edges", setModified = True)
 
 
     def deleteSelected(self):
@@ -239,7 +268,7 @@ class QDMGraphicsView(QGraphicsView):
                 item.edge.remove()
             elif hasattr(item, 'node'):
                 item.node.remove()
-        self.grScene.scene.history.storeHistory("Delete selected")
+        self.grScene.scene.history.storeHistory("Delete selected", setModified = True)
 
 
 
@@ -259,35 +288,35 @@ class QDMGraphicsView(QGraphicsView):
 
 
     def edgeDragStart(self, item):
-        self.previousEdge = item.socket.edge
-        self.last_start_socket = item.socket
-        self.dragEdge = Edge(self.grScene.scene, item.socket, None, EDGE_TYPE_BEZIER)
+        self.drag_start_socket = item.socket
+        self.drag_edge = Edge(self.grScene.scene, item.socket, None, EDGE_TYPE_BEZIER)
+
 
 
     def edgeDragEnd(self, item):
         """ return True if skip the rest of the code """
         self.mode = MODE_NOOP
+        self.drag_edge.remove()
+        self.drag_edge = None
+
 
         if type(item) is QDMGraphicsSocket:
-            end_edge = None
-            if item.socket.hasEdge():
-                end_edge = item.socket.edge
-                item.socket.edge.remove()
-            if self.previousEdge is not None and self.previousEdge is not end_edge:
-                self.previousEdge.remove()
-            self.dragEdge.start_socket = self.last_start_socket
-            self.dragEdge.end_socket = item.socket
-            self.dragEdge.start_socket.setConnectedEdge(self.dragEdge)
-            self.dragEdge.end_socket.setConnectedEdge(self.dragEdge)
-            self.dragEdge.updatePositions()
-            self.grScene.scene.history.storeHistory("Created new edge by dragging")
+            if item.socket != self.drag_start_socket:
+                # if we released dragging on a socket (other then the beginning socket)
+
+                # we wanna keep all the edges comming from target socket
+                if not item.socket.is_multi_edges:
+                    item.socket.removeAllEdges()
+
+                # we wanna keep all the edges comming from start socket
+                if not self.drag_start_socket.is_multi_edges:
+                    self.drag_start_socket.removeAllEdges()
+
+                new_edge = Edge(self.grScene.scene, self.drag_start_socket, item.socket, edge_type=EDGE_TYPE_BEZIER)
+
+            self.grScene.scene.history.storeHistory("Created new edge by dragging", setModified = True)
 
             return True
-
-        self.dragEdge.remove()
-        self.dragEdge = None
-        if self.previousEdge is not None:
-            self.previousEdge.start_socket.edge = self.previousEdge
 
         return False
 

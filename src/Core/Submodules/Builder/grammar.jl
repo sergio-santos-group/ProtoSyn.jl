@@ -410,7 +410,7 @@ function lgfactory(::Type{T}, template::Dict) where T
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
-                @info "  $sr"
+                ProtoSyn.verbose.mode && @info "  $sr"
             end
         end
     end
