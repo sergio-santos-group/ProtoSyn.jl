@@ -21,12 +21,13 @@ are passed as arguments to the `event` method every `callback.frequency` steps.
 # Examples
 ```jldoctest
 julia> cb = ProtoSyn.Drivers.Callback((pose::Pose, driver_state::ProtoSyn.Drivers.DriverState) -> println("Status OK"), 1)
-+----------------------------------------------------------+
-| Index | Field           | Value                          |
-+----------------------------------------------------------+
-| 1     | Frequency       | 1                              |
-| 2     | Event           | #5                             |
-+----------------------------------------------------------+
+✉  Callback:
++----------------------------------------------------------------------+
+| Index | Field                     | Value                            |
++----------------------------------------------------------------------+
+| 1     | Event                     | #1                               |
+| 2     | Frequency                 | 1                                |
++----------------------------------------------------------------------+
 
 julia> cb(pose, driver_state)
 Status OK

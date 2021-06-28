@@ -19,8 +19,8 @@ simulations.
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Peptides.Drivers.RotamerBlitzState{Float64}()
-ProtoSyn.Drivers.RotamerBlitzState{Float64}(0, false, false, false)
+julia> ProtoSyn.Peptides.Drivers.RotamerBlitzState()
+ProtoSyn.Peptides.Drivers.RotamerBlitzState(0, false, false, false)
 ```
 """
 Base.@kwdef mutable struct RotamerBlitzState <: ProtoSyn.Drivers.DriverState

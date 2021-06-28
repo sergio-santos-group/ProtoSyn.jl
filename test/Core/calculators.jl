@@ -122,8 +122,8 @@ println("-----------\n Calculators:")
         @test size(dm) === (39, 39)
         @test dm[end, 1] === dm[1, end]
         @test dm[1, end] ≈ 9.503650710901654 atol = 1e-5
-        @test ProtoSyn.Calculators.distance_matrix(ProtoSyn.CUDA_2, pose.state) == dm
-        @test ProtoSyn.Calculators.distance_matrix(ProtoSyn.CUDA_2, pose) == dm
+        @test collect(ProtoSyn.Calculators.distance_matrix(ProtoSyn.CUDA_2, pose.state)) == dm
+        @test collect(ProtoSyn.Calculators.distance_matrix(ProtoSyn.CUDA_2, pose)) == dm
         
         dm_sele = collect(ProtoSyn.Calculators.distance_matrix(ProtoSyn.CUDA_2, pose, an"CA"))
         @test dm_sele[1, 1] === 0.0
@@ -136,8 +136,8 @@ println("-----------\n Calculators:")
         @test size(dm_full) === (39, 39)
         @test dm_full[end, 1] === dm_full[1, end]
         @test dm_full[1, end] ≈ 9.503650710901654 atol = 1e-5
-        @test ProtoSyn.Calculators.full_distance_matrix(ProtoSyn.CUDA_2, pose.state) == dm_full
-        @test ProtoSyn.Calculators.full_distance_matrix(ProtoSyn.CUDA_2, pose) == dm_full
+        @test collect(ProtoSyn.Calculators.full_distance_matrix(ProtoSyn.CUDA_2, pose.state)) == dm_full
+        @test collect(ProtoSyn.Calculators.full_distance_matrix(ProtoSyn.CUDA_2, pose)) == dm_full
 
         dm_full_sele = collect(ProtoSyn.Calculators.full_distance_matrix(ProtoSyn.CUDA_2, pose, an"CA"))
         @test dm_full_sele[1, 1] === 0.0
@@ -162,8 +162,8 @@ println("-----------\n Calculators:")
         @test dm[1, 1] === 0.0
         @test size(dm) === (39, 39)
         @test dm[1, end] ≈ 9.503650710901654 atol = 1e-5
-        @test ProtoSyn.Calculators.distance_matrix(pose.state) == dm
-        @test ProtoSyn.Calculators.distance_matrix(pose) == dm
+        @test collect(ProtoSyn.Calculators.distance_matrix(pose.state)) == dm
+        @test collect(ProtoSyn.Calculators.distance_matrix(pose)) == dm
         
         dm_sele = collect(ProtoSyn.Calculators.distance_matrix(pose, an"CA"))
         @test dm_sele[1, 1] === 0.0
@@ -174,8 +174,8 @@ println("-----------\n Calculators:")
         @test dm_full[1, 1] === 0.0
         @test size(dm_full) === (39, 39)
         @test dm_full[1, end] ≈ 9.503650710901654 atol = 1e-5
-        @test ProtoSyn.Calculators.full_distance_matrix(pose.state) == dm_full
-        @test ProtoSyn.Calculators.full_distance_matrix(pose) == dm_full
+        @test collect(ProtoSyn.Calculators.full_distance_matrix(pose.state)) == dm_full
+        @test collect(ProtoSyn.Calculators.full_distance_matrix(pose)) == dm_full
 
         dm_full_sele = collect(ProtoSyn.Calculators.full_distance_matrix(pose, an"CA"))
         @test dm_full_sele[1, 1] === 0.0

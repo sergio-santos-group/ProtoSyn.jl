@@ -18,6 +18,6 @@ primitive
 body_centered
 ```
 
-![ProtoSyn Body Centered Lattice](../../../assets/ProtoSyn-body-centered-lattice.png)
+![ProtoSyn Body Centered Lattice](../../../assets/ProtoSyn-body-centered-lattice.gif)
 
 **Figure 2 |** An example of the [`body_centered`](@ref) lattice.

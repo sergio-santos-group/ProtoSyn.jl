@@ -59,7 +59,7 @@ sure the corresponding [`Pose`](@ref) instance has been synched (using the
 [`sync!`](@ref) method). Returns result in radians.
 
 # Examples
-```jldoctest
+```
 julia> a = ProtoSyn.dihedral(pose.state[1], pose.state[2], pose.state[3], pose.state[4])
 -1.2318251145557122
 ```

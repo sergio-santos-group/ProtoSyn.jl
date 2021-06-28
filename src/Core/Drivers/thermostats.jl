@@ -91,7 +91,7 @@ quadratic curve.
 # Examples
 ```jldoctest
 julia> thermostat = ProtoSyn.Drivers.get_quadratic_quench(1.0, 100, 0.0)
-(::ProtoSyn.Drivers.var"#quadratic_quench#15"{Float64, Int64, Float64}) (generic function with 1 method)
+(::ProtoSyn.Drivers.var"#quadratic_quench#11"{Float64, Int64, Float64}) (generic function with 1 method)
 
 julia> thermostat(0)
 1.0

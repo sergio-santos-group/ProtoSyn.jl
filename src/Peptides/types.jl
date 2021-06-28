@@ -20,7 +20,7 @@ returning the respective representative atom:
 `Dihedral.chi1` `Dihedral.chi2` `Dihedral.chi3` `Dihedral.chi4`
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.Dihedral.phi(pose.graph[1][1])
 Atom{/UNK:1/UNK:1/SER:1/C:10}
 
@@ -137,6 +137,7 @@ Return a new [`SecondaryStructureTemplate`](@ref) with the given phi `ϕ`, psi
 julia> t = ProtoSyn.Peptides.SecondaryStructureTemplate(-60°, -45°, 180°)
 Secondary Structure Template:
  └─ Phi (ϕ):  -1.047 rad | Psi (ψ):  -0.785 rad | Omega (ω):   3.142 rad
+             -60.000 deg |          -45.000 deg |            180.000 deg
 ```
 """
 struct SecondaryStructureTemplate{T <: AbstractFloat}
@@ -163,6 +164,7 @@ This constant holds default values for common
 julia> t = ProtoSyn.Peptides.SecondaryStructure[:helix]
 Secondary Structure Template:
  └─ Phi (ϕ):  -1.047 rad | Psi (ψ):  -0.785 rad | Omega (ω):   3.142 rad
+             -60.000 deg |          -45.000 deg |            180.000 deg
 ```
 """
 const SecondaryStructure = Dict{Symbol, SecondaryStructureTemplate}(

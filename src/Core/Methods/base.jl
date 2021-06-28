@@ -65,7 +65,7 @@ order of `items`. Return the altered `container`.
 [`insert!`](@ref) [`delete!`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> push!(pose.graph[1][1], Atom("CA", -1, -1, "C"))
 Residue{/UNK:1/UNK:1/SER:1}
 ```

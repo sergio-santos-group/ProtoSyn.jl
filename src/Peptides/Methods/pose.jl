@@ -355,14 +355,14 @@ can perform correctly.
 ```jldoctest
 julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 21
+ Size: 147
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 
 julia> ProtoSyn.Peptides.remove_sidechains!(pose, res_lib, rn"ALA")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
- Size: 21
+ Size: 147
  i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
@@ -416,7 +416,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 julia> ProtoSyn.Peptides.force_remove_sidechains!(pose, rn"ALA")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 105
- i2c: false | c2i: false
+ i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ```
@@ -608,11 +608,11 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * Default terminal fragments
     T               = eltype(pose.state)
     n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
-    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename; verbose = false))
+    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
     n_term_atoms    = ["H1", "H2", "H3"]
 
     c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
-    c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename; verbose = false))
+    c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
     c_term_atoms    = ["O", "OXT"]
 
     # * Remove any existing caps

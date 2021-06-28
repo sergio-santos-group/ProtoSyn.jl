@@ -81,11 +81,11 @@ also updated each step and provided to the [`Callback`](@ref) `callback`.
 # Examples
 ```jldoctest
 julia> monte_carlo = ProtoSyn.Drivers.MonteCarlo(
-           energy_function,
-           dihedral_mutator,
-           ProtoSyn.Common.default_energy_step_callback(1),
-           10,
-           ProtoSyn.Drivers.get_linear_quench(1.0, 10))
+                  energy_function,
+                  dihedral_mutator,
+                  ProtoSyn.Common.default_energy_step_callback(1),
+                  10,
+                  ProtoSyn.Drivers.get_linear_quench(1.0, 10))
 ⚒  Monte Carlo Driver:
  ├──  ●  Evaluator:
  |    └── 🗲  Energy Function (4 components):
@@ -109,6 +109,15 @@ julia> monte_carlo = ProtoSyn.Drivers.MonteCarlo(
  |        +----------------------------------------------------------------------+
  |         ● Selection: Set
  |         └── FieldSelection › Atom.name = r"C|N"
+ |   
+ ├──  ● Callback:
+ |    └── ✉  Callback:
+ |        +----------------------------------------------------------------------+
+ |        | Index | Field                     | Value                            |
+ |        +----------------------------------------------------------------------+
+ |        | 1     | Event                     | energy_step                      |
+ |        | 2     | Frequency                 | 1                                |
+ |        +----------------------------------------------------------------------+
  |   
  └──  ● Settings:
        Max steps: 10

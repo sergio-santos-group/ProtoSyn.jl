@@ -59,7 +59,7 @@ solely for uniformization with other energy-calculating functions.
 [`get_default_solvation_energy`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.Calculators.Caterpillar.calc_solvation_energy(pose)
 (925.5142248612556, nothing)
 ```

@@ -52,7 +52,7 @@ using the following signature, in which case only the provided list of
 [`DesignMutator`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> rm = ProtoSyn.Peptides.Mutators.RotamerMutator(rot_lib, 1.0, 10, an"CA" & !rn"PRO")
 ⚯  Rotamer Mutator:
 +----------------------------------------------------------------------+

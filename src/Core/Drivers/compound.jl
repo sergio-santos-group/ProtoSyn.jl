@@ -48,14 +48,7 @@ julia> ProtoSyn.Drivers.CompoundDriver([monte_carlo, monte_carlo])
  |    |         ● Selection: Set
  |    |         └── FieldSelection › Atom.name = r"C|N"
  |    |   
- |    ├──  ● Callback:
- |    |    └── ✉  Callback:
- |    |        +----------------------------------------------------------------------+
- |    |        | Index | Field                     | Value                            |
- |    |        +----------------------------------------------------------------------+
- |    |        | 1     | Event                     | energy_step                      |
- |    |        | 2     | Frequency                 | 1                                |
- |    |        +----------------------------------------------------------------------+
+ |    ├──  ○  Callback: Not set
  |    |   
  |    └──  ● Settings:
  |          Max steps: 10
@@ -85,14 +78,7 @@ julia> ProtoSyn.Drivers.CompoundDriver([monte_carlo, monte_carlo])
       |         ● Selection: Set
       |         └── FieldSelection › Atom.name = r"C|N"
       |   
-      ├──  ● Callback:
-      |    └── ✉  Callback:
-      |        +----------------------------------------------------------------------+
-      |        | Index | Field                     | Value                            |
-      |        +----------------------------------------------------------------------+
-      |        | 1     | Event                     | energy_step                      |
-      |        | 2     | Frequency                 | 1                                |
-      |        +----------------------------------------------------------------------+
+      ├──  ○  Callback: Not set
       |   
       └──  ● Settings:
             Max steps: 10

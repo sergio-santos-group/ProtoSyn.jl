@@ -85,7 +85,7 @@ julia> sd = ProtoSyn.Drivers.SteepestDescent(energy_function, cb, 1000, 0.001, 0
  |        | 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
  |        +----------------------------------------------------------------------+
  |   
- ├──  ● Callbacks:
+ ├──  ● Callback:
  |    └── ✉  Callback:
  |        +----------------------------------------------------------------------+
  |        | Index | Field                     | Value                            |

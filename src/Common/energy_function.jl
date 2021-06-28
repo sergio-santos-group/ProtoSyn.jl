@@ -6,20 +6,10 @@ export default_energy_function
     default_energy_function(::Type{T}) where {T <: AbstractFloat}
     default_energy_function()
 
-Returns a default energy function for ProtoSyn. As of ProtoSyn 0.4, this
-includes the following terms:
-```
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | TorchANI_ML_Model                   | 1.000      |
-| 2     | Caterpillar_Solvation               | 0.010      |
-| 3     | Bond_Distance_Restraint             | 1.000      |
-| 4     | Cα-Cα_Clash_Restraint               | 100.000    |
-+----------------------------------------------------------+
-```
-!!! note 
-    If no Type{T} is provided, will use ProtoSyn.Units.defaultFloat;
+Returns a default energy function for ProtoSyn.
+
+!!! ukw "Note:" 
+    If no `Type{T}` is provided, will use `ProtoSyn.Units.defaultFloat`;
 
 # Examples
 ```jldoctest
@@ -50,32 +40,27 @@ end
 
 # ------------------------------------------------------------------------------
 
-export xmlrpc_energy_function
+export default_xmlrpc_energy_function
 
 @doc """
-    xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat}
-    xmlrpc_energy_function()
+    default_xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat}
+    default_xmlrpc_energy_function()
 
-Returns a default energy function for ProtoSyn. As of ProtoSyn 0.4, this
-includes the following terms:
-```
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | TorchANI_ML_Model_XMLRPC            | 1.000      |
-| 2     | Caterpillar_Solvation               | 0.010      |
-| 3     | Bond_Distance_Restraint             | 1.000      |
-| 4     | Cα-Cα_Clash_Restraint               | 100.000    |
-+----------------------------------------------------------+
-```
-!!! note 
-    If no Type{T} is provided, will use ProtoSyn.Units.defaultFloat;
-!!! note
-    This energy function employs the XML-RPC protocol whenever possible (is slower, but safe in term of CUDA running out of memory).
+Returns a default energy function for ProtoSyn, where a XML-RPC version of each
+component is employed (when available).
+
+!!! ukw "Note:" 
+    If no `Type{T}` is provided, will use `ProtoSyn.Units.defaultFloat`;
+
+!!! ukw "Note:"
+    Since this energy function employs the XML-RPC protocol whenever possible, it is slower, but safe in term of CUDA running out of memory.
+
+# See also
+[`default_energy_function`](@ref)
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Common.xmlrpc_energy_function()
+julia> ProtoSyn.Common.default_xmlrpc_energy_function()
 🗲  Energy Function (4 components):
 +----------------------------------------------------------------------+
 | Index | Component name                                | Weight (α)   |
@@ -85,13 +70,9 @@ julia> ProtoSyn.Common.xmlrpc_energy_function()
 | 3     | Bond_Distance_Restraint                       |      1.000   |
 | 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
 +----------------------------------------------------------------------+
-
 ```
-
-# See also
-`default_energy_function`
 """
-xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
+default_xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
     return Calculators.EnergyFunction([
         ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc(α = 1.0),
         ProtoSyn.Peptides.Calculators.Caterpillar.get_default_solvation_energy(α = 0.01),
@@ -100,6 +81,6 @@ xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
     ])
 end
 
-xmlrpc_energy_function() = begin
-    xmlrpc_energy_function(defaultFloat)
+default_xmlrpc_energy_function() = begin
+    default_xmlrpc_energy_function(defaultFloat)
 end

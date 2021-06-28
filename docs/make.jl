@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
     using ProtoSyn.Units;
     using Random; Random.seed!(1);
-    res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false);
+    res_lib  = ProtoSyn.Peptides.grammar(Float64);
     frag     = fragment(res_lib, seq"AAA");
     pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL"); sync!(pose);
     pose_mod = copy(pose);
@@ -34,7 +34,8 @@ makedocs(
         "Home" => "index.md",
         "Getting Started" => [
             "Installation" => "getting-started/installation.md",
-            "First steps" => "getting-started/first-steps.md"
+            "First steps" => "getting-started/first-steps.md",
+            "Examples" => "getting-started/examples.md"
         ],
         "ProtoSyn API" => [
             "Core" => [

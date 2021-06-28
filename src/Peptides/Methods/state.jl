@@ -24,10 +24,8 @@ instances.
 [`SecondaryStructure`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.Peptides.setss!(pose, ProtoSyn.Peptides.SecondaryStructure[:helix])
-┌ Warning: Residue Residue{/UNK:1/UNK:1/LEU:21} has no psi angle
-└ @ ProtoSyn.Peptides.Dihedral ~/project_c/ProtoSyn.jl/src/Peptides/types.jl:54
 State{Float64}:
  Size: 343
  i2c: true | c2i: false

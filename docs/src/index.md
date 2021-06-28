@@ -21,15 +21,28 @@ usage.
 * Explore rotamer libraries to optimize sidechain packaging
 * Select residues based on name, index, distance and other parameters, with a rich combinatory selection syntax
 * Perform rigid body docking of ligands
+* Include ramified carbohydrates and glycoproteins in your simulations, with support for sugar residues 
 
-Version 1.0 is scheduled to be released in the end of 2021.
+!!! ukw "Note:"
+    Version 1.0 is scheduled to be released at the end of August 2021.
 
 ## Getting started
 * [Installation](@ref)
 * [First steps](@ref)
+* [Examples](@ref)
 
-## Examples
-* Example 1
-* Example 2
+## Publications
 
-# ProtoSyn.jl API
+A scientific paper about ProtoSyn.jl package is being written and should be available soon.
+
+## Contacts
+
+[![jose.manuel.pereira@ua.pt](./assets/ProtoSyn-email.png)](mailto:jose.manuel.pereira@ua.pt)
+
+[![ProtoSyn YouTube Channel](./assets/ProtoSyn-youtube.png)](https://www.youtube.com/)
+
+## Acknowledgments
+ 
+![Acknowledgments](./assets/ProtoSyn-acknowledgments.png)
+
+This work was developed within the scope of the project CICECO-Aveiro Institute of Materials, UIDB/50011/2020 & UIDP/50011/2020, financed by national funds through the Portuguese Foundation for Science and Technology/MCTES. José Pereira further acknowledges FCT financial support on the scope of the PhD scholarship SFRH/BD/138820/2018.

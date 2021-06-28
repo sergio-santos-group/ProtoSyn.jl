@@ -119,7 +119,7 @@ return the altered [`Pose`](@ref) `pose`.
 julia> ProtoSyn.unbond!(pose, pose.graph[1][1]["C"], pose.graph[1, 2, "N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 343
- i2c: false | c2i: false
+ i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 

@@ -253,7 +253,7 @@ default), the downstream [`Residue`](@ref) position is maintained (by calling
 julia> unbond!(pose, pose.graph[1][2]["C"], pose.graph[1][3]["N"])
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:
  Size: 343
- i2c: false | c2i: false
+ i2c: true | c2i: false
  Energy: Dict(:Total => Inf)
 )
 ```

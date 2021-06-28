@@ -9,7 +9,7 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
     using ProtoSyn.Units;
     using Random; Random.seed!(1);
-    res_lib  = ProtoSyn.Peptides.grammar(Float64, verbose = false);
+    res_lib  = ProtoSyn.Peptides.grammar(Float64);
     frag     = fragment(res_lib, seq"AAA");
     pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL"); sync!(pose);
     pose_mod = copy(pose);
