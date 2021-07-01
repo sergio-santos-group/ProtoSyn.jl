@@ -1,0 +1,41 @@
+- name: run .travis.yml
+  # You may pin to the exact commit or the version.
+  # uses: ktomk/run-travis-yml@fab26d29082e009f43121c9e922be2555fa0a5cb
+  uses: ktomk/run-travis-yml@v1.7.0
+  with:
+    # Path to `.travis.yml` file. Leave empty / unset for default
+`.travis.yml`. Relative to project root. Overrides the
+`TRAVIS_YAML_FILE` environment variable if non-empty.
+
+    file: # optional, default is 
+    # Space separated list of steps to run. Leave empty
+/ unset to run all custom steps.
+
+    steps: # default is 
+    # Deprecated: Space separated list of steps to run
+(originally misnamed stages). Leave empty / unset to run
+all custom steps. Use `inputs.steps` instead. Note:
+`input.stages` might be re-used for different or just error
+in a future version; change early.
+
+    stages: # default is 
+    # Allow the .travis.yml build to fail. Possible values are
+`true` and `false`. Overrides the `TRAVIS_ALLOW_FAILURE`
+environment variable if set.
+
+    allow-failure: # optional, default is 
+    # alias of `allow-failure`
+    allow_failure: # optional, default is 
+    # Name of the run-job. Possible values are the ones the
+plan is listing. By default, the original root step-scripts
+are in use. If a job has a name, it can be used as well.
+
+    run-job: # optional, default is 
+    # alias of `run-job`
+    run_job: # optional, default is 
+    # Dry-run the run-job. Possible values are `true` and
+`false`.
+
+    dry-run-job: # optional, default is 
+    # alias of `dry-run-job`
+    dry_run_job: # optional, default is 
