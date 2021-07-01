@@ -266,7 +266,15 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     for atom in atoms
         for bond in atom.bonds
             !(bond in atoms) && begin
-                ProtoSyn.unbond!(pose, atom, bond)
+
+                # Unbond
+                i = findfirst(atom, bond.bonds)
+                i !== nothing && deleteat!(bond.bonds, i)
+                
+                j = findfirst(bond, atom.bonds)
+                j !== nothing && deleteat!(atom.bonds, j)
+
+                # Remove parenthood
                 ProtoSyn.isparent(bond.container, atom.container) && begin
                     ProtoSyn.popparent!(atom.container) 
                 end
@@ -709,7 +717,7 @@ end
 
 
 """
-    pop_residue!(pose::Pose{Topology}, residue::Residue; keep_downstream_position::Bool = false)
+    pop_residue!(pose::Pose{Topology}, residue::Residue; [keep_downstream_position::Bool = false])
 
 Pop and return the desired [`Residue`](@ref) `residue` from the given
 [`Pose`](@ref) `pose`. This is peformed by popping each [`Atom`](@ref) of the

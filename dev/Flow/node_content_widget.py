@@ -20,15 +20,14 @@ class QDMNodeContentWidget(QWidget, Serializable):
         self.layout.addWidget(QDMTextEdit("1.0"))
 
     def setEditingFlag(self, value):
-        self.node.scene.grScene.views()[0].editingFlag = value
+        self.node.scene.getView().editingFlag = value
 
     def serialize(self):
         return OrderedDict([
     ])
 
     def deserialize(self, data, hashmap={}, restore_id = True):
-        if restore_id: self.id = data['id']
-        return False
+        return True
 
 
 class QDMTextEdit(QTextEdit):

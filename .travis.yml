@@ -8,7 +8,7 @@ language: julia
 os:
   - linux
 julia:
-  - 1.4
+  - 1.6.1
 notifications:
   email: false
 git:
@@ -19,6 +19,7 @@ jobs:
       julia: 1.6.1
       os: linux
       script:
+        - pip install torch
         - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
         - julia --project=docs/ docs/make.jl
       after_success: skip

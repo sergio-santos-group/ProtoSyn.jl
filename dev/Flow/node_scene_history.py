@@ -21,8 +21,6 @@ class SceneHistory():
     def canRedo(self):
         return self.history_current_step + 1 < len(self.history_stack)
 
-
-
     def undo(self):
         if self.canUndo():
             self.history_current_step -= 1
@@ -30,7 +28,7 @@ class SceneHistory():
             self.scene.has_been_modified = True
 
     def redo(self):
-        if self.history_current_step + 1 < len(self.history_stack):
+        if self.canRedo():
             self.history_current_step += 1
             self.restoreHistory()
             self.scene.has_been_modified = True

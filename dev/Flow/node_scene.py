@@ -28,6 +28,8 @@ class Scene(Serializable):
         self._item_selected_listeners     = []
         self._items_deselected_listeners  = []
 
+        # here we can store callback for retrieving the class for Nodes
+        self.node_class_selector = None
 
         self.initUI()
         self.history                      = SceneHistory(self)
@@ -85,10 +87,10 @@ class Scene(Serializable):
         self._items_deselected_listeners.append(callback)
 
     def addDragEnterListener(self, callback):
-        self.grScene.views()[0].addDragEnterListener(callback)
+        self.getView().addDragEnterListener(callback)
 
     def addDropListener(self, callback):
-        self.grScene.views()[0].addDropListener(callback)
+        self.getView().addDropListener(callback)
 
     # custom flag to detect node or edge has been selected....
     def resetLastSelectedStates(self):
@@ -100,6 +102,12 @@ class Scene(Serializable):
     def initUI(self):
         self.grScene = QDMGraphicsScene(self)
         self.grScene.setGrScene(self.scene_width, self.scene_height)
+
+    def getView(self):
+        return self.grScene.views()[0]
+
+    def getItemAt(self, pos):
+        return self.getView().itemAt(pos)
 
     def addNode(self, node):
         self.nodes.append(node)
@@ -138,6 +146,13 @@ class Scene(Serializable):
             except Exception as e:
                 dumpException(e)
 
+    def setNodeClassSelector(self, class_selecting_function):
+        """ When the function self.node_class_selector is set, we can use different Node Classes """
+        self.node_class_selector = class_selecting_function
+
+    def getNodeClassFromData(self, data):
+        return Node if self.node_class_selector is None else self.node_class_selector(data)
+
     def serialize(self):
         nodes, edges = [], []
         for node in self.nodes: nodes.append(node.serialize())
@@ -158,7 +173,7 @@ class Scene(Serializable):
 
         # create nodes
         for node_data in data['nodes']:
-            Node(self).deserialize(node_data, hashmap, restore_id)
+            self.getNodeClassFromData(node_data)(self).deserialize(node_data, hashmap, restore_id)
 
         # create edges
         for edge_data in data['edges']:

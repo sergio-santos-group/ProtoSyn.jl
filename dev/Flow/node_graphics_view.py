@@ -96,6 +96,9 @@ class QDMGraphicsView(QGraphicsView):
 
 
     def middleMouseButtonPress(self, event):
+        item = self.getItemAtClick(event)
+        
+        # faking events for enable MMB dragging the scene
         releaseEvent = QMouseEvent(QEvent.MouseButtonRelease, event.localPos(), event.screenPos(),
                                    Qt.LeftButton, Qt.NoButton, event.modifiers())
         super().mouseReleaseEvent(releaseEvent)

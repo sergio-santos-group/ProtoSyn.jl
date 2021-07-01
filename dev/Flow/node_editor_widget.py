@@ -31,9 +31,6 @@ class NodeEditorWidget(QWidget):
         self.view = QDMGraphicsView(self.scene.grScene, self)
         self.layout.addWidget(self.view)
 
-        # Save initial status for Redo
-        self.scene.history.storeHistory("Start")
-
     def isModified(self):
         return self.scene.isModified()
 
