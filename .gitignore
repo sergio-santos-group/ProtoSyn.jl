@@ -3,7 +3,6 @@
 *.jl.mem
 *.DS_STORE
 *.zip
-*.txt
 *.forces
 
 docs/build/
