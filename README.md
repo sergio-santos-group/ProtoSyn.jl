@@ -2,7 +2,7 @@
 
 | **Status**                                                         |
 |:-------------------------------------------------------------------------|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] [![][build-status-img]][build-status-url]|
+| [![][docs-stable-img]][docs-stable-url] [![][build-status-img]][build-status-url]|
 
 
 ## Installation
