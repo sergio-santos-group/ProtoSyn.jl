@@ -122,7 +122,5 @@ makedocs(
 
 deploydocs(
     repo = "github.com/sergio-santos-group/ProtoSyn.jl.git",
-    osname = "linux",
-    julia = "1.6.1",
     versions = ["stable" => "v^", "v#.#", "dev" => "dev"],
 )

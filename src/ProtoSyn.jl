@@ -1,6 +1,6 @@
 module ProtoSyn
 
-const _version = 0.4
+const _version = 0.9
 
 mutable struct Verbose
     mode::Bool
@@ -100,8 +100,6 @@ include("Sugars/Sugars.jl")
 
 @info "Loading Common"
 include("Common/Common.jl")
-
-
 
 @info "ProtoSyn loaded successfully!"
 

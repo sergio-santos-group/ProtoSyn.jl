@@ -8,6 +8,12 @@ os:
   - linux
 julia:
   - 1.6.1
+matrix:
+  - PYTHON=Conda-python
+env:
+  - PYTHON=~/.julia/conda/3/bin/python
+before_install:
+  - julia -e 'using Pkg; Pkg.add.(["PyCall"]); Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -m pip install torch`)';
 notifications:
   email: false
 git:
