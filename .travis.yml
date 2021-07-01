@@ -2,7 +2,6 @@
 branches:
   only:
   - master
-  - refactoring
 
 language: julia
 os:
@@ -19,7 +18,7 @@ jobs:
       julia: 1.6.1
       os: linux
       script:
-        - pip install torch
+        - pip install torch --user
         - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
         - julia --project=docs/ docs/make.jl
       after_success: skip
