@@ -121,6 +121,5 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/sergio-santos-group/ProtoSyn.jl.git",
-    versions = ["stable" => "v^", "v#.#", "dev" => "dev"],
+    repo = "github.com/sergio-santos-group/ProtoSyn.jl.git"
 )

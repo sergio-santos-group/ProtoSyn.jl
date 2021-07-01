@@ -8,8 +8,6 @@ os:
   - linux
 julia:
   - 1.6.1
-matrix:
-  - PYTHON=Conda-python
 env:
   - PYTHON=~/.julia/conda/3/bin/python
 before_install:
@@ -24,7 +22,6 @@ jobs:
       julia: 1.6.1
       os: linux
       script:
-        - pip install torch --user
         - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
         - julia --project=docs/ docs/make.jl
       after_success: skip
