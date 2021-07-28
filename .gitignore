@@ -12,3 +12,4 @@ docs/build/
 *.png
 *.dat
 dev/
+test*

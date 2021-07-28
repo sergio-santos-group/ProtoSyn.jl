@@ -154,6 +154,12 @@ When mutating to Proline, falls back to [`force_mutate!`](@ref). If
 sidechains are first removed and then re-added, regardless of being of the same
 type (which normally are ignored, if no mutation is required).
 
+    mutate!(pose::Pose{Topology}, sele::AbstractSelection, grammar::LGrammar, derivation)
+
+Mutate the given [`Pose`](@ref) `pose` at [`Residue`](@ref) `residue` selected
+by the `AbstractSelection` `sele`. Note that this selection can only return a
+single aminoacid at a time.
+
 !!! ukw "Note:"
     Sidechains are selected based on the [`Atom`](@ref)`.name` (backbone
     [`Atom`](@ref) instances must be named N, H, CA, C and O, exclusively. Non
@@ -260,6 +266,12 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     ProtoSyn.request_i2c!(pose.state)
 
     return pose
+end
+
+mutate!(pose::Pose{Topology}, sele::AbstractSelection, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false) = begin
+    residue = sele(pose, gather = true)
+    @assert length(residue) == 1 "Can only mutate one residue at a time."
+    return mutate!(pose, residue[1], grammar, derivation, ignore_existing_sidechain = ignore_existing_sidechain)
 end
 
 

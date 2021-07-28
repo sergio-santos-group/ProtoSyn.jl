@@ -188,9 +188,9 @@ julia> m = ProtoSyn.Mutators.RotationRigidBodyMutator(ProtoSyn.rand_vector_in_sp
 ```
 """
 mutable struct RotationRigidBodyMutator <: AbstractMutator
-    axis_sampler::Function # should return a Vector{Float}
-    angle_sampler::Function # should return a Float
-    pivot_sampler::Function # receives a pose and a vector of selected
+    axis_sampler::Function # Should return a Vector{Float}
+    angle_sampler::Function # Should return a Float
+    pivot_sampler::Function # Receives a pose and a vector of selected
     # atom indexes and should return a Vector{Float}.
     step_size::AbstractFloat
     selection::Opt{AbstractSelection}
