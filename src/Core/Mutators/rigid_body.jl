@@ -57,7 +57,7 @@ julia> m = ProtoSyn.Mutators.TranslationRigidBodyMutator(ProtoSyn.rand_vector_in
 ```
 """
 mutable struct TranslationRigidBodyMutator <: AbstractMutator
-    translation_vector_sampler::Function # should return a Vector{Float}
+    translation_vector_sampler::Function # Should return a Vector{Float}
     step_size::AbstractFloat
     selection::Opt{AbstractSelection}
 end

@@ -75,9 +75,16 @@ println("-----------\n Mutators:")
         @test pos_2_3 ≈ [7.863391631896685, -4.874122906544416, -0.2690548282792112]
     end
 
+    @testset verbose = true "$(@sprintf "%-54s" "Backrub")" begin
+        pose = copy(backup)
+        m =  ProtoSyn.Mutators.BackrubMutator(()->[1.0, 1.0, 1.0], 1.0, 1.0, aid"2")
+        pos_1_2 = pose.state[pose.graph[1][1][2]].t
+        m(pose); sync!(pose)
+        @test pose.state[pose.graph[1][1][2]].t == pos_1_2 .+ 1.0
+    end
+
     @testset verbose = true "$(@sprintf "%-54s" "Compound")" begin
         pose = copy(backup)
-        ProtoSyn.write(pose, "teste.pdb")
         m1 = ProtoSyn.Mutators.DihedralMutator(() -> pi, 1.0, 1.0, an"C")
         m2 = ProtoSyn.Mutators.DihedralMutator(() -> pi, 1.0, 1.0, an"C")
         m =  ProtoSyn.Mutators.CompoundMutator([m1, m2], rid"2")
@@ -85,7 +92,6 @@ println("-----------\n Mutators:")
         ∠1_2 = ProtoSyn.getdihedral(pose.state, pose.graph[1][2]["CA"])
         ∠1_3 = ProtoSyn.getdihedral(pose.state, pose.graph[1][3]["N"])
         m(pose); sync!(pose)
-        ProtoSyn.append(pose, "teste.pdb")
         ∠2_1 = ProtoSyn.getdihedral(pose.state, pose.graph[1][2]["C"])
         ∠2_2 = ProtoSyn.getdihedral(pose.state, pose.graph[1][2]["CA"])
         ∠2_3 = ProtoSyn.getdihedral(pose.state, pose.graph[1][3]["N"])
@@ -93,5 +99,4 @@ println("-----------\n Mutators:")
         @test ProtoSyn.unit_circle(∠2_2)  ≈ ProtoSyn.unit_circle(∠1_2 + 2π) atol = 1e-5
         @test ProtoSyn.unit_circle(∠2_3)  ≈ ProtoSyn.unit_circle(∠1_3 + 2π) atol = 1e-5
     end
-
 end

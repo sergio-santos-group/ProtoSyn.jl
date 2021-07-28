@@ -100,6 +100,7 @@ mutable struct CrankshaftMutator <: AbstractMutator
     # movement WILL BE included in the rotation.
 end
 
+
 function (crankshaft_mutator::CrankshaftMutator)(pose::Pose)
     if crankshaft_mutator.selection === nothing
         atoms = collect(eachatom(pose.graph))
