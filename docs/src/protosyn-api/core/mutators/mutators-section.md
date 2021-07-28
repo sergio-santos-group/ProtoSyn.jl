@@ -43,4 +43,5 @@ Besides all the machinery to create custom mutators, ProtoSyn's `Core` module ma
 * [Dihedral Mutator](@ref)
 * [Crankshaft Mutator](@ref)
 * [Rigid Body Mutators](@ref)
+* [Backrub Mutators](@ref)
 * [Compound Mutator](@ref)
