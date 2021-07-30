@@ -68,7 +68,7 @@ end
 
 function (backrub_mutator::BackrubMutator)(pose::Pose)
     if backrub_mutator.selection === nothing
-        atoms = collect(eachatom(pose.graph))
+        atoms = Vector{Atom}(collect(eachatom(pose.graph)))
     else
         if ProtoSyn.selection_type(backrub_mutator.selection) !== Atom
             sele  = ProtoSyn.promote(backrub_mutator.selection, Atom) # default aggregator is `any`
