@@ -120,6 +120,9 @@ end
 
 function (driver::SteepestDescent)(pose::Pose)
   
+    # SteepestDescent requires a synched pose
+    sync!(pose)
+
     T = eltype(pose.state)
     energy = driver.eval!(pose, true)
 
