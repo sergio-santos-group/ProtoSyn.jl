@@ -89,7 +89,6 @@ function (compound_mutator::CompoundMutator)(pose::Pose)
     else
         sele = TrueSelection{Atom}()
     end
-    atoms = sele(pose, gather = true)
 
     # Note: From one mutator to the next, certain changes may have taken place.
     # If these changes are applied to the internal coordinates only, no sync!
@@ -98,6 +97,7 @@ function (compound_mutator::CompoundMutator)(pose::Pose)
     # been correctly updated. Example: CrankshaftMutators check i2c! since they
     # require the updated cartesian coordinates.
     for mutator in compound_mutator.mutators
+        atoms = (mutator.selection & sele)(pose, gather = true)
         mutator(pose, atoms)
     end
 end
