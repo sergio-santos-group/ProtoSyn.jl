@@ -157,7 +157,7 @@ module Restraints
         return EnergyFunctionComponent(
             "Cα-Cα_Clash_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.0, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
             α,
             false)
     end
