@@ -81,6 +81,15 @@ function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: Abstract
     end
 end
 
+function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
+    return EnergyFunctionComponent{T}(
+        efc.name,
+        efc.calc,
+        copy(efc.settings),
+        copy(efc.α),
+        copy(efc.update_forces))
+end
+
 @info " | Loading TorchANI"
 include("torchani.jl")
 
