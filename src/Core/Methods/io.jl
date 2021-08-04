@@ -175,7 +175,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?<an>\w+)\s+(?<rn>\w+)\s+(?<sn>\S*)\s+(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s+(?<as>\w)"
+    er = r"\w+\s+(?<aid>\d+)\s+(?<an>\w{1,5})\s*\w*(?<rn>\w{3,})\s+(?<sn>\S*)\s+(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s*(?<as>\w)\s*$"
     
     seekstart(io)
     for line in eachline(io)
