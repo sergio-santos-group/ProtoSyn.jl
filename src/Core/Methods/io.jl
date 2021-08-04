@@ -5,7 +5,7 @@ const PDB = Val{1}
 const YML = Val{2}
 
 """
-    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false]) where {T <: AbstractFloat}
+    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false, alternative_location::String = "A"]) where {T <: AbstractFloat}
 
 Load the given `filename` into a pose, parametrized by `T`. If this is not
 provided, the default `ProtoSyn.Units.defaultFloat` is used. The file format is
@@ -13,7 +13,9 @@ infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
 set to `true` (`false`, by default), the CONECT records will be complemented
 with bonds infered by distance. The distances for each pair of atoms
 is defined in `ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard
-deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance.
+deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance. By
+default, and when available, ProtoSyn will use `alternative_location` `A`,
+unless specified in the flag `alternative_location`.
 
 # See also
 [`distance`](@ref)
@@ -31,9 +33,9 @@ Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
 )
 ```
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") where {T <: AbstractFloat}
     if endswith(filename, ".pdb") 
-        return load(T, filename, PDB, bonds_by_distance = bonds_by_distance)
+        return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
     elseif endswith(filename, ".yml")
         return load(T, filename, YML, bonds_by_distance = bonds_by_distance)
     else
@@ -42,17 +44,17 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 end
 
 
-load(filename::AbstractString; bonds_by_distance = false) = begin
+load(filename::AbstractString; bonds_by_distance = false, alternative_location::String = "A") = begin
     ProtoSyn.verbose.mode && begin
         @info "Consider using Peptides.load when dealing with peptide chains."
     end
-    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance)
+    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location)
 end
 
 
-load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T <: AbstractFloat, K} = begin
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
     
-    pose = load(T, open(filename), K)
+    pose = load(T, open(filename), K; alternative_location = alternative_location)
     name, _ = splitext(basename(filename))
     pose.graph.name = name
 
@@ -106,8 +108,8 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
 end
 
 
-load(filename::AbstractString, ::Type{K}; bonds_by_distance = false) where K = begin
-    load(Float64, filename, K, bonds_by_distance = bonds_by_distance)
+load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where K = begin
+    load(Float64, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 end
 
 
@@ -159,7 +161,7 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
 end
 
 
-load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
     
     top  = Topology("UNK", -1)
     seg  = Segment("", -1)     # orphan segment
@@ -175,17 +177,24 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?<an>\w{1,5})\s*\w*(?<rn>\w{3,})\s+(?<sn>\S*)\s+(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s*(?<as>\w)\s*$"
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3})))\s+(?<sn>\S{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s*(?<as>\w)\s*$"
     
     seekstart(io)
     for line in eachline(io)
         
-        if startswith(line, "TITLE")
-            top.name = string(strip(line[11:end]))
+        # if startswith(line, "TITLE")
+        #     top.name = string(strip(line[11:end]))
 
-        elseif startswith(line, "ATOM") || startswith(line, "HETATM")
+        if startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
+
+            # * Choose alternative locations
+            al = string(atom["al"])
+            if al !== "" && al !== alternative_location
+                continue
+            end
+
             segname = atom["sn"] == "" ? "A" : string(atom["sn"]) # * Default
 
             if seg.name != segname
@@ -207,6 +216,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
                 parse(Int, atom["aid"]),
                 atmindex,
                 string(atom["as"]))
+
             id2atom[parse(Int, atom["aid"])] = new_atom
             
             s = state[atmindex]
@@ -218,6 +228,12 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 
         elseif startswith(line, "CONECT")
             idxs = map(s -> parse(Int, s), split(line)[2:end])
+
+            # * In case this atom ID belongs to an alternative location
+            # if !(idxs[1] in keys(id2atom))
+            #     continue
+            # end
+
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
                 other_atom = id2atom[i]
