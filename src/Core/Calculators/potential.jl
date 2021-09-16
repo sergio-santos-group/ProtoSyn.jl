@@ -139,8 +139,12 @@ function apply_potential(::Type{ProtoSyn.CUDA_2}, coords::Vector{T}, potential::
     return energies, forces
 end # function
 
-apply_potential(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin
-    error("'apply_potential' method is only available with CUDA_2 acceleration type.")
+apply_potential(::Type{ProtoSyn.SISD_0}, coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin
+    error("'apply_potential' method is not available with SISD_0 acceleration type.")
+end
+
+apply_potential(::Type{ProtoSyn.SIMD_1}, coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin
+    error("'apply_potential' method is not available with SIMD_1 acceleration type.")
 end
 
 apply_potential(coords::Vector{T}, potential::Function) where {T <: AbstractFloat} = begin

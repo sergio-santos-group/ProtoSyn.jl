@@ -113,7 +113,7 @@ load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative
 end
 
 
-load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
     
     yml = YAML.load(io)
     natoms = length(yml["atoms"])

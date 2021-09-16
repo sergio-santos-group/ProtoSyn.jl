@@ -108,11 +108,11 @@ module TorchANI
 
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
-    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
-        error("'calc_torchani_model' requires CUDA_2 acceleration.")
-    end
+    # function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    #     error("'calc_torchani_model' requires CUDA_2 acceleration.")
+    # end
 
-    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}, Type{ProtoSyn.CUDA_2}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         

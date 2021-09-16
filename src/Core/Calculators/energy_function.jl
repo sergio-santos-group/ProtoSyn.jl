@@ -149,7 +149,7 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
     end
 
     # Perform memory allocation clean-up and maintenance
-    if performed_calc
+    if performed_calc && ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
         energy_function.cache += 1
         if energy_function.cache % energy_function.clean_cache_every == 0
             GC.gc(false)
