@@ -141,8 +141,18 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
             e += e_comp
 
             if uf & !(forces === nothing)
-                for atom_index in 1:pose.state.size
-                    pose.state.f[:, atom_index] += forces[:, atom_index] .* component.α
+                if :selection in keys(component.settings)
+                    i = 0
+                    selected = component.settings[:selection](pose)
+                    for atom_index in 1:pose.state.size
+                        !selected[atom_index] && continue
+                        i += 1
+                        pose.state.f[:, atom_index] += forces[:, i] .* component.α
+                    end
+                else
+                    for atom_index in 1:pose.state.size
+                        pose.state.f[:, atom_index] += forces[:, atom_index] .* component.α
+                    end
                 end
             end
         end

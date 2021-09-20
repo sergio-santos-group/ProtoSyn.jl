@@ -94,7 +94,7 @@ end
 include("torchani.jl")
 
 @info " | Loading Restraint Models"
-include("potential.jl")
+include("Potentials/potentials.jl")
 include("restraints.jl")
 
 @info " | Loading Energy Function"

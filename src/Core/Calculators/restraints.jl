@@ -139,6 +139,8 @@ module Restraints
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     """
+        # TODO - Update this to include calc_flat_bottom_restraint! and remove warning
+
         calc_flat_bottom_restraint([::Type{A}], pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
 
     Apply a flat bottom potential to a given [`Pose`](@ref) `pose`. The
@@ -175,12 +177,24 @@ module Restraints
     (556449.1936070402, [-711.7603616347209 -630.2662235401388 … 995.0284325254745 1153.572133762037; -419.1275359380875 -548.0506257124055 … 286.5285847489888 92.16862928705675; 6.007398880372552 8.2409631821887 … -99.38257889245355 -92.37110004070036])    ```
     """
     function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
-        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, selection, mask)
+        fbr = ProtoSyn.Calculators.get_flat_bottom_potential(A; d1 = d1, d2 = d2, d3 = d3, d4 = d4)
+        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, update_forces, nothing, selection, mask)
         return e, f
     end # function
 
     calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat} = begin
         calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask)
+    end
+
+    """
+        # TODO
+    """
+    function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+        fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
+        e, f = ProtoSyn.Calculators.apply_potential!(A, pose, fbr, update_forces, nothing, selection, mask)
+    end # function
+
+    calc_flat_bottom_restraint!(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat} = begin
+        calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask)
     end
 end
