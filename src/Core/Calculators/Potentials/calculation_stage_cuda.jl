@@ -68,5 +68,6 @@ function resolve_calculation(::Type{ProtoSyn.CUDA_2},
 
     @cuda blocks = blocks threads = threads resolve_calculation_kernel(_coords, energies, forces, _size, potential)
 
-    return resolve_mask(ProtoSyn.CUDA_2, pose, energies, forces, mask)
+    # return 0.0, nothing
+    return resolve_mask(ProtoSyn.CUDA_2, pose, energies, forces, update_forces, mask)
 end

@@ -35,6 +35,11 @@ become obsolete, and needs to be updated using [`update!`](@ref).
 Creates a new [`VerletList`](@ref) with infinite `cutoff` (holds all atoms in
 the molecule).
 
+    VerletList(pose::Pose)
+    
+Creates a new [`VerletList`](@ref) with infinite `cutoff` (holds all atoms in
+the [`Pose`](@ref)).
+
 # Fields
 * `size::Int` - The number of [`Atom`](@ref) instances this [`VerletList`](@ref) makes reference to. Should be the size of `:offset` field;
 * `capacity::Int` - Maximum number of interaction pairs listed in this [`VerletList`](@ref); 
@@ -63,6 +68,17 @@ VerletList(size::Int) = begin
     return VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
 end
 
+VerletList(pose::Pose) = begin
+    size = pose.state.size
+    return VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
+end
+
+function Base.show(io::IO, vlist::VerletList)
+    s = "Size: $(vlist.size) | Cutoff (Å): $(vlist.cutoff)"
+    if !any(vlist.list .!== 0); s *= " | Update required"; end
+    println(s)
+end
+
 
 """
     resize!(verlet_list::VerletList, n::Int)
@@ -79,6 +95,7 @@ Base.resize!(verlet_list::VerletList, n::Int) = begin
     verlet_list.capacity = n
 end
 
+# ------------------------------------------------------------------------------
 
 """
     update!([::Type{ProtoSyn.SISD_0}], verlet_list::VerletList, pose::Pose, [selection::Opt{ProtoSyn.AbstractSelection} = nothing])
@@ -101,39 +118,26 @@ julia> ProtoSyn.Calculators.update!(verlet_list, pose, an"CA")
     ...
 ```
 """
-function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, coords::Matrix{T}) where {T <: AbstractFloat}
     # coords must be in AoS format
     
-    @assert verlet_list.size == pose.state.size "incompatible sizes"
-
+    natoms = maximum(size(coords))
+    @assert verlet_list.size == natoms "incompatible sizes (Verlet: $(verlet_list.size) | Atoms: $natoms)"
     
     # cutoff squared
-    cutsq  = convert(eltype(pose.state), verlet_list.cutoff * verlet_list.cutoff)
+    cutsq  = convert(T, verlet_list.cutoff * verlet_list.cutoff)
     offset = 1
-    natoms = pose.state.size
-    coords = pose.state.x.coords
-
-    if selection !== nothing
-        mask = selection(pose)
-    else
-        mask = !ProtoSyn.Mask{Atom}(natoms)
-    end
 
     @inbounds for i = 1:natoms
-
-        !(mask[i]) && continue # If not selected, continue
 
         verlet_list.offset[i] = offset
         @nexprs 3 u -> xi_u = coords[u, i]
 
         for j = (i+1):natoms
 
-            !(mask[j]) && continue # If not selected, continue
-
             @nexprs 3 u -> vij_u = coords[u, j] - xi_u
             dij_sq = @reduce 3 (+) u -> vij_u * vij_u
 
-            # println("$i - $j: $dij_sq < $cutsq = $(dij_sq < cutsq)")
             if dij_sq < cutsq
                 verlet_list.list[offset] = j
                 offset += 1
@@ -155,32 +159,40 @@ function update!(::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, s
     return verlet_list
 end
 
+function update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection)
+    
+    sele = ProtoSyn.promote(selection, Atom)(pose).content
+    N = count(sele)
+    if N == 0
+        @warn "The provided selection resulted in 0 atoms selected to update Verlet list."
+        return verlet_list
+    end
+    coords = pose.state.x.coords[:, sele]
 
-function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing)
+    return update!(A, verlet_list, coords)
+end
 
-    @assert verlet_list.size == pose.state.size "incompatible sizes"
+update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection = nothing) = update!(A, verlet_list, pose)
+update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose) = update!(A, verlet_list, pose.state.x.coords)
+
+# ------------------------------------------------------------------------------
+
+function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, coords::Vector{T}) where {T <: AbstractFloat}
+
+    natoms = maximum(size(coords)) ÷ 3
+    @assert verlet_list.size == natoms "incompatible sizes (Verlet: $(verlet_list.size) | Atoms: $natoms)"
 
     # cutoff squared
-    T               = eltype(pose.state)
     cutsq           = convert(T, verlet_list.cutoff * verlet_list.cutoff)
     offset          = 1
-    natoms          = pose.state.size
     remaining_mask  = Vec{4, T}((1, 1, 1, 0))
 
     # For the coords we need to add an extra 0, because the last coord will
     # be loaded in a 4-wide vector for SIMD calculation. The last value is
     # then ignored.
-    coords = push!(pose.state.x[:], T(0))
-
-    if selection !== nothing
-        mask = selection(pose)
-    else
-        mask = !ProtoSyn.Mask{Atom}(natoms)
-    end
+    coords = push!(coords, T(0))
 
     @inbounds for i = 1:natoms
-
-        !(mask[i]) && continue # If not selected, continue
 
         verlet_list.offset[i] = offset
 
@@ -189,8 +201,6 @@ function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, s
         vi = vload(Vec{4, T}, coords, _i) # Load XYZ (consecutive)
 
         @inbounds for j = (i+1):natoms
-
-            !(mask[j]) && continue # If not selected, continue
             
             # Atom number to atom position conversion
             _j = j << 2 - (2 + j)
@@ -200,7 +210,6 @@ function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, s
             rij = (vload(Vec{4, T}, coords, _j) - vi) * remaining_mask   # xi1, yi1, zi1, ?i1
             dij_sq = sum(rij * rij)
 
-            # println("$i - $j: $dij_sq < $cutsq = $(dij_sq < cutsq)")
             if dij_sq < cutsq
                 verlet_list.list[offset] = j
                 offset += 1
@@ -221,6 +230,24 @@ function update!(::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, s
 
     return verlet_list
 end
+
+function update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection)
+    
+    sele = ProtoSyn.promote(selection, Atom)(pose).content
+    N = count(sele)
+    if N == 0
+        @warn "The provided selection resulted in 0 atoms selected to update Verlet list."
+        return verlet_list
+    end
+    coords = pose.state.x.coords[:, sele][:]
+
+    return update!(A, verlet_list, coords)
+end
+
+update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection = nothing) = update!(A, verlet_list, pose)
+update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose) = update!(A, verlet_list, pose.state.x.coords[:])
+
+# ------------------------------------------------------------------------------
 
 update!(::Type{ProtoSyn.CUDA_2}, verlet_list::VerletList, pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing) = begin
     @warn "CUDA_2 acceleration not available for `update!` method. Downgrading to SIMD_1 acceleration ..."

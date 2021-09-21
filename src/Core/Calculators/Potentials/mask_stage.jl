@@ -7,12 +7,17 @@ function resolve_mask(A::Type{ProtoSyn.CUDA_2},
     pose::Pose,
     e::Union{Array, CuArray},
     f::Union{Array, CuArray},
+    update_forces::Bool,
     mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {C <: ProtoSyn.AbstractContainer, T <: AbstractFloat}
 
     energy = sum(e .* CuArray(mask))
     
-    f = map(*, f, CuArray(repeat(mask, outer = (1, 1, 3))))
-    forces = collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
+    if update_forces
+        f = map(*, f, CuArray(repeat(mask, outer = (1, 1, 3))))
+        forces = collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
+    else
+        forces = nothing
+    end
 
     return energy, forces
 end
@@ -22,13 +27,18 @@ function resolve_mask(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}},
     pose::Pose,
     e::Union{Array, CuArray},
     f::Union{Array, CuArray},
+    update_forces::Bool,
     mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {C <: ProtoSyn.AbstractContainer, T <: AbstractFloat}
 
     @assert size(e) == size(mask) "The used mask $(size(mask)) does not match the size of the current selected coords $(size(e)). Check both the applied selection and mask."
     energy = sum(e .* mask.content)
     
-    f = map(*, f, repeat(mask, outer = (1, 1, 3)))
-    forces = collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
+    if update_forces
+        f = map(*, f, repeat(mask, outer = (1, 1, 3)))
+        forces = collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
+    else
+        forces = nothing
+    end
 
     return energy, forces
 end
@@ -40,9 +50,10 @@ function resolve_mask(A::Type{<: ProtoSyn.AbstractAccelerationType},
     pose::Pose,
     e::Union{Array, CuArray},
     f::Union{Array, CuArray},
+    update_forces::Bool,
     mask::Function)
 
-    resolve_mask(A, pose, e, f, mask(pose))
+    resolve_mask(A, pose, e, f, update_forces, mask(pose))
 end
 
 # * No mask
@@ -52,6 +63,7 @@ function resolve_mask(A::Type{<: ProtoSyn.AbstractAccelerationType},
     pose::Pose,
     e::Union{Array, CuArray},
     f::Union{Array, CuArray},
+    update_forces::Bool,
     mask::Nothing)
 
     return sum(e), collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
@@ -192,6 +204,13 @@ julia> ProtoSyn.Calculators.get_diagonal_mask(an"CA")
 function get_diagonal_mask(selection::AbstractSelection)
     return function _diagonal_mask(pose::Pose)
         N = count(selection(pose))
+        return !ProtoSyn.Mask{Atom}(BitArray(Matrix{Bool}(I, N, N)))
+    end
+end
+
+function get_diagonal_mask()
+    return function _diagonal_mask(pose::Pose)
+        N = pose.state.size
         return !ProtoSyn.Mask{Atom}(BitArray(Matrix{Bool}(I, N, N)))
     end
 end

@@ -6,7 +6,7 @@ Contains restraint energy components, such as `bond_distance_restraint`.
 module Restraints
 
     using ProtoSyn
-    using ProtoSyn.Calculators: EnergyFunctionComponent
+    using ProtoSyn.Calculators: EnergyFunctionComponent, VerletList
 
     """
         calc_bond_distance_restraint([::Type{A}], pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
@@ -176,25 +176,25 @@ module Restraints
     julia> ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint(pose, false, d1 = 10.0, d2 = 12.0)
     (556449.1936070402, [-711.7603616347209 -630.2662235401388 … 995.0284325254745 1153.572133762037; -419.1275359380875 -548.0506257124055 … 286.5285847489888 92.16862928705675; 6.007398880372552 8.2409631821887 … -99.38257889245355 -92.37110004070036])    ```
     """
-    function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(A; d1 = d1, d2 = d2, d3 = d3, d4 = d4)
-        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, update_forces, nothing, selection, mask)
+        e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, update_forces, vlist, selection, mask)
         return e, f
     end # function
 
-    calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat} = begin
-        calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask)
+    calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
+        calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
     end
 
     """
         # TODO
     """
-    function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
-        e, f = ProtoSyn.Calculators.apply_potential!(A, pose, fbr, update_forces, nothing, selection, mask)
+        e, f = ProtoSyn.Calculators.apply_potential!(A, pose, fbr, update_forces, vlist, selection, mask)
     end # function
 
-    calc_flat_bottom_restraint!(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {T <: AbstractFloat} = begin
-        calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask)
+    calc_flat_bottom_restraint!(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
+        calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
     end
 end

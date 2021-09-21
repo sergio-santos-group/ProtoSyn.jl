@@ -178,6 +178,15 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
     return e
 end
 
+"""
+# TODO
+"""
+function append_verlet_list_to_energy_function(vlist::VerletList, ef::EnergyFunction)
+    for efc in ef.components
+        efc.settings[:vlist] = vlist
+    end
+end
+
 # * Show -----------------------------------------------------------------------
 
 function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = nothing)
