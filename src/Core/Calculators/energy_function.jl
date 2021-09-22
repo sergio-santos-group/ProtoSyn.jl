@@ -141,7 +141,7 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
             e += e_comp
 
             if uf & !(forces === nothing)
-                if :selection in keys(component.settings)
+                if :selection in keys(component.settings) && component.settings[:selection] !== nothing
                     i = 0
                     selected = component.settings[:selection](pose)
                     for atom_index in 1:pose.state.size
@@ -176,15 +176,6 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
 
     pose.state.e[:Total] = e
     return e
-end
-
-"""
-# TODO
-"""
-function append_verlet_list_to_energy_function(vlist::VerletList, ef::EnergyFunction)
-    for efc in ef.components
-        efc.settings[:vlist] = vlist
-    end
 end
 
 # * Show -----------------------------------------------------------------------

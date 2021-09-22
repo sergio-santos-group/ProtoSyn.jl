@@ -139,8 +139,6 @@ module Restraints
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     """
-        # TODO - Update this to include calc_flat_bottom_restraint! and remove warning
-
         calc_flat_bottom_restraint([::Type{A}], pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
 
     Apply a flat bottom potential to a given [`Pose`](@ref) `pose`. The
@@ -162,11 +160,12 @@ module Restraints
     `Type{<: ProtoSyn.AbstractAccelerationType}`. If not provided, the default
     `ProtoSyn.acceleration.active` will be used instead.
 
-    !!! ukw "Note:"
-        As of ProtoSyn 1.0, the
-        [`apply_potential`](@ref ProtoSyn.Calculators.apply_potential)
-        acceleration type defaults to `CUDA_2` regardless of the requested
-        acceleration type. This may be changed in future iterations.
+        calc_flat_bottom_restraint!([::Type{A}], pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+
+    Apply a flat bottom potential to a given [`Pose`](@ref) `pose` (see above).
+    Also apply any energy and forces changes directly to the [`Pose`](@ref)
+    `pose`.
+
 
     # Examples
     ```jldoctest
@@ -186,9 +185,6 @@ module Restraints
         calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
     end
 
-    """
-        # TODO
-    """
     function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
         e, f = ProtoSyn.Calculators.apply_potential!(A, pose, fbr, update_forces, vlist, selection, mask)

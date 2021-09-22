@@ -156,7 +156,10 @@ Base.lastindex(level_code::LevelCode) = length(level_code.levels)
 
 
 """
-    # TODO
+    get_lead(level_code::Opt{LevelCode} = nothing)
+
+Auxiliary function, uses level codes to show inheritance in the terminal for
+complex types.
 """
 function get_lead(level_code::Opt{LevelCode} = nothing)
     lead = ""

@@ -77,8 +77,7 @@ module TorchANI
     Calculate and return the [`Pose`](@ref) `pose` energy according to a single
     TorchANI model neural network. The model can be defined using `model_index`
     (from model 1 to 8, default is 3).The optional `A` parameter defines the
-    acceleration type used (note that only `CUDA_2` is available, any other
-    acceleration type will result in an error). If left undefined the default
+    acceleration type used. If left undefined the default
     `ProtoSyn.acceleration.active` mode will be used. By setting the
     `update_forces` flag to `true` (`false` by default), this function will also
     calculate and return the forces acting on each atom based on a single
@@ -112,7 +111,7 @@ module TorchANI
     #     error("'calc_torchani_model' requires CUDA_2 acceleration.")
     # end
 
-    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}, Type{ProtoSyn.CUDA_2}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         
@@ -141,8 +140,7 @@ module TorchANI
     
     Calculate and return the [`Pose`](@ref) `pose` energy according to the whole
     TorchANI neural network ensemble. The optional `A` parameter defines the
-    acceleration type used (note that only `CUDA_2` is available, any other
-    acceleration type will result in an error). If left undefined the default
+    acceleration type used. If left undefined the default
     `ProtoSyn.acceleration.active` mode will be used. By setting the
     `update_forces` flag to `true` (`false` by default), this function will also
     calculate and return the forces acting on each atom based on the whole
@@ -160,11 +158,7 @@ module TorchANI
     (-0.12801788747310638, [ ... ])
     ```
     """
-    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false)
-        error("'calc_torchani_ensemble' requires CUDA_2 acceleration.")
-    end
-
-    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false)
+    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false)
         
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         

@@ -177,7 +177,6 @@ end
 
 
 # ---
-# TODO
 derive(lg::LGrammar, axiom) = begin
     derivation = []
     for x in axiom

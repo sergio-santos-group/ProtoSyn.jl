@@ -73,6 +73,11 @@ VerletList(pose::Pose) = begin
     return VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
 end
 
+VerletList(pose::Pose, selection::AbstractSelection) = begin
+    size = count(selection(pose))
+    return VerletList(size, size, Inf, zeros(Int, size), zeros(Int, size))
+end
+
 function Base.show(io::IO, vlist::VerletList)
     s = "Size: $(vlist.size) | Cutoff (Å): $(vlist.cutoff)"
     if !any(vlist.list .!== 0); s *= " | Update required"; end
@@ -172,8 +177,7 @@ function update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, 
     return update!(A, verlet_list, coords)
 end
 
-update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection = nothing) = update!(A, verlet_list, pose)
-update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose) = update!(A, verlet_list, pose.state.x.coords)
+update!(A::Type{ProtoSyn.SISD_0}, verlet_list::VerletList, pose::Pose, selection::Nothing = nothing) = update!(A, verlet_list, pose.state.x.coords)
 
 # ------------------------------------------------------------------------------
 
@@ -244,8 +248,7 @@ function update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, 
     return update!(A, verlet_list, coords)
 end
 
-update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::ProtoSyn.AbstractSelection = nothing) = update!(A, verlet_list, pose)
-update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose) = update!(A, verlet_list, pose.state.x.coords[:])
+update!(A::Type{ProtoSyn.SIMD_1}, verlet_list::VerletList, pose::Pose, selection::Nothing = nothing) = update!(A, verlet_list, pose.state.x.coords[:])
 
 # ------------------------------------------------------------------------------
 

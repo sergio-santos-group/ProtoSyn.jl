@@ -61,13 +61,6 @@ function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
         copy(efc.update_forces))
 end
 
-"""
-# TODO
-"""
-function append_verlet_list_to_energy_function_component(vlist::VerletList, efc::EnergyFunctionComponent)
-    efc.settings[:vlist] = vlist
-end
-
 # * Show -----------------------------------------------------------------------
 
 function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}

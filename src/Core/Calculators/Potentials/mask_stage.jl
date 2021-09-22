@@ -10,6 +10,7 @@ function resolve_mask(A::Type{ProtoSyn.CUDA_2},
     update_forces::Bool,
     mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {C <: ProtoSyn.AbstractContainer, T <: AbstractFloat}
 
+    @assert size(e) == size(mask) "The used map $(size(mask)) does not match the size of the current selected coords $(size(e)). Check both the applied selection and mask."
     energy = sum(e .* CuArray(mask))
     
     if update_forces
@@ -22,16 +23,37 @@ function resolve_mask(A::Type{ProtoSyn.CUDA_2},
     return energy, forces
 end
 
-# Main function - SIMD_1 & SISD_0
+# Main function - SIMD_1 & SISD_0 (mask)
 function resolve_mask(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}},
     pose::Pose,
     e::Union{Array, CuArray},
     f::Union{Array, CuArray},
     update_forces::Bool,
-    mask::Union{ProtoSyn.Mask{C}, Matrix{T}}) where {C <: ProtoSyn.AbstractContainer, T <: AbstractFloat}
+    mask::ProtoSyn.Mask{C}) where {C <: ProtoSyn.AbstractContainer}
 
     @assert size(e) == size(mask) "The used mask $(size(mask)) does not match the size of the current selected coords $(size(e)). Check both the applied selection and mask."
     energy = sum(e .* mask.content)
+    
+    if update_forces
+        f = map(*, f, repeat(mask, outer = (1, 1, 3)))
+        forces = collect(reshape(sum(f, dims = 1), size(f)[1], 3)')
+    else
+        forces = nothing
+    end
+
+    return energy, forces
+end
+
+# Main function - SIMD_1 & SISD_0 (matrix)
+function resolve_mask(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}},
+    pose::Pose,
+    e::Union{Array, CuArray},
+    f::Union{Array, CuArray},
+    update_forces::Bool,
+    mask::Matrix{T}) where {T <: AbstractFloat}
+
+    @assert size(e) == size(mask) "The used mask $(size(mask)) does not match the size of the current selected coords $(size(e)). Check both the applied selection and mask."
+    energy = sum(e .* mask)
     
     if update_forces
         f = map(*, f, repeat(mask, outer = (1, 1, 3)))

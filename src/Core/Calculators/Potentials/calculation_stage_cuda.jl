@@ -14,7 +14,7 @@ function resolve_calculation_kernel(coords::CuDeviceArray{T}, energies::CuDevice
 
     if i <= n && j <= n
 
-        if i == j
+        if j <= i
             energies[j, i] = T(0.0)
             return nothing
         end
@@ -68,6 +68,5 @@ function resolve_calculation(::Type{ProtoSyn.CUDA_2},
 
     @cuda blocks = blocks threads = threads resolve_calculation_kernel(_coords, energies, forces, _size, potential)
 
-    # return 0.0, nothing
     return resolve_mask(ProtoSyn.CUDA_2, pose, energies, forces, update_forces, mask)
 end
