@@ -77,10 +77,14 @@ directory. If `T` is specified, the downloaded file will be loaded into a
 julia> ProtoSyn.download("2A3D")
 ```
 """
-function ProtoSyn.download(::Type{T}, pdb_code::String) where {T <: AbstractFloat}
+function ProtoSyn.Peptides.download(::Type{T}, pdb_code::String; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
     if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
     filename = pdb_code * ".pdb"
     url = "https://files.rcsb.org/download/" * filename
     download(url, filename)
-    return ProtoSyn.Peptides.load(T, filename)
+    return ProtoSyn.Peptides.load(T, filename, bonds_by_distance = bonds_by_distance)
+end
+
+ProtoSyn.Peptides.download(pdb_code::String; bonds_by_distance::Bool = false) = begin
+    ProtoSyn.Peptides.download(ProtoSyn.Units.defaultFloat, pdb_code, bonds_by_distance = bonds_by_distance)
 end
