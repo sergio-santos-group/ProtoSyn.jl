@@ -10,4 +10,5 @@ The following methods allow the user to load and export models and data from and
 load
 write
 append
+download
 ```

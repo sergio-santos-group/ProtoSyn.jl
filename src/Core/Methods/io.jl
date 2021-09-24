@@ -1,5 +1,6 @@
 using Printf: @sprintf
 using YAML
+using Downloads: download
 
 const PDB = Val{1}
 const YML = Val{2}
@@ -370,6 +371,33 @@ function append(pose::Pose, filename::String; model::Int = 1)
     end
     close(io)
 end
+
+"""
+    ProtoSyn.download([::T], pdb_code::String) where {T <: AbstractFloat}
+
+Download the PDB file (for the given PDB code) from the RCSB
+Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the current working
+directory. If `T` is specified, the downloaded file will be loaded into a
+[`Pose`](@ref) parametrized by `T`, otherwise uses the default
+`ProtoSyn.Units.defaultFloat`.
+
+# See also
+[`load`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.download("2A3D")
+```
+"""
+function ProtoSyn.download(::Type{T}, pdb_code::String) where {T <: AbstractFloat}
+    if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
+    filename = pdb_code * ".pdb"
+    url = "https://files.rcsb.org/download/" * filename
+    download(url, filename)
+    return load(T, filename)
+end
+
+ProtoSyn.download(pdb_code::String) = ProtoSyn.download(ProtoSyn.Units.defaultFloat, pdb_code)
 
 
 """

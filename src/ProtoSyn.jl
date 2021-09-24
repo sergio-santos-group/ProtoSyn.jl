@@ -1,6 +1,6 @@
 module ProtoSyn
 
-const _version = 0.9
+const _version = 1.01
 
 mutable struct Verbose
     mode::Bool

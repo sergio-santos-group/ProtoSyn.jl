@@ -58,3 +58,29 @@ end
 load(filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") = begin
     Peptides.load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 end
+
+
+"""
+    ProtoSyn.download([::T], pdb_code::String) where {T <: AbstractFloat}
+
+Download the PDB file (for the given PDB code) from the RCSB
+Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the current working
+directory. If `T` is specified, the downloaded file will be loaded into a
+[`Pose`](@ref) parametrized by `T`, otherwise uses the default
+`ProtoSyn.Units.defaultFloat`. Uses the specific `Peptides.load` method.
+
+# See also
+[`load`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.download("2A3D")
+```
+"""
+function ProtoSyn.download(::Type{T}, pdb_code::String) where {T <: AbstractFloat}
+    if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
+    filename = pdb_code * ".pdb"
+    url = "https://files.rcsb.org/download/" * filename
+    download(url, filename)
+    return ProtoSyn.Peptides.load(T, filename)
+end
