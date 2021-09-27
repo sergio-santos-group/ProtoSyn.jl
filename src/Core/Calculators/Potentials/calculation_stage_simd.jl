@@ -44,8 +44,8 @@ using SIMD
         _mask = Vec{4, T}((1, 1, 1, 0))
 
         if update_forces
-            arr1 = [T(0.0), T(0.0), T(0.0)] # Temporary save
-            arr2 = [T(0.0), T(0.0), T(0.0)] # Temporary save
+            arr1 = [T(0.0), T(0.0), T(0.0), T(0.0)] # Temporary save
+            arr2 = [T(0.0), T(0.0), T(0.0), T(0.0)] # Temporary save
         end
 
         @inbounds @simd for i in 1:n_atoms - 1
