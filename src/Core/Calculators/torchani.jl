@@ -22,6 +22,10 @@ module TorchANI
         end
         
         copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
+        @info "TorchANI is using:"
+        @info " torch version $(torch.__version__)"
+        @info " cuda-toolkit version $(torch.version.cuda)"
+        @info " torchani version $(torchani.__version__)"
     end
 
     # --- AUX
@@ -167,7 +171,8 @@ module TorchANI
 
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
-        m3 = _model.neural_networks(m2)[2]
+        # m3 = _model.neural_networks(m2)[2]
+        m3 = _model.neural_networks((m2[1].float(), m2[2].float()))[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
             return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1

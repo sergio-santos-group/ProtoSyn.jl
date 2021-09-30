@@ -392,6 +392,7 @@ function remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, selection::
         residue.name = saved_name
     end
 
+    sync!(pose)
     return pose
 end
 

@@ -61,6 +61,15 @@ function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
         copy(efc.update_forces))
 end
 
+"""
+    # TODO
+"""
+function fixate_mask!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
+    if (:mask in keys(efc.settings)) & isa(efc.settings[:mask], Function)
+        efc.settings[:mask] = efc.settings[:mask](pose)
+    end
+end
+
 # * Show -----------------------------------------------------------------------
 
 function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}

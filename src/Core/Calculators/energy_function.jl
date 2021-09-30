@@ -116,10 +116,22 @@ end
 function Base.copy(ef::EnergyFunction)
     nef = EnergyFunction()
     nef.clean_cache_every = ef.clean_cache_every
-    for (component, α) in ef.components
-        nef.components[component] = α
+    for component in ef.components
+        push!(nef.components, copy(component))
     end
+    nef.components_by_name = copy(ef.components_by_name)
     return nef
+end
+
+"""
+    # TODO
+"""
+function fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
+    for efc in ef.components
+        if (:mask in keys(efc.settings)) && isa(efc.settings[:mask], Function)
+            efc.settings[:mask] = efc.settings[:mask](pose)
+        end
+    end
 end
 
 # * Call energy function -------------------------------------------------------

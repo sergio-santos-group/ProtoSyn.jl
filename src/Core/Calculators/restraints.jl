@@ -65,7 +65,7 @@ module Restraints
                     _x0 = x0
                 end
 
-                if d > x0
+                if d > _x0
                     e += (d - _x0) * (d - _x0)
                     if update_forces
                         v = collect(pose.state[atom].t .- pose.state[bond].t)
