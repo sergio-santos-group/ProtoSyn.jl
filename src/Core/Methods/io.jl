@@ -35,13 +35,35 @@ Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
 ```
 """
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") where {T <: AbstractFloat}
-    if endswith(filename, ".pdb") 
-        return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+    if endswith(filename, ".pdb")
+        # Check if this is a trajectory
+        if !is_trajectory(filename)
+            return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        else
+            return load_trajectory(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        end
     elseif endswith(filename, ".yml")
         return load(T, filename, YML, bonds_by_distance = bonds_by_distance)
     else
         error("Unable to load '$filename': unsupported file type")
     end
+end
+
+
+"""
+    # TODO
+"""
+function is_trajectory(filename::String)
+    io = open(filename, "r")
+    models = 0
+    for line in eachline(io)
+        if startswith(line, "MODEL")
+            models += 1
+            models > 1 && return true
+        end
+    end
+
+    return false
 end
 
 
@@ -52,6 +74,60 @@ load(filename::AbstractString; bonds_by_distance = false, alternative_location::
     load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location)
 end
 
+
+"""
+    # TODO
+"""
+function splice_trajectory(filename::String)
+    # Create temporary folder
+    dirname::String = "$(filename[1:(end-4)])_spliced"
+    isdir(dirname) && begin
+        ProtoSyn.verbose.mode && @info "Found pre-existent $dirname folder. Overwritting."
+        rm(dirname, recursive = true)
+    end
+    mkdir(dirname)
+
+    model::Int = 0
+    io_out = nothing
+    io = open(filename, "r")
+
+    for line in eachline(io)
+        if startswith(line, "MODEL")
+            model += 1
+            model_name = joinpath(dirname, "$model.pdb")
+            io_out !== nothing && close(io_out)
+            io_out = open(model_name, "w")
+        end
+
+        if io_out !== nothing
+            Base.write(io_out, line * "\n")
+        end
+    end
+    close(io_out)
+
+    return dirname
+end
+
+
+"""
+    # TODO
+"""
+function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K}
+    models = splice_trajectory(filename)
+    a = readdir(models)
+    files = sort([parse(Int, split(x, ".")[1]) for x in a if endswith(x, ".pdb")])
+    files = map(x -> joinpath(models, string(x) * ".pdb"), files)
+
+    poses = Vector{Pose}()
+    for file in files
+        pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        push!(poses, pose)
+    end
+
+    # rm(models, recursive = true)
+
+    return poses
+end
 
 load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
     
@@ -160,7 +236,6 @@ load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {
     top.id = state.id = genid()
     sync!(Pose(top, state))
 end
-
 
 load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
     
