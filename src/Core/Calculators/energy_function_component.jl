@@ -62,7 +62,24 @@ function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
 end
 
 """
-    # TODO
+    fixate_mask!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
+
+Change the current [`Mask`](@ref) type of the given
+[`EnergyFunctionComponent`](@ref) `efc` from dynamic to static, by applying it
+to the given [`Pose`](@ref) `pose`.
+
+# See also
+[`fixate_masks!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.fixate_mask!(energy_function[4], pose)
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (21, 21)
+ ├── Count: 420
+ └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
+```
 """
 function fixate_mask!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
     if (:mask in keys(efc.settings)) & isa(efc.settings[:mask], Function)

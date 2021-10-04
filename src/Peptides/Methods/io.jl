@@ -10,6 +10,8 @@ each pair of atoms is defined in `ProtoSyn.bond_lengths`. Infers parenthood and
 ascedence from bonds (N-[`Residue`](@ref) instances have the connected
 C-[`Residue`](@ref) as child). By default, and when available, ProtoSyn will use
 `alternative_location` `A`, unless specified in the flag `alternative_location`.
+If the input file if of type PDB and a trajectory, returns a vector of
+[`Pose`](@ref) instances instead.
 
 !!! ukw "Note:"
     This function is an extension of [`ProtoSyn.load`](@ref).
