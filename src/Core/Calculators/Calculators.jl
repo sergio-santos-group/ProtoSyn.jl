@@ -10,8 +10,12 @@ include("distance_matrix.jl")
 # Load energy function components
 include("energy_function_component.jl")
 
-@info " | Loading TorchANI"
-include("torchani.jl")
+if ENV["NO_TORCHANI"] === "true"
+    @warn "Environment variable NO_TORCHANI set to `true`. Not loading torchani."
+else
+    @info " | Loading TorchANI"
+    include("torchani.jl")
+end
 
 @info " | Loading Restraint Models"
 include("Potentials/potentials.jl")
