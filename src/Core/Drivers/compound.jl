@@ -1,7 +1,7 @@
 using Printf
 
 """
-    CompoundDriver(drivers::Vector{Union{Function, AbstractMutator, Driver}})
+    CompoundDriver(drivers::Vector{Union{Function, AbstractMutator, Driver}}; [p::Float64 = 1.0])
 
 A [`CompoundDriver`](@ref) `Driver` instance. As such, this object is callable
 as a _functor_ with the following signature:
@@ -13,7 +13,8 @@ as a _functor_ with the following signature:
 A [`CompoundDriver`](@ref) `Driver` groups several `Driver`, `AbstractMutator`
 and custom functions, calling each of the components sequentially. Does not
 [`sync!`](@ref) changes, this task is left to each individual `Driver` or
-`AbstractMutator` instance.
+`AbstractMutator` instance. `p` defines the probability of running this
+[`CompoundDriver`](@ref) when called (From 0.0 to 1.0).
 
 !!! ukw "Note:"
     In contrast with [`CompoundMutator`](@ref ProtoSyn.Mutators.CompoundMutator),
@@ -23,7 +24,7 @@ and custom functions, calling each of the components sequentially. Does not
 # Examples
 ```jldoctest
 julia> ProtoSyn.Drivers.CompoundDriver([monte_carlo, monte_carlo])
-⚒  CompoundDriver Driver (2 elements):
+⚒  CompoundDriver Driver (2 elements) (p: 1.0):
  ├── ⚒  Monte Carlo Driver:
  |    ├──  ●  Evaluator:
  |    |    └── 🗲  Energy Function (4 components):
@@ -87,6 +88,11 @@ julia> ProtoSyn.Drivers.CompoundDriver([monte_carlo, monte_carlo])
 """
 mutable struct CompoundDriver <: Driver
     drivers::Vector{Union{Function, AbstractMutator, Driver}}
+    p::Float64
+end
+
+CompoundDriver(drivers::Vector{Any}) = begin
+    CompoundDriver(drivers, 1.0)
 end
 
 function (compound_driver::CompoundDriver)(pose::Pose)
@@ -103,10 +109,12 @@ function (compound_driver::CompoundDriver)(pose::Pose)
     # CrankshaftMutator uses cartesian coordinates to calculate the rotation
     # axis.
 
-    compound_driver.drivers[1](pose)
-    if length(compound_driver.drivers) > 1
-        for driver in compound_driver.drivers[2:end]
-            driver(pose)
+    if compound_driver.p >= rand()
+        compound_driver.drivers[1](pose)
+        if length(compound_driver.drivers) > 1
+            for driver in compound_driver.drivers[2:end]
+                driver(pose)
+            end
         end
     end
     
@@ -124,7 +132,7 @@ function Base.show(io::IO, drv::CompoundDriver, level_code::Opt{LevelCode} = not
     init_lead       = ProtoSyn.get_lead(level_code)
     init_inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    println(io, init_lead*"⚒  CompoundDriver Driver ($(length(drv.drivers)) elements):")
+    println(io, init_lead*"⚒  CompoundDriver Driver ($(length(drv.drivers)) elements) (p: $(drv.p)):")
 
     for driver in drv.drivers[1:(end-1)]
         if isa(driver, AbstractMutator)
