@@ -10,7 +10,7 @@ include("distance_matrix.jl")
 # Load energy function components
 include("energy_function_component.jl")
 
-if ENV["NO_TORCHANI"] === "true"
+if "NO_TORCHANI" in keys(ENV) & ENV["NO_TORCHANI"] === "true"
     @warn "Environment variable NO_TORCHANI set to `true`. Not loading torchani."
 else
     @info " | Loading TorchANI"
