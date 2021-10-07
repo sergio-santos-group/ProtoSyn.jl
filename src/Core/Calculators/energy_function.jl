@@ -113,6 +113,13 @@ Base.pop!(energy_function::EnergyFunction) = begin
     return component
 end
 
+Base.pop!(energy_function::EnergyFunction, efc::EnergyFunctionComponent) = begin
+    e = findall(x -> x == efc, energy_function.components)
+    deleteat!(energy_function.components, e)
+    delete!(energy_function.components_by_name, efc.name)
+    return efc
+end
+
 function Base.copy(ef::EnergyFunction)
     nef = EnergyFunction()
     nef.clean_cache_every = ef.clean_cache_every
@@ -124,7 +131,26 @@ function Base.copy(ef::EnergyFunction)
 end
 
 """
-    # TODO
+    fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
+
+Change the current [`Mask`](@ref) type of all [`EnergyFunctionComponent`](@ref) 
+instances in the given [`EnergyFunction`](@ref) `ef` from dynamic to static, by
+applying them to the given [`Pose`](@ref) `pose`.
+
+# See also
+[`fixate_mask!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.fixate_masks!(energy_function, pose)
+
+julia> energy_function[4].settings[:mask]
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (21, 21)
+ ├── Count: 420
+ └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
+```
 """
 function fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
     for efc in ef.components

@@ -10,6 +10,8 @@ each pair of atoms is defined in `ProtoSyn.bond_lengths`. Infers parenthood and
 ascedence from bonds (N-[`Residue`](@ref) instances have the connected
 C-[`Residue`](@ref) as child). By default, and when available, ProtoSyn will use
 `alternative_location` `A`, unless specified in the flag `alternative_location`.
+If the input file if of type PDB and a trajectory, returns a vector of
+[`Pose`](@ref) instances instead.
 
 !!! ukw "Note:"
     This function is an extension of [`ProtoSyn.load`](@ref).
@@ -30,29 +32,37 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
     end
 
-    pose = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+    poses = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 
     available_aminoacids = [ProtoSyn.Peptides.one_2_three[x] for x in keys(ProtoSyn.Peptides.available_aminoacids)]
     
     # Set parenthood of residues
-    for segment in eachsegment(pose.graph)
+    if isa(poses, Pose) 
+        poses = Vector{Pose}([poses])
+    end
+    for pose in poses
+        for segment in eachsegment(pose.graph)
 
-        n_residues = ProtoSyn.count_residues(segment)
-        for residue_index in 2:n_residues
-            residue = segment[residue_index]
-            if !(residue.name in available_aminoacids)
-                @warn "Found a possible ligand at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
-                continue
+            n_residues = ProtoSyn.count_residues(segment)
+            for residue_index in 2:n_residues
+                residue = segment[residue_index]
+                if !(residue.name in available_aminoacids)
+                    @warn "Found a possible ligand at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
+                    continue
+                end
+                popparent!(residue) # Was root before.
+                C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
+                C_bond_index == nothing && error("No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds)).")
+                parent_residue = residue["N"].bonds[C_bond_index].container
+                setparent!(residue, parent_residue)
             end
-            popparent!(residue) # Was root before.
-            C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
-            C_bond_index == nothing && error("No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds)).")
-            parent_residue = residue["N"].bonds[C_bond_index].container
-            setparent!(residue, parent_residue)
         end
     end
+    if length(poses) == 1
+        poses = poses[1]
+    end
 
-    return pose
+    return poses
 end
 
 load(filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") = begin

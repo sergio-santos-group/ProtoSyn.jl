@@ -4,6 +4,7 @@ module Clustering
     using ProtoSyn.Units
     using Clustering: ClusteringResult
     using LinearAlgebra: tril
+    using ProgressMeter
 
     """
         rmsd_matrix([T], poses::Vector{Pose})
@@ -34,7 +35,7 @@ module Clustering
         N           = length(poses)
         rmsd_matrix = zeros(T, N, N)
 
-        for i in 1:N
+        @showprogress "Measuring RMSD matrix - " for i in 1:N
             for j in (i+1):N
                 ProtoSyn.align!(poses[i], poses[j], selection)
                 rmsd_matrix[i, j] = ProtoSyn.rmsd(poses[i], poses[j], selection)

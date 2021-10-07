@@ -22,10 +22,12 @@ module TorchANI
         end
         
         copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
-        @info "TorchANI is using:"
-        @info " torch version $(torch.__version__)"
-        @info " cuda-toolkit version $(torch.version.cuda)"
-        @info " torchani version $(torchani.__version__)"
+        if ProtoSyn.verbose.mode
+            @info "TorchANI is using:"
+            @info " torch version $(torch.__version__)"
+            @info " cuda-toolkit version $(torch.version.cuda)"
+            @info " torchani version $(torchani.__version__)"
+        end
     end
 
     # --- AUX

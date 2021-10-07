@@ -97,7 +97,12 @@ function (compound_mutator::CompoundMutator)(pose::Pose)
     # been correctly updated. Example: CrankshaftMutators check i2c! since they
     # require the updated cartesian coordinates.
     for mutator in compound_mutator.mutators
-        atoms = (mutator.selection & sele)(pose, gather = true)
+        if mutator.selection !== nothing
+            atoms = (mutator.selection & sele)(pose, gather = true)
+        else
+            atoms = sele(pose, gather = true)
+        end
+        
         mutator(pose, atoms)
     end
 end

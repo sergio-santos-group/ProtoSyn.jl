@@ -105,7 +105,7 @@ function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}, verlet_list
     natoms = maximum(size(coords))
     distance_matrix = zeros(natoms, natoms)
     
-    for i = 1:natoms-1 # TODO add @inbounds
+    @inbounds for i = 1:natoms-1
 
         # ptr -> location of the first neighbor of atom i
         # ptr_stop -> location of the last neighbor of atom i
