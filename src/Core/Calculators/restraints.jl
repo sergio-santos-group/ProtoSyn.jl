@@ -132,7 +132,6 @@ module Restraints
             true)
     end
 
-
     # --------------------------------------------------------------------------
     # * Flat bottom restraint base function
 
@@ -192,5 +191,24 @@ module Restraints
 
     calc_flat_bottom_restraint!(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
         calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
+    end
+
+    # ---
+    # DEV
+
+    function get_default_all_atom_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        # * Note: The default :d1 and :d2 distances were parametrized based on
+        # * the 2A3D PDB structure.
+        
+        if mask === nothing
+            mask = ProtoSyn.Calculators.get_bonded_mask()
+        end
+
+        return EnergyFunctionComponent(
+            "All_Atom_Clash_Restraint",
+            ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 2.0, :d3 => Inf, :d4 => Inf, :selection => nothing, :mask => mask),
+            α,
+            true)
     end
 end

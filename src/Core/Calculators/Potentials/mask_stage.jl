@@ -237,6 +237,24 @@ function get_diagonal_mask()
     end
 end
 
+# ---
+# DEV
+function get_bonded_mask()
+    return function _diagonal_mask(pose::Pose)
+        N = pose.state.size
+        m = .!Matrix{Bool}(I, N, N)
+        for atom in eachatom(pose.graph)
+            i = atom.index
+            for bond in atom.bonds
+                j = bond.index
+                m[i, j] = false
+            end
+        end
+
+        return ProtoSyn.Mask{Atom}(BitArray(m))
+    end
+end
+
 
 """
     load_map([::Type{T}], filename::String) where {T <: AbstractFloat}
