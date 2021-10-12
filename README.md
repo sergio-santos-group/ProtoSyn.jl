@@ -51,6 +51,8 @@ All Julia-based dependencies should automatically installed/updated. In order to
 
 For any question or curiosity, please contact jose.manuel.pereira@ua.pt.
 
+Check for the most recent developments in [ProtoSyn's blog.](https://sites.google.com/view/protosyn-jl/página-inicial)
+
 
 ## :trophy: Acknowledgments
 
