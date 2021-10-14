@@ -1,6 +1,6 @@
 module ProtoSyn
 
-const _force_recompilation = 1
+const _force_recompilation = 2
 const _version             = 1.01
 
 mutable struct Verbose

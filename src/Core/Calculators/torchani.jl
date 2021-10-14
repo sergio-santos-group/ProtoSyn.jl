@@ -113,25 +113,39 @@ module TorchANI
 
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
-    # function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
-    #     error("'calc_torchani_model' requires CUDA_2 acceleration.")
-    # end
-
     function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
-        
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
-        
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
         m3 = get(_model.neural_networks, model)(m2)[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
-            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1
+            _f = convert(Matrix{Float64}, f.cpu().numpy()' .* -1)
+            e = m3.item()
+
+            return e, _f
         else
-            return m3.item(), nothing
+            e = m3.item()
+            # Note: When not consuming the m3 gradient (if requires_grad is set
+            # to true), as is the case when update_forces is set to false (this
+            # function returns e, nothing), a memory leak on the python site
+            # occurs. Two workarounds have been identified:
+            # (1) - Set requires_grad = update_forces.
+            # (2) - Call GC.gc(false)
+            # Fix 1 causes slightly higher memory allocation that option 2.
+            # Instead of calling GC.gc(false) every step, a counter can be used
+            # to call it every N steps. This can be done either before returning
+            # from this function or outside. For ProtoSyn >= 1.0, GC.gc(false)
+            # is being called outside, in the encompassing EnergyFunction call.
+            # This seems to result in a slightly lower mameory allocation. 
+            # However, if for some reason this function is being called solo, 
+            # CUDA out of memory erros might occur is users are not aware of
+            # this issue. Future iterations of ProtoSyn may bring GC.gc(false)
+            # inside the scope of this function.
+            return e, nothing
         end
     end
 
