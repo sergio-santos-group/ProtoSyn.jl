@@ -115,7 +115,7 @@ module TorchANI
     """
     function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
+        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = update_forces, device = device).float()
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
         m1 = _model.species_converter((species, coordinates))
