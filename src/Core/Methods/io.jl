@@ -391,18 +391,26 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
 end
 
 
-write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1) = begin
+write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1, B_factors::Vector{Float64} = Float64[]) = begin
     
+    B_factors_exist = length(B_factors) > 0
     @printf(io, "MODEL %8d\n", model)
+    i = 1
     for (index, segment) in enumerate(eachsegment(top))
         index > 1 && println(io, "TER")
         for atom in eachatom(segment)
             sti = state[atom.index]
-            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
+            B_factor = 0.0
+
+            if atom.name == "CA" && B_factors_exist
+                B_factor = B_factors[i]
+                i += 1
+            end
+            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%12.2f%12s",
                 atom.index, atom.name,
                 atom.container.name, atom.container.container.code,
                 atom.container.id,
-                sti.t[1], sti.t[2], sti.t[3],
+                sti.t[1], sti.t[2], sti.t[3], B_factor,
                 atom.symbol)
             println(io, s)
         end
