@@ -16,8 +16,12 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
     @assert rotamer.name == residue.name "Tried to apply a $(rotamer.name) rotamer to residue $(residue.name)."
     T = eltype(state)
 
-    chis = Dict{DihedralType, Tuple{T, T}}()
+    chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
     for (chi, (value, sd)) in rotamer.chis
+        value === nothing && begin
+            chis[chi] = (value, T(0))
+            continue
+        end
         _value = (randn() * sd) + value
         setdihedral!(state, chi(residue), _value)
         chis[chi] = (_value, T(0))
@@ -90,13 +94,18 @@ julia> ProtoSyn.Peptides.get_rotamer(pose, pose.graph[1][2])
 Rotamer{Float64}: GLU | Chi1:   180.0° ±  0.0 | Chi2:  -180.0° ±  0.0 | Chi3:    90.0° ±  0.0 | Chi4: --     
 ```
 """
-function get_rotamer(pose::Pose, residue::Residue)
+function get_rotamer(pose::Pose, residue::Residue; ignore_non_existent::Bool = false)
     T = eltype(pose.state)
-    chis = Dict{DihedralType, Tuple{T, T}}()
+    chis = Dict{DihedralType, Tuple{Union{T, Nothing}, T}}()
     for chi_index in 1:(length(Dihedral.chi_dict[residue.name.content]) - 1)
         chi = getfield(ProtoSyn.Peptides.Dihedral, Symbol("chi$chi_index"))
         #            Value                                  Standard Deviation
-        chis[chi] = (getdihedral(pose.state, chi(residue)), T(0))
+        c = chi(residue)
+        if c === nothing 
+            chis[chi] = (c, T(0))
+        else
+            chis[chi] = (getdihedral(pose.state, c), T(0))
+        end
     end
     return Rotamer{T}(residue.name, chis)
 end

@@ -79,8 +79,10 @@ module Dihedral
         available_chis = chi_dict[residue.name.content]
         @assert chi <= length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis)) chi angles defined"
         chi_atom = available_chis[chi + 1] # Note the "+ 1"
-        residue[chi_atom] === nothing
-        @assert residue[chi_atom] !== nothing "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
+        if residue[chi_atom] === nothing
+            ProtoSyn.verbose.mode && @warn "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
+            return nothing
+        end
         
         return residue[chi_atom]
     end
@@ -97,7 +99,7 @@ module Dihedral
     # dihedral angles which only rotate the position of hydrogens are not
     # considered in this dict.
     chi_dict = Dict{String, Vector{String}}(
-        "ALA" => ["HB1"],
+        "ALA" => ["CB"],
         "CYS" => ["CB", "SG"],
         "ASP" => ["CB", "CG", "OD1"],
         "GLU" => ["CB", "CG", "CD", "OE1"],
