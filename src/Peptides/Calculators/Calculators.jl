@@ -1,5 +1,5 @@
 module Calculators
 
-    include("caterpillar.jl")
+    include("Caterpillar/Caterpillar.jl")
     include("restraints.jl")
 end

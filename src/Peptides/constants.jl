@@ -73,6 +73,54 @@ const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
     "TYR" => -1.3
 )
 
+const doolitle_hydrophobicity_mod1 = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" =>  5.5,
+    "VAL" =>  5.2,
+    "LEU" =>  4.8,
+    "PHE" =>  3.8,
+    "CYS" =>  3.5,
+    "MET" =>  2.9,
+    "ALA" =>  2.8,
+    "GLY" => -0.4,
+    "THR" => -0.7,
+    "SER" => -0.8,
+    "TRP" => -0.9,
+    "TYR" => -1.3,
+    "PRO" => -1.6,
+    "HIS" => -3.2,
+    "HIE" => -3.2,
+    "ASN" => -3.5,
+    "GLN" => -3.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "LYS" => -3.9,
+    "ARG" => -4.5
+)
+
+const doolitle_hydrophobicity_mod2 = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" =>  6.5,
+    "VAL" =>  6.2,
+    "LEU" =>  5.8,
+    "PHE" =>  4.8,
+    "CYS" =>  4.5,
+    "MET" =>  3.9,
+    "ALA" =>  3.8,
+    "GLY" => -0.4,
+    "THR" => -0.7,
+    "SER" => -0.8,
+    "TRP" => -0.9,
+    "TYR" => -1.3,
+    "PRO" => -1.6,
+    "HIS" => -3.2,
+    "HIE" => -3.2,
+    "ASN" => -3.5,
+    "GLN" => -3.5,
+    "ASP" => -3.5,
+    "GLU" => -3.5,
+    "LYS" => -3.9,
+    "ARG" => -4.5
+)
+
 const doolitle_hydrophobicity_mod3 = Dict{String, ProtoSyn.Units.defaultFloat}(
     "ILE" =>  7.5,
     "VAL" =>  7.2,
