@@ -6,6 +6,9 @@ module Caterpillar
 
 
     # Burial degree calculation
+    null_identification_curve(x::Float64; rmax::Float64 = 0.0, sc::Float64 = 0.0) = 0.0
+    null_hydrophobicity_weight(x::Float64; hydrophobicity_map_value::Float64 = 0.0, Ω::Float64 = 0.0) = 0.0
+
     include("neighbour_count.jl")
     include("neighbour_vector.jl")
 
