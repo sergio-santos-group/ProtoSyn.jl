@@ -12,6 +12,4 @@ module Common
 
     include("energy_function.jl")
     include("callback.jl")
-
-    # This is a test
 end
