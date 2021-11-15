@@ -17,6 +17,9 @@ else
     include("torchani.jl")
 end
 
+@info " | Loading Hydrogen Bonds"
+include("hydrogen_bonds.jl")
+
 @info " | Loading Restraint Models"
 include("Potentials/potentials.jl")
 include("restraints.jl")

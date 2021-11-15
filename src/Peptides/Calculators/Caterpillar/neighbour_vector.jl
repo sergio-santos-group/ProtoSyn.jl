@@ -75,8 +75,13 @@ function neighbour_vector(::Type{A}, pose::Pose, update_forces::Bool; selection:
     end
     atoms = selection(pose, gather = true)
     
-    # Ωis   = Vector{T}()
-    # esols = Vector{T}()
+    if length(atoms) != length(eachresidue(pose.graph))
+        @warn "The number of selected residues doesn't match the number of residues in the pose ($(length(atoms)) ≠ $(length(eachresidue(pose.graph))))"
+        return 0.0, nothing
+    end
+    
+    Ωis   = Vector{T}() # !
+    esols = Vector{T}() # !
     esol = T(0.0)
     for i in 1:size(dm)[1]
         atom_i = atoms[i]
@@ -93,12 +98,13 @@ function neighbour_vector(::Type{A}, pose::Pose, update_forces::Bool; selection:
         _Ωi = norm(Ωi)
         esol_i = hydrophobicity_weight(_Ωi, hydrophobicity_map_value = DHI, Ω = Ω)
         esol += esol_i
-        # push!(Ωis, _Ωi)
-        # push!(esols, esol_i)
+
+        push!(Ωis, _Ωi) # !
+        push!(esols, esol_i) # !
     end
 
-    # return Ωis, esols
-    return esol, nothing
+    return esol, nothing, Ωis, esols
+    # return esol, nothing
 end
 
 
