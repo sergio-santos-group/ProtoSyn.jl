@@ -3,9 +3,6 @@ using LinearAlgebra
 # * Definition of useful alias
 
 MaskMap   = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
-const  UF = Val{true}
-const NUF = Val{false}
-
 
 include("mask_stage.jl")
 include("calculation_stage_sisd.jl")
@@ -224,126 +221,6 @@ function get_flat_bottom_potential(A::Type{ProtoSyn.SIMD_1}; d1::T = 0.0, d2::T 
     return e
     end
 end
-
-
-# function get_flat_bottom_potential(A::Type{ProtoSyn.SIMD_1}; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
-    
-#     # ! Note:
-#     # SIMD applies the same instruction to multiple data, however, in the case
-#     # of the flat-bottom potential, the instruction is different based on the
-#     # distance between each pair of atoms. Therefore, it is not possible to use
-#     # SIMD acceleration with this type of potential directly. An option would be
-#     # to have 5 masks applied in sequence, one for each of the zones in a
-#     # flat-bottom potential. Each mask would apply the correct potential
-#     # calculation only to the un-masked distances. 
-
-#     @assert d2 >= d1 "d2 must be of equal value or over d1"
-#     @assert d3 >= d2 "d3 must be of equal value or over d2"
-#     @assert d4 >= d3 "d4 must be of equal value or over d3"
-#     @assert d1 !== Inf && d2 !== Inf "Neither `d1` or `d2` can be infinite"
-
-#     return function flat_bottom_potential(d::Vec{8, T}; v::Opt{Vector{Vec{3, T}}} = nothing) where {T <: AbstractFloat}
-
-#         ϵ     = ones(T, 8)
-#         mlane = VecRange{8}(1)
-#         e     = Vec{8, T}(0.0)
-
-#         v !== nothing && begin
-#             f1 = fill(Vec{3, T}(0.0), 3)
-#             f2 = fill(Vec{3, T}(0.0), 3)
-#         end
-
-        
-#         d12  = d1 - d2
-#         m1   = 2 * d12
-#         b1   = d12 * d12 - m1 * d1
-#         d43  = d4 == Inf && d3 == Inf ? Inf : d4 - d3 # Prevent NaN by Inf - Inf
-#         m2   = 2 * d43
-#         d432 = d43 * d43
-#         b2f  = m2 * d4
-#         b2   = d432 == Inf && b2f == Inf ? Inf : d432 - b2f # Prevent NaN ...
-
-#         # * Linear Left (1)
-#         mask = d < d1
-#         m    = ϵ[mlane, mask]
-#         e   += (m1 * d + b1) * m
-#         v !== nothing && begin
-#             _f1 = - v * m1
-#             # Can't iterate, must do manual allocation
-#             f1[1] += m * _f1[1]
-#             f1[2] += m * _f1[2]
-#             f1[3] += m * _f1[3]
-#             _f2 =   v * m1
-#             f2[1] += m * _f2[1]
-#             f2[2] += m * _f2[2]
-#             f2[3] += m * _f2[3]
-#         end
-
-#         # * Quadratic Left (2)
-#         mask1 = d1 <= d
-#         mask2 = d < d2
-#         mask  = mask1 & mask2
-#         m     = ϵ[mlane, mask]
-#         e    += ((d - d2) * (d - d2)) * m
-#         v !== nothing && begin
-#             factor1 = 2.0 * (d - d2)
-#             f1[1] += m * (-v)[1] * factor1
-#             f1[2] += m * (-v)[2] * factor1
-#             f1[3] += m * (-v)[3] * factor1
-#             f2[1] += m * v[1] * factor1
-#             f2[2] += m * v[2] * factor1
-#             f2[3] += m * v[3] * factor1
-#         end
-
-#         # * Flat (3)
-#         # No operation required
-
-#         # * Quadratic Right (4)
-#         mask1 = d3 < d
-#         mask2 = d <= d4
-#         mask  = mask1 & mask2
-#         any(mask) && begin
-#             m     = ϵ[mlane, mask]
-#             f     = (d - d3) * (d - d3)
-#             f     = vifelse(f == Inf, f ^ -1, f) # Turns all Inf into 0.0
-#             e    += f * m
-#             v !== nothing && begin
-#                 factor2 = 2.0 * (d - d3)
-#                 f1[1] += m * (-v)[1] * factor2
-#                 f1[2] += m * (-v)[2] * factor2
-#                 f1[3] += m * (-v)[3] * factor2
-#                 f2[1] += m * v[1] * factor2
-#                 f2[2] += m * v[2] * factor2
-#                 f2[3] += m * v[3] * factor2
-#             end
-#         end
-
-#         # * Linear Right (5)
-#         mask = d > d4
-#         any(mask) && begin
-#             m    = ϵ[mlane, mask]
-#             f    = (m2 * d + b2)
-#             f    = vifelse(f == Inf, f ^ -1, f) # Turns all Inf into 0.0
-#             e   += f * m
-#             v !== nothing && begin
-#                 println(m2)
-#                 _f1 = - v * m2
-#                 # Can't iterate, must do manual allocation
-#                 f1[1] += m * _f1[1]
-#                 f1[2] += m * _f1[2]
-#                 f1[3] += m * _f1[3]
-#                 _f2 =   v * m2
-#                 f2[1] += m * _f2[1]
-#                 f2[2] += m * _f2[2]
-#                 f2[3] += m * _f2[3]
-#             end
-#         end
-    
-#         v !== nothing && return e, f1, f2
-#         return e
-#     end
-# end
-
 
 get_flat_bottom_potential(; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat} = begin
     get_flat_bottom_potential(ProtoSyn.acceleration.active; d1 = d1, d2 = d2, d3 = d3, d4 = d4)
