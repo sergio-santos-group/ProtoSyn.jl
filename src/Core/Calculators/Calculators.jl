@@ -20,6 +20,9 @@ end
 @info " | Loading Hydrogen Bonds"
 include("hydrogen_bonds.jl")
 
+@info " | Loading SASA"
+include("sasa.jl")
+
 @info " | Loading Restraint Models"
 include("Potentials/potentials.jl")
 include("restraints.jl")
