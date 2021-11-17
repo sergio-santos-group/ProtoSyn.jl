@@ -68,7 +68,7 @@ module SASA
                 :selection          => an"CA",
                 :probe_radius       => 6.0,
                 :n_points           => 100,
-                :hydrophobicity_map => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7
+                :hydrophobicity_map => ProtoSyn.Peptides.doolitle_hydrophobicity_extreme
             ),
             α,
             false

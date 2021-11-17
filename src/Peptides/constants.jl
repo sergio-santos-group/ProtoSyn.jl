@@ -169,6 +169,31 @@ const doolitle_hydrophobicity_mod7 = Dict{String, ProtoSyn.Units.defaultFloat}(
     "ARG" => -4.5
 )
 
+
+const doolitle_hydrophobicity_extreme = Dict{String, ProtoSyn.Units.defaultFloat}(
+    "ILE" => 11.5,
+    "VAL" => 11.2,
+    "LEU" => 10.8,
+    "PHE" => 9.8,
+    "CYS" => 9.5,
+    "MET" => 8.9,
+    "ALA" => 8.8,
+    "GLY" => 0.0,
+    "THR" => 0.0,
+    "SER" => 0.0,
+    "TRP" => 0.0,
+    "TYR" => 0.0,
+    "PRO" => 0.0,
+    "HIS" => 0.0,
+    "HIE" => 0.0,
+    "ASN" => 0.0,
+    "GLN" => 0.0,
+    "ASP" => 0.0,
+    "GLU" => 0.0,
+    "LYS" => 0.0,
+    "ARG" => 0.0
+)
+
 available_aminoacids = Dict{Char, Bool}(
     'M' => true,
     'K' => true,
