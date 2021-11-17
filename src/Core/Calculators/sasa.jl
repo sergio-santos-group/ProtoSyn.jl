@@ -13,10 +13,7 @@ module SASA
         probe_radius_2 = 2 * probe_radius
         
         # Define sphere
-        sphere = Vector{Vector{T}}()
-        for _ in 1:n_points
-            push!(sphere, ProtoSyn.rand_vector_in_sphere(T))
-        end
+        sphere = ProtoSyn.fibonacci_sphere(T, n_points)
 
         # Ωis   = Vector{T}() # !
         # esols = Vector{T}() # !
