@@ -69,17 +69,15 @@ module SASA
         probe_radius_2 = 2 * probe_radius
         
         # Define sphere
-        cloud  = fibonacci_sphere(T, n_points)
+        cloud  = ProtoSyn.fibonacci_sphere(T, n_points)
         levels = repeat([T(0.0)], n_points)
 
-        _cloud  = Vector{Vector{T}}()
-        _levels = Vector{T}()
+        # _cloud  = Vector{Vector{T}}()
+        # _levels = Vector{T}()
 
         esol = T(0.0)
         
         for i in 1:size(dm)[1]
-            Ωi = 0
-
             # define cloud i
             cloud_i  = copy(cloud)
             levels_i = copy(levels)
@@ -99,19 +97,20 @@ module SASA
                 end
             end
 
-            for point in cloud_i
-                push!(_cloud, point)
-            end
+            # for point in cloud_i
+            #     push!(_cloud, point)
+            # end
 
-            for level in levels_i
-                push!(_levels, level)
-            end
+            # for level in levels_i
+            #     push!(_levels, level)
+            # end
 
             # Define what to count
             esol += sum(filter(x -> x < 0.0, levels_i))
         end
 
-        return esol, nothing, _cloud, _levels
+        # return esol, nothing, _cloud, _levels
+        return esol, nothing
     end
 
     calc_core_sasa(pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 1000, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {T <: AbstractFloat} = begin
