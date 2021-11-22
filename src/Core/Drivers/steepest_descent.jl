@@ -110,7 +110,7 @@ end
 
 SteepestDescent(::Type{T}) where {T <: AbstractFloat} = begin
     zero_eval = (pose::Pose, update_forces::Bool = False) -> return 0.0
-    return SteepestDescent(zero_eval, 0, T(1), T(0.1))
+    return SteepestDescent(zero_eval, nothing, 0, T(1), T(0.1))
 end
 
 SteepestDescent() = begin
@@ -120,6 +120,9 @@ end
 
 function (driver::SteepestDescent)(pose::Pose)
   
+    # SteepestDescent requires a synched pose
+    sync!(pose)
+
     T = eltype(pose.state)
     energy = driver.eval!(pose, true)
 
@@ -157,8 +160,7 @@ function (driver::SteepestDescent)(pose::Pose)
         driver_state.stepsize = γ / driver_state.max_force[1]
         # driver_state.stepsize = 1e-1
 
-        # update coordinates (Isn't performing matrix operations in order to
-        # update pose.state.items)
+        # update coordinates
         for atom_index in 1:pose.state.size
             t = driver_state.stepsize .* pose.state.f[:, atom_index]
             pose.state.x[:, atom_index] = pose.state.x[:, atom_index] .+ t
@@ -181,7 +183,6 @@ function (driver::SteepestDescent)(pose::Pose)
             break
         end
 
-        # Update gamma (BUG HERE !!!!!!!!!!)
         if energy >= driver.eval!(backup_pose)
             γ *= γdec
             pose = copy(backup_pose)

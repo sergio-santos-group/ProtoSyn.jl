@@ -7,7 +7,8 @@ Currently, ProtoSyn-base makes available the following mutators:
 - `CrankshaftMutator`
 - `RotationRigidBodyMutator`
 - `TranslationRigidBodyMutator`
-- `BlockRotMutator`
+- `BackrubMutator`
+- `CompoundMutator`
 """
 module Mutators
 
@@ -18,5 +19,6 @@ module Mutators
     include("dihedral.jl")
     include("crankshaft.jl")
     include("rigid_body.jl")
+    include("backrub.jl")
     include("compound.jl")
 end

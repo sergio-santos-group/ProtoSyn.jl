@@ -113,13 +113,51 @@ Base.pop!(energy_function::EnergyFunction) = begin
     return component
 end
 
+Base.pop!(energy_function::EnergyFunction, efc::EnergyFunctionComponent) = begin
+    e = findall(x -> x == efc, energy_function.components)
+    deleteat!(energy_function.components, e)
+    delete!(energy_function.components_by_name, efc.name)
+    return efc
+end
+
 function Base.copy(ef::EnergyFunction)
     nef = EnergyFunction()
     nef.clean_cache_every = ef.clean_cache_every
-    for (component, α) in ef.components
-        nef.components[component] = α
+    for component in ef.components
+        push!(nef.components, copy(component))
     end
+    nef.components_by_name = copy(ef.components_by_name)
     return nef
+end
+
+"""
+    fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
+
+Change the current [`Mask`](@ref) type of all [`EnergyFunctionComponent`](@ref) 
+instances in the given [`EnergyFunction`](@ref) `ef` from dynamic to static, by
+applying them to the given [`Pose`](@ref) `pose`.
+
+# See also
+[`fixate_mask!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.fixate_masks!(energy_function, pose)
+
+julia> energy_function[4].settings[:mask]
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (21, 21)
+ ├── Count: 420
+ └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
+```
+"""
+function fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
+    for efc in ef.components
+        if (:mask in keys(efc.settings)) && isa(efc.settings[:mask], Function)
+            efc.settings[:mask] = efc.settings[:mask](pose)
+        end
+    end
 end
 
 # * Call energy function -------------------------------------------------------
@@ -141,15 +179,25 @@ function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = fal
             e += e_comp
 
             if uf & !(forces === nothing)
-                for atom_index in 1:pose.state.size
-                    pose.state.f[:, atom_index] += forces[:, atom_index] .* component.α
+                if :selection in keys(component.settings) && component.settings[:selection] !== nothing
+                    i = 0
+                    selected = component.settings[:selection](pose)
+                    for atom_index in 1:pose.state.size
+                        !selected[atom_index] && continue
+                        i += 1
+                        pose.state.f[:, atom_index] += forces[:, i] .* component.α
+                    end
+                else
+                    for atom_index in 1:pose.state.size
+                        pose.state.f[:, atom_index] += forces[:, atom_index] .* component.α
+                    end
                 end
             end
         end
     end
 
     # Perform memory allocation clean-up and maintenance
-    if performed_calc
+    if performed_calc && ProtoSyn.acceleration.active == ProtoSyn.CUDA_2
         energy_function.cache += 1
         if energy_function.cache % energy_function.clean_cache_every == 0
             GC.gc(false)

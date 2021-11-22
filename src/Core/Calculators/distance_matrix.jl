@@ -102,7 +102,7 @@ end
 
 function distance_matrix(::Type{ProtoSyn.SISD_0}, coords::Matrix{T}, verlet_list::VerletList) where {T <: AbstractFloat}
     
-    natoms = size(coords)[2]
+    natoms = maximum(size(coords))
     distance_matrix = zeros(natoms, natoms)
     
     @inbounds for i = 1:natoms-1

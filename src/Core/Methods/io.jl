@@ -1,11 +1,12 @@
 using Printf: @sprintf
 using YAML
+using Downloads: download
 
 const PDB = Val{1}
 const YML = Val{2}
 
 """
-    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false]) where {T <: AbstractFloat}
+    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false, alternative_location::String = "A"]) where {T <: AbstractFloat}
 
 Load the given `filename` into a pose, parametrized by `T`. If this is not
 provided, the default `ProtoSyn.Units.defaultFloat` is used. The file format is
@@ -13,7 +14,10 @@ infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
 set to `true` (`false`, by default), the CONECT records will be complemented
 with bonds infered by distance. The distances for each pair of atoms
 is defined in `ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard
-deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance.
+deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance. By
+default, and when available, ProtoSyn will use `alternative_location` `A`,
+unless specified in the flag `alternative_location`. If the input file if of
+type PDB and a trajectory, returns a vector of [`Pose`](@ref) instances instead.
 
 # See also
 [`distance`](@ref)
@@ -31,9 +35,14 @@ Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
 )
 ```
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
-    if endswith(filename, ".pdb") 
-        return load(T, filename, PDB, bonds_by_distance = bonds_by_distance)
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") where {T <: AbstractFloat}
+    if endswith(filename, ".pdb")
+        # Check if this is a trajectory
+        if !is_trajectory(filename)
+            return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        else
+            return load_trajectory(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        end
     elseif endswith(filename, ".yml")
         return load(T, filename, YML, bonds_by_distance = bonds_by_distance)
     else
@@ -42,17 +51,154 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 end
 
 
-load(filename::AbstractString; bonds_by_distance = false) = begin
-    ProtoSyn.verbose.mode && begin
-        @info "Consider using Peptides.load when dealing with peptide chains."
+"""
+    is_trajectory(filename::String)
+
+Read the given `filename` and check if multiple "MODEL" entries are found. File
+must be in PDB format.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.is_trajectory("teste.pdb")
+true
+```
+"""
+function is_trajectory(filename::String)
+    
+    @assert filename[(end-3):end] == ".pdb" "File $filename must be in PDB format."
+
+    io = open(filename, "r")
+    models = 0
+    for line in eachline(io)
+        if startswith(line, "MODEL")
+            models += 1
+            models > 1 && return true
+        end
     end
-    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance)
+
+    return false
 end
 
 
-load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) where {T <: AbstractFloat, K} = begin
+load(filename::AbstractString; bonds_by_distance = false, alternative_location::String = "A") = begin
+    ProtoSyn.verbose.mode && begin
+        @info "Consider using Peptides.load when dealing with peptide chains."
+    end
+    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location)
+end
+
+
+"""
+    splice_trajectory(filename::String)
+
+Create a new temporary folder holding all the "MODEL" entries in a given
+`filename` separated (one per file, input should be in PDB format).
+
+# Examples
+```
+julia> ProtoSyn.splice_trajectory("teste.pdb")
+"teste_spliced"
+```
+"""
+function splice_trajectory(filename::String)
+
+    @assert filename[(end-3):end] == ".pdb" "File $filename must be in PDB format."
+
+    # Create temporary folder
+    dirname::String = "$(filename[1:(end-4)])_spliced"
+    isdir(dirname) && begin
+        ProtoSyn.verbose.mode && @info "Found pre-existent $dirname folder. Overwritting."
+        rm(dirname, recursive = true)
+    end
+    mkdir(dirname)
+
+    model::Int = 0
+    io_out = nothing
+    io = open(filename, "r")
+
+    for line in eachline(io)
+        if startswith(line, "MODEL")
+            model += 1
+            model_name = joinpath(dirname, "$model.pdb")
+            io_out !== nothing && close(io_out)
+            io_out = open(model_name, "w")
+        end
+
+        if io_out !== nothing
+            Base.write(io_out, line * "\n")
+        end
+    end
+    close(io_out)
+
+    return dirname
+end
+
+
+"""
+    load_trajectory([::Type{T}], filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K}
+
+Load the given `filename` into a vector of [`Pose`](@ref) instances,
+parametrized by `T`, separated by new "MODEL" entries. If `T` is not provided,
+the default `ProtoSyn.Units.defaultFloat` is used. The file format is infered
+from the extension (Supported: .pdb only). If `bonds_by_distance` is set to
+`true` (`false`, by default), the CONECT records will be complemented with bonds
+infered by distance. The distances for each pair of atoms is defined in
+`ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard deviation
+threshold of 0.1 Å). Return the resulting vector of [`Pose`](@ref) instances. By
+default, and when available, ProtoSyn will use `alternative_location` `A`,
+unless specified in the flag `alternative_location`.
+
+# See also
+[`is_trajectory`](@ref) [`splice_trajectory`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.load_trajectory("teste.pdb")
+2-element Vector{Pose}:
+ Pose{Topology}(Topology{/1:5584}, State{Float64}:
+ Size: 39
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+ Pose{Topology}(Topology{/2:48484}, State{Float64}:
+ Size: 39
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K}
+    models = splice_trajectory(filename)
+    a = readdir(models)
+    files = sort([parse(Int, split(x, ".")[1]) for x in a if endswith(x, ".pdb")])
+    files = map(x -> joinpath(models, string(x) * ".pdb"), files)
+
+    poses = Vector{Pose}()
+    N = length(files)
+    for (i, file) in enumerate(files)
+        if ProtoSyn.verbose.mode
+            println("Loading pose $i out of $N")
+        end
+        pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        push!(poses, pose)
+    end
+
+    rm(models, recursive = true)
+
+    return poses
+end
+
+load_trajectory(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
+    load_trajectory(ProtoSyn.Units.defaultFloat, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+end
+
+load_trajectory(filename; bonds_by_distance::Bool = false, alternative_location::String = "A") = begin
+    load_trajectory(filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+end
+
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
     
-    pose = load(T, open(filename), K)
+    pose = load(T, open(filename), K; alternative_location = alternative_location)
     name, _ = splitext(basename(filename))
     pose.graph.name = name
 
@@ -106,12 +252,12 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false) 
 end
 
 
-load(filename::AbstractString, ::Type{K}; bonds_by_distance = false) where K = begin
-    load(Float64, filename, K, bonds_by_distance = bonds_by_distance)
+load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where K = begin
+    load(Float64, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 end
 
 
-load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
     
     yml = YAML.load(io)
     natoms = length(yml["atoms"])
@@ -158,8 +304,7 @@ load(::Type{T}, io::IO, ::Type{YML}) where {T<:AbstractFloat} = begin
     sync!(Pose(top, state))
 end
 
-
-load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
     
     top  = Topology("UNK", -1)
     seg  = Segment("", -1)     # orphan segment
@@ -175,17 +320,24 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?<an>\w+)\s+(?<rn>\w+)\s+(?<sn>\w*)\s+(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+\d+\.\d+\s+\d+\.\d+\s+\w*\s+(?<as>\w)"
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3})))\s+(?<sn>\S{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s*(?<as>\w+(?:\-|\+)*)\s*$"
     
     seekstart(io)
     for line in eachline(io)
         
-        if startswith(line, "TITLE")
-            top.name = string(strip(line[11:end]))
+        # if startswith(line, "TITLE")
+        #     top.name = string(strip(line[11:end]))
 
-        elseif startswith(line, "ATOM") || startswith(line, "HETATM")
+        if startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
+
+            # * Choose alternative locations
+            al = string(atom["al"])
+            if al !== "" && al !== alternative_location
+                continue
+            end
+
             segname = atom["sn"] == "" ? "A" : string(atom["sn"]) # * Default
 
             if seg.name != segname
@@ -207,6 +359,7 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
                 parse(Int, atom["aid"]),
                 atmindex,
                 string(atom["as"]))
+
             id2atom[parse(Int, atom["aid"])] = new_atom
             
             s = state[atmindex]
@@ -218,6 +371,12 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 
         elseif startswith(line, "CONECT")
             idxs = map(s -> parse(Int, s), split(line)[2:end])
+
+            # * In case this atom ID belongs to an alternative location
+            # if !(idxs[1] in keys(id2atom))
+            #     continue
+            # end
+
             pivot = id2atom[idxs[1]]
             for i in idxs[2:end]
                 other_atom = id2atom[i]
@@ -232,18 +391,26 @@ load(::Type{T}, io::IO, ::Type{PDB}) where {T<:AbstractFloat} = begin
 end
 
 
-write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1) = begin
+write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1, B_factors::Vector{Float64} = Float64[]) = begin
     
+    B_factors_exist = length(B_factors) > 0
     @printf(io, "MODEL %8d\n", model)
+    i = 1
     for (index, segment) in enumerate(eachsegment(top))
         index > 1 && println(io, "TER")
         for atom in eachatom(segment)
             sti = state[atom.index]
-            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%24s",
+            B_factor = 0.0
+
+            if atom.name == "CA" && B_factors_exist
+                B_factor = B_factors[i]
+                i += 1
+            end
+            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%12.2f%12s",
                 atom.index, atom.name,
                 atom.container.name, atom.container.container.code,
                 atom.container.id,
-                sti.t[1], sti.t[2], sti.t[3],
+                sti.t[1], sti.t[2], sti.t[3], B_factor,
                 atom.symbol)
             println(io, s)
         end
@@ -355,6 +522,34 @@ function append(pose::Pose, filename::String; model::Int = 1)
     close(io)
 end
 
+"""
+    ProtoSyn.download([::T], pdb_code::String) where {T <: AbstractFloat}
+
+Download the PDB file (for the given PDB code) from the RCSB
+Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the current working
+directory. If `T` is specified, the downloaded file will be loaded into a
+[`Pose`](@ref) parametrized by `T`, otherwise uses the default
+`ProtoSyn.Units.defaultFloat`.
+
+# See also
+[`load`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.download("2A3D")
+```
+"""
+function ProtoSyn.download(::Type{T}, pdb_code::String; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
+    if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
+    filename = pdb_code * ".pdb"
+    url = "https://files.rcsb.org/download/" * filename
+    download(url, filename)
+    return load(T, filename, bonds_by_distance = bonds_by_distance)
+end
+
+ProtoSyn.download(pdb_code::String; bonds_by_distance::Bool = false) = begin
+    ProtoSyn.download(ProtoSyn.Units.defaultFloat, pdb_code; bonds_by_distance = bonds_by_distance)
+end
 
 """
     write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}

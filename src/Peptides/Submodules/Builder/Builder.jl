@@ -23,6 +23,10 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 """
 function build(grammar::LGrammar{T}, derivation, ss::SecondaryStructureTemplate = SecondaryStructure[:linear]) where {T <: AbstractFloat}
 
+    if isa(derivation, String)
+        derivation = [string(x) for x in derivation]
+    end
+    
     pose = ProtoSyn.build(grammar, derivation)
     ProtoSyn.Peptides.setss!(pose, ss)
     sync!(pose)

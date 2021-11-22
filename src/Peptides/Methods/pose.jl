@@ -392,6 +392,7 @@ function remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, selection::
         residue.name = saved_name
     end
 
+    sync!(pose)
     return pose
 end
 
@@ -679,6 +680,30 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             ProtoSyn.request_i2c!(pose.state)
             sync!(pose)
         end
+    end
+
+    return pose
+end
+
+function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+    if selection !== nothing
+        residues = selection(pose, gather = true)
+    else
+        residues = collect(eachresidue(pose.graph))
+    end
+    for residue in residues
+        derivation = [string(Peptides.three_2_one[residue.name])]
+        derivation == ["P"] && continue
+
+        # 1. Save rotamer
+        rotamer = get_rotamer(pose, residue, ignore_non_existent = true)
+
+        # 2. Mutate to the same aminoacid (add hydrogens)
+        Peptides.mutate!(pose, residue, grammar, derivation,
+            ignore_existing_sidechain = true)
+
+        # 3. Apply pre-existing rotamer
+        apply!(pose.state, rotamer, residue)
     end
 
     return pose

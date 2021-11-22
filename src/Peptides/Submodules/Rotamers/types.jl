@@ -27,7 +27,7 @@ Rotamer{Float64}: LYS | Chi1:   -67.5° ±  6.9 | Chi2:  -179.6° ±  9.7 | Chi3
 """
 mutable struct Rotamer{T <: AbstractFloat}
     name::String
-    chis::Dict{DihedralType, Tuple{T, T}}
+    chis::Dict{DihedralType, Tuple{Opt{T}, T}}
 end
 
 function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}
@@ -40,7 +40,11 @@ function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
         if index <= length(r.chis)
             name = "chi$index"
             value, sd = r.chis[getfield(ProtoSyn.Peptides.Dihedral, Symbol(name))]
-            chis *= @sprintf " | %s: %7.1f° ± %4.1f" titlecase(name) rad2deg(value) rad2deg(sd)
+            if value === nothing
+                chis *= @sprintf " | %s: %11s ± %4.1f" titlecase(name) "Not defined" rad2deg(sd)
+            else
+                chis *= @sprintf " | %s: %7.1f° ± %4.1f" titlecase(name) rad2deg(value) rad2deg(sd)
+            end
         else
             name = "chi$index"
             chis *= @sprintf " | %s: %-15s" titlecase(name) "--"

@@ -1,6 +1,8 @@
+__precompile__(false)
 module ProtoSyn
 
-const _version = 0.9
+const _force_recompilation = 1
+const _version             = 1.01
 
 mutable struct Verbose
     mode::Bool
@@ -75,7 +77,7 @@ include("Core/Methods/base.jl")
 include("Core/Methods/io.jl")
 include("Core/Methods/iterators.jl")
 include("Core/Methods/align.jl")
-# include("Core/Clustering/Clustering.jl") # ! <- Location ?
+include("Core/Submodules/Clustering/Clustering.jl")
 include("Core/Submodules/Builder/grammar.jl")
 include("Core/Submodules/Builder/Builder.jl")
 include("Core/Methods/pose.jl") # Requires grammar.jl

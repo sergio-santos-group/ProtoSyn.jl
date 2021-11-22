@@ -29,6 +29,29 @@ rand_vector_in_sphere() = rand_vector_in_sphere(ProtoSyn.Units.defaultFloat)
 
 
 """
+# TODO
+"""
+function fibonacci_sphere(::Type{T}, n_points::Int = 1000) where {T <: AbstractFloat}
+    points = Vector{Vector{T}}()
+    ϕ = pi * (3.0 - sqrt(5.0))
+
+    for i in 0:(n_points - 1)
+        y = 1 - (i / (n_points - 1)) * 2
+        radius = sqrt(1 - y * y)
+        θ = ϕ * i
+        x = cos(θ) * radius
+        z = sin(θ) * radius
+
+        push!(points, [x, y, z])
+    end
+
+    return points
+end
+
+fibonacci_sphere(n_points::Int = 1000) = fibonacci_sphere(ProtoSyn.Units.defaultFloat, n_points)
+
+
+"""
     rotation_matrix_from_axis_angle(axis::Vector{T}, angle::T) where {T <: AbstractFloat}
 
 Return a rotation matrix based on the provided axis and angle (in radians).
@@ -156,7 +179,10 @@ Base.lastindex(level_code::LevelCode) = length(level_code.levels)
 
 
 """
-    # TODO
+    get_lead(level_code::Opt{LevelCode} = nothing)
+
+Auxiliary function, uses level codes to show inheritance in the terminal for
+complex types.
 """
 function get_lead(level_code::Opt{LevelCode} = nothing)
     lead = ""

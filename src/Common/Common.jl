@@ -11,5 +11,5 @@ module Common
     using ProtoSyn.Peptides
 
     include("energy_function.jl")
-    include("callback.jl")    
+    include("callback.jl")
 end

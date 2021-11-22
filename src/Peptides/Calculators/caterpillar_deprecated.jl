@@ -3,7 +3,7 @@ module Caterpillar
 using ProtoSyn
 using ProtoSyn.Calculators: EnergyFunctionComponent, full_distance_matrix
 using CUDA
-
+using LinearAlgebra
 
 function calc_solvation_energy_kernel(coords::CuDeviceArray{T}, Ωi::CuDeviceMatrix{T}, n::Int, rmax::T, sc::T) where {T <: AbstractFloat}
     # ! Note: coords must be in AoS format
@@ -111,11 +111,13 @@ function calc_solvation_energy(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_force
 end
 
 
-function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7) where {T <: AbstractFloat}
+function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; Ω::Int = 30, rmax::T = 12.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod2) where {T <: AbstractFloat}
         
     dm       = full_distance_matrix(A, pose, an"CA")
     residues = collect(eachresidue(pose.graph))
     esol = T(0)
+    Ωis = Vector{Float64}()
+    esols = Vector{Float64}()
 
     for i in 1:size(dm)[1]
         Ωi = 0
@@ -131,13 +133,60 @@ function calc_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIM
         end
 
         esol += esol_i
+        push!(Ωis, Ωi)
+        push!(esols, esol_i)
     end
 
-    return esol, nothing
+    return esol, nothing, Ωis, esols
 end
 
-calc_solvation_energy(pose::Pose, update_forces::Bool = false; Ω::Int = 24, rmax::T = 12.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7) where {T <: AbstractFloat} = begin
+calc_solvation_energy(pose::Pose, update_forces::Bool = false; Ω::Int = 30, rmax::T = 12.0, sc::T = 5.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod2) where {T <: AbstractFloat} = begin
     return calc_solvation_energy(ProtoSyn.acceleration.active, pose, update_forces; Ω = Ω, rmax = rmax, sc = sc, hydrophob_map = hydrophob_map)
+end
+
+
+function calc_nv_solvation_energy(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; rmax::T = 12.0, sc::T = 100.0, Ω::T = 1000.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod2) where {T <: AbstractFloat}
+        
+    dm       = full_distance_matrix(A, pose, an"CA")
+    residues = collect(eachresidue(pose.graph))
+    pose.state.f = zeros(T, 3, pose.state.size)
+    esol     = T(0)
+    Ωis = Vector{Float64}()
+    esols = Vector{Float64}()
+
+    for i in 1:size(dm)[1]
+        xi = pose.state[residues[i]["CA"]].t
+        vt = zeros(T, 3)
+
+        for j in 1:size(dm)[2]
+            i === j && continue
+            w1 = 1 - (1 / (1 + exp(sc * (rmax - dm[i, j]))))
+            w2 = - (dm[i, j]/rmax) + 1
+            v  = (pose.state[residues[j]["CA"]].t .- xi) / dm[i, j] .* w1
+            vt += v
+        end
+
+        dhi = hydrophob_map[residues[i].name]
+        # esol_i = - dhi * (Ω - norm(vt))
+        # println("esol_i = $(-dhi) * $(Ω - norm(vt)) = $esol_i")
+        Ωi = norm(vt)
+        if Ωi < Ω
+            esol_i = T(0)
+        else
+            esol_i = dhi * (Ωi - Ω)
+        end
+
+        esol += esol_i
+        pose.state.f[:, residues[i]["CA"].index] .= vt
+        push!(Ωis, Ωi)
+        push!(esols, esol_i)
+    end
+
+    return esol, nothing, Ωis, esols
+end
+
+calc_nv_solvation_energy(pose::Pose, update_forces::Bool = false; rmax::T = 12.0, sc::T = 5.0, Ω::T = 750.0, hydrophob_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod2) where {T <: AbstractFloat} = begin
+    return calc_nv_solvation_energy(ProtoSyn.acceleration.active, pose, update_forces; rmax = rmax, sc = sc, Ω = Ω, hydrophob_map = hydrophob_map)
 end
 
 # * Default Energy Components --------------------------------------------------
@@ -176,7 +225,16 @@ function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "Caterpillar_Solvation",
         calc_solvation_energy,
-        Dict{Symbol, Any}(:Ω => 24, :rmax => 12.0, :sc => 5.0, :hydrophob_map => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7),
+        Dict{Symbol, Any}(:Ω => 24, :rmax => 12.0, :sc => 5.0, :hydrophob_map => ProtoSyn.Peptides.doolitle_hydrophobicity_mod2),
+        α,
+        false)
+end
+
+function get_default_nv_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
+    return EnergyFunctionComponent(
+        "Caterpillar_Solvation",
+        calc_nv_solvation_energy,
+        Dict{Symbol, Any}(:Ω => 750.0, :rmax => 12.0, :sc => 5.0, :hydrophob_map => ProtoSyn.Peptides.doolitle_hydrophobicity_mod2),
         α,
         false)
 end

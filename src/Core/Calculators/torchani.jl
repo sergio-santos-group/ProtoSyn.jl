@@ -22,6 +22,12 @@ module TorchANI
         end
         
         copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
+        if ProtoSyn.verbose.mode
+            @info "TorchANI is using:"
+            @info " torch version $(torch.__version__)"
+            @info " cuda-toolkit version $(torch.version.cuda)"
+            @info " torchani version $(torchani.__version__)"
+        end
     end
 
     # --- AUX
@@ -77,8 +83,7 @@ module TorchANI
     Calculate and return the [`Pose`](@ref) `pose` energy according to a single
     TorchANI model neural network. The model can be defined using `model_index`
     (from model 1 to 8, default is 3).The optional `A` parameter defines the
-    acceleration type used (note that only `CUDA_2` is available, any other
-    acceleration type will result in an error). If left undefined the default
+    acceleration type used. If left undefined the default
     `ProtoSyn.acceleration.active` mode will be used. By setting the
     `update_forces` flag to `true` (`false` by default), this function will also
     calculate and return the forces acting on each atom based on a single
@@ -108,25 +113,39 @@ module TorchANI
 
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
-    function calc_torchani_model(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false; model::Int = 3)
-        error("'calc_torchani_model' requires CUDA_2 acceleration.")
-    end
-
-    function calc_torchani_model(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
-        
+        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = update_forces, device = device).float()
         s           = get_ani_species(pose)
         species     = torch.tensor([s], device = device)
-        
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
         m3 = get(_model.neural_networks, model)(m2)[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
-            return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1
+            _f = convert(Matrix{Float64}, f.cpu().numpy()' .* -1)
+            e = m3.item()
+
+            return e, _f
         else
-            return m3.item(), nothing
+            e = m3.item()
+            # Note: When not consuming the m3 gradient (if requires_grad is set
+            # to true), as is the case when update_forces is set to false (this
+            # function returns e, nothing), a memory leak on the python site
+            # occurs. Two workarounds have been identified:
+            # (1) - Set requires_grad = update_forces.
+            # (2) - Call GC.gc(false)
+            # Fix 1 causes slightly higher memory allocation that option 2.
+            # Instead of calling GC.gc(false) every step, a counter can be used
+            # to call it every N steps. This can be done either before returning
+            # from this function or outside. For ProtoSyn >= 1.0, GC.gc(false)
+            # is being called outside, in the encompassing EnergyFunction call.
+            # This seems to result in a slightly lower mameory allocation. 
+            # However, if for some reason this function is being called solo, 
+            # CUDA out of memory erros might occur is users are not aware of
+            # this issue. Future iterations of ProtoSyn may bring GC.gc(false)
+            # inside the scope of this function.
+            return e, nothing
         end
     end
 
@@ -141,8 +160,7 @@ module TorchANI
     
     Calculate and return the [`Pose`](@ref) `pose` energy according to the whole
     TorchANI neural network ensemble. The optional `A` parameter defines the
-    acceleration type used (note that only `CUDA_2` is available, any other
-    acceleration type will result in an error). If left undefined the default
+    acceleration type used. If left undefined the default
     `ProtoSyn.acceleration.active` mode will be used. By setting the
     `update_forces` flag to `true` (`false` by default), this function will also
     calculate and return the forces acting on each atom based on the whole
@@ -160,11 +178,7 @@ module TorchANI
     (-0.12801788747310638, [ ... ])
     ```
     """
-    function calc_torchani_ensemble(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, update_forces::Bool = false)
-        error("'calc_torchani_ensemble' requires CUDA_2 acceleration.")
-    end
-
-    function calc_torchani_ensemble(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false)
+    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false)
         
         coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
         
@@ -173,7 +187,8 @@ module TorchANI
 
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
-        m3 = _model.neural_networks(m2)[2]
+        # m3 = _model.neural_networks(m2)[2]
+        m3 = _model.neural_networks((m2[1].float(), m2[2].float()))[2]
         if update_forces
             f = torch.autograd.grad(m3.sum(), coordinates)[1][1]
             return m3.item(), convert(Matrix{Float64}, f.cpu().numpy()').*-1
