@@ -66,4 +66,12 @@ const bond_lengths = Dict{String, defaultFloat}(
     "HS" => 1.34
 )
 
+const mass = Dict{String, defaultFloat}(
+    "H" => 1.008,
+    "C" => 12.011,
+    "N" => 14.007,
+    "O" => 15.999,
+    "S" => 32.066
+)
+
 end

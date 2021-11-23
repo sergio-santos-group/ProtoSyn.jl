@@ -3,7 +3,7 @@ module SASA
     using ProtoSyn
     using LinearAlgebra
 
-    function calc_exposed_sasa(::Type{A}, pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_sasa(::Type{A}, pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         dm = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
         if A === ProtoSyn.CUDA_2
             dm = collect(dm)
@@ -53,83 +53,171 @@ module SASA
         # return esol, nothing, Ωis, esols 
     end
 
-    calc_exposed_sasa(pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {T <: AbstractFloat} = begin
-        calc_exposed_sasa(ProtoSyn.acceleration.active, pose, update_forces, selection = selection, probe_radius = probe_radius, n_points = n_points, hydrophobicity_map = hydrophobicity_map)
+    calc_sasa(pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {T <: AbstractFloat} = begin
+        calc_sasa(ProtoSyn.acceleration.active, pose, update_forces, selection = selection, probe_radius = probe_radius, n_points = n_points, hydrophobicity_map = hydrophobicity_map)
     end
 
-    # ---
+    # --------------------------------------------------------------------------
 
-    function calc_core_sasa(::Type{A}, pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 1000, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        dm = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
+    function calc_sasa_solvation_energy(::Type{A}, pose::Pose, update_forces::Bool = false;
+        solvation_selection::AbstractSelection = an"CA",
+        solvation_probe_radius::T = 5.0, solvation_n_points::Int = 10,
+        solvation_cut_off_radius::T = 3.0,
+        selection::AbstractSelection = an"CA", probe_radius::T = 6.0,
+        clash_radius::T = 3.0, n_points::Int = 1000,
+        hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
+        solvent_hydrophobicity_index::T = -2.0,
+        pose_solvated::Opt{Pose} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} 
+    
+        # Calculate new solvent positions
+        if pose_solvated === nothing
+            pose_solvated = ProtoSyn.add_semi_explicit_solvent(pose,
+                selection = solvation_selection,
+                probe_radius = solvation_probe_radius,
+                n_points = solvation_n_points,
+                cut_off_radius = solvation_cut_off_radius)
+        end
+    
+        @assert count(an"SOL"(pose_solvated)) > 0 "No solvent SOL found in the provided pose"
+    
+        _hydrophobicity_map = copy(hydrophobicity_map)
+        _hydrophobicity_map["SOL"] = solvent_hydrophobicity_index
+    
+        _selection = selection | an"SOL"
+        dm = ProtoSyn.Calculators.full_distance_matrix(A, pose_solvated, _selection)
         if A === ProtoSyn.CUDA_2
             dm = collect(dm)
         end
         
-        atoms = selection(pose, gather = true)
+        atoms = _selection(pose_solvated, gather = true)
+        M = length(atoms)
+        N = count(selection(pose_solvated))
         probe_radius_2 = 2 * probe_radius
         
         # Define sphere
         cloud  = ProtoSyn.fibonacci_sphere(T, n_points)
         levels = repeat([T(0.0)], n_points)
-
-        # _cloud  = Vector{Vector{T}}()
-        # _levels = Vector{T}()
-
+    
+        _cloud  = Vector{Vector{T}}()
+        _levels = Vector{T}()
+    
         esol = T(0.0)
         
-        for i in 1:size(dm)[1]
+        for i in 1:N
+    
+            i_hydro_index = abs(_hydrophobicity_map[atoms[i].container.name])
+            i_hydrophobic = _hydrophobicity_map[atoms[i].container.name] >= 0.0
+    
             # define cloud i
             cloud_i  = copy(cloud)
             levels_i = copy(levels)
-            i_coords = pose.state[atoms[i]].t
+            i_coords = pose_solvated.state[atoms[i]].t
             cloud_i  = map(x -> (x .* probe_radius) .+ i_coords, cloud_i)
-
-            for j in i:size(dm)[2]
-                if (dm[i, j] > probe_radius_2)
+    
+            for j in 1:M
+                if i === j || (dm[i, j] > probe_radius_2)
                     continue
                 end
-
-                j_coords = pose.state[atoms[j]].t
-                for k in 1:length(cloud_i) # note the reverse loop; can't use n_points -> length(cloud_i) should be changing
-                    if norm(cloud_i[k] - j_coords) < probe_radius
-                        levels_i[k] += hydrophobicity_map[atoms[j].container.name]
+    
+                j_hydro_index = abs(_hydrophobicity_map[atoms[j].container.name])
+                j_hydrophobic = _hydrophobicity_map[atoms[j].container.name] >= 0.0
+    
+                m = i_hydrophobic === j_hydrophobic ? 1.0 : -1.0
+    
+                j_coords = pose_solvated.state[atoms[j]].t
+                for k in length(cloud_i):-1:1
+                    d = norm(cloud_i[k] - j_coords)
+                    if (i - 4) < j < (i + 4) && d < clash_radius
+                        deleteat!(cloud_i, k)
+                        deleteat!(levels_i, k)
+                    elseif d < probe_radius
+                        levels_i[k] += (i_hydro_index + j_hydro_index) * m
                     end
                 end
             end
-
-            # for point in cloud_i
-            #     push!(_cloud, point)
-            # end
-
-            # for level in levels_i
-            #     push!(_levels, level)
-            # end
-
+    
+            for point in cloud_i
+                push!(_cloud, point)
+            end
+    
+            for level in levels_i
+                push!(_levels, level)
+            end
+    
             # Define what to count
-            esol += sum(filter(x -> x < 0.0, levels_i))
+            esol -= sum(levels_i) 
         end
-
-        # return esol, nothing, _cloud, _levels
-        return esol, nothing
+    
+        return esol, nothing, _cloud, _levels, pose_solvated
+        # return esol, nothing
     end
+    
+    calc_sasa_solvation_energy(pose::Pose, update_forces::Bool = false;
+        solvation_selection::AbstractSelection = an"CA",
+        solvation_probe_radius::T = 5.0, solvation_n_points::Int = 10,
+        solvation_cut_off_radius::T = 3.0,
+        selection::AbstractSelection = an"CA", probe_radius::T = 6.0,
+        clash_radius::T = 3.0, n_points::Int = 1000,
+        hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
+        solvent_hydrophobicity_index::T = -2.0,
+        pose_solvated::Opt{Pose} = nothing) where {T <: AbstractFloat} = begin
 
-    calc_core_sasa(pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 1000, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {T <: AbstractFloat} = begin
-        calc_core_sasa(ProtoSyn.acceleration.active, pose, update_forces, selection = selection, probe_radius = probe_radius, n_points = n_points, hydrophobicity_map = hydrophobicity_map)
+        calc_sasa_solvation_energy(ProtoSyn.acceleration.active, pose, update_forces,
+            selection = selection, probe_radius = probe_radius,
+            clash_radius = clash_radius, n_points = n_points,
+            hydrophobicity_map = hydrophobicity_map,
+            solvent_hydrophobicity_index = solvent_hydrophobicity_index,
+            solvation_selection = solvation_selection,
+            solvation_probe_radius = solvation_probe_radius,
+            solvation_n_points = solvation_n_points,
+            solvation_cut_off_radius = solvation_cut_off_radius,
+            pose_solvated = pose_solvated)
     end
 
     function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
-            "SASA_CORE_solvation",
-            calc_core_sasa,
+            "SASA_SOL_solvation",
+            calc_sasa_solvation_energy,
             Dict{Symbol, Any}(
-                :selection          => an"CA",
-                :probe_radius       => 6.0,
-                :n_points           => 1000,
-                :hydrophobicity_map => ProtoSyn.Peptides.doolitle_hydrophobicity
+                :solvation_selection          => an"CA",
+                :solvation_probe_radius       => 5.0,
+                :solvation_n_points           => 10,
+                :solvation_cut_off_radius     => 3.0,
+                :selection                    => an"CA",
+                :probe_radius                 => 6.0,
+                :n_points                     => 100,
+                :clash_radius                 => 3.0,
+                :solvent_hydrophobicity_index => -2.0,
+                :hydrophobicity_map           => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
+                :pose_solvated                => nothing
             ),
             α,
             false
         )
     end
 
+    # --------------------------------------------------------------------------
+
+    function calc_radius_gyration(pose::Pose)
+        atoms = collect(eachatom(pose.graph))
+        cm = ProtoSyn.center_of_mass(pose)
+        mi = [ProtoSyn.Units.mass[atom.symbol] for atom in atoms]'
+        rr = mi .* ((pose.state.x.coords .- cm) .^ 2)
+        return sqrt.(sum(rr, dims = 2) ./ sum(mi))
+    end
+
+    function calc_radius_gyration_energy(pose::Pose, update_forces::Bool)
+        rg = calc_radius_gyration(pose)
+        return sum(rg), nothing
+    end
+
+    function get_default_rg(;α::T = 1.0) where {T <: AbstractFloat}
+        return ProtoSyn.Calculators.EnergyFunctionComponent(
+            "Radius_Gyration",
+            calc_radius_gyration_energy,
+            Dict{Symbol, Any}(),
+            α,
+            false
+        )
+    end
 end

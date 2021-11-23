@@ -84,6 +84,7 @@ include("Core/Methods/pose.jl") # Requires grammar.jl
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
+include("Core/Methods/pose-solvation.jl") # Requires selections.jl; distance_matrix.jl
 
 @info "Loading Mutators"
 include("Core/Mutators/Mutators.jl")
