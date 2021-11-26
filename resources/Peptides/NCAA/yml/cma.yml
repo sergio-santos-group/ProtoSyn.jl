@@ -1,0 +1,47 @@
+name: CMA
+atoms:
+  - {name:  C1, id:   1, symbol:  C, b:   1.529573, theta:   2.050815, phi:  -0.261912}
+  - {name:  C3, id:   2, symbol:  C, b:   1.529987, theta:   2.050979, phi:  -0.001394}
+  - {name:  C4, id:   3, symbol:  C, b:   1.529796, theta:   1.910797, phi:   3.054467}
+  - {name:  CA, id:   4, symbol:  C, b:   1.469308, theta:   0.421456, phi:   2.585778}
+  - {name:   C, id:   5, symbol:  C, b:   1.507348, theta:   2.016261, phi:   2.279723}
+  - {name:   O, id:   6, symbol:  O, b:   1.207303, theta:   2.094486, phi:  -0.447234}
+  - {name:   N, id:   7, symbol:  N, b:   1.747312, theta:   2.038016, phi:   0.156402}
+  - {name:  C2, id:   8, symbol:  C, b:   1.529894, theta:   1.046684, phi:  -1.876904}
+  - {name: H13, id:   9, symbol:  H, b:   1.089589, theta:   2.050933, phi:   2.529329}
+  - {name:  H7, id:  10, symbol:  H, b:   1.089687, theta:   1.911225, phi:  -1.133205}
+  - {name:  H8, id:  11, symbol:  H, b:   1.090640, theta:   1.910755, phi:   0.960217}
+  - {name:  H9, id:  12, symbol:  H, b:   1.090470, theta:   1.910336, phi:  -3.140815}
+  - {name: H10, id:  13, symbol:  H, b:   1.089885, theta:   1.910833, phi:  -1.047360}
+  - {name: H11, id:  14, symbol:  H, b:   1.089298, theta:   1.910535, phi:   1.047505}
+  - {name:   H, id:  15, symbol:  H, b:   1.009258, theta:   2.340065, phi:   2.929042}
+  - {name: H15, id:  16, symbol:  H, b:   1.090100, theta:   2.050455, phi:   1.876427}
+  - {name: H16, id:  17, symbol:  H, b:   1.089547, theta:   2.050416, phi:  -1.876466}
+bonds:
+  C1: [C3, CA, C2, H13]
+  C3: [C1, C4, H7, H8]
+  C4: [C3, H9, H10, H11]
+  CA: [C1, C, N, C2]
+  C: [CA, O]
+  O: [C]
+  N: [CA, H]
+  C2: [C1, CA, H15, H16]
+  H13: [C1]
+  H7: [C3]
+  H8: [C3]
+  H9: [C4]
+  H10: [C4]
+  H11: [C4]
+  H: [N]
+  H15: [C2]
+  H16: [C2]
+graph:
+  root: N
+  adjacency:
+    C1: [C3, C2, H13]
+    C3: [C4, H7, H8]
+    C4: [H9, H10, H11]
+    CA: [C1, C]
+    C: [O]
+    N: [CA, H]
+    C2: [H15, H16]

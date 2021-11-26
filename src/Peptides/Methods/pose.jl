@@ -181,6 +181,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 """
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
 
+    T = eltype(pose.state)
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
@@ -204,6 +205,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 
     # Insert new sidechain
     frag_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(frag, gather = true)
+    # println("New fragment sidechain: $frag_sidechain")
     poseCA = residue["CA"]
     
     # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
@@ -220,30 +222,42 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     _ϕ = ProtoSyn.getdihedral(frag.state, frag.graph[1]["C"])
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
+        println(atom)
         parent_is_CA = false
+        bonded_to_CA = false
         if atom.parent.name == "CA"
+            println("Parent is CA")
             parent_is_CA     = true
             _atom_dihedral   = ProtoSyn.getdihedral(frag.state, atom)
             atom_dihedral    = ProtoSyn.unit_circle(_atom_dihedral)
             objective_change = atom_dihedral - ϕ
             push!(objective_changes, objective_change)
             ProtoSyn.unbond!(frag, atom, atom.parent)
+        elseif "CA" in [a.name for a in atom.bonds]
+            bonded_to_CA = true
+            ProtoSyn.unbond!(frag, atom, atom.bonds[findfirst(a -> a.name === "CA", atom.bonds)])
         end
 
         # Insert into the graph
         # Note: insert! already sets the residue.itemsbyname
+        println("Inserting atom $atom in $residue at index $(poseCA_index + index)")
         insert!(residue, poseCA_index + index, atom)
 
         # Since now atom is already in the graph, we can bond and add parents
         if parent_is_CA
             ProtoSyn.bond(atom, poseCA)
             setparent!(atom, poseCA)
+        elseif bonded_to_CA
+            ProtoSyn.bond(atom, poseCA)
         end
+
+        insert!(pose.state, poseCA.index + index, State(T, [frag.state[atom.index]]))
     end
 
-    _start = frag_sidechain[1].index
-    _end   = frag_sidechain[end].index
-    insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
+    # Deal with non-contiguous sidechains
+    # _start = frag_sidechain[1].index
+    # _end   = frag_sidechain[end].index
+    # insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
     
     reindex(pose.graph)
     reindex(pose.state)

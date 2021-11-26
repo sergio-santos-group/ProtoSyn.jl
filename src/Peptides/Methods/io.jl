@@ -44,17 +44,29 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
         for segment in eachsegment(pose.graph)
 
             n_residues = ProtoSyn.count_residues(segment)
+
+            # Intra-residue parenthood (on residue 1)
+            residue = segment[1]
+            ProtoSyn.infer_parenthood!(residue, overwrite = true, start = residue["N"])
+
             for residue_index in 2:n_residues
                 residue = segment[residue_index]
+
+                # Intra-residue parenthood
+                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = residue["N"])
+
+                # Inter-residue parenthood
                 if !(residue.name in available_aminoacids)
-                    @warn "Found a possible ligand at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
+                    @warn "Found a possible ligand or NCAA at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
                     continue
                 end
                 popparent!(residue) # Was root before.
+                popparent!(residue["N"]) # Was root before.
                 C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
                 C_bond_index == nothing && error("No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds)).")
                 parent_residue = residue["N"].bonds[C_bond_index].container
                 setparent!(residue, parent_residue)
+                setparent!(residue["N"], residue["N"].bonds[C_bond_index])
             end
         end
     end
