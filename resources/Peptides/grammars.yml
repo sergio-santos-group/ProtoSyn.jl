@@ -1,4 +1,4 @@
-peptide:
+default:
   variables:
     B: Peptides/yml/bkb.yml
     A: Peptides/yml/ala.yml

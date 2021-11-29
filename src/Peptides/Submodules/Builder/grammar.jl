@@ -3,6 +3,7 @@ using YAML
 export grammar
 
 """
+# TODO
     grammar([::Type{T}];[verbose::Bool = true]) where {T <: AbstractFloat}
 
 Build a [`LGrammar`](@ref ProtoSyn.LGrammar) for peptides, taking as variables
@@ -18,22 +19,19 @@ the loading status.
 julia> res_lib = ProtoSyn.Peptides.grammar()
 ```
 """
-function grammar(::Type{T}) where {T <: AbstractFloat}
-    filename = joinpath(Peptides.resource_dir, "grammars.yml")
-    grammar = ProtoSyn.load_grammar_from_file(T, filename, "peptide")
-
-    load_grammar_extras_from_file(T, filename, "peptide")
+function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
+    filename = joinpath(Peptides.resource_dir, filename)
+    grammar = ProtoSyn.load_grammar_from_file(T, filename, key)
+    load_grammar_extras_from_file!(T, filename, key)
 
     return grammar
 end
-
-grammar(;verbose::Bool = true) = grammar(ProtoSyn.Units.defaultFloat)
 
 
 """
 # TODO
 """
-function load_grammar_extras_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
+function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     
     function read_yml(_filename::String)
         open(_filename, "r") do io
@@ -59,6 +57,19 @@ function load_grammar_extras_from_file(::Type{T}, filename::AbstractString, key:
     end
 end
 
-load_grammar_extras_from_file(filename::AbstractString, key::String) = begin
-    load_grammar_extras_from_file(ProtoSyn.Units.defaultFloat, filename, key)
+load_grammar_extras_from_file!(filename::AbstractString, key::String) = begin
+    load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
 end
+
+
+"""
+# TODO
+"""
+load_default_grammar(::Type{T}) where {T <: AbstractFloat} = load_grammar_from_file(T, "grammars.yml", "default")
+load_default_grammar() = load_default_grammar(ProtoSyn.Units.defaultFloat)
+
+
+"""
+# TODO
+"""
+grammar = load_default_grammar()

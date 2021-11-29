@@ -45,3 +45,4 @@ graph:
     C: [O]
     N: [CA, H]
     C2: [H15, H16]
+chis: [C3]
