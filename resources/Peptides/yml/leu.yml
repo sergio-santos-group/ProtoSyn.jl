@@ -50,3 +50,4 @@ graph:
     CD1: [HD11, HD12, HD13]
     CD2: [HD21, HD22, HD23]
     C: [O]
+chis: [CB, CG, CD1]

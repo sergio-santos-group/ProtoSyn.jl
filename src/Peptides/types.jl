@@ -99,27 +99,27 @@ module Dihedral
     # dihedral angles which only rotate the position of hydrogens are not
     # considered in this dict.
     chi_dict = Dict{String, Vector{String}}(
-        "ALA" => ["CB"],
-        "CYS" => ["CB", "SG"],
-        "ASP" => ["CB", "CG", "OD1"],
-        "GLU" => ["CB", "CG", "CD", "OE1"],
-        "PHE" => ["CB", "CG", "CD1"],
-        "GLY" => [],
-        "HIS" => ["CB", "CG", "ND1"],
-        "HIE" => ["CB", "CG", "ND1"],
-        "ILE" => ["CB", "CG1", "CD1", "HD11"],
-        "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
-        "LEU" => ["CB", "CG", "CD1"],
-        "MET" => ["CB", "CG", "SD", "CE"],
-        "ASN" => ["CB", "CG", "OD1", "HD21"],
-        "PRO" => ["CB", "CG", "CD", "HD2"], # Attention
-        "GLN" => ["CB", "CG", "CD", "NE2"],
-        "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
-        "SER" => ["CB", "OG"],
-        "THR" => ["CB", "OG1"],
-        "VAL" => ["CB", "CG1"],
-        "TRP" => ["CB", "CG", "CD1"],
-        "TYR" => ["CB", "CG", "CD1"]
+        # "ALA" => ["CB"],
+        # "CYS" => ["CB", "SG"],
+        # "ASP" => ["CB", "CG", "OD1"],
+        # "GLU" => ["CB", "CG", "CD", "OE1"],
+        # "PHE" => ["CB", "CG", "CD1"],
+        # "GLY" => [],
+        # "HIS" => ["CB", "CG", "ND1"],
+        # "HIE" => ["CB", "CG", "ND1"],
+        # "ILE" => ["CB", "CG1", "CD1", "HD11"],
+        # "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
+        # "LEU" => ["CB", "CG", "CD1"],
+        # "MET" => ["CB", "CG", "SD", "CE"],
+        # "ASN" => ["CB", "CG", "OD1", "HD21"],
+        # "PRO" => ["CB", "CG", "CD", "HD2"], # Attention
+        # "GLN" => ["CB", "CG", "CD", "NE2"],
+        # "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
+        # "SER" => ["CB", "OG"],
+        # "THR" => ["CB", "OG1"],
+        # "VAL" => ["CB", "CG1"],
+        # "TRP" => ["CB", "CG", "CD1"],
+        # "TYR" => ["CB", "CG", "CD1"]
     )
 end
 

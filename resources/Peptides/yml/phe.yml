@@ -55,3 +55,4 @@ graph:
     CE2: [HE2]
     CD2: [CE2, HD2]
     C: [O]
+chis: [CB, CG, CD1]

@@ -50,3 +50,4 @@ graph:
     CG1: [HG11, HG12, CD1]
     CD1: [HD11, HD12, HD13]
     C: [O]
+chis: [CB, CG1, CD1, HD11]

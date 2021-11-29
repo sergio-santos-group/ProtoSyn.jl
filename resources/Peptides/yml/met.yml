@@ -46,3 +46,4 @@ graph:
     SD: [CE]
     CE: [HE1, HE2, HE3]
     C: [O]
+chis: [CB, CG, SD, CE]

@@ -222,11 +222,9 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     _ϕ = ProtoSyn.getdihedral(frag.state, frag.graph[1]["C"])
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
-        println(atom)
         parent_is_CA = false
         bonded_to_CA = false
         if atom.parent.name == "CA"
-            println("Parent is CA")
             parent_is_CA     = true
             _atom_dihedral   = ProtoSyn.getdihedral(frag.state, atom)
             atom_dihedral    = ProtoSyn.unit_circle(_atom_dihedral)
@@ -240,7 +238,6 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 
         # Insert into the graph
         # Note: insert! already sets the residue.itemsbyname
-        println("Inserting atom $atom in $residue at index $(poseCA_index + index)")
         insert!(residue, poseCA_index + index, atom)
 
         # Since now atom is already in the graph, we can bond and add parents

@@ -195,25 +195,26 @@ const doolitle_hydrophobicity_extreme = Dict{String, ProtoSyn.Units.defaultFloat
 )
 
 available_aminoacids = Dict{Char, Bool}(
-    'M' => true,
-    'K' => true,
-    'P' => true,
-    'Q' => true,
-    'I' => true,
-    'H' => true,
-    'E' => true,
-    'W' => true,
-    'S' => true,
-    'T' => true,
-    'C' => true,
-    'D' => true,
-    'A' => true,
-    'L' => true,
-    'Y' => true,
-    'V' => true,
-    'R' => true,
-    'G' => true,
-    'F' => true,
-    'N' => true)
+    # 'M' => true,
+    # 'K' => true,
+    # 'P' => true,
+    # 'Q' => true,
+    # 'I' => true,
+    # 'H' => true,
+    # 'E' => true,
+    # 'W' => true,
+    # 'S' => true,
+    # 'T' => true,
+    # 'C' => true,
+    # 'D' => true,
+    # 'A' => true,
+    # 'L' => true,
+    # 'Y' => true,
+    # 'V' => true,
+    # 'R' => true,
+    # 'G' => true,
+    # 'F' => true,
+    # 'N' => true
+)
 
 const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]

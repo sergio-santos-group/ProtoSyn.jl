@@ -48,3 +48,4 @@ graph:
     NE2: [HE2]
     CD2: [NE2, HD2]
     C: [O]
+chis: [CB, CG, ND1]

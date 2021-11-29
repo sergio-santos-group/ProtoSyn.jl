@@ -39,3 +39,4 @@ graph:
     CG2: [HG21, HG22, HG23]
     OG1: [HG1]
     C: [O]
+chis: [CB, OG1]

@@ -39,3 +39,4 @@ graph:
     CG: [OD1, ND2]
     ND2: [HD21, HD22]
     C: [O]
+chis: [CB, CG, OD1, HD21]
