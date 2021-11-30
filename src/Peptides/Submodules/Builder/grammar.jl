@@ -27,6 +27,9 @@ function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String
     return grammar
 end
 
+load_grammar_from_file(filename::AbstractString, key::String) = begin
+    load_grammar_from_file(ProtoSyn.Units.defaultFloat, filename, key)
+end
 
 """
 # TODO
@@ -54,6 +57,15 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
 
         # 2. Add entries to the Peptides.available_aminoacids
         Peptides.available_aminoacids[var_yml["code"][1]] = true
+
+        # 3. Add entries to Peptides.three_2_one & Peptides.one_2_three
+        Peptides.three_2_one[var_yml["name"]] = var_yml["code"][1]
+        if "alt" in keys(var_yml)
+            for alt_name in var_yml["alt"]
+                Peptides.three_2_one[alt_name] = var_yml["code"][1]
+            end
+        end
+        Peptides.one_2_three[var_yml["code"][1]] = var_yml["name"]
     end
 end
 

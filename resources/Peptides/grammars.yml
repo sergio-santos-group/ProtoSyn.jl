@@ -45,8 +45,7 @@ default:
   defop: β
 ncaa:
   variables:
-    CMA: Peptides/NCAA/yml/cma.yml
-    CMB: Peptides/NCAA/yml/cmb.yml
+    a: Peptides/NCAA/yml/cma.yml
   operators:
     α: # N.ϕ is defined based on parent residue
       residue1: C

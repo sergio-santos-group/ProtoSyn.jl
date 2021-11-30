@@ -1,4 +1,5 @@
 name: CMA
+code: a
 atoms:
   - {name:  C1, id:   1, symbol:  C, b:   1.529573, theta:   2.050815, phi:  -0.261912}
   - {name:  C3, id:   2, symbol:  C, b:   1.529987, theta:   2.050979, phi:  -0.001394}
@@ -45,4 +46,4 @@ graph:
     C: [O]
     N: [CA, H]
     C2: [H15, H16]
-chis: [C3]
+chis: [C3, C4]

@@ -32,6 +32,7 @@ end
 
 
 """
+# TODO name change
     sample(rs::RotamerStack{T}, [n::Int = -1]) where {T <: AbstractFloat}
 
 Sample a [`Rotamer`](@ref) instance from the given [`RotamerStack`](@ref) `rs`,
@@ -46,7 +47,7 @@ julia> ProtoSyn.Peptides.sample(rot_lib["GLU"][35°, -35°])
 Rotamer{Float64}: GLU | Chi1:   -66.8° ±  8.2 | Chi2:   179.1° ± 11.8 | Chi3:   -35.0° ±  8.5 | Chi4: --         
 ```
 """
-function sample(rs::RotamerStack{T}, n::Int = -1) where {T <: AbstractFloat}
+function sample(rs::BBI_RotamerLibrary{T}, n::Int = -1) where {T <: AbstractFloat}
     if n <= 0
         return StatsBase.sample(rs.rotamers, rs.weights)
     else
@@ -55,7 +56,7 @@ function sample(rs::RotamerStack{T}, n::Int = -1) where {T <: AbstractFloat}
     end
 end
 
-Base.push!(rs::RotamerStack{T}, rotamer::Rotamer{T}, weight::T) where {T <: AbstractFloat} = begin
+Base.push!(rs::BBI_RotamerLibrary{T}, rotamer::Rotamer{T}, weight::T) where {T <: AbstractFloat} = begin
 
     push!(rs.rotamers, rotamer)
     rs.weights = Weights(vcat(rs.weights, Weights([weight])))
@@ -71,15 +72,53 @@ function findnearest(a, x)
     x-a[last(r)] > a[first(r)]-x && return first(searchsorted(a,a[first(r)]))
 end
 
-Base.getindex(rs::RotamerStack, i::Int) = begin
+Base.getindex(rs::BBI_RotamerLibrary, i::Int) = begin
     return rs.rotamers[i]
 end
 
-Base.getindex(rl::R, phi::T, psi::T) where {R <: RotamerLibrary, T <: AbstractFloat} = begin
+Base.getindex(rl::BBD_RotamerLibrary, phi::T, psi::T) where {T <: AbstractFloat} = begin
     phi_index = findnearest(rl.phis, phi)
     psi_index = findnearest(rl.psis, psi)
     return rl.rotamer_stacks[phi_index, psi_index]
 end
+
+
+"""
+# TODO
+"""
+function sample(rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1)
+
+    phi_atom = Dihedral.phi(residue)
+    phi_atom === nothing && return nothing
+    phi = getdihedral(pose.state, phi_atom)
+    psi_atom = Dihedral.psi(residue)
+    psi_atom === nothing && return nothing
+    psi = getdihedral(pose.state, psi_atom)
+
+    try
+        rotamer_stack = rl[residue.name][phi, psi]
+    catch KeyError
+        return nothing
+    end
+
+    return Peptides.sample(rotamer_stack, n)
+end
+
+
+"""
+# TODO
+"""
+function sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
+    
+    try
+        rotamer_stack = rl[residue.name]
+    catch KeyError
+        return nothing
+    end
+
+    return Peptides.sample(rotamer_stack, n)
+end
+
 
 """
     get_rotamer(pose::Pose, residue::Residue)
@@ -87,6 +126,8 @@ end
 Measure the existent chi dihedral angles in [`Residue`](@ref) `residue` on the
 given [`Pose`](@ref) `pose`, saving the information in a new [`Rotamer`](@ref)
 instance.
+
+# TODO ignore_non_existent
 
 # Examples
 ```jldoctest

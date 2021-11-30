@@ -1,4 +1,5 @@
 name: HIE
+alt: [HIS]
 code: H
 atoms:
   - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}

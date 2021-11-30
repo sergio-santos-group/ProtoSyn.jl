@@ -38,11 +38,11 @@ Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary} with 19 entries:
 """
 function load_dunbrack(::Type{T}, filename::String) where {T <: AbstractFloat}
 
-    matrices = create_residue_library_matrices(T, filename)
-    return fill_residue_library_matrices(T, filename, matrices)
+    matrices = create_BBD_library_matrices(T, filename)
+    return fill_BBD_library_matrices(T, filename, matrices)
 end
 
-function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Dict{String, BBD_RotamerLibrary}) where {T <: AbstractFloat}
+function fill_BBD_library_matrices(::Type{T}, filename::String, matrices::Dict{String, BBD_RotamerLibrary}) where {T <: AbstractFloat}
 
     open(filename) do file
         for line in readlines(file)
@@ -64,7 +64,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
 
             #  c) Gather probability and create the Rotamer
             weight  = parse(T, elem[9])
-            rotamer = Rotamer(name, chis)
+            rotamer = Rotamer{T}(name, chis)
 
             # Gather the location to append this rotamer to, in the rotamers
             # matrix
@@ -76,7 +76,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             try
                 push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
             catch UndefRefError
-                rl.rotamer_stacks[phi_index, psi_index] = RotamerStack(T)
+                rl.rotamer_stacks[phi_index, psi_index] = BBI_RotamerLibrary(T)
                 push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
             end
         end
@@ -87,7 +87,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
     return matrices
 end
 
-function create_residue_library_matrices(::Type{T}, filename::String) where {T <: AbstractFloat}
+function create_BBD_library_matrices(::Type{T}, filename::String) where {T <: AbstractFloat}
 
     matrices = Dict{String, BBD_RotamerLibrary}()
     phi_lower_bound = 0.0
