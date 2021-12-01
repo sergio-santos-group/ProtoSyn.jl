@@ -1,4 +1,5 @@
 using ProtoSyn.Peptides: Dihedral
+using StatsBase
 
 """
     load_dunbrack([::Type{T}], [filename::String]) where {T <: AbstractFloat}
@@ -128,7 +129,7 @@ function create_BBD_library_matrices(::Type{T}, filename::String) where {T <: Ab
                 psis = collect(psi_lower_bound:psi_step:psi_upper_bound)
                 psis[end] = psi_upper_bound
                 n_phis, n_psis = length(phis), length(psis)
-                rotamers = Matrix{RotamerStack}(undef, n_phis, n_psis)
+                rotamers = Matrix{BBI_RotamerLibrary}(undef, n_phis, n_psis)
                 matrices[name] = BBD_RotamerLibrary(name, phis, psis, rotamers)
             end
         end
@@ -144,3 +145,27 @@ load_dunbrack(::Type{T}) where {T <: AbstractFloat} = begin
     load_dunbrack(T, ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
 end
 load_dunbrack() = load_dunbrack(ProtoSyn.Units.defaultFloat)
+
+# ------------------------------------------------------------------------------
+
+function load_BBI_rotamer_library(::Type{T}, filename::String) where {T <: AbstractFloat}
+
+    rotamers = Vector{Rotamer}()
+    weights = Vector{T}()
+    open(filename, "r") do io
+        for line in eachline(io)
+            startswith(line, '#') && continue
+            elems = split(line)
+            values = map((x) -> deg2rad(parse(T, string(x))), elems[2:end])
+            push!(weights, values[1])
+            chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
+            chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6])
+            chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7])
+            chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8])
+            chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9])
+            push!(rotamers, Rotamer{T}(string(elems[1]), chis))
+        end
+    end
+
+    return BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+end
