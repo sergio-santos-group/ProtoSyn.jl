@@ -120,7 +120,7 @@ module SASA
                 end
     
                 j_hydro_index = abs(_hydrophobicity_map[atoms[j].container.name])
-                j_hydrophobic = _hydrophobicity_map[atoms[j].container.name] >= 0.0
+                j_hydrophobic = _hydrophobicity_map[atoms[j].container.name] > 0.0
     
                 m = i_hydrophobic === j_hydrophobic ? 1.0 : -1.0
     
@@ -180,14 +180,14 @@ module SASA
             calc_sasa_solvation_energy,
             Dict{Symbol, Any}(
                 :solvation_selection          => an"CA",
-                :solvation_probe_radius       => 5.0,
+                :solvation_probe_radius       => 10.0,
                 :solvation_n_points           => 10,
                 :solvation_cut_off_radius     => 3.0,
                 :selection                    => an"CA",
                 :probe_radius                 => 6.0,
                 :n_points                     => 100,
                 :clash_radius                 => 3.0,
-                :solvent_hydrophobicity_index => -2.0,
+                :solvent_hydrophobicity_index => -1.0,
                 :hydrophobicity_map           => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
                 :pose_solvated                => nothing
             ),

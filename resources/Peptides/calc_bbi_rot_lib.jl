@@ -39,7 +39,6 @@ l = quote
         function f(pos...)
             rot = Peptides.Rotamer(pose.graph[1, 1].name.content, chi)
             Peptides.apply!(pose.state, rot, pose.graph[1, 1])
-            #eval
             energies[pos...] = energy_function(pose)
             rotamers[pos...] = rot
         end
@@ -49,10 +48,16 @@ l = quote
 end
 eval(l)
 
-local_minima      = Images.findlocalminima(energies)
-selected_rotamers = rotamers[local_minima]
-selected_energies = energies[local_minima]
-probabilities     = selected_energies ./ sum(selected_energies)
+local_minima         = Images.findlocalminima(energies)
+selected_rotamers    = rotamers[local_minima]
+selected_energies    = energies[local_minima]
+_min                 = minimum(selected_energies)
+_max                 = maximum(selected_energies)
+minmax_energies      = map((x) -> (x - _min)/(_max - _min), selected_energies)
+probabilities        = minmax_energies ./ sum(minmax_energies)
+probabilities_sorted = sort(probabilities, rev = true)
+perm                 = sortperm(probabilities, rev = true);
+rotamer_sorted       = selected_rotamers[perm];
 
 function get_chi(rot::Peptides.Rotamer, chi::Peptides.Dihedral.DihedralType)
     if chi in keys(rot.chis)
@@ -67,12 +72,12 @@ open(filename, "w") do io
         "Probabil", "chi1Val", "chi2Val", "chi3Val", "chi4Val", "chi1Sig",
         "chi2Sig", "chi3Sig", "chi4Sig"))
 
-    for (probability, rotamer) in zip(probabilities, selected_rotamers)
+    for (probability, rotamer) in zip(probabilities_sorted, rotamer_sorted)
+        probability === 0.0 && continue
         chi1 = get_chi(rotamer, Peptides.Dihedral.chi1)
         chi2 = get_chi(rotamer, Peptides.Dihedral.chi2)
         chi3 = get_chi(rotamer, Peptides.Dihedral.chi3)
         chi4 = get_chi(rotamer, Peptides.Dihedral.chi4)
-        println(probability)
         write(io, @sprintf("%3s %8.6f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f\n",
             rotamer.name, probability, chi1[1], chi2[1], chi3[1], chi4[1],
             chi1[2], chi2[2], chi3[2], chi4[2]))
