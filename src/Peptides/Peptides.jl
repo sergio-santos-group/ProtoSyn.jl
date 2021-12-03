@@ -30,7 +30,7 @@ include("Methods/state.jl")
 include("Methods/pose.jl")
 include("Submodules/Builder/Builder.jl")
 include("Submodules/Builder/grammar.jl")
-include("Mutators/Mutators.jl")
+include("Mutators/Mutators.jl") # Requires Rotamers.jl
 include("Drivers/drivers.jl")
 
 end

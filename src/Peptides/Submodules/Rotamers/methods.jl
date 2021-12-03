@@ -110,11 +110,8 @@ end
 """
 function sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
     
-    try
-        rotamer_stack = rl[residue.name]
-    catch KeyError
-        return nothing
-    end
+    !(residue.name in keys(rl)) && return nothing
+    rotamer_stack = rl[residue.name]
 
     return Peptides.sample(rotamer_stack, n)
 end

@@ -61,16 +61,16 @@ rotamer_sorted       = selected_rotamers[perm];
 
 function get_chi(rot::Peptides.Rotamer, chi::Peptides.Dihedral.DihedralType)
     if chi in keys(rot.chis)
-        return map(rad2deg, rot.chis[chi])
+        return (1, map(rad2deg, rot.chis[chi])...)
     else
-        return (0.0, 0.0)
+        return (0, 0.0, 0.0)
     end
 end
 
 open(filename, "w") do io
-    write(io, @sprintf("%3s %8s %7s %7s %7s %7s %7s %7s %7s %7s\n", "# T",
-        "Probabil", "chi1Val", "chi2Val", "chi3Val", "chi4Val", "chi1Sig",
-        "chi2Sig", "chi3Sig", "chi4Sig"))
+    write(io, @sprintf("%3s %2s %2s %2s %2s %8s %7s %7s %7s %7s %7s %7s %7s %7s\n",
+        "# T", "r1", "r2", "r3", "r4", "Probabil", "chi1Val", "chi2Val",
+        "chi3Val", "chi4Val", "chi1Sig", "chi2Sig", "chi3Sig", "chi4Sig"))
 
     for (probability, rotamer) in zip(probabilities_sorted, rotamer_sorted)
         probability === 0.0 && continue
@@ -78,8 +78,9 @@ open(filename, "w") do io
         chi2 = get_chi(rotamer, Peptides.Dihedral.chi2)
         chi3 = get_chi(rotamer, Peptides.Dihedral.chi3)
         chi4 = get_chi(rotamer, Peptides.Dihedral.chi4)
-        write(io, @sprintf("%3s %8.6f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f\n",
-            rotamer.name, probability, chi1[1], chi2[1], chi3[1], chi4[1],
-            chi1[2], chi2[2], chi3[2], chi4[2]))
+        write(io, @sprintf("%3s %2d %2d %2d %2d %8.6f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f %7.1f\n",
+            rotamer.name, chi1[1], chi2[1], chi3[1], chi4[1], probability,
+            chi1[2], chi2[2], chi3[2], chi4[2],
+            chi1[3], chi2[3], chi3[3], chi4[3]))
     end
 end

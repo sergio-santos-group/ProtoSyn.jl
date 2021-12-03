@@ -696,6 +696,10 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     return pose
 end
 
+
+"""
+# TODO
+"""
 function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
     if selection !== nothing
         residues = selection(pose, gather = true)

@@ -79,7 +79,7 @@ julia> rot_lib["VAL"][35°, -35°]
 +---------------------------------------------------------------------------------------------------------------------------+
 ```
 """
-mutable struct BBI_RotamerLibrary{T <: AbstractFloat}
+mutable struct BBI_RotamerLibrary{T <: AbstractFloat} <: RotamerLibrary
     rotamers::Vector{Rotamer{T}}
     weights::Weights{T, T, Array{T, 1}}
 end

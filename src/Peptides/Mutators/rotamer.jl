@@ -70,7 +70,7 @@ julia> rm = ProtoSyn.Peptides.Mutators.RotamerMutator(rot_lib, 1.0, 10, an"CA" &
 ```
 """
 mutable struct RotamerMutator <: AbstractMutator
-    rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}
+    rotamer_library::Dict{String, <: ProtoSyn.Peptides.RotamerLibrary}
     p_mut::AbstractFloat
     n_first::Int
     selection::Opt{AbstractSelection}

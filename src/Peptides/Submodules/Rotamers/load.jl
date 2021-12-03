@@ -150,22 +150,41 @@ load_dunbrack() = load_dunbrack(ProtoSyn.Units.defaultFloat)
 
 function load_BBI_rotamer_library(::Type{T}, filename::String) where {T <: AbstractFloat}
 
-    rotamers = Vector{Rotamer}()
-    weights = Vector{T}()
+    rotamers        = Vector{Rotamer}()
+    weights         = Vector{T}()
+    library         = Dict{String, BBI_RotamerLibrary}()
+    current_residue = nothing
+
     open(filename, "r") do io
         for line in eachline(io)
             startswith(line, '#') && continue
             elems = split(line)
-            values = map((x) -> deg2rad(parse(T, string(x))), elems[2:end])
+
+            residue_name = string(elems[1])
+            if residue_name !== current_residue
+                rotamers = Vector{Rotamer}()
+                if current_residue !== nothing
+                    lib = BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+                    library[current_residue] = lib
+                end
+
+                current_residue = residue_name
+            end
+
+            exists = map((x) -> parse(Bool, string(x)), elems[2:5])
+            values = map((x) -> deg2rad(parse(T, string(x))), elems[6:end])
             push!(weights, values[1])
             chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
-            chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6])
-            chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7])
-            chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8])
-            chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9])
+            if exists[1]; chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6]); end
+            if exists[2]; chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7]); end
+            if exists[3]; chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8]); end
+            if exists[4]; chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9]); end
             push!(rotamers, Rotamer{T}(string(elems[1]), chis))
         end
+
+        lib = BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+        library[current_residue] = lib
     end
 
-    return BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+    return library
 end
