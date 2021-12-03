@@ -371,37 +371,42 @@ function lgfactory(::Type{T}, template::Dict) where T
         grammar[key] = fragment(pose)
     end
 
-    ops = template["operators"]
-    for (opname, opargs) in ops
-        if haskey(opargs, "presets")
-            for presets in values(opargs["presets"])
-                for (k, v) in presets
-                    presets[k] = ProtoSyn.Units.tonumber(T, v)
+    if haskey(template, "operators")
+        ops = template["operators"]
+        for (opname, opargs) in ops
+            if haskey(opargs, "presets")
+                for presets in values(opargs["presets"])
+                    for (k, v) in presets
+                        presets[k] = ProtoSyn.Units.tonumber(T, v)
+                    end
                 end
             end
-        end
 
-        if haskey(opargs, "offsets")
-            offsets = opargs["offsets"]
-            for (k,v) in offsets
-                offsets[k] = ProtoSyn.Units.tonumber(T, v)
-            end
-        end
-
-        if haskey(opargs, "dependents")
-            dependents = opargs["dependents"]
-            for (k, v) in dependents
-                for (_k, _v) in v
-                    !haskey(dependents[k][_k], "offset") && continue
-                    dependents[k][_k]["offset"] = ProtoSyn.Units.tonumber(T, _v["offset"])
+            if haskey(opargs, "offsets")
+                offsets = opargs["offsets"]
+                for (k,v) in offsets
+                    offsets[k] = ProtoSyn.Units.tonumber(T, v)
                 end
             end
-        end
 
-        ProtoSyn.verbose.mode && @info "Loading operator $opname"
-        grammar[opname] = opfactory(opargs)
+            if haskey(opargs, "dependents")
+                dependents = opargs["dependents"]
+                for (k, v) in dependents
+                    for (_k, _v) in v
+                        !haskey(dependents[k][_k], "offset") && continue
+                        dependents[k][_k]["offset"] = ProtoSyn.Units.tonumber(T, _v["offset"])
+                    end
+                end
+            end
+
+            ProtoSyn.verbose.mode && @info "Loading operator $opname"
+            grammar[opname] = opfactory(opargs)
+        end
     end
-    grammar.defop = getop(grammar, template["defop"])
+    
+    if haskey(template, "defop")
+        grammar.defop = getop(grammar, template["defop"])
+    end
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]

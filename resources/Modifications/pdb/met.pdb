@@ -1,0 +1,11 @@
+HETATM    1  R     CH3     1       0.002  -0.004   0.002  0.00  0.00           R  
+HETATM    2  CM    CH3     1      -0.013   1.086   0.008  0.00  0.00           C  
+HETATM    3  HM1   CH3     1       1.010   1.463   0.000  0.00  0.00           H  
+HETATM    4  HM2   CH3     1      -0.540   1.447  -0.875  0.00  0.00           H  
+HETATM    5  HM3   CH3     1      -0.523   1.437   0.905  0.00  0.00           H  
+CONECT    1    2
+CONECT    2    1    3    4    5
+CONECT    3    2
+CONECT    4    2
+CONECT    5    2
+END
