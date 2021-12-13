@@ -17,7 +17,7 @@ function sample(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: Abstr
     selected = probs(dnp) .> min_prob
     x = support(dnp)[selected]
     p = probs(dnp)[selected]
-    @assert length(p) > 0 "The requested minimum probability ($min_prob) didn't yield any remaining dihedral angles. Try a lower 'min_prob' value."
+    @assert length(p) > 0 "The requested minimum probability ($min_prob) didn't yield any remaining dihedral angles. Try 'min_prob' value lower than $(maximum(probs(dnp)))."
     
     return rand(DiscreteNonParametric(x, p./(sum(p))))
 end
@@ -53,6 +53,13 @@ struct SecondaryStructureTemplate{T <: AbstractFloat}
     ϕ::DihedralTemplate{T}
     ψ::DihedralTemplate{T}
     ω::DihedralTemplate{T}
+end
+
+SecondaryStructureTemplate{T}(ϕ::T, ψ::T, ω::T) where {T <: AbstractFloat} = begin
+    SecondaryStructureTemplate{T}(
+        DihedralTemplate{T}(ϕ),
+        DihedralTemplate{T}(ψ),
+        DihedralTemplate{T}(ω))
 end
 
 Base.show(io::IO, sst::SecondaryStructureTemplate) = begin

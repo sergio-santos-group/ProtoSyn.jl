@@ -23,6 +23,7 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
             continue
         end
         _value = (randn() * sd) + value
+        @assert chi(residue) !== nothing "Tried to apply $chi on residue $residue, but the requested atom was not found."
         setdihedral!(state, chi(residue), _value)
         chis[chi] = (_value, T(0))
     end

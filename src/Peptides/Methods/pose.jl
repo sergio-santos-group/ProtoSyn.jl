@@ -123,7 +123,7 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue,
         # target_dihedral = current_psi - 180°
         # pose.state[anchor["O"]].ϕ = pose.state[anchor["C"]].Δϕ - target_dihedral
         # ProtoSyn.request_i2c!(pose.state, all = true)
-    else
+    elseif residue["H"] !== nothing
         # If connected to root, adjust the position of the downstream N=H bond
         current_omega = ProtoSyn.getdihedral(pose.state, residue["CA"])
         target_dihedral = current_omega - 180°
@@ -314,9 +314,15 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
     phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
+    psi_atom = Peptides.Dihedral.psi(residue)
+    if psi_atom !== nothing
+        psi = ProtoSyn.getdihedral(pose.state, psi_atom)
+    else
+        psi = 0.0
+    end
     omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
-    ss    = ProtoSyn.Peptides.SecondaryStructureTemplate(phi, psi, omega)
+    T     = eltype(pose.state)
+    ss    = ProtoSyn.Peptides.SecondaryStructureTemplate{T}(phi, psi, omega)
     old_r_pos = findfirst(residue, residue.container.items)
     Peptides.insert_fragment!(pose, residue, grammar, derivation,
         ss = ss, op = op)
@@ -334,12 +340,14 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
     # the root).
     downstream_r_pos = old_r_pos
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
-
-    # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
-    # position, based on the peptidic bond
-    grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+    if downstream_r_pos < length(Peptides.sequence(pose))
+        ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
+        ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
+        
+        # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
+        # position, based on the peptidic bond
+        grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+    end
 
     # 5) Re-set ascedents
     ProtoSyn.reindex(pose.graph)
@@ -707,17 +715,34 @@ function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{
         residues = collect(eachresidue(pose.graph))
     end
     for residue in residues
+
+        # 1. Check if backbone has hydrogen
+        backbone_h = "H" in [a.name for a in residue["N"].children]
+        if !backbone_h
+            h = Atom("H", -1, -1, "H")
+            h_state = AtomState()
+            h_state.b = 0.98
+            h_state.θ = 120°
+            h_state.ϕ = 0°
+            ProtoSyn.insert_atom_as_children!(pose, residue["N"], h, h_state)
+        end
+
+        # Don't change sidechains in NCAA
+        if !(residue.name in keys(Peptides.three_2_one))
+            continue
+        end
+        
         derivation = [string(Peptides.three_2_one[residue.name])]
         derivation == ["P"] && continue
 
-        # 1. Save rotamer
+        # 2. Save rotamer
         rotamer = get_rotamer(pose, residue, ignore_non_existent = true)
 
-        # 2. Mutate to the same aminoacid (add hydrogens)
+        # 3. Mutate to the same aminoacid (add hydrogens)
         Peptides.mutate!(pose, residue, grammar, derivation,
             ignore_existing_sidechain = true)
 
-        # 3. Apply pre-existing rotamer
+        # 4. Apply pre-existing rotamer
         apply!(pose.state, rotamer, residue)
     end
 
