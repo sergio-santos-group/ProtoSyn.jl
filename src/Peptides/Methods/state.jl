@@ -1,6 +1,9 @@
 using ProtoSyn.Units
 
 """
+# TODO
+# * Add include variation explanation
+
     setss!(state::State, ss::SecondaryStructureTemplate, residues::Vector{Residue})
 
 Set the phi `ϕ`, psi `ψ` and omega `ω` backbone angles of all [`Residue`](@ref)
@@ -32,7 +35,7 @@ State{Float64}:
  Energy: Dict(:Total => Inf)
 ```
 """
-function setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vector{Residue}) where {T <: AbstractFloat}
+function setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vector{Residue}; include_variation::Bool = false, min_prob::T = 0.0) where {T <: AbstractFloat}
     for r in residues
         if r.name == "PRO"
             # Proline is restricted to TRANS conformation
@@ -45,25 +48,35 @@ function setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vecto
             ProtoSyn.setdihedral!(state, Dihedral.omega(r), T(180°))
             continue
         end
-        ProtoSyn.setdihedral!(state, Dihedral.phi(r), ss.ϕ)
-        # Last residues of chain might not have a psi angle.
-        Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Dihedral.psi(r),  ss.ψ)
-        ProtoSyn.setdihedral!(state, Dihedral.omega(r), ss.ω)
+        if !include_variation
+            ProtoSyn.setdihedral!(state, Dihedral.phi(r), ss.ϕ.angle)
+            # Last residues of chain might not have a psi angle.
+            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Dihedral.psi(r),  ss.ψ.angle)
+            ProtoSyn.setdihedral!(state, Dihedral.omega(r), ss.ω.angle)
+        else
+            _ϕ = ss.ϕ.sampler === nothing ? ss.ϕ.angle : Peptides.sample(ss.ϕ.sampler, min_prob = min_prob)
+            ProtoSyn.setdihedral!(state, Dihedral.phi(r), _ϕ)
+            # Last residues of chain might not have a psi angle.
+            _ψ = ss.ψ.sampler === nothing ? ss.ψ.angle : Peptides.sample(ss.ψ.sampler, min_prob = min_prob)
+            Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Dihedral.psi(r), _ψ)
+            _ω = ss.ω.sampler === nothing ? ss.ω.angle : Peptides.sample(ss.ω.sampler, min_prob = min_prob)
+            ProtoSyn.setdihedral!(state, Dihedral.omega(r), _ω)
+        end
     end
 
     return state
 end
 
-setss!(pose::Pose, ss::SecondaryStructureTemplate{T}) where {T <: AbstractFloat} = begin
+setss!(pose::Pose, ss::SecondaryStructureTemplate{T}; include_variation::Bool = false, min_prob::T = 0.0) where {T <: AbstractFloat} = begin
     residues::Vector{Residue} = collect(eachresidue(pose.graph))
-    Peptides.setss!(pose.state, ss, residues)
+    Peptides.setss!(pose.state, ss, residues, include_variation = include_variation, min_prob = min_prob)
 end
 
-setss!(pose::Pose, ss::SecondaryStructureTemplate{T}, sele::ProtoSyn.AbstractSelection) where {T <: AbstractFloat} = begin
+setss!(pose::Pose, ss::SecondaryStructureTemplate{T}, sele::ProtoSyn.AbstractSelection; include_variation::Bool = false, min_prob::T = 0.0) where {T <: AbstractFloat} = begin
     residues = ProtoSyn.PromoteSelection(sele, Residue, any)(pose.graph, gather = true)
-    Peptides.setss!(pose.state, ss, residues)
+    Peptides.setss!(pose.state, ss, residues, include_variation = include_variation, min_prob = min_prob)
 end
 
-setss!(pose::Pose, ss::SecondaryStructureTemplate{T}, residue::Residue) where {T <: AbstractFloat} = begin
-    Peptides.setss!(pose.state, ss, [residue])
+setss!(pose::Pose, ss::SecondaryStructureTemplate{T}, residue::Residue; include_variation::Bool = false, min_prob::T = 0.0) where {T <: AbstractFloat} = begin
+    Peptides.setss!(pose.state, ss, [residue], include_variation = include_variation, min_prob = min_prob)
 end

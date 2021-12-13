@@ -239,6 +239,9 @@ end
 
 # ---
 # DEV
+"""
+# TODO
+"""
 function get_bonded_mask()
     return function _diagonal_mask(pose::Pose)
         N = pose.state.size
@@ -308,3 +311,52 @@ function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
 end
 
 load_map(filename::String) = load_map(ProtoSyn.Units.defaultFloat, filename)
+
+# ---
+
+"""
+# TODO
+"""
+function get_upper_triangular_matrix(selection::AbstractSelection)
+    return function _upper_triangular_matrix(pose::Pose)
+        T = eltype(pose.state)
+        N = count(selection(pose))
+        map = Matrix(UpperTriangular(ones(T, (N, N))))
+        map[I(N)] .= zero(T)
+        return map
+    end
+end
+
+function get_upper_triangular_matrix()
+    return function _upper_triangular_matrix(pose::Pose)
+        T = eltype(pose.state)
+        N = pose.state.size
+        map = Matrix(UpperTriangular(ones(T, (N, N))))
+        map[I(N)] .= zero(T)
+        return map
+    end
+end
+
+
+"""
+# TODO
+"""
+function get_upper_triangular_matrix_inversed(selection::AbstractSelection)
+    return function _upper_triangular_matrix_inversed(pose::Pose)
+        T = eltype(pose.state)
+        N = count(selection(pose))
+        map = Matrix(UpperTriangular(ones(T, (N, N)) .* T(-1.0)))
+        map[I(N)] .= zero(T)
+        return map
+    end
+end
+
+function get_upper_triangular_matrix_inversed()
+    return function _upper_triangular_matrix_inversed(pose::Pose)
+        T = eltype(pose.state)
+        N = pose.state.size
+        map = Matrix(UpperTriangular(ones(T, (N, N)) .* T(-1.0)))
+        map[I(N)] .= zero(T)
+        return map
+    end
+end

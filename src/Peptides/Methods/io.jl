@@ -60,6 +60,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                     @warn "Found a possible ligand or NCAA at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
                     continue
                 end
+                
                 popparent!(residue) # Was root before.
                 popparent!(residue["N"]) # Was root before.
                 C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)

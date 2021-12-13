@@ -1,5 +1,5 @@
 using ProtoSyn.Peptides: Dihedral
-using StatsBase
+using StatsBase: Weights
 
 """
     load_dunbrack([::Type{T}], [filename::String]) where {T <: AbstractFloat}

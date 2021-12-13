@@ -60,12 +60,15 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
 
         # 3. Add entries to Peptides.three_2_one & Peptides.one_2_three
         Peptides.three_2_one[var_yml["name"]] = var_yml["code"][1]
+        Peptides.one_2_three[var_yml["code"][1]] = var_yml["name"]
+
+        # 4. Add same entries for any alternative name
         if "alt" in keys(var_yml)
             for alt_name in var_yml["alt"]
                 Peptides.three_2_one[alt_name] = var_yml["code"][1]
+                Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
             end
         end
-        Peptides.one_2_three[var_yml["code"][1]] = var_yml["name"]
     end
 end
 

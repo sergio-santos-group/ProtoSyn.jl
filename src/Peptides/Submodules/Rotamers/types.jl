@@ -1,7 +1,7 @@
 using ProtoSyn: State, setdihedral!, Residue
 using ProtoSyn.Peptides.Dihedral: DihedralType
 using Random
-using StatsBase
+using StatsBase: Weights
 using Printf
 
 abstract type RotamerLibrary end

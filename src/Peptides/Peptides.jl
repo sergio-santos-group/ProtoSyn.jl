@@ -14,7 +14,7 @@ const resource_dir = let
     joinpath(ProtoSyn.resource_dir, modname)
 end
 
-include("types.jl")
+include("Types/types.jl")
 
 # Selections
 include("Submodules/Selections/polar.jl")
