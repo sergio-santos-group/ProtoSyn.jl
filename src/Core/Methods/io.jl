@@ -267,8 +267,12 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 if overwrite && hasparent(atom_j)
                     ProtoSyn.popparent!(atom_j)
                 end
-                !hasparent(atom_j) && ProtoSyn.setparent!(atom_j, atom_i)
-                # println("  Setting $atom_i as parent of $atom_j")
+                if !hasparent(atom_j)
+                    # println("  Setting $atom_i as parent of $atom_j")
+                    ProtoSyn.setparent!(atom_j, atom_i)
+                else
+                    # println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                end
             end
         end
     end

@@ -34,6 +34,53 @@ end
 """
 # TODO
 """
+function join_grammars!(g1::LGrammar{T, K, V}, g2::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V}
+    for (key, value) in g2.rules
+        if key in keys(g1.rules)
+            @warn "Rule $key found in existing grammar with same key. Skipping addition of rule from new grammar. Check if this is the desired behaviour."
+        else
+            g1.rules[key] = value
+        end
+    end
+
+    for (key, value) in g2.variables
+        if key in keys(g1.variables)
+            @warn "Variable $key found in existing grammar with same key. Skipping addition of variable from new grammar. Check if this is the desired behaviour."
+        else
+            g1.variables[key] = value
+        end
+    end
+
+    for (key, value) in g2.operators
+        if key in keys(g1.operators)
+            @warn "Operator $key found in existing grammar with same key. Skipping addition of operator from new grammar. Check if this is the desired behaviour."
+        else
+            g1.operators[key] = value
+        end
+    end
+
+    @warn "Default operator of existing grammar was not changed. Skipping addition of default operator from new grammar. Check if this is the desired behaviour."
+
+    return g1
+end
+
+"""
+# TODO
+"""
+function load_grammar_from_file!(::Type{T}, grammar::LGrammar{T, K, V}, filename::AbstractString, key::String) where {T <: AbstractFloat, K, V}
+    new_grammar = load_grammar_from_file(T, filename, key)
+    join_grammars!(grammar, new_grammar)
+
+    return grammar
+end
+
+load_grammar_from_file!(grammar::LGrammar{T, K, V}, filename::AbstractString, key::String) where {T <: AbstractFloat, K, V} = begin
+    load_grammar_from_file!(ProtoSyn.Units.defaultFloat, grammar, filename, key)
+end
+
+"""
+# TODO
+"""
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     
     function read_yml(_filename::String)
