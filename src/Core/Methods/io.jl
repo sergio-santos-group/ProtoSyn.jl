@@ -44,7 +44,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             return load_trajectory(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
         end
     elseif endswith(filename, ".yml")
-        return load(T, filename, YML, bonds_by_distance = bonds_by_distance)
+        return load(T, filename, YML, bonds_by_distance = bonds_by_distance, infer_parenthood = false)
     else
         error("Unable to load '$filename': unsupported file type")
     end
@@ -196,7 +196,7 @@ load_trajectory(filename; bonds_by_distance::Bool = false, alternative_location:
     load_trajectory(filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 end
 
-load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", infer_parenthood::Bool = true) where {T <: AbstractFloat, K} = begin
     
     pose = load(T, open(filename), K; alternative_location = alternative_location)
     name, _ = splitext(basename(filename))
@@ -226,29 +226,67 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, 
     end
 
     # Set parenthood of atoms (infered)
-    atoms   = collect(eachatom(pose.graph))
+    infer_parenthood && infer_parenthood!(pose.graph)
+
+    ProtoSyn.request_c2i!(pose.state)
+    sync!(pose)
+    pose
+end
+
+
+function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing)
+
+    @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
+
+    atoms   = collect(eachatom(container))
+
+    if start !== nothing
+        index   = findfirst(atom -> atom.index == start.index, atoms)
+        tmp          = atoms[1]
+        atoms[1]     = atoms[index]
+        atoms[index] = tmp
+    end
+
     n_atoms = length(atoms)
     visited = ProtoSyn.Mask{Atom}(n_atoms)
 
-    for atom_i in atoms
-        visited[atom_i.index] = true
+    # First atom is always connected to root
+    _root = ProtoSyn.root(container)
+    if overwrite && hasparent(atoms[1])
+        ProtoSyn.popparent!(atoms[1])
+    end
+    ProtoSyn.setparent!(atoms[1], _root)
+
+    for (i, atom_i) in enumerate(atoms)
+        # println("Focus on atom $atom_i - $i")
+        visited[i] = true
         for atom_j in atom_i.bonds
-            if visited[atom_j.index]
-            else
-                !hasparent(atom_j) && ProtoSyn.setparent!(atom_j, atom_i)
+            j = findfirst(atom -> atom === atom_j, atoms)
+            # println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
+            if j !== nothing && !(visited[j])
+                if overwrite && hasparent(atom_j)
+                    ProtoSyn.popparent!(atom_j)
+                end
+                if !hasparent(atom_j)
+                    # println("  Setting $atom_i as parent of $atom_j")
+                    ProtoSyn.setparent!(atom_j, atom_i)
+                else
+                    # println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                end
             end
         end
     end
 
-    _root = ProtoSyn.root(pose.graph)
+    # Any non-connected atoms (by bonds) are children of root
     for atom in atoms
         !hasparent(atom) && ProtoSyn.setparent!(atom, _root)
     end
 
-    reindex(pose.graph) # Sets ascedents
-    ProtoSyn.request_c2i!(pose.state)
-    sync!(pose)
-    pose
+    if typeof(container) > Residue
+        reindex(container) # Sets ascedents
+    end
+
+    return container
 end
 
 
@@ -320,8 +358,9 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3})))\s+(?<sn>\S{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+\w*\s*(?<as>\w+(?:\-|\+)*)\s*$"
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3})))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?<as>\w+(?:\-|\+)*)\s*$"
     
+    aid = 0
     seekstart(io)
     for line in eachline(io)
         
@@ -338,7 +377,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
                 continue
             end
 
-            segname = atom["sn"] == "" ? "A" : string(atom["sn"]) # * Default
+            segname = atom["sn"] == " " ? "?" : string(atom["sn"]) # * Default
 
             if seg.name != segname
                 seg = Segment!(top, segname, segid)
@@ -349,13 +388,23 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
             resid = parse(Int, atom["rid"])
             resname = string(atom["rn"])
 
+            # New residue
             if res.id != resid || res.name != resname
                 res = Residue!(seg, resname, resid)
                 setparent!(res, ProtoSyn.root(top).container)
+                aid = 1
+            end
+
+            # Deal with repeated atom names
+            an = string(atom["an"])
+            while an in keys(res.itemsbyname)
+                @warn "Atom named $an already found in residue $res. Adding atom identifier $aid."
+                aid += 1
+                an = an * string(aid)
             end
 
             new_atom = Atom!(res,
-                string(atom["an"]),
+                an,
                 parse(Int, atom["aid"]),
                 atmindex,
                 string(atom["as"]))

@@ -63,3 +63,4 @@ graph:
     NH1: [HH11, HH12]
     NH2: [HH21, HH22]
     C: [O]
+chis: [CB, CG, CD, NE, CZ]

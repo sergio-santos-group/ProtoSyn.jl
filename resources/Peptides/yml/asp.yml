@@ -34,3 +34,4 @@ graph:
     CB: [HB1, HB2, CG]
     CG: [OD1, OD2]
     C: [O]
+chis: [CB, CG, OD1]

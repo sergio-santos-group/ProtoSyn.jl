@@ -57,3 +57,4 @@ graph:
     CE: [HE1, HE2, NZ]
     NZ: [HZ1, HZ2, HZ3]
     C: [O]
+chis: [CB, CG, CD, CE, NZ]

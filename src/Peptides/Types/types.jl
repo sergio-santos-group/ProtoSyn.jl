@@ -99,80 +99,28 @@ module Dihedral
     # dihedral angles which only rotate the position of hydrogens are not
     # considered in this dict.
     chi_dict = Dict{String, Vector{String}}(
-        "ALA" => ["CB"],
-        "CYS" => ["CB", "SG"],
-        "ASP" => ["CB", "CG", "OD1"],
-        "GLU" => ["CB", "CG", "CD", "OE1"],
-        "PHE" => ["CB", "CG", "CD1"],
-        "GLY" => [],
-        "HIS" => ["CB", "CG", "ND1"],
-        "HIE" => ["CB", "CG", "ND1"],
-        "ILE" => ["CB", "CG1", "CD1", "HD11"],
-        "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
-        "LEU" => ["CB", "CG", "CD1"],
-        "MET" => ["CB", "CG", "SD", "CE"],
-        "ASN" => ["CB", "CG", "OD1", "HD21"],
-        "PRO" => ["CB", "CG", "CD", "HD2"], # Attention
-        "GLN" => ["CB", "CG", "CD", "NE2"],
-        "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
-        "SER" => ["CB", "OG"],
-        "THR" => ["CB", "OG1"],
-        "VAL" => ["CB", "CG1"],
-        "TRP" => ["CB", "CG", "CD1"],
-        "TYR" => ["CB", "CG", "CD1"]
+        # "ALA" => ["CB"],
+        # "CYS" => ["CB", "SG"],
+        # "ASP" => ["CB", "CG", "OD1"],
+        # "GLU" => ["CB", "CG", "CD", "OE1"],
+        # "PHE" => ["CB", "CG", "CD1"],
+        # "GLY" => [],
+        # "HIS" => ["CB", "CG", "ND1"],
+        # "HIE" => ["CB", "CG", "ND1"],
+        # "ILE" => ["CB", "CG1", "CD1", "HD11"],
+        # "LYS" => ["CB", "CG", "CD", "CE", "NZ"],
+        # "LEU" => ["CB", "CG", "CD1"],
+        # "MET" => ["CB", "CG", "SD", "CE"],
+        # "ASN" => ["CB", "CG", "OD1", "HD21"],
+        # "PRO" => ["CB", "CG", "CD", "HD2"], # Attention
+        # "GLN" => ["CB", "CG", "CD", "NE2"],
+        # "ARG" => ["CB", "CG", "CD", "NE", "CZ"],
+        # "SER" => ["CB", "OG"],
+        # "THR" => ["CB", "OG1"],
+        # "VAL" => ["CB", "CG1"],
+        # "TRP" => ["CB", "CG", "CD1"],
+        # "TYR" => ["CB", "CG", "CD1"]
     )
 end
 
-# --- Secondary Structure ------------------------------------------------------
-
-export SecondaryStructure
-export SecondaryStructureTemplate
-
-"""
-    SecondaryStructureTemplate{T}(ϕ::T, ψ::T, ω::T) where {T <: AbstractFloat}
-
-Return a new [`SecondaryStructureTemplate`](@ref) with the given phi `ϕ`, psi
-`ψ` and omega `ω` backbone angles (in radians).
-
-# Examples
-```jldoctest
-julia> t = ProtoSyn.Peptides.SecondaryStructureTemplate(-60°, -45°, 180°)
-Secondary Structure Template:
- └─ Phi (ϕ):  -1.047 rad | Psi (ψ):  -0.785 rad | Omega (ω):   3.142 rad
-             -60.000 deg |          -45.000 deg |            180.000 deg
-```
-"""
-struct SecondaryStructureTemplate{T <: AbstractFloat}
-    ϕ::T
-    ψ::T
-    ω::T
-end
-
-Base.show(io::IO, sst::SecondaryStructureTemplate) = begin
-    println(io, "Secondary Structure Template:")
-    println(io, @sprintf " └─ Phi (ϕ): %7.3f rad | Psi (ψ): %7.3f rad | Omega (ω): %7.3f rad" sst.ϕ sst.ψ sst.ω)
-    println(io, @sprintf "             %7.3f deg |          %7.3f deg |            %7.3f deg" rad2deg(sst.ϕ) rad2deg(sst.ψ) rad2deg(sst.ω))
-end
-
-"""
-    SecondaryStructure
-
-This constant holds default values for common
-[`SecondaryStructureTemplate`](@ref) instances: `:helix`, `:linear`,
-`:parallel_sheet` and `:antiparallel_sheet`.
-
-# Examples
-```jldoctest
-julia> t = ProtoSyn.Peptides.SecondaryStructure[:helix]
-Secondary Structure Template:
- └─ Phi (ϕ):  -1.047 rad | Psi (ψ):  -0.785 rad | Omega (ω):   3.142 rad
-             -60.000 deg |          -45.000 deg |            180.000 deg
-```
-"""
-const SecondaryStructure = Dict{Symbol, SecondaryStructureTemplate}(
-    # Values taken from https://proteopedia.org/
-    #                                                     phi,    psi,  omega
-    :antiparallel_sheet => SecondaryStructureTemplate(-139.0°, 135.0°, 180.0°),
-    :parallel_sheet     => SecondaryStructureTemplate(-119.0°, 113.0°, 180.0°),
-    :linear             => SecondaryStructureTemplate( 180.0°, 180.0°, 180.0°),
-    :helix              => SecondaryStructureTemplate( -60.0°, -45.0°, 180.0°))
+include("secondary-structure.jl")

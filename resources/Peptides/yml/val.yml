@@ -43,3 +43,4 @@ graph:
     CG1: [HG11, HG12, HG13]
     CG2: [HG21, HG22, HG23]
     C: [O]
+chis: [CB, CG1]

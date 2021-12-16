@@ -123,7 +123,7 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue,
         # target_dihedral = current_psi - 180°
         # pose.state[anchor["O"]].ϕ = pose.state[anchor["C"]].Δϕ - target_dihedral
         # ProtoSyn.request_i2c!(pose.state, all = true)
-    else
+    elseif residue["H"] !== nothing
         # If connected to root, adjust the position of the downstream N=H bond
         current_omega = ProtoSyn.getdihedral(pose.state, residue["CA"])
         target_dihedral = current_omega - 180°
@@ -181,6 +181,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 """
 function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; ignore_existing_sidechain::Bool = false)
 
+    T = eltype(pose.state)
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
@@ -196,6 +197,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     end
 
     frag = ProtoSyn.fragment(grammar, derivation)
+    @assert frag.state.size !== 0 "Residue $derivation was not found in current grammar. Check if using correct grammar, including NCAAs."
     
     # Remove old sidechain
     for atom in reverse(sidechain)
@@ -204,6 +206,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
 
     # Insert new sidechain
     frag_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(frag, gather = true)
+    # println("New fragment sidechain: $frag_sidechain")
     poseCA = residue["CA"]
     
     # poseCA_index is the LOCAL index (inside residue.items). poseCA.index is
@@ -221,6 +224,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for (index, atom) in enumerate(frag_sidechain)
         parent_is_CA = false
+        bonded_to_CA = false
         if atom.parent.name == "CA"
             parent_is_CA     = true
             _atom_dihedral   = ProtoSyn.getdihedral(frag.state, atom)
@@ -228,6 +232,9 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
             objective_change = atom_dihedral - ϕ
             push!(objective_changes, objective_change)
             ProtoSyn.unbond!(frag, atom, atom.parent)
+        elseif "CA" in [a.name for a in atom.bonds]
+            bonded_to_CA = true
+            ProtoSyn.unbond!(frag, atom, atom.bonds[findfirst(a -> a.name === "CA", atom.bonds)])
         end
 
         # Insert into the graph
@@ -238,12 +245,17 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
         if parent_is_CA
             ProtoSyn.bond(atom, poseCA)
             setparent!(atom, poseCA)
+        elseif bonded_to_CA
+            ProtoSyn.bond(atom, poseCA)
         end
+
+        insert!(pose.state, poseCA.index + index, State(T, [frag.state[atom.index]]))
     end
 
-    _start = frag_sidechain[1].index
-    _end   = frag_sidechain[end].index
-    insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
+    # Deal with non-contiguous sidechains
+    # _start = frag_sidechain[1].index
+    # _end   = frag_sidechain[end].index
+    # insert!(pose.state, poseCA.index + 1, splice!(frag.state, _start:_end))
     
     reindex(pose.graph)
     reindex(pose.state)
@@ -303,9 +315,15 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
     phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    psi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.psi(residue))
+    psi_atom = Peptides.Dihedral.psi(residue)
+    if psi_atom !== nothing
+        psi = ProtoSyn.getdihedral(pose.state, psi_atom)
+    else
+        psi = 0.0
+    end
     omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
-    ss    = ProtoSyn.Peptides.SecondaryStructureTemplate(phi, psi, omega)
+    T     = eltype(pose.state)
+    ss    = ProtoSyn.Peptides.SecondaryStructureTemplate{T}(phi, psi, omega)
     old_r_pos = findfirst(residue, residue.container.items)
     Peptides.insert_fragment!(pose, residue, grammar, derivation,
         ss = ss, op = op)
@@ -323,12 +341,14 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
     # the root).
     downstream_r_pos = old_r_pos
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
-    ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
-
-    # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
-    # position, based on the peptidic bond
-    grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+    if downstream_r_pos < length(Peptides.sequence(pose))
+        ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
+        ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
+        
+        # 4) Use operator 'op' from 'grammar' to set parenthoods, bonds and correct
+        # position, based on the peptidic bond
+        grammar.operators[op](new_residue, pose, residue_index = downstream_r_pos)
+    end
 
     # 5) Re-set ascedents
     ProtoSyn.reindex(pose.graph)
@@ -685,26 +705,152 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     return pose
 end
 
-function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing)
+
+"""
+# TODO
+"""
+function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing; predict_unknown_aminoacids::Bool = false)
     if selection !== nothing
         residues = selection(pose, gather = true)
     else
         residues = collect(eachresidue(pose.graph))
     end
     for residue in residues
+
+        # 1. Check if backbone has hydrogen
+        backbone_h = "H" in [a.name for a in residue["N"].children]
+        if !backbone_h
+            h = Atom("H", -1, -1, "H")
+            h_state = AtomState()
+            h_state.b = 0.98
+            h_state.θ = 120°
+            h_state.ϕ = 0°
+            ProtoSyn.insert_atom_as_children!(pose, residue["N"], h, h_state)
+        end
+
+        # Don't change sidechains in NCAA
+        if !(residue.name in keys(Peptides.three_2_one))
+            if predict_unknown_aminoacids
+                @warn "Possible NCAA found at residue $residue. Predicting hydrogens."
+                predict_hydrogens!(pose, SerialSelection{Residue}(residue.id, :id))
+            else
+                @warn "Possible NCAA found at residue $residue. Skipping this residue. Set `predict_unknown_aminoacids` flag to `true` to try to place hydrogens on this structure."
+            end
+            continue
+        end
+        
         derivation = [string(Peptides.three_2_one[residue.name])]
         derivation == ["P"] && continue
 
-        # 1. Save rotamer
+        # 2. Save rotamer
         rotamer = get_rotamer(pose, residue, ignore_non_existent = true)
 
-        # 2. Mutate to the same aminoacid (add hydrogens)
+        # 3. Mutate to the same aminoacid (add hydrogens)
         Peptides.mutate!(pose, residue, grammar, derivation,
             ignore_existing_sidechain = true)
 
-        # 3. Apply pre-existing rotamer
+        # 4. Apply pre-existing rotamer
         apply!(pose.state, rotamer, residue)
     end
 
     return pose
+end
+
+
+function predict_hydrogens!(pose, selection::Opt{AbstractSelection} = nothing)
+    if selection !== nothing
+        residues = selection(pose, gather = true)
+    else
+        residues = collect(eachresidue(pose.graph))
+    end
+
+    for residue in residues
+        CA = residue["CA"]
+        sidechain = ProtoSyn.SidechainSelection()(residue, gather = true)
+        cg = [x for x in ProtoSyn.travel_graph(CA) if x in sidechain]
+
+        for (i, atom) in enumerate(cg[1:(end - 1)])
+            h = Atom("H$i", -1, -1, "H")
+            h_state = AtomState()
+            h_state.b = 1.09
+            h_state.θ = 110°
+            h_state.ϕ = 0°
+
+            if atom.symbol === "C"
+                # Check if already has at least 1 hydrogen children
+                if "H" in [a.symbol for a in atom.children]
+                    continue
+                end
+
+                ψ = ProtoSyn.getdihedral(pose.state, atom.children[1])
+                println("Atom $atom chi dihedral = $(rad2deg(ψ))")
+                println("Atom $atom Δϕ = $(pose.state[atom].Δϕ)")
+                
+                h1 = copy(h)
+                h1_state = copy(h_state)
+                println("H1: $(rad2deg(ProtoSyn.unit_circle(ψ - 120° - pose.state[atom].Δϕ)))")
+                h1_state.ϕ = ψ - 120° - pose.state[atom].Δϕ
+                h1.name = h1.name * "1"
+                ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
+
+                h2 = copy(h)
+                h2_state = copy(h_state)
+                println("H1: $(rad2deg(ProtoSyn.unit_circle(ψ - 240° - pose.state[atom].Δϕ)))")
+                h2_state.ϕ = ψ - 240° - pose.state[atom].Δϕ
+                h2.name = h2.name * "2"
+                ProtoSyn.insert_atom_as_children!(pose, atom, h2, h2_state)
+                
+            elseif atom.symbol === "N"
+                # Check if already has at least 1 hydrogen children
+                if "H" in [a.symbol for a in atom.children]
+                    continue
+                end
+                
+                ψ = ProtoSyn.getdihedral(pose.state, atom.children[1])
+
+                h1 = copy(h)
+                h1_state = copy(h_state)
+                h1_state.θ = 120°
+                h1_state.ϕ = ψ - pose.state[atom].Δϕ
+                ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
+            else
+                continue
+            end
+        end
+
+        # Last residue should have an extra hydrogen (CH3 / NH3)
+        atom = cg[end]
+        i = length(cg)
+        h = Atom("H$i", -1, -1, "H")
+        h_state = AtomState()
+        h_state.b = 1.09
+        h_state.θ = 110°
+        h_state.ϕ = 0°
+
+        if "H" in [a.symbol for a in atom.children]
+            continue
+        end
+            
+        h1 = copy(h)
+        h1_state = copy(h_state)
+        h1_state.ϕ = -60°
+        h1.name = h1.name * "1"
+        ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
+
+        h2 = copy(h)
+        h2_state = copy(h_state)
+        h2_state.ϕ = 60°
+        h2.name = h2.name * "2"
+        ProtoSyn.insert_atom_as_children!(pose, atom, h2, h2_state)
+
+        h3 = copy(h)
+        h3_state = copy(h_state)
+        h3_state.ϕ = -180°
+        h3.name = h3.name * "3"
+        ProtoSyn.insert_atom_as_children!(pose, atom, h3, h3_state)
+    end
+
+    reindex(pose.graph; set_ascendents = true)
+    reindex(pose.state)
+    ProtoSyn.request_i2c!(pose.state; all = true)
 end

@@ -62,7 +62,7 @@ export Opt
 const Opt = Union{Nothing, T} where T
 
 include("Core/Units/Units.jl")
-include("Core/Methods/aux.jl") # Requires Units.jl
+include("Core/Methods/other.jl") # Requires Units.jl
 include("Core/Methods/constants.jl")
 include("Core/Types/other.jl")
 include("Core/Methods/macros.jl") # Requires other.jl
@@ -84,6 +84,7 @@ include("Core/Methods/pose.jl") # Requires grammar.jl
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
+include("Core/Methods/pose-solvation.jl") # Requires selections.jl; distance_matrix.jl
 
 @info "Loading Mutators"
 include("Core/Mutators/Mutators.jl")

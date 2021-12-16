@@ -39,3 +39,4 @@ graph:
     CB: [HB1, HB2, CG]
     CA: [CB, HA, C]
     C: [O]
+chis: [CB, CG, CD, HD2]

@@ -45,7 +45,7 @@ makedocs(
                     "protosyn-api/core/methods/state.md",
                     "protosyn-api/core/methods/pose.md",
                     "protosyn-api/core/methods/io.md",
-                    "protosyn-api/core/methods/aux.md",
+                    "protosyn-api/core/methods/other.md",
                 ],
                 "Calculators" => [
                     "Calculators Section" => "protosyn-api/core/calculators/calculators-section.md",

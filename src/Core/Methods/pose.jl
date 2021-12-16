@@ -309,6 +309,37 @@ end
 
 
 """
+    fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
+
+Return a [Fragment](@ref) from a list of `coords`. Each coordinate creates a new
+[Residue](@ref) instance with a single [Atom](@ref) instance. Doesn't set
+parenthoods.
+
+# Examples
+```
+julia> frag = fragment(coords)
+Fragment(Segment{/UNK:-1}, State{Float64}:
+ Size: 343
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
+    N = length(coords)
+    state = State(N)
+    segment = Segment("UNK", -1)
+    for i in 1:N
+        res = Residue!(segment, "UNK", i)
+        state[i].t = coords[i]
+        Atom!(res, "X$i", i, i, "X")
+    end
+
+    return Pose(segment, state)
+end
+
+
+"""
     fragment!(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; [keep_downstream_position::Bool = true])
 
 Return a [Fragment](@ref) from a list of residues retrieved from the given
@@ -808,4 +839,58 @@ function pop_residue!(pose::Pose{Topology}, residue::Residue; keep_downstream_po
     # Return the popped residue as a Fragment (no connection to root)
     popped_residue.id = popped_state.id = genid()
     return Pose(popped_residue, popped_state)
+end
+
+
+"""
+# TODO
+"""
+function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
+    
+    # 0. Save current atom information
+    fragment = copy(fragment)
+    parent = atom.parent
+    parent_index = parent.index
+    parent_index_in_res = findfirst(x -> x === parent, parent.container.items)
+    atomstate = copy(pose.state[atom])
+
+    dihedrals = Vector{eltype(pose.state)}()
+    _fragment = Pose(fragment)
+    for a in ProtoSyn.root(_fragment.graph).children[1].children[1].children
+        push!(dihedrals, ProtoSyn.getdihedral(_fragment.state, a))
+    end
+    
+    # 1. Remove selected atom & any children atoms
+    to_remove = ProtoSyn.travel_graph(atom)
+
+    for a in reverse(to_remove) # Note the reverse loop
+        ProtoSyn.pop_atom!(pose, a)
+    end
+
+    # 2. Add fragment to residue
+    frag_origin = ProtoSyn.origin(fragment.graph)
+    first_atom = frag_origin.children[1]
+    insert!(parent.container, parent_index_in_res + 1, first_atom)
+    ProtoSyn.popparent!(first_atom)
+    ProtoSyn.unbond!(fragment, first_atom, frag_origin)
+    ProtoSyn.bond(first_atom, parent)
+    ProtoSyn.setparent!(first_atom, parent)
+    atomstate.b = fragment.state[first_atom].b
+    insert!(pose.state, parent_index + 1, State([atomstate]))
+
+    for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
+        insert!(parent.container, parent_index_in_res + i + 1, frag_atom)
+        insert!(pose.state, parent_index + i + 1, State([fragment.state[frag_atom]]))
+    end
+
+    reindex(pose.graph, set_ascendents = true)
+    reindex(pose.state)
+
+    for (i, a) in enumerate(first_atom.children)
+        ProtoSyn.setdihedral!(pose.state, a, dihedrals[i])
+    end
+
+    ProtoSyn.request_i2c!(pose.state)
+
+    return pose
 end

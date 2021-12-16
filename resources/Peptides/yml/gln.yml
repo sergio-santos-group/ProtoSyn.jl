@@ -46,3 +46,4 @@ graph:
     CD: [OE1, NE2]
     NE2: [HE21, HE22]
     C: [O]
+chis: [CB, CG, CD, NE2]

@@ -1,0 +1,4 @@
+modifications:
+  variables:
+    MET: Modifications/yml/met.yml
+    PO4: Modifications/yml/po4.yml

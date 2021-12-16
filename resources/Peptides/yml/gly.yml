@@ -22,3 +22,4 @@ graph:
     N: [H, CA]
     CA: [HA1, HA2, C]
     C: [O]
+chis: []

@@ -1,4 +1,5 @@
 using ProtoSyn.Peptides: Dihedral
+using StatsBase: Weights
 
 """
     load_dunbrack([::Type{T}], [filename::String]) where {T <: AbstractFloat}
@@ -38,11 +39,11 @@ Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary} with 19 entries:
 """
 function load_dunbrack(::Type{T}, filename::String) where {T <: AbstractFloat}
 
-    matrices = create_residue_library_matrices(T, filename)
-    return fill_residue_library_matrices(T, filename, matrices)
+    matrices = create_BBD_library_matrices(T, filename)
+    return fill_BBD_library_matrices(T, filename, matrices)
 end
 
-function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Dict{String, BBD_RotamerLibrary}) where {T <: AbstractFloat}
+function fill_BBD_library_matrices(::Type{T}, filename::String, matrices::Dict{String, BBD_RotamerLibrary}) where {T <: AbstractFloat}
 
     open(filename) do file
         for line in readlines(file)
@@ -64,7 +65,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
 
             #  c) Gather probability and create the Rotamer
             weight  = parse(T, elem[9])
-            rotamer = Rotamer(name, chis)
+            rotamer = Rotamer{T}(name, chis)
 
             # Gather the location to append this rotamer to, in the rotamers
             # matrix
@@ -76,7 +77,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
             try
                 push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
             catch UndefRefError
-                rl.rotamer_stacks[phi_index, psi_index] = RotamerStack(T)
+                rl.rotamer_stacks[phi_index, psi_index] = BBI_RotamerLibrary(T)
                 push!(rl.rotamer_stacks[phi_index, psi_index], rotamer, weight)
             end
         end
@@ -87,7 +88,7 @@ function fill_residue_library_matrices(::Type{T}, filename::String, matrices::Di
     return matrices
 end
 
-function create_residue_library_matrices(::Type{T}, filename::String) where {T <: AbstractFloat}
+function create_BBD_library_matrices(::Type{T}, filename::String) where {T <: AbstractFloat}
 
     matrices = Dict{String, BBD_RotamerLibrary}()
     phi_lower_bound = 0.0
@@ -128,7 +129,7 @@ function create_residue_library_matrices(::Type{T}, filename::String) where {T <
                 psis = collect(psi_lower_bound:psi_step:psi_upper_bound)
                 psis[end] = psi_upper_bound
                 n_phis, n_psis = length(phis), length(psis)
-                rotamers = Matrix{RotamerStack}(undef, n_phis, n_psis)
+                rotamers = Matrix{BBI_RotamerLibrary}(undef, n_phis, n_psis)
                 matrices[name] = BBD_RotamerLibrary(name, phis, psis, rotamers)
             end
         end
@@ -144,3 +145,46 @@ load_dunbrack(::Type{T}) where {T <: AbstractFloat} = begin
     load_dunbrack(T, ProtoSyn.resource_dir * "/Peptides/dunbrack_rotamers.lib")
 end
 load_dunbrack() = load_dunbrack(ProtoSyn.Units.defaultFloat)
+
+# ------------------------------------------------------------------------------
+
+function load_BBI_rotamer_library(::Type{T}, filename::String) where {T <: AbstractFloat}
+
+    rotamers        = Vector{Rotamer}()
+    weights         = Vector{T}()
+    library         = Dict{String, BBI_RotamerLibrary}()
+    current_residue = nothing
+
+    open(filename, "r") do io
+        for line in eachline(io)
+            startswith(line, '#') && continue
+            elems = split(line)
+
+            residue_name = string(elems[1])
+            if residue_name !== current_residue
+                rotamers = Vector{Rotamer}()
+                if current_residue !== nothing
+                    lib = BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+                    library[current_residue] = lib
+                end
+
+                current_residue = residue_name
+            end
+
+            exists = map((x) -> parse(Bool, string(x)), elems[2:5])
+            values = map((x) -> deg2rad(parse(T, string(x))), elems[6:end])
+            push!(weights, values[1])
+            chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
+            if exists[1]; chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6]); end
+            if exists[2]; chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7]); end
+            if exists[3]; chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8]); end
+            if exists[4]; chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9]); end
+            push!(rotamers, Rotamer{T}(string(elems[1]), chis))
+        end
+
+        lib = BBI_RotamerLibrary{T}(rotamers, Weights(weights))
+        library[current_residue] = lib
+    end
+
+    return library
+end

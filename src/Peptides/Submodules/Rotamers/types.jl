@@ -1,7 +1,7 @@
 using ProtoSyn: State, setdihedral!, Residue
 using ProtoSyn.Peptides.Dihedral: DihedralType
 using Random
-using StatsBase
+using StatsBase: Weights
 using Printf
 
 abstract type RotamerLibrary end
@@ -56,6 +56,7 @@ end
 # ---
 
 """
+# TODO name change
     RotamerStack{T <: AbstractFloat}(rotamers::Vector{Rotamer{T}}, weights::Weights{T, T, Array{T, 1}})
 
 A [`RotamerStack`](@ref) is a smart list of [`Rotamer`](@ref) instances, ordered
@@ -78,18 +79,18 @@ julia> rot_lib["VAL"][35°, -35°]
 +---------------------------------------------------------------------------------------------------------------------------+
 ```
 """
-mutable struct RotamerStack{T <: AbstractFloat}
+mutable struct BBI_RotamerLibrary{T <: AbstractFloat} <: RotamerLibrary
     rotamers::Vector{Rotamer{T}}
     weights::Weights{T, T, Array{T, 1}}
 end
 
-RotamerStack(::Type{T}) where {T <: AbstractFloat} = begin
-    RotamerStack(Vector{Rotamer{T}}(), Weights(Vector{T}()))
+BBI_RotamerLibrary(::Type{T}) where {T <: AbstractFloat} = begin
+    BBI_RotamerLibrary(Vector{Rotamer{T}}(), Weights(Vector{T}()))
 end
 
-RotamerStack() = RotamerStack(ProtoSyn.Units.defaultFloat)
+BBI_RotamerLibrary() = BBI_RotamerLibrary(ProtoSyn.Units.defaultFloat)
 
-function Base.show(io::IO, r::RotamerStack)
+function Base.show(io::IO, r::BBI_RotamerLibrary)
     println(io, "\n+"*repeat("-", 123)*"+")
     @printf(io, "| %-5s | %10s | %-99s |\n", "Index", "Probability", "Rotamer description")
     println(io, "+"*repeat("-", 123)*"+")
@@ -125,7 +126,7 @@ mutable struct BBD_RotamerLibrary{T <: AbstractFloat} <: RotamerLibrary
     name::String
     phis::Vector{T}
     psis::Vector{T}
-    rotamer_stacks::Matrix{RotamerStack}
+    rotamer_stacks::Matrix{BBI_RotamerLibrary}
 end
 
 function Base.show(io::IO, r::BBD_RotamerLibrary)

@@ -223,11 +223,30 @@ julia> ascendents(pose.graph[1][1][4], 4)
 ```
 """
 function ascendents(container::AbstractContainer, level::Int)
+    # println("$container (Level $level)")
     if level > 1
         return (container.index, ascendents(container.parent, level - 1)...)
     else
         (container.index,)
     end
+end
+
+
+"""
+# TODO
+"""
+function rename!(atom::Atom, name::String)
+    similar = findfirst(atom -> atom.name === name, atom.container.items)
+
+    # Change to same name
+    similar !== nothing && atom.container.items[similar] === atom && return atom 
+
+    @assert similar === nothing "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar]))"
+    pop!(atom.container.itemsbyname, atom.name)
+    atom.name = name
+    atom.container.itemsbyname[name] = atom
+
+    return atom
 end
 
 

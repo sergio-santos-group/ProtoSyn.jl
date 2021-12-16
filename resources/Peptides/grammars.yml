@@ -1,4 +1,4 @@
-peptide:
+default:
   variables:
     B: Peptides/yml/bkb.yml
     A: Peptides/yml/ala.yml
@@ -43,3 +43,30 @@ peptide:
         C:  180°
         O:  0°
   defop: β
+ncaa:
+  variables:
+    a: Peptides/NCAA/yml/cma.yml
+    b: Peptides/NCAA/yml/mse.yml
+  operators:
+    α: # N.ϕ is defined based on parent residue
+      residue1: C
+      residue2: N
+      presets:
+        N:  {θ: 120°, b: 1.2Å}
+        H:  {θ: 120°, ϕ:   0°}
+        CA: {θ: 120°, ϕ: 180°}
+      dependents:
+        N: {ϕ: {measure: O, offset: 180°}}
+    β: # N.ϕ is set to 180° (useful when building new peptides from derivation)
+      residue1: C
+      residue2: N
+      presets:
+        N:  {θ: 120°, ϕ: 180°, b: 1.2Å}
+        H:  {θ: 120°, ϕ:   0°}
+        CA: {θ: 120°, ϕ: 180°}
+      offsets:
+        CA: 180°
+        C:  180°
+        O:  0°
+  defop: β
+

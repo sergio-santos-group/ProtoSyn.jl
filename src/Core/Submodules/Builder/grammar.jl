@@ -257,6 +257,8 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
             parent = frag2
+        else
+            @warn "Residue $letter in fragment derivation can't be identified either as a variable or as an operation."
         end
     end
 
@@ -371,37 +373,42 @@ function lgfactory(::Type{T}, template::Dict) where T
         grammar[key] = fragment(pose)
     end
 
-    ops = template["operators"]
-    for (opname, opargs) in ops
-        if haskey(opargs, "presets")
-            for presets in values(opargs["presets"])
-                for (k, v) in presets
-                    presets[k] = ProtoSyn.Units.tonumber(T, v)
+    if haskey(template, "operators")
+        ops = template["operators"]
+        for (opname, opargs) in ops
+            if haskey(opargs, "presets")
+                for presets in values(opargs["presets"])
+                    for (k, v) in presets
+                        presets[k] = ProtoSyn.Units.tonumber(T, v)
+                    end
                 end
             end
-        end
 
-        if haskey(opargs, "offsets")
-            offsets = opargs["offsets"]
-            for (k,v) in offsets
-                offsets[k] = ProtoSyn.Units.tonumber(T, v)
-            end
-        end
-
-        if haskey(opargs, "dependents")
-            dependents = opargs["dependents"]
-            for (k, v) in dependents
-                for (_k, _v) in v
-                    !haskey(dependents[k][_k], "offset") && continue
-                    dependents[k][_k]["offset"] = ProtoSyn.Units.tonumber(T, _v["offset"])
+            if haskey(opargs, "offsets")
+                offsets = opargs["offsets"]
+                for (k,v) in offsets
+                    offsets[k] = ProtoSyn.Units.tonumber(T, v)
                 end
             end
-        end
 
-        ProtoSyn.verbose.mode && @info "Loading operator $opname"
-        grammar[opname] = opfactory(opargs)
+            if haskey(opargs, "dependents")
+                dependents = opargs["dependents"]
+                for (k, v) in dependents
+                    for (_k, _v) in v
+                        !haskey(dependents[k][_k], "offset") && continue
+                        dependents[k][_k]["offset"] = ProtoSyn.Units.tonumber(T, _v["offset"])
+                    end
+                end
+            end
+
+            ProtoSyn.verbose.mode && @info "Loading operator $opname"
+            grammar[opname] = opfactory(opargs)
+        end
     end
-    grammar.defop = getop(grammar, template["defop"])
+    
+    if haskey(template, "defop")
+        grammar.defop = getop(grammar, template["defop"])
+    end
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]
@@ -421,14 +428,13 @@ lgfactory(template::Dict) = lgfactory(Float64, template)
 
 
 """
-    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String; [verbose::Bool = true]) where {T <: AbstractFloat}
+    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
 
 Create an [`LGrammar`](@ref) instance from the contents of a grammar file (in
 .YML format) under the `key` entry. The file contents are parsed by the
 [`lgfactory`](@ref) method. Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). Return the parsed
-[`LGrammar`](@ref) instance. If `verbose` is set to `true` (is, by default),
-print the loading status.
+[`LGrammar`](@ref) instance.
 
 # See also
 [`LGrammar`](@ref) [`lgfactory`](@ref)

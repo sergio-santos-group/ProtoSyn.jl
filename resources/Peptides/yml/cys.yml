@@ -32,3 +32,4 @@ graph:
     CB: [HB1, HB2, SG]
     SG: [HG]
     C: [O]
+chis: [CB, SG]

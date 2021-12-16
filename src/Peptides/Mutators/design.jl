@@ -1,4 +1,4 @@
-using StatsBase
+using StatsBase: sample
 
 """
     DesignMutator(p_mut::AbstractFloat, grammar::LGrammar, selection::Opt{AbstractSelection}; [searchable_aminoacids::Dict{Char, Bool} = Peptides.available_aminoacids])

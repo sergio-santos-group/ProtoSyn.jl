@@ -66,3 +66,4 @@ graph:
     CE3: [CZ3, HE3]
     CD2: [CE2, CE3]
     C: [O]
+chis: [CB, CG, CD1]

@@ -1,0 +1,47 @@
+name: MSE
+code: b
+atoms:
+  - {name:   N, id:   1, symbol:  N, b:  19.449758, theta:   2.245291, phi:   1.284150}
+  - {name:  CA, id:   2, symbol:  C, b:   1.318385, theta:   1.520353, phi:   2.973030}
+  - {name:   C, id:   3, symbol:  C, b:   1.581898, theta:   1.979994, phi:  -2.033416}
+  - {name:   O, id:   4, symbol:  O, b:   1.060323, theta:   1.966511, phi:   0.783105}
+  - {name:  CB, id:   5, symbol:  C, b:   1.492183, theta:   2.108789, phi:   1.646722}
+  - {name:  CG, id:   6, symbol:  C, b:   1.502517, theta:   2.045675, phi:  -1.030720}
+  - {name:  SE, id:   7, symbol: Se, b:   1.822927, theta:   1.961499, phi:  -3.090228}
+  - {name:  CE, id:   8, symbol:  C, b:   1.812496, theta:   1.759862, phi:   1.609081}
+  - {name:   H, id:   9, symbol:  H, b:   1.013860, theta:   1.722050, phi:   0.882167}
+  - {name: H11, id:  10, symbol:  H, b:   1.104454, theta:   1.972788, phi:   3.024981}
+  - {name: H12, id:  11, symbol:  H, b:   1.099886, theta:   1.778853, phi:   1.034524}
+  - {name: H21, id:  12, symbol:  H, b:   1.090684, theta:   1.918084, phi:   1.106752}
+  - {name: H22, id:  13, symbol:  H, b:   1.091097, theta:   1.922098, phi:  -0.987182}
+  - {name: H41, id:  14, symbol:  H, b:   1.092357, theta:   1.939606, phi:  -1.059965}
+  - {name: H42, id:  15, symbol:  H, b:   1.092633, theta:   1.930491, phi:   1.061576}
+  - {name: H43, id:  16, symbol:  H, b:   1.095976, theta:   1.900319, phi:   3.139482}
+bonds:
+  N: [CA, H]
+  CA: [N, C, CB]
+  C: [CA, O]
+  O: [C]
+  CB: [CA, CG, H11, H12]
+  CG: [CB, SE, H21, H22]
+  SE: [CG, CE]
+  CE: [SE, H41, H42, H43, CE]
+  H: [N]
+  H11: [CB]
+  H12: [CB]
+  H21: [CG]
+  H22: [CG]
+  H41: [CE]
+  H42: [CE]
+  H43: [CE]
+graph:
+  root: N
+  adjacency:
+    N: [CA, H]
+    CA: [C, CB]
+    C: [O]
+    CB: [CG, H11, H12]
+    CG: [SE, H21, H22]
+    SE: [CE]
+    CE: [H41, H42, H43]
+chis: [CB, CG, SE, CE]
