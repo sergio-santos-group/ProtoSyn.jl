@@ -57,7 +57,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 
                 # Inter-residue parenthood
                 if !(residue.name in available_aminoacids)
-                    @warn "Found a possible ligand or NCAA at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
+                    @warn "Found a possible ligand or unknown NCAA at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
                     continue
                 end
                 

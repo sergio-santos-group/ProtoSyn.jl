@@ -28,7 +28,7 @@ module Caterpillar
                 :rmax                  => 9.0,
                 :sc                    => 1.0,
                 :Ω                     => 24.0,
-                :hydrophob_map         => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
+                :hydrophobicity_map    => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
                 :hydrophobicity_weight => nv_scalling_all_contributions),
             α,
             false)

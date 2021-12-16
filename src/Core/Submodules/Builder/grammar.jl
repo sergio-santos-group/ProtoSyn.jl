@@ -257,6 +257,8 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
             parent = frag2
+        else
+            @warn "Residue $letter in fragment derivation can't be identified either as a variable or as an operation."
         end
     end
 

@@ -7,7 +7,7 @@ atoms:
   - {name:   O, id:   4, symbol:  O, b:   1.060323, theta:   1.966511, phi:   0.783105}
   - {name:  CB, id:   5, symbol:  C, b:   1.492183, theta:   2.108789, phi:   1.646722}
   - {name:  CG, id:   6, symbol:  C, b:   1.502517, theta:   2.045675, phi:  -1.030720}
-  - {name:  SE, id:   7, symbol:  S, b:   1.822927, theta:   1.961499, phi:  -3.090228}
+  - {name:  SE, id:   7, symbol: Se, b:   1.822927, theta:   1.961499, phi:  -3.090228}
   - {name:  CE, id:   8, symbol:  C, b:   1.812496, theta:   1.759862, phi:   1.609081}
   - {name:   H, id:   9, symbol:  H, b:   1.013860, theta:   1.722050, phi:   0.882167}
   - {name: H11, id:  10, symbol:  H, b:   1.104454, theta:   1.972788, phi:   3.024981}

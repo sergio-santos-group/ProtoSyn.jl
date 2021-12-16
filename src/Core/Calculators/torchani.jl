@@ -63,7 +63,7 @@ module TorchANI
     """
     function get_ani_species(container::ProtoSyn.AbstractContainer)
         
-        periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16)
+        periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16, "Se" => 34)
 
         species = Vector{Int64}()
         for atom in eachatom(container)

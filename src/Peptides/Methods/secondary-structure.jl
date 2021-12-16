@@ -88,38 +88,38 @@ end
 # TODO
 """
 function read_ss_map(pose::Pose, filename::String, ss_type::String)
-    
+
     sequence = ProtoSyn.Peptides.sequence(pose)
     N = length(sequence)
-    i = 1
+    i = 0
     selection = !TrueSelection{Residue}()
+    
+    ss_map = open(filename, "r")
 
-    open(filename, "r") do ss_map
-        for line in eachline(ss_map)
-            startswith(line, "#") && continue
-            elems = split(line)
-            
-            println("$(typeof(string(elems[2]))) - $(string(elems[2]))")
-            println("$(typeof(string(sequence[i]))) - $(sequence[i]) - $(string(sequence[i]))")
-            println(string(elems[2]) === string(sequence[i]))
+    for line in eachline(ss_map)
+        startswith(line, "#") && continue
+        elems = split(line)
 
-            if i > N
-                @info "Secondary structure map continues after last aminoacid on sequence ($i > $N): skipping this aminoacid on the secondary structure map."
-                continue
-            elseif string(elems[2]) !== string(sequence[i])
-                @info "Aminoacid type on secondary structure map ($(elems[2])) does not match the given sequence on the same position ($(sequence[i])): skiping this aminoacid on the secondary structure map."
-                continue
-            end
+        
+        if (i+1) > N
+            @info "Secondary structure map continues after last aminoacid on sequence (> $N): skipping this aminoacid on the secondary structure map."
+            continue
+        elseif string(elems[2]) !== string(sequence[i + 1])
+            @info "Aminoacid type on secondary structure map ($(elems[2])) does not match the given sequence on the same position ($(sequence[i + 1])): skiping this aminoacid on the secondary structure map."
+            continue
+        end
+        
+        i += 1
 
-            i += 1
-
-            if elems[3] === ss_type
-                this_aminoacid = ProtoSyn.RangeSelection{Residue}(elems[1], :id)
-                selection = selection | this_aminoacid
-            end
+        if string(elems[3]) === ss_type
+            id = parse(Int, elems[1])
+            this_aminoacid = ProtoSyn.SerialSelection{Residue}(id, :id)
+            selection = selection | this_aminoacid
         end
     end
-
+    
+    close(ss_map)
+    
     return selection
 end
 
