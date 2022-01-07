@@ -1,3 +1,5 @@
+using StatsBase
+
 """
     apply!(state::State, rotamer::Rotamer, residue::Residue)
 
@@ -87,7 +89,7 @@ end
 """
 # TODO
 """
-function sample(rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1)
+function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1)
 
     phi_atom = Dihedral.phi(residue)
     phi_atom === nothing && return nothing
@@ -97,7 +99,7 @@ function sample(rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int =
     psi = getdihedral(pose.state, psi_atom)
 
     try
-        rotamer_stack = rl[residue.name][phi, psi]
+        global rotamer_stack = rl[residue.name][phi, psi]
     catch KeyError
         return nothing
     end

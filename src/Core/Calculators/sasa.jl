@@ -174,40 +174,52 @@ module SASA
             pose_solvated = pose_solvated)
     end
 
-    function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
-        return ProtoSyn.Calculators.EnergyFunctionComponent(
-            "SASA_SOL_solvation",
-            calc_sasa_solvation_energy,
-            Dict{Symbol, Any}(
-                :solvation_selection          => an"CA",
-                :solvation_probe_radius       => 10.0,
-                :solvation_n_points           => 10,
-                :solvation_cut_off_radius     => 3.0,
-                :selection                    => an"CA",
-                :probe_radius                 => 6.0,
-                :n_points                     => 100,
-                :clash_radius                 => 3.0,
-                :solvent_hydrophobicity_index => -1.0,
-                :hydrophobicity_map           => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
-                :pose_solvated                => nothing
-            ),
-            α,
-            false
-        )
-    end
+    # ! RE-DO SASA SOLVATION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
+    #     return ProtoSyn.Calculators.EnergyFunctionComponent(
+    #         "SASA_SOL_solvation",
+    #         calc_sasa_solvation_energy,
+    #         Dict{Symbol, Any}(
+    #             :solvation_selection          => an"CA",
+    #             :solvation_probe_radius       => 10.0,
+    #             :solvation_n_points           => 10,
+    #             :solvation_cut_off_radius     => 3.0,
+    #             :selection                    => an"CA",
+    #             :probe_radius                 => 6.0,
+    #             :n_points                     => 100,
+    #             :clash_radius                 => 3.0,
+    #             :solvent_hydrophobicity_index => -1.0,
+    #             :hydrophobicity_map           => ProtoSyn.Peptides.doolitle_hydrophobicity_mod7,
+    #             :pose_solvated                => nothing
+    #         ),
+    #         α,
+    #         false
+    #     )
+    # end
 
     # --------------------------------------------------------------------------
 
-    function calc_radius_gyration(pose::Pose)
-        atoms = collect(eachatom(pose.graph))
-        cm = ProtoSyn.center_of_mass(pose)
+    function calc_radius_gyration(pose::Pose, selection::Opt{AbstractSelection})
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        atoms = sele(pose, gather = true)
+
+        cm = ProtoSyn.center_of_mass(pose, selection)
         mi = [ProtoSyn.Units.mass[atom.symbol] for atom in atoms]'
-        rr = mi .* ((pose.state.x.coords .- cm) .^ 2)
+        coords = pose.state.x.coords[:, sele(pose).content]
+        rr = mi .* ((coords .- cm) .^ 2)
         return sqrt.(sum(rr, dims = 2) ./ sum(mi))
     end
 
-    function calc_radius_gyration_energy(pose::Pose, update_forces::Bool)
-        rg = calc_radius_gyration(pose)
+    calc_radius_gyration(pose::Pose) = calc_radius_gyration(pose, nothing)
+
+    function calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool)
+        rg = calc_radius_gyration(pose, selection)
         return sum(rg), nothing
     end
 
@@ -215,6 +227,7 @@ module SASA
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "Radius_Gyration",
             calc_radius_gyration_energy,
+            selection,
             Dict{Symbol, Any}(),
             α,
             false

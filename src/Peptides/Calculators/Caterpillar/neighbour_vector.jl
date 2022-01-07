@@ -1,4 +1,6 @@
 """
+# TODO Update the selection call signature
+
     ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector([::A], pose::Pose, update_forces::Bool = false; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A, T <: AbstractFloat}
     
 Calculate the given [`Pose`](@ref) `pose` caterpillar solvation energy using the
@@ -67,21 +69,28 @@ julia> ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector(pose, false)
 (0.0, nothing)
 ```
 """
-function neighbour_vector(::Type{A}, pose::Pose, update_forces::Bool; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+function neighbour_vector(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
     
+    if selection === nothing
+        selection = TrueSelection{Atom}()
+    else
+        selection = ProtoSyn.promote(selection, Atom)
+    end
+
     dm    = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
     if A === ProtoSyn.CUDA_2
         dm = collect(dm)
     end
+
     atoms = selection(pose, gather = true)
     
-    if length(atoms) != length(eachresidue(pose.graph))
-        @warn "The number of selected residues doesn't match the number of residues in the pose ($(length(atoms)) ≠ $(length(eachresidue(pose.graph))))"
-        return 0.0, nothing
-    end
+    # if length(atoms) != length(eachresidue(pose.graph))
+    #     @warn "The number of selected residues doesn't match the number of residues in the pose ($(length(atoms)) ≠ $(length(eachresidue(pose.graph))))"
+    #     return 0.0, nothing
+    # end
     
-    Ωis   = Vector{T}() # !
-    esols = Vector{T}() # !
+    # Ωis   = Vector{T}() # !
+    # esols = Vector{T}() # !
     esol = T(0.0)
     for i in 1:size(dm)[1]
         atom_i = atoms[i]
@@ -99,18 +108,17 @@ function neighbour_vector(::Type{A}, pose::Pose, update_forces::Bool; selection:
         esol_i = hydrophobicity_weight(_Ωi, hydrophobicity_map_value = DHI, Ω = Ω)
         esol += esol_i
 
-        push!(Ωis, _Ωi) # !
-        push!(esols, esol_i) # !
+        # push!(Ωis, _Ωi) # !
+        # push!(esols, esol_i) # !
     end
 
-    return esol, nothing, Ωis, esols
-    # return esol, nothing
+    # return esol, nothing, Ωis, esols
+    return esol, nothing
 end
 
 
-neighbour_vector(pose::Pose, update_forces::Bool; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
-    neighbour_vector(ProtoSyn.acceleration.active, pose, update_forces,
-        selection = selection,
+neighbour_vector(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
+    neighbour_vector(ProtoSyn.acceleration.active, pose, selection, update_forces,
         identification_curve = identification_curve,
         hydrophobicity_weight = hydrophobicity_weight,
         rmax = rmax,

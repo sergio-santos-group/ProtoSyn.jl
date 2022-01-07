@@ -242,6 +242,28 @@ end
 """
 # TODO
 """
+function get_bonded_mask(selection::AbstractSelection)
+    
+    sele = ProtoSyn.promote(selection, Atom)
+
+    return function _diagonal_mask(pose::Pose)
+        atoms = sele(pose, gather = true)
+        N = length(atoms)
+        m = .!Matrix{Bool}(I, N, N)
+        for (i, atom_i) in enumerate(atoms)
+            for (j, atom_j) in enumerate(atoms)
+                i === j && continue
+
+                if atom_j in atom_i.bonds
+                    m[i, j] = false
+                end
+            end
+        end
+
+        return ProtoSyn.Mask{Atom}(BitArray(m))
+    end
+end
+
 function get_bonded_mask()
     return function _diagonal_mask(pose::Pose)
         N = pose.state.size

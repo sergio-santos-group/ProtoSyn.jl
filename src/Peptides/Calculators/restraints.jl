@@ -52,7 +52,8 @@ module Restraints
         return EnergyFunctionComponent(
             "Clash_Sidechain_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :mask => mask),
             α,
             true)
     end
@@ -103,7 +104,8 @@ module Restraints
         return EnergyFunctionComponent(
             "Contact_Map",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 0.0, :d2 => 0.0, :d3 => 8.0, :d4 => 12.0, :selection => _sele, :mask => mask),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 0.0, :d2 => 0.0, :d3 => 8.0, :d4 => 12.0, :mask => mask),
             α,
             false)
     end
@@ -157,7 +159,8 @@ module Restraints
         return EnergyFunctionComponent(
             "Cα-Cα_Clash_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask, :vlist => nothing),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.5, :d3 => Inf, :d4 => Inf, :mask => mask, :vlist => nothing),
             α,
             false)
     end
@@ -196,12 +199,12 @@ module Restraints
         return e
     end
 
-    function calc_residue_level_potential(pose::Pose, update_forces::Bool; selection::Opt{AbstractSelection} = nothing, potential::Function = (res::Residue) -> 0.0)
+    function calc_residue_level_potential(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; potential::Function = (pose::Pose, res::Residue) -> 0.0)
         
         if selection === nothing
             selection = TrueSelection{Residue}()
         else
-            selection = promote(selection, Residue)
+            selection = ProtoSyn.promote(selection, Residue)
         end
         
         e = 0.0
@@ -216,7 +219,8 @@ module Restraints
         return EnergyFunctionComponent(
             "Ramachandran_Potential",
             calc_residue_level_potential,
-            Dict{Symbol, Any}(:selection => nothing, :potential => ramachandran_potential),
+            nothing,
+            Dict{Symbol, Any}(:potential => ramachandran_potential),
             α,
             false)
     end

@@ -61,19 +61,25 @@ module TorchANI
      8
     ```
     """
-    function get_ani_species(container::ProtoSyn.AbstractContainer)
+    function get_ani_species(container::ProtoSyn.AbstractContainer, selection::Opt{AbstractSelection})
         
         periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16, "Se" => 34)
 
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
         species = Vector{Int64}()
-        for atom in eachatom(container)
+        for atom in sele(container, gather = true)
             push!(species, periodic_table[atom.symbol])
         end
 
         return species
     end
 
-    get_ani_species(pose::Pose) = get_ani_species(pose.graph)
+    get_ani_species(pose::Pose, selection::Opt{AbstractSelection}) = get_ani_species(pose.graph, selection)
 
     # --- SINGLE MODEL
     
@@ -113,10 +119,17 @@ module TorchANI
 
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
-    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = update_forces, device = device).float()
-        s           = get_ani_species(pose)
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        coords = pose.state.x.coords[:, sele(pose).content]'
+        coordinates = torch.tensor([coords], requires_grad = update_forces, device = device).float()
+        s           = get_ani_species(pose, selection)
         species     = torch.tensor([s], device = device)
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
@@ -149,8 +162,8 @@ module TorchANI
         end
     end
 
-    calc_torchani_model(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
-        calc_torchani_model(ProtoSyn.acceleration.active, pose, update_forces, model = model)
+    calc_torchani_model(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3) = begin
+        calc_torchani_model(ProtoSyn.acceleration.active, pose, selection, update_forces, model = model)
     end
 
     # --- ENSEMBLE
@@ -178,11 +191,18 @@ module TorchANI
     (-0.12801788747310638, [ ... ])
     ```
     """
-    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false)
+    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        coords = pose.state.x.coords[:, sele(pose).content]'
+        coordinates = torch.tensor([coords], requires_grad = true, device = device).float()
         
-        s           = get_ani_species(pose)
+        s           = get_ani_species(pose, selection)
         species     = torch.tensor([s], device = device)
 
         m1 = _model.species_converter((species, coordinates))
@@ -197,8 +217,8 @@ module TorchANI
         end
     end
 
-    calc_torchani_ensemble(pose::Pose, update_forces::Bool = false) = begin
-        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces)
+    calc_torchani_ensemble(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false) = begin
+        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, selection, update_forces)
     end
 
     # * Default Energy Components ----------------------------------------------
@@ -229,7 +249,13 @@ module TorchANI
     ```
     """
     function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
-        EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model, Dict{Symbol, Any}(:model => 3), α, true)
+        EnergyFunctionComponent(
+            "TorchANI_ML_Model",
+            calc_torchani_model,
+            nothing,
+            Dict{Symbol, Any}(:model => 3),
+            α,
+            true)
     end
     
     """
@@ -255,7 +281,13 @@ module TorchANI
     ```
     """
     function get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
-        return EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble, Dict{Symbol, Any}(), α, true)
+        return EnergyFunctionComponent(
+            "TorchANI_ML_Ensemble",
+            calc_torchani_ensemble,
+            nothing,
+            Dict{Symbol, Any}(),
+            α,
+            true)
     end
 
     include("torchani_xmlrpc.jl")

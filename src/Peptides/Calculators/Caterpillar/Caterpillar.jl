@@ -22,9 +22,9 @@ module Caterpillar
         return EnergyFunctionComponent(
             "Caterpillar_Solvation",
             neighbour_vector,
+            an"CB" | (an"HA2" & rn"GLY"),
             Dict{Symbol, Any}(
                 :identification_curve  => sigmoid,
-                :selection             => an"CB" | (an"HA2" & rn"GLY"),
                 :rmax                  => 9.0,
                 :sc                    => 1.0,
                 :Ω                     => 24.0,

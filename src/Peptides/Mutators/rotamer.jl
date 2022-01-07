@@ -102,6 +102,7 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
 
             # 2) Sample a rotamer
             rotamer = Peptides.sample(
+                pose,
                 rotamer_mutator.rotamer_library,
                 residue, 
                 rotamer_mutator.n_first)

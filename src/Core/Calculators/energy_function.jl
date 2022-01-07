@@ -162,26 +162,40 @@ end
 
 # * Call energy function -------------------------------------------------------
 
-function (energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = false)
-    e = 0.0
+function (energy_function::EnergyFunction)(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false)
+    e              = 0.0
     performed_calc = false
+
     for component in energy_function.components
-        uf = update_forces & component.update_forces
+
+        # Calculate component only if α > 0.0
         if component.α > 0.0
-            if !performed_calc 
+
+            # Intersect update forces
+            uf = update_forces & component.update_forces
+
+            # Intersect selection
+            sele = selection & component.selection
+
+            # Reset energy & forces on first calculation. Both are reset if one
+            # of them is updated.
+            if !performed_calc
                 pose.state.e = Dict{Symbol, eltype(pose.state)}()
-                uf && fill!(pose.state.f, eltype(pose.state)(0))
+                fill!(pose.state.f, eltype(pose.state)(0))
             end
-            energy, forces = component.calc(pose, uf; component.settings...)
+
+            # Calculate component
+            energy, forces = component.calc(pose, sele, uf; component.settings...)
             performed_calc = true
             e_comp         = component.α * energy
             pose.state.e[Symbol(component.name)] = e_comp
             e += e_comp
 
+            # Update forces (requires correctly indexed pose)
             if uf & !(forces === nothing)
-                if :selection in keys(component.settings) && component.settings[:selection] !== nothing
+                if sele !== nothing
                     i = 0
-                    selected = component.settings[:selection](pose)
+                    selected = sele(pose) # this is a mask
                     for atom_index in 1:pose.state.size
                         !selected[atom_index] && continue
                         i += 1

@@ -150,6 +150,8 @@ function center_of_mass(pose::Pose, selection::AbstractSelection)
     return center_of_mass(pose, idxs)
 end
 
+center_of_mass(pose::Pose, selection::Nothing) = center_of_mass(pose)
+
 function center_of_mass(pose::Pose, idxs::Vector{Int})
     return mean(pose.state.x[:, idxs], dims = 2)
 end

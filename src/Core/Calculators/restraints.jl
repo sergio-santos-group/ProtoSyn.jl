@@ -46,34 +46,49 @@ module Restraints
     (0.0, nothing)
     ```
     """
-    function calc_bond_distance_restraint(::Type{ProtoSyn.SISD_0}, pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat}
+    function calc_bond_distance_restraint(::Type{ProtoSyn.SISD_0}, pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat}
+
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+        
+        mask = sele(pose)
 
         e  = 0.0
         if update_forces
-            f = zeros(size(pose.state.f))
+            f = zeros(3, pose.state.size)
         end
 
         for atom in eachatom(pose.graph)
+
+            !mask[atom.index] && continue
+
             for bond in atom.bonds
+
+                !mask[bond.index] && continue
+
                 d = ProtoSyn.distance(pose.state[atom], pose.state[bond])
                 
                 p = atom.symbol*bond.symbol
                 if p in keys(ProtoSyn.Units.max_bond_lengths)
                     _x0 = ProtoSyn.Units.max_bond_lengths[p]
                 else
-                    println("Pair $p not found in max lengths list.")
+                    @info "Pair $p not found in max lengths list."
                     _x0 = x0
                 end
 
                 if d > _x0
                     e += (d - _x0) * (d - _x0)
+                    
                     if update_forces
                         v = collect(pose.state[atom].t .- pose.state[bond].t)
                         factor1 = 2 * (d - _x0)
 
                         # * Assumes atom IDs are synched with pose.state
-                        f[:, atom.id] -= v * factor1
-                        f[:, bond.id] += v * factor1
+                        f[:, atom.index] -= v * factor1
+                        f[:, bond.index] += v * factor1 # TODO
                     end
                 end
             end
@@ -86,14 +101,14 @@ module Restraints
         end
     end
 
-    calc_bond_distance_restraint(pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat} = begin
-        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, update_forces, x0 = x0)
+    calc_bond_distance_restraint(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; x0::T = 2.0) where {T <: AbstractFloat} = begin
+        calc_bond_distance_restraint(ProtoSyn.acceleration.active, pose, selection, update_forces, x0 = x0)
     end
 
-    calc_bond_distance_restraint(::Type{A}, pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
+    calc_bond_distance_restraint(::Type{A}, pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
         # ! Regardless of the requested acceleration type, this function will
         # ! default to SISD_0. This may be changed in future iterations. 
-        calc_bond_distance_restraint(ProtoSyn.SISD_0, pose, update_forces, x0 = x0)
+        calc_bond_distance_restraint(ProtoSyn.SISD_0, pose, selection, update_forces, x0 = x0)
     end
 
 
@@ -127,6 +142,7 @@ module Restraints
         return EnergyFunctionComponent(
             "Bond_Distance_Restraint",
             calc_bond_distance_restraint,
+            nothing,
             Dict{Symbol, Any}(:x0 => 2.0),
             α,
             true)
@@ -174,28 +190,28 @@ module Restraints
     julia> ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint(pose, false, d1 = 10.0, d2 = 12.0)
     (556449.1936070402, [-711.7603616347209 -630.2662235401388 … 995.0284325254745 1153.572133762037; -419.1275359380875 -548.0506257124055 … 286.5285847489888 92.16862928705675; 6.007398880372552 8.2409631821887 … -99.38257889245355 -92.37110004070036])    ```
     """
-    function calc_flat_bottom_restraint(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_flat_bottom_restraint(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(A; d1 = d1, d2 = d2, d3 = d3, d4 = d4)
         e, f = ProtoSyn.Calculators.apply_potential(A, pose, fbr, update_forces, vlist, selection, mask)
         return e, f
     end # function
 
-    calc_flat_bottom_restraint(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
-        calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
+    calc_flat_bottom_restraint(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
+        calc_flat_bottom_restraint(ProtoSyn.acceleration.active, pose, selection, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, mask = mask, vlist = vlist)
     end
 
-    function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_flat_bottom_restraint!(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         fbr = ProtoSyn.Calculators.get_flat_bottom_potential(d1 = d1, d2 = d2, d3 = d3, d4 = d4)
         e, f = ProtoSyn.Calculators.apply_potential!(A, pose, fbr, update_forces, vlist, selection, mask)
     end # function
 
-    calc_flat_bottom_restraint!(pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
-        calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, selection = selection, mask = mask, vlist = vlist)
+    calc_flat_bottom_restraint!(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {T <: AbstractFloat} = begin
+        calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, selection, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, mask = mask, vlist = vlist)
     end
 
-    # ---
-    # DEV
-
+    """
+    # TODO
+    """
     function get_default_all_atom_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
         # * Note: The default :d1 and :d2 distances were parametrized based on
         # * the 2A3D PDB structure.
@@ -207,7 +223,8 @@ module Restraints
         return EnergyFunctionComponent(
             "All_Atom_Clash_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 2.0, :d3 => Inf, :d4 => Inf, :selection => nothing, :mask => mask),
+            nothing,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 2.0, :d3 => Inf, :d4 => Inf, :mask => mask),
             α,
             true)
     end

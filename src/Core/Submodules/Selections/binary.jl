@@ -87,6 +87,12 @@ selection_type(sele::BinarySelection) = min(selection_type(sele.left), selection
 Base.:&(l::AbstractSelection, r::AbstractSelection) = BinarySelection(&, l, r)
 Base.:|(l::AbstractSelection, r::AbstractSelection) = BinarySelection(|, l, r)
 
+# Case matching with nothing
+Base.:&(::Nothing, sele::AbstractSelection) = nothing
+Base.:&(sele::AbstractSelection, ::Nothing) = nothing
+Base.:|(::Nothing, sele::AbstractSelection) = nothing
+Base.:|(sele::AbstractSelection, ::Nothing) = nothing
+
 
 # --- Select -------------------------------------------------------------------
 select(sele::BinarySelection{Stateless, Stateless}, container::AbstractContainer) = begin

@@ -47,15 +47,41 @@ mutable struct EnergyFunctionComponent{T <: AbstractFloat}
 
     name::String
     calc::Function
+    selection::Opt{AbstractSelection}
     settings::Dict{Symbol, Any}
     α::T
     update_forces::Bool
+end
+
+Base.setproperty!(efc::EnergyFunctionComponent{T}, key::Symbol, val) where {T <: AbstractFloat} = begin
+    # Intercepts `setproperty!` to issue warnings and information tips.
+
+    if key == :selection
+        if :mask in keys(efc.settings)
+            @info """The EnergyFunctionComponent selection has been changed. Make sure the comp.settings[:mask] is in accordance with the new selection.
+            This depends on the mask being used.
+            As an example, for a diagonal mask, this can be set by calling `comp.settings[:mask] = ProtoSyn.Calculators.get_diagonal_mask(comp.selection)`.
+            For non-design efforts, consider fixating the mask to a single pose, in order to improve performance.
+            This can be set by calling `comp.settings[:mask] = comp.settings[:mask](pose)` or `ProtoSyn.Calculators.fixate_mask!(comp, pose)`."""
+        end
+        if :hydrogen_bond_network in keys(efc.settings) && !isa(efc.settings[:hydrogen_bond_network], Function)
+            @info """The EnergyFunctionComponent selection has been changed, but this component seems to have a static `hydrogen_bond_network`.
+            You may update this component `hydrogen_bond_network` by setting it to a Function (`comp.settings[:hydrogen_bond_network] = ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network`).
+            For non-design efforts, consider fixating the mask to a single pose, in order to improve performance.
+            This can be set by calling `ProtoSyn.Calculators.HydrogenBonds.fixate_hydrogen_bond_network!(comp, pose)`."""
+        end
+        setfield!(efc, :selection, val)
+    else
+        setfield!(efc, key, val)
+    end
+    efc
 end
 
 function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
     return EnergyFunctionComponent{T}(
         efc.name,
         efc.calc,
+        efc.selection,
         copy(efc.settings),
         copy(efc.α),
         copy(efc.update_forces))
@@ -93,6 +119,7 @@ function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: Abstract
     @printf(io, "%14s : %-s\n", "Name", efc.name)
     @printf(io, "%14s : %-s\n", "Weight (α)", efc.α)
     @printf(io, "%14s : %-s\n", "Update forces", string(efc.update_forces))
+    @printf(io, "%14s : %-s\n", "Selection", string(efc.selection))
     if length(efc.settings) == 0
         @printf(io, "%14s : -", "Setings")
     else

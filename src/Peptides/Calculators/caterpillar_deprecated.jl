@@ -234,6 +234,7 @@ function get_default_nv_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat
     return EnergyFunctionComponent(
         "Caterpillar_Solvation",
         calc_nv_solvation_energy,
+        nothing,
         Dict{Symbol, Any}(:Ω => 750.0, :rmax => 12.0, :sc => 5.0, :hydrophob_map => ProtoSyn.Peptides.doolitle_hydrophobicity_mod2),
         α,
         false)
