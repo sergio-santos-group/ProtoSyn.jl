@@ -1,5 +1,6 @@
 using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn.Mutators: AbstractMutator
+using Printf
 
 """
     MonteCarloState{T <: AbstractFloat}(step::Int = 0, converged::Bool = false, completed::Bool = false, stalled::Bool = false, acceptance_count = 0, temperature::T = T(0.0))
@@ -139,15 +140,16 @@ function (driver::MonteCarlo)(pose::Pose)
     driver_state = MonteCarloState{T}()
     driver_state.temperature = driver.temperature(0)
     
+    previous_energy = driver.eval!(pose)
+    # @printf "%10s %5.2f %5.2f %5.2f %5.2f %5.2f\n" "INIT" pose.state.e[:Total] pose.state.e[:TorchANI_ML_Model] pose.state.e[:SASA] pose.state.e[:Hydrogen_Bond_Network] pose.state.e[:Clash_Sidechain_Restraint]
     previous_state  = copy(pose)
-    previous_energy = driver.eval!(pose, false)
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
-            
+        
         driver.sample!(pose)
         sync!(pose)
-        energy = driver.eval!(pose, false)
+        energy = driver.eval!(pose)
         
         n = rand()
         driver_state.temperature = driver.temperature(driver_state.step)
@@ -157,6 +159,7 @@ function (driver::MonteCarlo)(pose::Pose)
             previous_state = copy(pose)
             driver_state.acceptance_count += 1
         else
+            # @printf "%10s %5.2f %5.2f %5.2f %5.2f %5.2f\n" "REJECTED" pose.state.e[:Total] pose.state.e[:TorchANI_ML_Model] pose.state.e[:SASA] pose.state.e[:Hydrogen_Bond_Network] pose.state.e[:Clash_Sidechain_Restraint]
             ProtoSyn.recoverfrom!(pose, previous_state)
         end
 

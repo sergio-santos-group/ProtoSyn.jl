@@ -1,6 +1,8 @@
 using Printf
 
 """
+# TODO Update Examples
+
     EnergyFunction(components::Vector{EnergyFunctionComponent}, clean_cache_every::Int16, cache::Int16, components_by_name::Dict{String, Int})
 
 Construct and return a new [`EnergyFunction`](@ref) instance. An
@@ -73,6 +75,8 @@ mutable struct EnergyFunction
     clean_cache_every::Int16
     cache::Int16
     components_by_name::Dict{String, Int}
+    selection::AbstractSelection
+    update_forces::Bool
 end
 
 EnergyFunction() = begin
@@ -84,7 +88,7 @@ EnergyFunction(::Type{T}) where {T <: AbstractFloat} = begin
 end
 
 EnergyFunction(components::Vector{EnergyFunctionComponent{T}}) where {T <: AbstractFloat} = begin
-    energy_function = EnergyFunction(Vector{EnergyFunctionComponent}(), ProtoSyn.Units.defaultCleanCacheEvery, Int16(0), Dict{String, Int}())
+    energy_function = EnergyFunction(Vector{EnergyFunctionComponent}(), ProtoSyn.Units.defaultCleanCacheEvery, Int16(0), Dict{String, Int}(), TrueSelection{Atom}(), false)
     for component in components
         push!(energy_function, component)
     end
@@ -127,6 +131,8 @@ function Base.copy(ef::EnergyFunction)
         push!(nef.components, copy(component))
     end
     nef.components_by_name = copy(ef.components_by_name)
+    nef.selection = ef.selection
+    nef.update_forces = ef.update_forces
     return nef
 end
 
@@ -162,7 +168,7 @@ end
 
 # * Call energy function -------------------------------------------------------
 
-function (energy_function::EnergyFunction)(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false)
+function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Bool = false)
     e              = 0.0
     performed_calc = false
 
@@ -172,10 +178,10 @@ function (energy_function::EnergyFunction)(pose::Pose, selection::Opt{AbstractSe
         if component.α > 0.0
 
             # Intersect update forces
-            uf = update_forces & component.update_forces
+            uf = energy_function.update_forces & component.update_forces & update_forces_overwrite
 
             # Intersect selection
-            sele = selection & component.selection
+            sele = energy_function.selection & component.selection
 
             # Reset energy & forces on first calculation. Both are reset if one
             # of them is updated.
@@ -245,4 +251,8 @@ function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = not
         @printf(io, "%s| %-5d | %-45s | %10.3f   |\n", inner_lead, index, component.name, component.α)
     end
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
+
+    println(io, inner_lead*" ● Update forces: $(efc.update_forces)")
+    println(io, inner_lead*" ● Selection: Set")
+    Base.show(io, efc.selection, vcat(level_code, 4))
 end

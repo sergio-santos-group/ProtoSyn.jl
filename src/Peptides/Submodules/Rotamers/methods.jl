@@ -33,6 +33,10 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
     return Rotamer(rotamer.name, chis)
 end
 
+apply!(state::State, rotamer::Nothing, residue::Residue) = begin
+    @warn "Tried to apply a rotamer to $(residue.name), but no Rotamer was provided (rotamer = nothing)"
+    return nothing
+end
 
 """
 # TODO name change
@@ -89,20 +93,37 @@ end
 """
 # TODO
 """
-function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1)
+function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
 
-    phi_atom = Dihedral.phi(residue)
-    phi_atom === nothing && return nothing
-    phi = getdihedral(pose.state, phi_atom)
-    psi_atom = Dihedral.psi(residue)
-    psi_atom === nothing && return nothing
-    psi = getdihedral(pose.state, psi_atom)
+    phi_atom = Peptides.Dihedral.phi(residue)
+    if phi_atom === nothing
+        if !random_inexistent_phi_psi
+            @warn "Tried to sample a rotamer for residue $residue but the required atom for phi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."
+            return nothing
+        else
+            phi = rand(-π:π)
+        end
+    else
+        phi = getdihedral(pose.state, phi_atom)
+    end
 
-    try
-        global rotamer_stack = rl[residue.name][phi, psi]
-    catch KeyError
+    psi_atom = Peptides.Dihedral.psi(residue)
+    if psi_atom === nothing
+        if !random_inexistent_phi_psi
+            @warn "Tried to sample a rotamer for residue $residue but the required atom for psi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."
+            return nothing
+        else
+            psi = rand(-π:π)
+        end
+    else
+        psi = getdihedral(pose.state, psi_atom)
+    end
+
+    if !(residue.name in keys(rl))
+        @warn "Tried to sample a rotamer for residue $residue but no entries were found in the provided rotamer library for this residue type."
         return nothing
     end
+    rotamer_stack = rl[residue.name][phi, psi]
 
     return Peptides.sample(rotamer_stack, n)
 end

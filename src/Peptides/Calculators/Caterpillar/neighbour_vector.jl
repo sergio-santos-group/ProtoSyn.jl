@@ -89,8 +89,8 @@ function neighbour_vector(::Type{A}, pose::Pose, selection::Opt{AbstractSelectio
     #     return 0.0, nothing
     # end
     
-    # Ωis   = Vector{T}() # !
-    # esols = Vector{T}() # !
+    Ωis   = Vector{T}() # !
+    esols = Vector{T}() # !
     esol = T(0.0)
     for i in 1:size(dm)[1]
         atom_i = atoms[i]
@@ -108,12 +108,12 @@ function neighbour_vector(::Type{A}, pose::Pose, selection::Opt{AbstractSelectio
         esol_i = hydrophobicity_weight(_Ωi, hydrophobicity_map_value = DHI, Ω = Ω)
         esol += esol_i
 
-        # push!(Ωis, _Ωi) # !
-        # push!(esols, esol_i) # !
+        push!(Ωis, _Ωi) # !
+        push!(esols, esol_i) # !
     end
 
-    # return esol, nothing, Ωis, esols
-    return esol, nothing
+    return esol, nothing, Ωis, esols
+    # return esol, nothing
 end
 
 

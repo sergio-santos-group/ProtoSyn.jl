@@ -47,6 +47,7 @@ using the following signature, in which case only the provided list of
 * `p_mut::AbtractFloat` - Compared against a `rand()` call, applies this Mutator to [`Atom`](@ref) instances where `rand() < p_mut`;
 * `n_first::Int` - Take only the N most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances from the rotamer library;
 * `selection::Opt{AbstractSelection}` - If given, this Mutator will only loop over the selected [`Atom`](@ref) instances;
+* `randomize_inexistent_phi_psi::Bool` - If set to true, any Residue instance whose phi or psi dihedral angle is unable to be determined will be randomized (example: last aminoacid in a chain);
 
 # See also
 [`DesignMutator`](@ref)
@@ -74,6 +75,7 @@ mutable struct RotamerMutator <: AbstractMutator
     p_mut::AbstractFloat
     n_first::Int
     selection::Opt{AbstractSelection}
+    random_inexistent_phi_psi::Bool
 end
 
 
@@ -96,16 +98,18 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
     
     for atom in atoms
         if rand() < rotamer_mutator.p_mut
-
+            
             # 1) Get the residue name
             residue = atom.container
-
+            # println("Residue $residue")
+            
             # 2) Sample a rotamer
             rotamer = Peptides.sample(
                 pose,
                 rotamer_mutator.rotamer_library,
                 residue, 
-                rotamer_mutator.n_first)
+                rotamer_mutator.n_first,
+                rotamer_mutator.random_inexistent_phi_psi)
 
             # 3) Apply sampled rotamer
             Peptides.apply!(pose.state, rotamer, residue)
@@ -126,6 +130,7 @@ function Base.show(io::IO, rm::RotamerMutator, level_code::Opt{LevelCode} = noth
     @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "rotamer_library", "Set ✓")
     @printf(io, "%s| %-5d | %-27s | %-30.3f |\n", inner_lead, 2, "p_mut", rm.p_mut)
     @printf(io, "%s| %-5d | %-27s | %-30d |\n", inner_lead, 3, "n_first", rm.n_first)
+    @printf(io, "%s| %-5d | %-27s | %-30d |\n", inner_lead, 3, "random_inexistent_phi_psi", rm.random_inexistent_phi_psi)
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     
     if rm.selection !== nothing

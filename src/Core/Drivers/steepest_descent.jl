@@ -124,7 +124,7 @@ function (driver::SteepestDescent)(pose::Pose)
     sync!(pose)
 
     T = eltype(pose.state)
-    energy = driver.eval!(pose, true)
+    energy = driver.eval!(pose, update_forces_overwrite = true)
 
     # Instantiate a new DriverState object. By default, no optimization step has
     # yet been taken apart from calculating the energy and forces for the input
@@ -172,7 +172,7 @@ function (driver::SteepestDescent)(pose::Pose)
 
         # Calculate new energy and forces (make sure to reset forces)
         ProtoSyn.reset_forces!(pose.state)
-        energy = driver.eval!(pose, true)
+        energy = driver.eval!(pose, update_forces_overwrite = true)
         driver_state.max_force = ProtoSyn.atmax(pose.state, :f)
 
         # Verify convergence

@@ -48,7 +48,8 @@ three_2_one = Dict{String, Char}(
     # "TYR" => 'Y',
 )
 
-
+# Positive values: Hydrophobic
+# Negative values: Hydrophilic
 const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
     "ILE" =>  4.5,
     "VAL" =>  4.2,
@@ -217,4 +218,4 @@ available_aminoacids = Dict{Char, Bool}(
     # 'N' => true
 )
 
-const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]
+const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR"]

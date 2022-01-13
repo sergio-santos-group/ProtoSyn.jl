@@ -100,7 +100,7 @@ module HydrogenBonds
         if selection === nothing
             sele = TrueSelection{Atom}()
         else
-            sele = promote(selection, Atom)
+            sele = ProtoSyn.promote(selection, Atom)
         end
 
         hbn  = HydrogenBondNetwork()

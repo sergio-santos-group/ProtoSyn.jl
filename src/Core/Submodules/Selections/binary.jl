@@ -88,10 +88,14 @@ Base.:&(l::AbstractSelection, r::AbstractSelection) = BinarySelection(&, l, r)
 Base.:|(l::AbstractSelection, r::AbstractSelection) = BinarySelection(|, l, r)
 
 # Case matching with nothing
-Base.:&(::Nothing, sele::AbstractSelection) = nothing
-Base.:&(sele::AbstractSelection, ::Nothing) = nothing
-Base.:|(::Nothing, sele::AbstractSelection) = nothing
-Base.:|(sele::AbstractSelection, ::Nothing) = nothing
+Base.:&(::Nothing, sele::AbstractSelection) = sele
+Base.:&(sele::AbstractSelection, ::Nothing) = sele
+Base.:|(::Nothing, sele::AbstractSelection) = sele
+Base.:|(sele::AbstractSelection, ::Nothing) = sele
+
+Base.:&(::Nothing, ::Nothing) = nothing
+Base.:|(::Nothing, ::Nothing) = nothing
+
 
 
 # --- Select -------------------------------------------------------------------
