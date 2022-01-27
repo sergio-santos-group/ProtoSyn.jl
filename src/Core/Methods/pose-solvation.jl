@@ -3,7 +3,7 @@ using LinearAlgebra
 """
 # TODO
 """
-function add_semi_explicit_solvent!(::Type{A}, pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 5.0, n_points::Int = 10, cut_off_radius::T = 3.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+function add_semi_explicit_solvent!(::Type{A}, pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 10, cut_off_radius::T = 1.85) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
     
     sync!(pose)
     
@@ -22,7 +22,6 @@ function add_semi_explicit_solvent!(::Type{A}, pose::Pose; selection::AbstractSe
     cloud = Vector{Vector{T}}()
 
     for i in 1:size(dm)[1]
-        Ωi = 0
 
         # define cloud i
         cloud_i  = copy(sphere)
@@ -89,7 +88,7 @@ function add_semi_explicit_solvent!(::Type{A}, pose::Pose; selection::AbstractSe
     return pose
 end
 
-add_semi_explicit_solvent!(pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 5.0, n_points::Int = 10, cut_off_radius::T = 3.0) where {T <: AbstractFloat} = begin
+add_semi_explicit_solvent!(pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 10, cut_off_radius::T = 1.85) where {T <: AbstractFloat} = begin
     add_semi_explicit_solvent!(ProtoSyn.acceleration.active, pose, selection = selection, probe_radius = probe_radius, n_points = n_points, cut_off_radius = cut_off_radius)
 end
 
@@ -97,7 +96,7 @@ end
 """
 # TODO
 """
-add_semi_explicit_solvent(pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 5.0, n_points::Int = 10, cut_off_radius::T = 3.0) where {T <: AbstractFloat} = begin
+add_semi_explicit_solvent(pose::Pose; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 10, cut_off_radius::T = 1.85) where {T <: AbstractFloat} = begin
     pose_solvated = copy(pose)
     add_semi_explicit_solvent!(ProtoSyn.acceleration.active, pose_solvated, selection = selection, probe_radius = probe_radius, n_points = n_points, cut_off_radius = cut_off_radius)
 

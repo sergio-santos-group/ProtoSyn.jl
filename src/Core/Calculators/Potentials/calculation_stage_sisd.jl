@@ -25,7 +25,7 @@
                     energies[j, i] = potential(dij)
                 else
                     @nexprs 3 u -> rij_u = rij_u / dij # normalization
-                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3))
+                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3), qi = pose.state[i].δ, qj = pose.state[j].δ)
                 end
             end
         end
@@ -70,7 +70,7 @@ end
                     energies[j, i] = potential(dij)
                 else
                     @nexprs 3 u -> rij_u = rij_u / dij # normalization
-                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3))
+                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3), qi = pose.state[i].δ, qj = pose.state[j].δ)
                 end
 
                 ptr += 1

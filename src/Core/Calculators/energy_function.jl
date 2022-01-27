@@ -168,7 +168,7 @@ end
 
 # * Call energy function -------------------------------------------------------
 
-function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Bool = false)
+function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Opt{Bool} = nothing)
     e              = 0.0
     performed_calc = false
 
@@ -178,7 +178,11 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::
         if component.α > 0.0
 
             # Intersect update forces
-            uf = energy_function.update_forces & component.update_forces & update_forces_overwrite
+            if update_forces_overwrite !== nothing
+                uf = update_forces_overwrite
+            else
+                uf = energy_function.update_forces & component.update_forces
+            end
 
             # Intersect selection
             sele = energy_function.selection & component.selection
@@ -191,7 +195,10 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::
             end
 
             # Calculate component
-            energy, forces = component.calc(pose, sele, uf; component.settings...)
+            energy, forces = component.calc(
+                ProtoSyn.acceleration.active, pose, sele, uf;
+                component.settings...)
+                
             performed_calc = true
             e_comp         = component.α * energy
             pose.state.e[Symbol(component.name)] = e_comp

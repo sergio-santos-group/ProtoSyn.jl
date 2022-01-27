@@ -444,17 +444,13 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1,
     
     B_factors_exist = length(B_factors) > 0
     @printf(io, "MODEL %8d\n", model)
-    i = 1
     for (index, segment) in enumerate(eachsegment(top))
         index > 1 && println(io, "TER")
-        for atom in eachatom(segment)
+        for (i, atom) in enumerate(eachatom(segment))
             sti = state[atom.index]
-            B_factor = 0.0
 
-            if atom.name == "CA" && B_factors_exist
-                B_factor = B_factors[i]
-                i += 1
-            end
+            B_factor = B_factors_exist ? B_factors[i] : 0.0
+
             s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%12.2f%12s",
                 atom.index, atom.name,
                 atom.container.name, atom.container.container.code,

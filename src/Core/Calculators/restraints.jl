@@ -6,7 +6,7 @@ Contains restraint energy components, such as `bond_distance_restraint`.
 module Restraints
 
     using ProtoSyn
-    using ProtoSyn.Calculators: EnergyFunctionComponent, VerletList
+    using ProtoSyn.Calculators: EnergyFunctionComponent, VerletList, MaskMap
 
     """
         calc_bond_distance_restraint([::Type{A}], pose::Pose, update_forces::Bool = false; x0::T = 2.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
@@ -95,7 +95,7 @@ module Restraints
         end
 
         if update_forces
-            return e, f
+            return e, f[:, mask.content]
         else
             return e, nothing
         end
@@ -150,8 +150,6 @@ module Restraints
 
     # --------------------------------------------------------------------------
     # * Flat bottom restraint base function
-
-    MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     """
         calc_flat_bottom_restraint([::Type{A}], pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
@@ -216,6 +214,7 @@ module Restraints
         # * Note: The default :d1 and :d2 distances were parametrized based on
         # * the 2A3D PDB structure.
         
+        # with the bonded mask ignore clashes between bonded atoms
         if mask === nothing
             mask = ProtoSyn.Calculators.get_bonded_mask()
         end

@@ -1,33 +1,38 @@
 module Calculators
 
-using ProtoSyn
-using Base.Cartesian
-using Printf
+    using ProtoSyn
+    using Base.Cartesian
+    using Printf
 
-include("verlet_list.jl")
-include("distance_matrix.jl")
+    MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
-# Load energy function components
-include("energy_function_component.jl")
+    include("verlet_list.jl")
+    include("distance_matrix.jl")
 
-if "NO_TORCHANI" in keys(ENV) && ENV["NO_TORCHANI"] === "true"
-    @warn "Environment variable NO_TORCHANI set to `true`. Not loading torchani."
-else
-    @info " | Loading TorchANI"
-    include("torchani.jl")
-end
+    # Load energy function components
+    include("energy_function_component.jl")
 
-@info " | Loading Hydrogen Bonds"
-include("hydrogen_bonds.jl")
+    if "NO_TORCHANI" in keys(ENV) && ENV["NO_TORCHANI"] === "true"
+        @warn "Environment variable NO_TORCHANI set to `true`. Not loading torchani."
+    else
+        @info " | Loading TorchANI"
+        include("torchani.jl")
+    end
 
-@info " | Loading SASA"
-include("sasa.jl")
+    @info " | Loading Hydrogen Bonds"
+    include("hydrogen_bonds.jl")
 
-@info " | Loading Restraint Models"
-include("Potentials/potentials.jl")
-include("restraints.jl")
+    @info " | Loading SASA"
+    include("sasa.jl")
 
-@info " | Loading Energy Function"
-include("energy_function.jl")
+    @info " | Loading Electrostatics"
+    include("electrostatics.jl")
+
+    @info " | Loading Restraint Models"
+    include("Potentials/potentials.jl")
+    include("restraints.jl")
+
+    @info " | Loading Energy Function"
+    include("energy_function.jl")
 
 end

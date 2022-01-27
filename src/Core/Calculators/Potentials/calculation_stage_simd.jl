@@ -61,7 +61,7 @@ using SIMD
                     energies[j, i] = potential(dij)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[i].δ, qj = pose.state[j].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]
@@ -117,7 +117,7 @@ end
                     energies[j, i] = potential(dij)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[i].δ, qj = pose.state[j].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]

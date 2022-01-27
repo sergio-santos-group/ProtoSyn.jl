@@ -7,6 +7,7 @@ using Printf
 export AtomState, StateMatrix
 
 """
+# TODO: Update to add charge
     AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
     
 An [`AtomState`](@ref) instance. Holds information regarding the state of the atom,
@@ -62,7 +63,10 @@ mutable struct AtomState{T <: AbstractFloat}
     # internal coordinates
     b::T                    # self<->parent bond length
     θ::T                    # self<->parent<->grandparent angle
-    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral <- GRANDCHILDREN ?!
+    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral
+
+    # charge
+    δ::T                     # partial charge
     
     Δϕ::T                   # change in dihedral angles (to be applied to children)
     changed::Bool           # flag
@@ -74,6 +78,7 @@ AtomState{T}() where {T} = begin
         -1,
         MVector{3,T}(zeros(T, 3)),
         MMatrix{3,3,T,9}(Matrix{T}(I,3,3)),
+        zero(T),
         zero(T),
         zero(T),
         zero(T),
@@ -112,6 +117,7 @@ function Base.show(io::IO, as::AtomState{T}) where {T <: AbstractFloat}
     @printf(io, " T: [%.3f, %.3f, %.3f]\n", as.t[1], as.t[2], as.t[3])
     # @printf(io, " b: $(as.b) | θ: $(as.θ) rad ($(deg2rad(as.θ))°) | ϕ: $(as.ϕ) | Δϕ: $(as.Δϕ)")
     @printf(io, " b: %5.3f Å | θ: %6.3f rad (%7.2f°) | ϕ: %6.3f rad (%7.2f°) | Δϕ: %6.3f rad (%7.2f°)\n", as.b, as.θ, rad2deg(as.θ), as.ϕ, rad2deg(as.ϕ), as.Δϕ, rad2deg(as.Δϕ))
+    @printf(io, " δ: %5.3f\n", as.δ)
     println(io, " Changed: $(as.changed)")
 end
 
@@ -401,7 +407,7 @@ end
 Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
     return ProtoSyn.AtomState(
         nothing, as.index, copy(as.t), copy(as.r),
-        as.b, as.θ, as.ϕ, as.Δϕ, as.changed)
+        as.b, as.θ, as.ϕ, as.Δϕ, as.δ, as.changed)
 end
 
 #endregion State
