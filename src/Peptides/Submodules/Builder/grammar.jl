@@ -82,20 +82,14 @@ end
 # TODO
 """
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
-    
-    function read_yml(_filename::String)
-        open(_filename, "r") do io
-            return YAML.load(io)
-        end
-    end
 
     # Re-read the YML grammar file
-    yml = read_yml(filename)[key]
+    yml = ProtoSyn.read_yml(filename)[key]
     
     vars = yml["variables"]
     for (key, name) in vars
         var_filename = joinpath(ProtoSyn.resource_dir, name)
-        var_yml = read_yml(var_filename)
+        var_yml = ProtoSyn.read_yml(var_filename)
         
         # 1. Add chi entries to Peptides.Dihedral.chi_dict
         if "chis" in keys(var_yml)

@@ -1,4 +1,5 @@
 using Statistics
+using YAML
 
 """
     rand_vector_in_sphere([::Type{T}]) where {T <: AbstractFloat}
@@ -109,6 +110,16 @@ julia> ProtoSyn.gpu_allocation()
 function gpu_allocation()
     mem = (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
     return ProtoSyn.Units.defaultFloat(mem)
+end
+
+
+"""
+# TODO: Documentation
+"""
+function read_yml(_filename::String)
+    open(_filename, "r") do io
+        return YAML.load(io)
+    end
 end
 
 # --- Tree display -------------------------------------------------------------
