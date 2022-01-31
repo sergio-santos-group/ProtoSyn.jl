@@ -1,4 +1,5 @@
 using Distributions: DiscreteNonParametric, probs, support
+using CurveFit: Polynomial
 using Serialization
 
 export SecondaryStructure
@@ -6,12 +7,24 @@ export SecondaryStructureTemplate
 export DihedralTemplate
 
 # Load Ramachandran samplers
-phi_α_R = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-R.jls"))
-psi_α_R = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-R.jls"))
-phi_α_L = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-L.jls"))
-psi_α_L = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-L.jls"))
-phi_β   = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-β.jls"))
-psi_β   = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-β.jls"))
+phi_α_R_sampler  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-R-sampler.jls"))
+psi_α_R_sampler  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-R-sampler.jls"))
+phi_α_L_sampler  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-L-sampler.jls"))
+psi_α_L_sampler  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-L-sampler.jls"))
+phi_β_sampler    = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-β-sampler.jls"))
+psi_β_sampler    = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-β-sampler.jls"))
+phi_coil_sampler = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-coil-sampler.jls"))
+psi_coil_sampler = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-coil-sampler.jls"))
+
+# Load Ramachandran potentials
+phi_α_R_potential  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-R-potential.jls"))
+psi_α_R_potential  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-R-potential.jls"))
+phi_α_L_potential  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-α-L-potential.jls"))
+psi_α_L_potential  = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-α-L-potential.jls"))
+phi_β_potential    = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-β-potential.jls"))
+psi_β_potential    = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-β-potential.jls"))
+phi_coil_potential = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-coil-potential.jls"))
+psi_coil_potential = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-coil-potential.jls"))
 
 function sample(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
     selected = probs(dnp) .> min_prob
@@ -90,26 +103,26 @@ const SecondaryStructure = Dict{Symbol, SecondaryStructureTemplate}(
     # Values taken from https://proteopedia.org/ or measured from example structures
 
     :antiparallel_sheet => SecondaryStructureTemplate(
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}(-120.0°, phi_β),   # phi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 140.0°, psi_β),   # psi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),         # omega
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}(-120.0°, phi_β_sampler),   # phi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 140.0°, psi_β_sampler),   # psi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),                 # omega
 
     :parallel_sheet     => SecondaryStructureTemplate(
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}(-119.0°, phi_β),   # phi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 113.0°, psi_β),   # psi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),         # omega
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}(-119.0°, phi_β_sampler),   # phi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 113.0°, psi_β_sampler),   # psi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),                 # omega
 
     :linear             => SecondaryStructureTemplate(
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°),          # phi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°),          # psi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),         # omega
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°),                  # phi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°),                  # psi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),                 # omega
 
     :helix              => SecondaryStructureTemplate(
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( -64.0°, phi_α_R), # phi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( -47.0°, psi_α_R), # psi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),         # omega
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( -64.0°, phi_α_R_sampler), # phi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( -47.0°, psi_α_R_sampler), # psi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)),                 # omega
 
     :left_handed_helix  => SecondaryStructureTemplate(
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}(  57.0°, phi_α_L), # phi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}(  47.0°, psi_α_L), # psi
-        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)))         # omega
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}(  57.0°, phi_α_L_sampler), # phi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}(  47.0°, psi_α_L_sampler), # psi
+        DihedralTemplate{ProtoSyn.Units.defaultFloat}( 180.0°)))                 # omega

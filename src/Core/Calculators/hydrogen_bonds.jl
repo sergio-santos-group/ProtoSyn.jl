@@ -52,6 +52,7 @@ module HydrogenBonds
         end
 
         ehb = T(0.0)
+        hb_list = Vector{Tuple{Atom, Atom}}()
         for acceptor in hydrogen_bond_network.acceptors
     
             c = pose.state[acceptor.base].t
@@ -80,10 +81,14 @@ module HydrogenBonds
                 ehb_i = d - c1 * c2
                 ehb_i = ehb_i < 0.0 ? ehb_i : 0.0
                 ehb += ehb_i
+                
+                if ehb_i < 0.0
+                    push!(hb_list, (acceptor.charged, donor.charged))
+                end
             end
         end
         
-        return ehb, nothing
+        return ehb, nothing, hb_list
     end
 
     calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), d0::T = 3.0) where {T <: AbstractFloat} = begin

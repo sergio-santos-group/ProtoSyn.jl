@@ -1,4 +1,6 @@
+using ProtoSyn
 using ProtoSyn.Units
+using CurveFit: Polynomial
 
 """
 # TODO
@@ -142,4 +144,142 @@ function read_ss_map(filename::String, ss_type::String)
     end
 
     return selection
+end
+
+
+"""
+# TODO: Documentation
+# Compare with DSSP
+"""
+function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.AbstractSelection})
+    T = eltype(pose.state)
+
+    if selection === nothing
+        sele = TrueSelection{Residue}()
+    else
+        sele = promote(selection, Residue)
+    end
+
+    residues = sele(pose, gather = true)
+
+    N = length(residues)
+    points = zeros((3, N))
+
+    ss_assignment = Dict(1 => "H", 2 => "E", 3 => "C")
+
+    # 1. Get geometrical criteria ----------------------------------------------
+
+    phi_potentials = Dict{String, Polynomial}([
+        "1L" => ProtoSyn.Peptides.phi_α_L_potential,
+        "1R" => ProtoSyn.Peptides.phi_α_R_potential,
+        "2" => ProtoSyn.Peptides.phi_β_potential,
+        "3" => ProtoSyn.Peptides.phi_coil_potential])
+
+    phi_values = Dict{String, T}([
+        "1L" => 0.0, # Helix
+        "1R" => 0.0, # Helix
+        "2" => 0.0,  # Beta-sheet
+        "3" => 0.0]) # Coil
+
+    psi_potentials = Dict{String, Polynomial}([
+        "1L" => ProtoSyn.Peptides.psi_α_L_potential,
+        "1R" => ProtoSyn.Peptides.psi_α_R_potential,
+        "2" => ProtoSyn.Peptides.psi_β_potential,
+        "3" => ProtoSyn.Peptides.psi_coil_potential])
+
+    psi_values = Dict{String, T}([
+        "1L" => 0.0, # Helix
+        "1R" => 0.0, # Helix
+        "2" => 0.0,  # Beta-sheet
+        "3" => 0.0]) # Coil
+
+    for (residue_index, residue) in enumerate(residues)
+        phi_atom = ProtoSyn.Peptides.Dihedral.phi(residue)
+        phi_atom === nothing && continue
+        phi = ProtoSyn.getdihedral(pose.state, phi_atom)
+        
+        for (ss, potential) in phi_potentials
+            value = potential(phi)
+            phi_values[ss] = value
+        end
+        min_phi_values = argmin(collect(values(phi_values)))
+        phi_ss = parse(Int, collect(keys(phi_values))[min_phi_values][1])
+        
+        psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
+        psi_atom === nothing && continue
+        psi = ProtoSyn.getdihedral(pose.state, psi_atom)
+        for (ss, potential) in psi_potentials
+            value = potential(psi)
+            psi_values[ss] = value
+        end
+        min_psi_values = argmin(collect(values(psi_values)))
+        psi_ss = parse(Int, collect(keys(psi_values))[min_psi_values][1])
+
+        if phi_ss === psi_ss
+            points[phi_ss, residue_index] += 2.0
+            points[psi_ss, residue_index] += 2.0
+        else
+            points[phi_ss, residue_index] += 1.0
+            points[psi_ss, residue_index] += 1.0
+            points[3, residue_index] += 0.5
+        end
+    end
+
+    # 2. Get hydrogen bonding pattern criteria ---------------------------------
+
+    hbn = ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network(
+        pose, sele & !SidechainSelection())
+    _, _, hb_list = ProtoSyn.Calculators.HydrogenBonds.calc_hydrogen_bond_network(
+        pose, nothing, false; hydrogen_bond_network = hbn)
+
+    involved_in_hb = falses(N)
+    for (acceptor, donor) in hb_list
+        di = donor.container.index
+        ai = acceptor.container.index
+        involved_in_hb[di] = true
+        involved_in_hb[ai] = true
+        if (di === ai + 4) | (di === ai + 3)
+            points[1, di] += 4.0
+            points[1, ai] += 4.0
+        elseif di === ai + 1
+            points[3, di] += 4.0
+            points[3, ai] += 4.0
+        else
+            points[2, di] += 2.0
+            points[2, ai] += 2.0
+            points[3, di] += 1.0
+            points[3, ai] += 1.0
+        end
+    end
+
+    for (residue_index, _involved_in_hb) in enumerate(involved_in_hb)
+        if !_involved_in_hb
+            points[1, residue_index] -= 2.0
+            points[2, residue_index] -= 2.0
+            points[3, residue_index] += 2.0
+        end
+    end
+
+    # 3. Flanking residue SS criteria ------------------------------------------
+    _points = copy(points)
+    blur_amount = 0.5
+    points[:, 2] += _points[:, 1] .* blur_amount
+    for i in 2:(N-1)
+        value = _points[:, i] .* blur_amount
+        points[:, (i-1)] += value
+        points[:, (i+1)] += value
+    end
+    points[:, (N-1)] += _points[:, N] .* blur_amount
+
+    # 4. Terminals criteria ----------------------------------------------------
+    points[3, 1] += 5.0
+    points[3, N] += 5.0
+
+    max_points = map((x) -> trunc(Int, ceil(x[1])), argmax(points, dims=1))
+    converted_points = map((x) -> convert(Float64,x), max_points[1, :])
+    return Base.join(map((x) -> ss_assignment[x], converted_points))
+end
+
+catergorize_ss_from_dihedral_angles(pose::Pose) = begin
+    catergorize_ss_from_dihedral_angles(pose, nothing)
 end
