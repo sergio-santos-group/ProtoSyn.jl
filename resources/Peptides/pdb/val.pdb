@@ -1,0 +1,38 @@
+MODEL        1
+ATOM      1    N VAL ?   1       3.326   1.548   0.000        0.00           N
+ATOM      2    H VAL ?   1       2.935   1.514   0.971        0.00           H
+ATOM      3   CX VAL ?   1       2.782   0.881  -0.596        0.00           C
+ATOM      4   CA VAL ?   1       4.734   1.205   0.000        0.00           C
+ATOM      5   HA VAL ?   1       4.966   0.620   0.890        0.00           H
+ATOM      6   CB VAL ?   1       5.099   0.384  -1.232        0.00           C
+ATOM      7   HB VAL ?   1       4.516  -0.537  -1.241        0.00           H
+ATOM      8  CG1 VAL ?   1       4.793   1.192  -2.490        0.00           C
+ATOM      9 HG11 VAL ?   1       5.376   2.113  -2.481        0.00           H
+ATOM     10 HG12 VAL ?   1       5.054   0.604  -3.371        0.00           H
+ATOM     11 HG13 VAL ?   1       3.731   1.435  -2.517        0.00           H
+ATOM     12  CG2 VAL ?   1       6.585   0.044  -1.195        0.00           C
+ATOM     13 HG21 VAL ?   1       6.804  -0.532  -0.296        0.00           H
+ATOM     14 HG22 VAL ?   1       6.847  -0.542  -2.075        0.00           H
+ATOM     15 HG23 VAL ?   1       7.168   0.965  -1.186        0.00           H
+ATOM     16    C VAL ?   1       5.602   2.456  -0.000        0.00           C
+ATOM     17    O VAL ?   1       5.123   3.485   0.448        0.00           O
+ATOM     18   NX VAL ?   1       6.734   2.367  -0.445        0.00           N
+CONECT    1    4    3    2
+CONECT    2    1
+CONECT    3    1
+CONECT    4   16    1    6    5
+CONECT    5    4
+CONECT    6    7   12    4    8
+CONECT    7    6
+CONECT    8   11    6   10    9
+CONECT    9    8
+CONECT   10    8
+CONECT   11    8
+CONECT   12    6   13   14   15
+CONECT   13   12
+CONECT   14   12
+CONECT   15   12
+CONECT   16    4   18   17
+CONECT   17   16
+CONECT   18   16
+ENDMDL

@@ -314,6 +314,7 @@ load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {
         s.θ = ProtoSyn.Units.tonumber(T, pivot["theta"])
         s.ϕ = ProtoSyn.Units.tonumber(T, pivot["phi"])
         s.b = ProtoSyn.Units.tonumber(T, pivot["b"])
+        s.δ = ProtoSyn.Units.tonumber(T, pivot["c"])
     end
 
     # add bonds

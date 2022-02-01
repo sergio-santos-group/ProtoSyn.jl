@@ -1,28 +1,28 @@
 name: LYS
 code: K
 atoms:
-  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
-  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
-  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
-  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276}
-  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300}
-  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563}
-  - {name:  CG, id:   8, symbol:  C, b:   1.525095, theta:   1.911075, phi:   3.141387}
-  - {name: HG1, id:   9, symbol:  H, b:   1.089995, theta:   1.910407, phi:  -1.046846}
-  - {name: HG2, id:  10, symbol:  H, b:   1.089791, theta:   1.910429, phi:   1.046235}
-  - {name:  CD, id:  11, symbol:  C, b:   1.524840, theta:   1.911075, phi:   3.141593}
-  - {name: HD1, id:  12, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047094}
-  - {name: HD2, id:  13, symbol:  H, b:   1.090067, theta:   1.910960, phi:   1.047632}
-  - {name:  CE, id:  14, symbol:  C, b:   1.524230, theta:   1.910344, phi:  -3.141513}
-  - {name: HE1, id:  15, symbol:  H, b:   1.089861, theta:   1.911616, phi:  -1.047131}
-  - {name: HE2, id:  16, symbol:  H, b:   1.089461, theta:   1.911808, phi:   1.047302}
-  - {name:  NZ, id:  17, symbol:  N, b:   1.470315, theta:   1.910257, phi:  -3.141573}
-  - {name: HZ1, id:  18, symbol:  H, b:   1.010312, theta:   1.910621, phi:   1.047419}
-  - {name: HZ2, id:  19, symbol:  H, b:   1.010185, theta:   1.910382, phi:   3.141434}
-  - {name: HZ3, id:  20, symbol:  H, b:   1.009237, theta:   1.910502, phi:  -1.047294}
-  - {name:   C, id:  21, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
-  - {name:   O, id:  22, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000, c: -0.5952}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593, c:  0.3669}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000, c: -0.1227}
+  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759, c:  0.2430}
+  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276, c: -0.3360}
+  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300, c:  0.2517}
+  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563, c:  0.2806}
+  - {name:  CG, id:   8, symbol:  C, b:   1.525095, theta:   1.911075, phi:   3.141387, c: -0.3315}
+  - {name: HG1, id:   9, symbol:  H, b:   1.089995, theta:   1.910407, phi:  -1.046846, c:  0.3284}
+  - {name: HG2, id:  10, symbol:  H, b:   1.089791, theta:   1.910429, phi:   1.046235, c:  0.2522}
+  - {name:  CD, id:  11, symbol:  C, b:   1.524840, theta:   1.911075, phi:   3.141593, c: -0.3515}
+  - {name: HD1, id:  12, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047094, c:  0.2439}
+  - {name: HD2, id:  13, symbol:  H, b:   1.090067, theta:   1.910960, phi:   1.047632, c:  0.2533}
+  - {name:  CE, id:  14, symbol:  C, b:   1.524230, theta:   1.910344, phi:  -3.141513, c: -0.2580}
+  - {name: HE1, id:  15, symbol:  H, b:   1.089861, theta:   1.911616, phi:  -1.047131, c:  0.2447}
+  - {name: HE2, id:  16, symbol:  H, b:   1.089461, theta:   1.911808, phi:   1.047302, c:  0.2358}
+  - {name:  NZ, id:  17, symbol:  N, b:   1.470315, theta:   1.910257, phi:  -3.141573, c: -0.8169}
+  - {name: HZ1, id:  18, symbol:  H, b:   1.010312, theta:   1.910621, phi:   1.047419, c:  0.3330}
+  - {name: HZ2, id:  19, symbol:  H, b:   1.010185, theta:   1.910382, phi:   3.141434, c:  0.3295}
+  - {name: HZ3, id:  20, symbol:  H, b:   1.009237, theta:   1.910502, phi:  -1.047294, c:  0.3304}
+  - {name:   C, id:  21, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.7990}
+  - {name:   O, id:  22, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7887}
 bonds:
   N: [H, CA]
   H: [N]

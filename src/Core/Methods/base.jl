@@ -325,7 +325,6 @@ Base.copy(t0::Topology) = begin
     return t1
 end
 
-# !!!!!!!
 Base.copy(s::State{T}) where T = begin
     ns = State(T, s.size)
     # Updating item.t also updates the parent.x matrix
@@ -337,6 +336,7 @@ Base.copy(s::State{T}) where T = begin
         ns[index].ϕ = atomstate.ϕ
         ns[index].Δϕ = atomstate.Δϕ
         ns[index].changed = atomstate.changed
+        ns[index].δ = atomstate.δ
     end
     ns.id = genid()
     ns.i2c = s.i2c
