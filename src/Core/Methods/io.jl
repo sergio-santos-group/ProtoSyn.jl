@@ -4,6 +4,7 @@ using Downloads: download
 
 const PDB = Val{1}
 const YML = Val{2}
+const PQR = Val{3}
 
 """
     load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false, alternative_location::String = "A"]) where {T <: AbstractFloat}
@@ -469,6 +470,31 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1,
     println(io, "ENDMDL")
 end
 
+write(io::IO, top::AbstractContainer, state::State, ::Type{PQR}; model::Int = 1) = begin
+    
+    @printf(io, "MODEL %8d\n", model)
+    for (index, segment) in enumerate(eachsegment(top))
+        index > 1 && println(io, "TER")
+        for atom in eachatom(segment)
+            sti = state[atom.index]
+
+            s = @sprintf("ATOM  %5d %4s %3s %s%4d    %8.3f%8.3f%8.3f%8.3f%8.3f",
+                atom.index, atom.name,
+                atom.container.name, atom.container.container.code,
+                atom.container.id,
+                sti.t[1], sti.t[2], sti.t[3], sti.δ, 0.0)
+            println(io, s)
+        end
+    end
+
+    for atom in eachatom(top)
+       print(io, @sprintf("CONECT%5d", atom.index))
+       foreach(n->print(io, @sprintf("%5d", n.index)), atom.bonds)
+       println(io,"")
+    end
+    println(io, "ENDMDL")
+end
+
 write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     println(io, "name: ", top.name)
     println(io, "atoms:")
@@ -526,6 +552,8 @@ function write(pose::Pose{Topology}, filename::String)
         write(io, pose.graph, pose.state, PDB)
     elseif endswith(filename, ".yml")
         write(io, pose.graph, pose.state, YML)
+    elseif endswith(filename, ".pqr")
+        write(io, pose.graph, pose.state, PQR)
     else
         error("Unable to write to '$filename': unsupported file type")
     end
