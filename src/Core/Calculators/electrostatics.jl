@@ -18,17 +18,15 @@ module Electrostatics
 
     # ---
 
-    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType}
         cp = ProtoSyn.Calculators.coulomb_potential
         e, f = ProtoSyn.Calculators.apply_potential(A, pose, cp, update_forces, vlist, selection, mask)
         return e, f
     end # function
 
-    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        cp = ProtoSyn.Calculators.coulomb_potential
-        e, f = ProtoSyn.Calculators.apply_potential(A, pose, cp, update_forces, vlist, selection, mask)
-        return e, f
-    end # function
+    calc_coulomb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) = begin
+        calc_coulomb(ProtoSyn.acceleration.active, pose, selection, update_forces; mask = mask, vlist = vlist)
+    end
 
     function get_default_coulomb(;α::T = 1.0) where {T <: AbstractFloat}
         _mask = ProtoSyn.Calculators.get_bonded_mask()

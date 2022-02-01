@@ -1,4 +1,4 @@
-using StatsBase: sample
+using StatsBase
 
 """
     DesignMutator(p_mut::AbstractFloat, grammar::LGrammar, selection::Opt{AbstractSelection}; [searchable_aminoacids::Dict{Char, Bool} = Peptides.available_aminoacids])
@@ -98,7 +98,7 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
             cr_name = Peptides.three_2_one[residue.name]
             nr_name = cr_name
             while nr_name == cr_name
-                nr_name = sample(searchable_aas)
+                nr_name = StatsBase.sample(searchable_aas)
             end
 
             # 2) Perform mutation (already requests i2c)

@@ -8,4 +8,5 @@ module Calculators
     include("restraints.jl")
     include("hydrogen_bonds.jl")
     include("natural_frequency.jl")
+    include("ss_propensity.jl")
 end

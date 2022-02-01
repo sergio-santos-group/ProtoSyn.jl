@@ -34,7 +34,7 @@ end
 
 function get_default_aa_frequency(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
-        "Natural AA Frequency",
+        "Natural_AA_Frequency",
         calc_aa_frequency,
         nothing,
         Dict{Symbol, Any}(:aa_frequency_map => default_aa_frequencies),

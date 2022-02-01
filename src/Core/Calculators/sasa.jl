@@ -3,7 +3,7 @@ module SASA
     using ProtoSyn
     using LinearAlgebra
 
-    function calc_sasa(::Type{A}, pose::Pose, update_forces::Bool = false; selection::AbstractSelection = an"CA", probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, Ω::T = 4.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_sasa(::Type{A}, pose::Pose, selection::AbstractSelection = an"CA", update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, Ω::T = 4.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         dm = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
         if A === ProtoSyn.CUDA_2
             dm = collect(dm)

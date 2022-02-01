@@ -56,8 +56,12 @@ function get_flat_bottom_potential(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn
     @assert d4 >= d3 "d4 must be of equal value or over d3"
     @assert d1 !== Inf && d2 !== Inf "Neither `d1` or `d2` can be infinite"
 
-    return function flat_bottom_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing) where {T <: AbstractFloat}
+    return function flat_bottom_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, qi::T = 0.0, qj::T = 0.0) where {T <: AbstractFloat}
 
+        # Note: 'qi' and 'qj' refer to the atomic partial charges, which are not
+        # necessary for this potential. They are included for uniformization
+        # purposes only.
+        
         v !== nothing && begin
             f1 = (T(0.0), T(0.0), T(0.0))
             f2 = (T(0.0), T(0.0), T(0.0))
@@ -119,7 +123,11 @@ function get_flat_bottom_potential(A::Type{ProtoSyn.SIMD_1}; d1::T = 0.0, d2::T 
     @assert d4 >= d3 "d4 must be of equal value or over d3"
     @assert d1 !== Inf && d2 !== Inf "Neither `d1` or `d2` can be infinite"
 
-    return function flat_bottom_potential(d::T; v::Opt{Vec{4, T}} = nothing) where {T <: AbstractFloat}
+    return function flat_bottom_potential(d::T; v::Opt{Vec{4, T}} = nothing, qi::T = 0.0, qj::T = 0.0) where {T <: AbstractFloat}
+
+        # Note: 'qi' and 'qj' refer to the atomic partial charges, which are not
+        # necessary for this potential. They are included for uniformization
+        # purposes only.
 
         v !== nothing && begin
             f1 = Vec((T(0.0), T(0.0), T(0.0)))
