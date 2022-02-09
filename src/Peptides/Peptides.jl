@@ -28,6 +28,7 @@ include("Methods/io.jl")
 include("Methods/graph.jl")
 include("Methods/state.jl")
 include("Methods/pose.jl")
+include("Methods/other.jl") # Requires constants.jl
 include("Submodules/Builder/Builder.jl")
 include("Submodules/Builder/grammar.jl")
 include("Mutators/Mutators.jl") # Requires Rotamers.jl
