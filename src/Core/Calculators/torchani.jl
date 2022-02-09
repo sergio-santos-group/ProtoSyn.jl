@@ -61,7 +61,7 @@ module TorchANI
      8
     ```
     """
-    function get_ani_species(container::ProtoSyn.AbstractContainer, selection::Opt{AbstractSelection})
+    function get_ani_species(pose::Pose, selection::Opt{AbstractSelection})
         
         periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16, "Se" => 34)
 
@@ -72,14 +72,14 @@ module TorchANI
         end
 
         species = Vector{Int64}()
-        for atom in sele(container, gather = true)
+        for atom in sele(pose, gather = true)
             push!(species, periodic_table[atom.symbol])
         end
 
         return species
     end
 
-    get_ani_species(pose::Pose, selection::Opt{AbstractSelection}) = get_ani_species(pose.graph, selection)
+    # get_ani_species(pose::Pose, selection::Opt{AbstractSelection}) = get_ani_species(pose, selection)
 
     # --- SINGLE MODEL
     

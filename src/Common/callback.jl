@@ -56,3 +56,34 @@ function default_energy_step_frame_callback(n::Int, filename::String)::Callback
 
     return Callback(energy_step_frame, n)
 end
+
+
+"""
+# TODO DOCUMENTATION
+"""
+function default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none)
+    function energy_step_detailed(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
+        N = 20 + (20 * length(pose.state.e)) - length(msg)
+        M = floor(Int, N/2) - 3
+        E = N-6-(M*2)
+        acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        if driver_state.step === 0
+            s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
+            s *= @sprintf("%6s%14s", "Step", "Accept-Ratio")
+            for component in sort(collect(keys(pose.state.e)))
+                s *= @sprintf("%20s", string(component))
+            end
+            s*= "\n"
+            printstyled(s, color = :cyan)
+        end
+
+        s = @sprintf("%6d%14.3f", driver_state.step, acc)
+        for component in sort(collect(keys(pose.state.e)))
+            s *= @sprintf("%20.3f", pose.state.e[component])
+        end
+        s*= "\n"
+        printstyled(s, color = color)
+    end
+
+    return Callback(energy_step_detailed, n)
+end

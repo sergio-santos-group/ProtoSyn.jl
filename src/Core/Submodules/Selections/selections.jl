@@ -72,6 +72,7 @@ function gather(mask::Mask{T}, container::AbstractContainer) where {T <: Abstrac
             push!(results, item)
         end
     end
+    
     return results
 end
 
