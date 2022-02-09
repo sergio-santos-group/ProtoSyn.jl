@@ -139,7 +139,7 @@ module HydrogenBonds
     """
     function get_default_hydrogen_bond_network_comp(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
-            "Hydrogen_Bond_Network",
+            "Hydrogen_Bonds",
             calc_hydrogen_bond_network,
             nothing,
             Dict{Symbol, Any}(

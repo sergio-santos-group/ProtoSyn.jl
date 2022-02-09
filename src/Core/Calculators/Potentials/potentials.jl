@@ -26,19 +26,6 @@ apply_potential(pose::Pose, potential::Function, update_forces::Bool, verlet_lis
 apply_potential!(A::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, potential::Function, update_forces::Bool, verlet_list::Union{VerletList, Nothing}, selection::Union{Nothing, ProtoSyn.AbstractSelection}, mask::MaskMap) = begin
     e, f = apply_potential(A, pose, potential, update_forces, verlet_list, selection, mask)
 
-    if update_forces & !(f === nothing)
-        if selection !== nothing
-            for (i, atom) in enumerate(selection(pose; gather = true))
-                pose.state.f[:, atom.index] += f[:, i]
-            end
-        else
-            for atom_index in 1:pose.state.size
-                pose.state.f[:, atom_index] += f[:, atom_index]
-            end
-        end
-    end
-
-    pose.state.e[:Total] = e
     return e, f
 end
 
