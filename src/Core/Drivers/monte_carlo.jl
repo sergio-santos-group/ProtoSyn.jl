@@ -141,7 +141,6 @@ function (driver::MonteCarlo)(pose::Pose)
     driver_state.temperature = driver.temperature(0)
     
     previous_energy = driver.eval!(pose)
-    # @printf "%10s %5.2f %5.2f %5.2f %5.2f %5.2f\n" "INIT" pose.state.e[:Total] pose.state.e[:TorchANI_ML_Model] pose.state.e[:SASA] pose.state.e[:Hydrogen_Bond_Network] pose.state.e[:Clash_Sidechain_Restraint]
     previous_state  = copy(pose)
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
@@ -155,12 +154,13 @@ function (driver::MonteCarlo)(pose::Pose)
         driver_state.temperature = driver.temperature(driver_state.step)
         m = exp((-(energy - previous_energy)) / driver_state.temperature)
         if (energy < previous_energy) || (n < m)
+            # println("Accepted")
             previous_energy = energy
             previous_state = copy(pose)
             driver_state.acceptance_count += 1
         else
-            # @printf "%10s %5.2f %5.2f %5.2f %5.2f %5.2f\n" "REJECTED" pose.state.e[:Total] pose.state.e[:TorchANI_ML_Model] pose.state.e[:SASA] pose.state.e[:Hydrogen_Bond_Network] pose.state.e[:Clash_Sidechain_Restraint]
-            ProtoSyn.recoverfrom!(pose, previous_state)
+            # println("Rejected")
+            ProtoSyn.recoverfrom!(pose, previous_state) # If copy, the chain is broken
         end
 
         driver_state.step += 1

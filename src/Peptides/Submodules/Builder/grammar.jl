@@ -22,7 +22,7 @@ julia> res_lib = ProtoSyn.Peptides.grammar()
 function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     filename = joinpath(Peptides.resource_dir, filename)
     grammar = ProtoSyn.load_grammar_from_file(T, filename, key)
-    load_grammar_extras_from_file!(T, filename, key)
+    Peptides.load_grammar_extras_from_file!(T, filename, key)
 
     return grammar
 end
@@ -83,14 +83,7 @@ end
 """
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
 
-    # Re-read the YML grammar file
-    yml = ProtoSyn.read_yml(filename)[key]
-    
-    vars = yml["variables"]
-    for (key, name) in vars
-        var_filename = joinpath(ProtoSyn.resource_dir, name)
-        var_yml = ProtoSyn.read_yml(var_filename)
-        
+    function load_extras!(var_yml::Dict{Any, Any})
         # 1. Add chi entries to Peptides.Dihedral.chi_dict
         if "chis" in keys(var_yml)
             Peptides.Dihedral.chi_dict[var_yml["name"]] = var_yml["chis"]
@@ -99,22 +92,48 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
         # 2. Add entries to the Peptides.available_aminoacids
         Peptides.available_aminoacids[var_yml["code"][1]] = true
 
-        # 3. Add entries to Peptides.three_2_one & Peptides.one_2_three
-        Peptides.three_2_one[var_yml["name"]] = var_yml["code"][1]
-        Peptides.one_2_three[var_yml["code"][1]] = var_yml["name"]
+        # 3. Add entries to ProtoSyn.three_2_one & ProtoSyn.one_2_three
+        ProtoSyn.three_2_one[var_yml["name"]] = var_yml["code"][1]
+        if var_yml["code"][1] in keys(ProtoSyn.one_2_three)
+            ProtoSyn.verbose.mode && println("Variable $(var_yml["code"][1]) already in the Protosyn.three_2_one dictionary (Currently assigned to $(ProtoSyn.one_2_three[var_yml["code"][1]])).")
+        else
+            ProtoSyn.one_2_three[var_yml["code"][1]] = var_yml["name"]
+        end
 
         # 4. Add same entries for any alternative name
         if "alt" in keys(var_yml)
             for alt_name in var_yml["alt"]
-                Peptides.three_2_one[alt_name] = var_yml["code"][1]
-                Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
+                ProtoSyn.three_2_one[alt_name] = var_yml["code"][1]
+                if alt_name in keys(Peptides.Dihedral.chi_dict)
+                    ProtoSyn.verbose.mode && println("Variable $(alt_name) already in the Peptides.Dihedral.chi_dict (Currently assigned to $(Peptides.Dihedral.chi_dict[alt_name]).")
+                else
+                    Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
+                end
             end
+        end
+    end
+
+    # Re-read the YML grammar file
+    yml = ProtoSyn.read_yml(filename)[key]
+    
+    vars = yml["variables"]
+    for (key, name) in vars
+        if isa(name, Vector{String})
+            for _name in name
+                var_filename = joinpath(ProtoSyn.resource_dir, _name)
+                var_yml = ProtoSyn.read_yml(var_filename)
+                load_extras!(var_yml)
+            end
+        else
+            var_filename = joinpath(ProtoSyn.resource_dir, name)
+            var_yml = ProtoSyn.read_yml(var_filename)
+            load_extras!(var_yml)
         end
     end
 end
 
 load_grammar_extras_from_file!(filename::AbstractString, key::String) = begin
-    load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
+    Peptides.load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
 end
 
 
@@ -124,6 +143,7 @@ end
 load_default_grammar(::Type{T}) where {T <: AbstractFloat} = load_grammar_from_file(T, "grammars.yml", "default")
 load_default_grammar() = load_default_grammar(ProtoSyn.Units.defaultFloat)
 
+@info " | Loading default peptides grammar"
 
 """
 # TODO

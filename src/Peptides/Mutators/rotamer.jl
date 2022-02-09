@@ -116,6 +116,8 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
             ProtoSyn.request_i2c!(pose.state, all = true)
         end
     end
+
+    return pose
 end
 
 function Base.show(io::IO, rm::RotamerMutator, level_code::Opt{LevelCode} = nothing)

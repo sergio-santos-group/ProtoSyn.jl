@@ -21,7 +21,7 @@ function calc_aa_frequency(::Type{A}, pose::Pose, selection::Opt{AbstractSelecti
 
     e = 0.0
     for residue in residues
-        name = ProtoSyn.Peptides.three_2_one[residue.name]
+        name = ProtoSyn.ProtoSyn.three_2_one[residue.name]
         e -= aa_frequency_map[name]
     end
 

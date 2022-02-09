@@ -15,17 +15,15 @@ mutable struct ResidueName <: AbstractString
 end
 
 Base.show(io::IO, rn::ResidueName) = begin
-    print(rn.content)
+    print(io, rn.content)
 end
+
+Base.ncodeunits(rn::ProtoSyn.ResidueName) = length(rn.content)
 
 Base.:(==)(s1::String, s2::ResidueName)      = s2 == s1
 Base.:(==)(s1::ResidueName, s2::ResidueName) = s1 == s2.content
 Base.:(==)(s1::ResidueName, s2::String)      = begin
-    if s1.content in ["HIE", "HIS"] && s2 in ["HIE", "HIS"]
-        return true
-    else
-        return s1.content == s2
-    end
+    return s2 in ProtoSyn.alt_residue_names[s1.content]
 end
 
 Base.iterate(rn::ResidueName) = Base.iterate(rn.content)

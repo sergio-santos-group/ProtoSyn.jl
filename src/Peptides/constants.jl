@@ -1,52 +1,4 @@
-one_2_three = Dict{Char,String}(
-    # '?' => "BKB",
-    # 'A' => "ALA",
-    # 'C' => "CYS",
-    # 'D' => "ASP",
-    # 'E' => "GLU",
-    # 'F' => "PHE",
-    # 'G' => "GLY",
-    # 'H' => "HIS",
-    # 'H' => "HIE",
-    # 'I' => "ILE",
-    # 'K' => "LYS",
-    # 'L' => "LEU",
-    # 'M' => "MET",
-    # 'N' => "ASN",
-    # 'P' => "PRO",
-    # 'Q' => "GLN",
-    # 'R' => "ARG",
-    # 'S' => "SER",
-    # 'T' => "THR",
-    # 'V' => "VAL",
-    # 'W' => "TRP",
-    # 'Y' => "TYR",
-)
-
-three_2_one = Dict{String, Char}(
-    # "BKB" => '?',
-    # "ALA" => 'A',
-    # "CYS" => 'C',
-    # "ASP" => 'D',
-    # "GLU" => 'E',
-    # "PHE" => 'F',
-    # "GLY" => 'G',
-    # "HIS" => 'H',
-    # "HIE" => 'H',
-    # "ILE" => 'I',
-    # "LYS" => 'K',
-    # "LEU" => 'L',
-    # "MET" => 'M',
-    # "ASN" => 'N',
-    # "PRO" => 'P',
-    # "GLN" => 'Q',
-    # "ARG" => 'R',
-    # "SER" => 'S',
-    # "THR" => 'T',
-    # "VAL" => 'V',
-    # "TRP" => 'W',
-    # "TYR" => 'Y',
-)
+using CSV
 
 # Positive values: Hydrophobic
 # Negative values: Hydrophilic
@@ -195,27 +147,23 @@ const doolitle_hydrophobicity_extreme = Dict{String, ProtoSyn.Units.defaultFloat
     "ARG" => 0.0
 )
 
-available_aminoacids = Dict{Char, Bool}(
-    # 'M' => true,
-    # 'K' => true,
-    # 'P' => true,
-    # 'Q' => true,
-    # 'I' => true,
-    # 'H' => true,
-    # 'E' => true,
-    # 'W' => true,
-    # 'S' => true,
-    # 'T' => true,
-    # 'C' => true,
-    # 'D' => true,
-    # 'A' => true,
-    # 'L' => true,
-    # 'Y' => true,
-    # 'V' => true,
-    # 'R' => true,
-    # 'G' => true,
-    # 'F' => true,
-    # 'N' => true
-)
+available_aminoacids = Dict{Char, Bool}()
 
 const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR"]
+
+function load_aa_similarity(::Type{T}, filename::String) where {T <: AbstractFloat}
+
+    _filename = joinpath(Peptides.resource_dir, filename)
+    data = CSV.File(_filename; skipto = 2)
+
+    aa_similarity = Dict{String, Dict{String, T}}()
+
+    for row in data
+        k = string.(keys(row)[2:end])
+        aa_similarity[row[:X]] = Dict(zip(k, values(row)[2:end]))
+    end
+
+    return aa_similarity
+end
+
+const aminoacid_similarity = load_aa_similarity(ProtoSyn.Units.defaultFloat, "aa_similarity.csv")

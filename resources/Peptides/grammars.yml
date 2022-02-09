@@ -7,7 +7,7 @@ default:
     E: Peptides/yml/glu.yml
     F: Peptides/yml/phe.yml
     G: Peptides/yml/gly.yml
-    H: Peptides/yml/hie.yml
+    H: [Peptides/yml/hie.yml, Peptides/yml/hid.yml]
     I: Peptides/yml/ile.yml
     K: Peptides/yml/lys.yml
     L: Peptides/yml/leu.yml

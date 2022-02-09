@@ -95,7 +95,7 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
             residue = atom.container
 
             # 1) Get different aminoacid
-            cr_name = Peptides.three_2_one[residue.name]
+            cr_name = ProtoSyn.three_2_one[residue.name]
             nr_name = cr_name
             while nr_name == cr_name
                 nr_name = StatsBase.sample(searchable_aas)

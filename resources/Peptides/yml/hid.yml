@@ -1,5 +1,5 @@
-name: HIE
-alt: [HIS, HID]
+name: HID
+alt: [HIS, HIE]
 code: H
 atoms:
   - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000, c: -0.5964}
@@ -11,10 +11,10 @@ atoms:
   - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563, c:  0.3338}
   - {name:  CG, id:   8, symbol:  C, b:   1.509861, theta:   2.007128, phi:   3.141232, c:  0.2427}
   - {name: ND1, id:   9, symbol:  N, b:   1.390068, theta:   2.129231, phi:  -3.141546, c: -0.4698}
-  - {name: CE1, id:  10, symbol:  C, b:   1.320049, theta:   1.885492, phi:  -3.141177, c:  0.2381}
-  - {name: HE1, id:  11, symbol:  H, b:   1.089771, theta:   2.095009, phi:  -3.141351, c:  0.2368}
-  - {name: NE2, id:  12, symbol:  N, b:   1.359805, theta:   1.856107, phi:  -3.141512, c: -0.5908}
-  - {name: HE2, id:  13, symbol:  H, b:   1.010161, theta:   2.181227, phi:  -3.141158, c:  0.3959}
+  - {name: HD1, id:  10, symbol:  H, b:   1.010161, theta:   2.181227, phi:  -0.001449, c:  0.3959}
+  - {name: CE1, id:  11, symbol:  C, b:   1.320049, theta:   1.885492, phi:  -3.141177, c:  0.2381}
+  - {name: HE1, id:  12, symbol:  H, b:   1.089771, theta:   2.095009, phi:  -3.141351, c:  0.2368}
+  - {name: NE2, id:  13, symbol:  N, b:   1.359805, theta:   1.856107, phi:  -3.141512, c: -0.5908}
   - {name: CD2, id:  14, symbol:  C, b:   1.360079, theta:   2.293040, phi:   0.000579, c:  0.0169}
   - {name: HD2, id:  15, symbol:  H, b:   1.089409, theta:   2.332226, phi:  -0.001449, c:  0.2858}
   - {name:   C, id:  16, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.7243}
@@ -28,11 +28,11 @@ bonds:
   HB1: [CB]
   HB2: [CB]
   CG: [CB, ND1, CD2]
-  ND1: [CG, CE1]
+  ND1: [CG, CE1, HD1]
+  HD1: [ND1]
   CE1: [ND1, HE1, NE2]
   HE1: [CE1]
-  NE2: [CE1, HE2, CD2]
-  HE2: [NE2]
+  NE2: [CE1, CD2]
   CD2: [CG, NE2, HD2]
   HD2: [CD2]
   C: [CA, O]
@@ -44,9 +44,8 @@ graph:
     CA: [HA, CB, C]
     CB: [HB1, HB2, CG]
     CG: [ND1, CD2]
-    ND1: [CE1]
+    ND1: [CE1, HD1]
     CE1: [HE1]
-    NE2: [HE2]
     CD2: [NE2, HD2]
     C: [O]
 chis: [CB, CG, ND1]

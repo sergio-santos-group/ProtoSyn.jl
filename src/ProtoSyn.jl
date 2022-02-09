@@ -63,7 +63,7 @@ const Opt = Union{Nothing, T} where T
 
 include("Core/Units/Units.jl")
 include("Core/Methods/other.jl") # Requires Units.jl
-include("Core/Methods/constants.jl")
+include("Core/Types/constants.jl")
 include("Core/Types/other.jl")
 include("Core/Methods/macros.jl") # Requires other.jl
 include("Core/Types/graph.jl")
@@ -79,6 +79,7 @@ include("Core/Methods/iterators.jl")
 include("Core/Methods/align.jl")
 include("Core/Submodules/Clustering/Clustering.jl")
 include("Core/Submodules/Builder/grammar.jl")
+include("Core/Methods/tautomers.jl") # Requires grammar.jl
 include("Core/Submodules/Builder/Builder.jl")
 include("Core/Methods/pose.jl") # Requires grammar.jl
 

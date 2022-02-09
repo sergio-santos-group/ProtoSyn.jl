@@ -42,7 +42,7 @@ function calc_aa_ss_propensity(::Type{A}, pose::Pose, selection::Opt{AbstractSel
 
     e = 0.0
     for residue in residues
-        name = ProtoSyn.Peptides.three_2_one[residue.name]
+        name = ProtoSyn.ProtoSyn.three_2_one[residue.name]
         e -= aa_ss_propensity_map[ss[residue.index]][name]
     end
 
@@ -64,7 +64,7 @@ end
 
 function get_default_aa_ss_propensity(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
-        "AA_Secondary_Structure_Propensity",
+        "AA_SS_Propensity",
         calc_aa_ss_propensity,
         nothing,
         Dict{Symbol, Any}(

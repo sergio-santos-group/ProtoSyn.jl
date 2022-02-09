@@ -186,7 +186,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     
     sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
 
-    same_aminoacid = string(ProtoSyn.Peptides.three_2_one[residue.name]) == derivation[1]
+    same_aminoacid = string(ProtoSyn.ProtoSyn.three_2_one[residue.name]) == derivation[1]
     if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
         # println("No mutation required, residue already has sidechain of the requested type.")
         return pose
@@ -274,7 +274,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
         end
     end
     
-    residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
+    residue.name = ProtoSyn.ResidueName(ProtoSyn.one_2_three[derivation[1][1]])
     ProtoSyn.request_i2c!(pose.state)
 
     return pose
@@ -361,7 +361,7 @@ end
 # * Remove and add sidechains
 
 """
-    remove_sidechains!(pose::Pose{Topology}, res_lib::selection::LGrammar, Opt{AbstractSelection} = nothing)
+    remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, Opt{AbstractSelection} = nothing)
 
 Removes the sidechain atoms of the given [`Pose`](@ref) `pose`. If an
 `AbstractSelection` `selection` is provided, only the sidechain atoms belonging
@@ -502,7 +502,7 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
         residues = collect(eachresidue(pose.graph))
     end
     for residue in residues
-        derivation = [string(Peptides.three_2_one[residue.name])]
+        derivation = [string(ProtoSyn.three_2_one[residue.name])]
         derivation == ["P"] && continue
         Peptides.mutate!(pose, residue, grammar, derivation,
             ignore_existing_sidechain = true)
@@ -729,7 +729,7 @@ function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{
         end
 
         # Don't change sidechains in NCAA
-        if !(residue.name in keys(Peptides.three_2_one))
+        if !(residue.name in keys(ProtoSyn.three_2_one))
             if predict_unknown_aminoacids
                 @warn "Possible NCAA found at residue $residue. Predicting hydrogens."
                 predict_hydrogens!(pose, SerialSelection{Residue}(residue.id, :id))
@@ -739,7 +739,7 @@ function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{
             continue
         end
         
-        derivation = [string(Peptides.three_2_one[residue.name])]
+        derivation = [string(ProtoSyn.three_2_one[residue.name])]
         derivation == ["P"] && continue
 
         # 2. Save rotamer
