@@ -32,30 +32,89 @@ end
 
 
 """
-    sequence(container::ProtoSyn.AbstractContainer)::String
-    sequence(pose::Pose)::String
-
-Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
-as a string.
-
-# Examples
-```
-julia> ProtoSyn.Peptides.sequence(pose)
-"SESEAEFKQRLAAIKTRLQAL"
-```
+# TODO
+# SHOULD USE FIND_TAUTOMER?
 """
-function sequence(container::ProtoSyn.AbstractContainer)::String
+function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.grammar)
+    
+    pose_sequence = [string(residue) for residue in ProtoSyn.sequence(pose)]
+    template = ProtoSyn.build(grammar, pose_sequence)
 
-    sequence = ""
-    for residue in eachresidue(container)
-        try
-            sequence *= three_2_one[residue.name]
-        catch KeyError
-            sequence *= '?'
+    for segment in eachsegment(pose.graph)
+        # Check caps
+        # N-terminal
+        N = ProtoSyn.identify_atom_by_bonding_pattern(segment[1], ["N", "C", "C", "O"])
+        if length(N.bonds) > 2 
+            Peptides.cap!(template, rid"1")
+        end
+
+        last_res_id = segment[end].id
+        Cs = ProtoSyn.identify_atom_by_bonding_pattern(segment[end], ["C", "C", "N", "C"])
+        C = [c for c in Cs if length(c.bonds) <= 3][1]
+        if length(C.bonds) > 2 
+            Peptides.cap!(template, SerialSelection{Residue}(last_res_id, :id))
+        end
+    end
+    
+    t_atoms = ProtoSyn.travel_graph(template.graph[1, 1, 1], sort_bonds = true)
+    p_atoms = ProtoSyn.travel_graph(pose.graph[1, 1, 1], sort_bonds = true)
+    
+    if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
+        for (t_atom, p_atom) in zip(t_atoms, p_atoms)
+            ProtoSyn.rename!(p_atom, t_atom.name)
+        end
+    end
+    
+    # In case the direct approach wasn't successful
+    @warn "Possible tautomers identified, assigning default names residue by residue ..."
+    pose_temp_res = zip(eachresidue(pose.graph), eachresidue(template.graph))
+    for (pose_residue, template_residue) in pose_temp_res
+        # println("\n$pose_residue - $template_residue")
+
+        pose_res_name = string(ProtoSyn.three_2_one[pose_residue.name.content])
+        ind_pose_res  = copy(pose_residue) # Removes inter-residue connections
+        pose_N        = ProtoSyn.identify_atom_by_bonding_pattern(ind_pose_res, ["N", "C", "C", "O"])
+        pose_atoms    = ProtoSyn.travel_graph(pose_N, sort_bonds = true)
+        pose_graph    = [a.symbol for a in pose_atoms]
+        # println("Residue $pose_residue (Graph: $pose_graph)")
+
+        if isa(grammar.variables[pose_res_name], Tautomer)
+            found_match = false
+            for tautomer in grammar.variables[pose_res_name].list
+                temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(tautomer.graph[1], ["N", "C", "C", "O"])
+                temp_atoms = ProtoSyn.travel_graph(temp_N, sort_bonds = true)
+                temp_graph = [a.symbol for a in temp_atoms]
+
+                if all(pose_graph .=== temp_graph)
+                    # println("Match found.")
+                    for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
+                        pri = pose_residue.items
+                        actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
+                        ProtoSyn.rename!(pri[actual_pose_a], t_atom.name)
+                    end
+                    found_match = true
+                end
+            end
+            !found_match && @warn "No available tautomer matched the residue $ind_pose_res !"
+        else
+            temp_res   = copy(template_residue)
+            temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(temp_res, ["N", "C", "C", "O"])
+            temp_atoms = ProtoSyn.travel_graph(temp_N, sort_bonds = true)
+            temp_graph = [a.symbol for a in temp_atoms]
+
+            if all(pose_graph .=== temp_graph)
+                # println("Match found.")
+                for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
+                    pri = pose_residue.items
+                    actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
+                    # println("renaming atom $(pri[actual_pose_a]) to $(t_atom.name)")
+                    ProtoSyn.rename!(pri[actual_pose_a], t_atom.name)
+                end
+            else
+                @warn "Available template for $pose_residue ($(template_residue)) doesn't match the graph."
+            end
         end
     end
 
-    return sequence
+    return pose
 end
-
-sequence(pose::Pose) = sequence(pose.graph)

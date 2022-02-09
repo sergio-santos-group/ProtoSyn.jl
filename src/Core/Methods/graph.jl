@@ -421,49 +421,7 @@ count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
 
 
-export travel_graph
-
-"""
-    travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
-
-Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
-and `stop`, while following the structure's [Graph](@ref state-types). If no `stop`
-[`Atom`](@ref) instance is provided or if it isn't found as a downstream parent
-of the `start` [`Atom`](@ref), all instances until no children [`Atom`](@ref)
-instances are found are returned (for example, until the end of the current
-[Pose](@ref) of [`Segment`](@ref)). Note that the order of the returned
-[`Atom`](@ref) instances reflects the organization of the graph followed, and
-not the distance/parenthood to the `start` [`Atom`](@ref), and should therefore
-be ignored in most cases.
-
-# See also
-[`is_contiguous`](@ref) [`hasparent`](@ref) [`setparent!`](@ref)
- 
-# Examples
-```jldoctest
-julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
-4-element Vector{Atom}:
- Atom{/UNK:1/UNK:1/LEU:21/CD1:334}
- Atom{/UNK:1/UNK:1/LEU:21/HD13:337}
- Atom{/UNK:1/UNK:1/LEU:21/HD12:336}
- Atom{/UNK:1/UNK:1/LEU:21/HD11:335}
-```
-"""
-function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
-    atoms = Vector{Atom}([start])
-    stack = Vector{Atom}(copy(start.children))
-
-    while length(stack) > 0
-        atom_i = pop!(stack)
-        if atom_i != stop
-            stack = vcat(stack, copy(atom_i.children))
-        end
-        push!(atoms, atom_i)
-    end
-
-    return atoms
-end
-
+include("travel-graph.jl")
 
 export ids
 """

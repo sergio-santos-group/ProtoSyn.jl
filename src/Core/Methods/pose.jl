@@ -223,7 +223,6 @@ Fragment(Segment{/UNK:58266}, State{Float64}:
 ```
 """
 function fragment(pose::Pose{Topology})
-    
     length(pose.graph) != 1 && error("Only topologies with a single Segment can be turned into fragments")
     
     topology = copy(pose.graph)
@@ -746,7 +745,6 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     return Pose(popped_atom, popped_state)
 end
 
-
 """
     pop_residue!(pose::Pose{Topology}, residue::Residue; [keep_downstream_position::Bool = false])
 
@@ -894,3 +892,71 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
 
     return pose
 end
+
+
+"""
+# TODO
+"""
+function identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+    function seek_pattern(atom::Atom, inner_pattern::Vector{String}, previous::Opt{Atom})
+        inner_candidates = [a for a in atom.bonds if (a.symbol === inner_pattern[1]) && (a !== previous)]
+        length(inner_candidates) === 0 && return false
+        deleteat!(inner_pattern, 1)
+        length(inner_pattern) === 0 && return true
+        return [seek_pattern(c, copy(inner_pattern), atom) for c in inner_candidates]
+    end
+
+    candidates = [a for a in eachatom(container) if a.symbol === pattern[1]]
+    length(candidates) === 1 && return candidates[1]
+    deleteat!(pattern, 1)
+    length(pattern) === 0 && return candidates
+
+    c = [seek_pattern(c, copy(pattern), nothing) for c in candidates]
+
+    # Unravel results
+    _c = Vector{Bool}([])
+    for group in c
+        for _ in 1:length(pattern)
+            group = reduce(vcat, group)
+        end
+        push!(_c, any(group))
+    end
+
+    hits = candidates[_c]
+    if length(hits) === 1
+        return hits[1]
+    else
+        return hits
+    end
+end
+
+
+"""
+    sequence(container::ProtoSyn.AbstractContainer)::String
+    sequence(pose::Pose)::String
+
+Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
+as a string.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.sequence(pose)
+"SESEAEFKQRLAAIKTRLQAL"
+```
+"""
+function sequence(container::ProtoSyn.AbstractContainer)::String
+
+    sequence = ""
+    for residue in eachresidue(container)
+        try
+            sequence *= ProtoSyn.three_2_one[residue.name.content]
+        catch KeyError
+            sequence *= '?'
+        end
+    end
+
+    return sequence
+end
+
+sequence(pose::Pose) = sequence(pose.graph)

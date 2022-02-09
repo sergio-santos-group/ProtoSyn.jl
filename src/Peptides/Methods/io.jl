@@ -34,7 +34,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 
     poses = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
 
-    available_aminoacids = [ProtoSyn.Peptides.one_2_three[x] for x in keys(ProtoSyn.Peptides.available_aminoacids)]
+    available_aminoacids = [ProtoSyn.ProtoSyn.one_2_three[x] for x in keys(ProtoSyn.Peptides.available_aminoacids)]
     
     # Set parenthood of residues
     if isa(poses, Pose) 
@@ -46,14 +46,19 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             n_residues = ProtoSyn.count_residues(segment)
 
             # Intra-residue parenthood (on residue 1)
+            # Note: the pose already has an infered graph from ProtoSyn.load,
+            # but the Peptides module makes sure that all intra-residue graphs
+            # emerge from the N atom, matching the default Peptides grammar.
             residue = segment[1]
-            ProtoSyn.infer_parenthood!(residue, overwrite = true, start = residue["N"])
+            starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
+            ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
 
             for residue_index in 2:n_residues
                 residue = segment[residue_index]
 
                 # Intra-residue parenthood
-                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = residue["N"])
+                starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
+                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
 
                 # Inter-residue parenthood
                 if !(residue.name in available_aminoacids)
@@ -61,13 +66,17 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                     continue
                 end
                 
+                # Re-set the inter-residue parenthood to match the default
+                # Peptides grammar
                 popparent!(residue) # Was root before.
                 popparent!(residue["N"]) # Was root before.
+                # println("Bonds of $(residue["N"]): $(residue["N"].bonds)")
                 C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
                 @assert C_bond_index !== nothing "No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds))."
                 parent_residue = residue["N"].bonds[C_bond_index].container
                 setparent!(residue, parent_residue)
                 setparent!(residue["N"], residue["N"].bonds[C_bond_index])
+                # println("$(residue["N"].bonds[C_bond_index])-$(residue["N"])")
             end
         end
     end

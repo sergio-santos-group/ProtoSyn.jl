@@ -142,7 +142,7 @@ function (crankshaft_mutator::CrankshaftMutator)(pose::Pose, atoms::Vector{Atom}
                 # atom from the last residue in the rotation. In the case of
                 # proteins, for example, it should be the sidechain, as in
                 # the selection !(an"^CA$|^N$|^C$|^H$|^O$"r)
-                ids    = ProtoSyn.ids(travel_graph(atom_i, atom_j))
+                ids    = ProtoSyn.ids(travel_graph(atom_i, stop = atom_j))
                 atoms  = crankshaft_mutator.inc_last_res(atom_j.container, gather = true)
                 ids2   = ProtoSyn.ids(atoms)
                 idxs   = vcat(ids, ids2)
