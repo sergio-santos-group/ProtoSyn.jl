@@ -45,12 +45,12 @@ module Restraints
         # * Note: The default :d1 and :d2 distances were parametrized based on
         # * the 2A3D PDB structure.
         
-        _sele = !an"^CA$|^N$|^C$|^H$|^O$"r
+        _sele = !SidechainSelection()
         if mask === nothing
-            mask = ProtoSyn.Calculators.get_intra_residue_mask(_sele)
+            mask = ProtoSyn.Calculators.get_intra_residue_mask
         end
         return EnergyFunctionComponent(
-            "Clash_Sidechain_Restraint",
+            "Sidechain_Clash",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
             _sele,
             Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :mask => mask),

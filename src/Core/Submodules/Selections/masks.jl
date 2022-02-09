@@ -251,3 +251,14 @@ function cross2d(m1::Mask{T}, m2::Mask{T}) where {T <: AbstractContainer}
 end
 
 cross2d(m1::Mask{T}) where {T <: AbstractContainer} = cross2d(m1, m1')
+
+# # --- Dynamic masks
+
+# mutable struct DynamicMask
+#     f::Function
+#     sele::AbstractSelection
+# end
+
+# (dm::dynamicMask)(pose::Pose) = begin
+#     return dm.f(pose, dm.sele)
+# end

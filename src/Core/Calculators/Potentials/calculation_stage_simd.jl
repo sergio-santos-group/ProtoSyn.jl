@@ -35,7 +35,8 @@ using SIMD
     update_forces::Bool,
     verlet_list::Nothing,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
         n_atoms  = length(coords) ÷ 3
@@ -61,7 +62,7 @@ using SIMD
                     energies[j, i] = potential(dij)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[i].δ, qj = pose.state[j].δ)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]
@@ -86,7 +87,8 @@ end
     update_forces::Bool,
     verlet_list::VerletList,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
         n_atoms  = length(coords) ÷ 3
@@ -117,7 +119,7 @@ end
                     energies[j, i] = potential(dij)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[i].δ, qj = pose.state[j].δ)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]

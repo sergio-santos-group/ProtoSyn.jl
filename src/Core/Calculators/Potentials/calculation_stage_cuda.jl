@@ -49,7 +49,8 @@ function resolve_calculation(::Type{ProtoSyn.CUDA_2},
     update_forces::Bool,
     verlet_list::Union{VerletList, Nothing},
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     # Note: verlet_list and update_forces are ignored in CUDA_2 mode
     # (in version 1.01)
@@ -66,7 +67,7 @@ function resolve_calculation(::Type{ProtoSyn.CUDA_2},
     forces   = CuArray(zeros(T, _size, _size, 3))
     energies = CuArray(zeros(T, _size, _size))
 
-    qs = CuArray([pose.state[index].δ for index in 1:_size])
+    qs = CuArray([pose.state[index].δ for index in indexes])
 
     @cuda blocks = blocks threads = threads resolve_calculation_kernel(_coords, energies, forces, _size, potential, qs)
 

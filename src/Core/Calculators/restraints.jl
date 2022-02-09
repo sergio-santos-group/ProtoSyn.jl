@@ -140,7 +140,7 @@ module Restraints
     """
     function get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
-            "Bond_Distance_Restraint",
+            "Bond_Distance_Rest",
             calc_bond_distance_restraint,
             nothing,
             Dict{Symbol, Any}(:x0 => 2.0),
@@ -216,11 +216,11 @@ module Restraints
         
         # with the bonded mask ignore clashes between bonded atoms
         if mask === nothing
-            mask = ProtoSyn.Calculators.get_bonded_mask()
+            mask = ProtoSyn.Calculators.get_bonded_mask
         end
 
         return EnergyFunctionComponent(
-            "All_Atom_Clash_Restraint",
+            "All_Atom_Clash_Rest",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
             nothing,
             Dict{Symbol, Any}(:d1 => 1.0, :d2 => 2.0, :d3 => Inf, :d4 => Inf, :mask => mask),
