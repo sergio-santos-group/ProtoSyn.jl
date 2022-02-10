@@ -61,8 +61,11 @@ end
 """
 # TODO DOCUMENTATION
 """
-function default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none)
+function default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)
     function energy_step_detailed(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
+        if file_out !== nothing
+            io = open(file_out, "a")
+        end
         N = 20 + (20 * length(pose.state.e)) - length(msg)
         M = floor(Int, N/2) - 3
         E = N-6-(M*2)
@@ -74,7 +77,10 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
                 s *= @sprintf("%20s", string(component))
             end
             s*= "\n"
-            printstyled(s, color = :cyan)
+            print_to_sdtout && printstyled(s, color = :cyan)
+            if file_out !== nothing
+                print(io, s)
+            end
         end
 
         s = @sprintf("%6d%14.3f", driver_state.step, acc)
@@ -82,7 +88,11 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
             s *= @sprintf("%20.3f", pose.state.e[component])
         end
         s*= "\n"
-        printstyled(s, color = color)
+        print_to_sdtout && printstyled(s, color = color)
+        if file_out !== nothing
+            print(io, s)
+            close(io)
+        end
     end
 
     return Callback(energy_step_detailed, n)
