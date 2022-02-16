@@ -69,3 +69,20 @@ amylose:
           ϕ: -1.8059794435011325  # -103.475 deg
         C5: 
           ϕ:  1.8321070224034874  # 104.972 deg
+
+polyacrilamide:
+  variables:
+    P: Sugars/yml/pam.yml
+  defop: α
+  operators:
+    α:
+      residue1: C2
+      residue2: C
+      presets:
+        C:  {θ: 120°, ϕ:   180°, b: 1.4782Å}
+        H:  {θ: 120°, ϕ:   0°}
+        C2: {θ: 120°, ϕ:   0°}
+      offsets:
+        C2: 0°
+        C3: 0°
+        N:  0°

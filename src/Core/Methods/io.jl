@@ -67,6 +67,7 @@ true
 function is_trajectory(filename::String)
     
     @assert filename[(end-3):end] == ".pdb" "File $filename must be in PDB format."
+    @assert isfile(filename) "File \"$filename\" not found."
 
     io = open(filename, "r")
     models = 0

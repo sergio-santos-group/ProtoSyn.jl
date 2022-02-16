@@ -497,6 +497,10 @@ distance_matrix(pose::Pose) = begin
     distance_matrix(ProtoSyn.acceleration.active, pose)
 end
 
+distance_matrix(pose::Pose, selection::Nothing) = begin
+    distance_matrix(ProtoSyn.acceleration.active, pose)
+end
+
 distance_matrix(state::State{T}) where {T <: AbstractFloat} = begin
     distance_matrix(ProtoSyn.acceleration.active, state)
 end

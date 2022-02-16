@@ -25,6 +25,9 @@ module Calculators
     @info " | Loading SASA"
     include("sasa.jl")
 
+    @info " | Loading GB"
+    include("gb.jl")
+
     @info " | Loading Electrostatics"
     include("electrostatics.jl")
 

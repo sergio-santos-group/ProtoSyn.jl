@@ -20,7 +20,7 @@ module Caterpillar
 
     function get_default_solvation_energy(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
-            "Caterpillar_Solvation",
+            "Caterpillar_Solv",
             neighbour_vector,
             an"CB" | (an"HA2" & rn"GLY"),
             Dict{Symbol, Any}(

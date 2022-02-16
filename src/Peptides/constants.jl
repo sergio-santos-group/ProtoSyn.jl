@@ -3,27 +3,28 @@ using CSV
 # Positive values: Hydrophobic
 # Negative values: Hydrophilic
 const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
-    "ILE" =>  4.5,
-    "VAL" =>  4.2,
-    "LEU" =>  3.8,
-    "PHE" =>  2.8,
-    "CYS" =>  2.5,
-    "MET" =>  1.9,
-    "ALA" =>  1.8,
-    "GLY" => -0.4,
-    "THR" => -0.7,
-    "SER" => -0.8,
-    "TRP" => -0.9,
-    "TYR" => -1.3,
-    "PRO" => -1.6,
-    "HIS" => -3.2,
-    "HIE" => -3.2,
-    "ASN" => -3.5,
-    "GLU" => -3.5,
-    "GLN" => -3.5,
-    "ASP" => -3.5,
-    "LYS" => -3.9,
-    "ARG" => -4.5
+    "ILE" =>  4.5, # I
+    "VAL" =>  4.2, # V
+    "LEU" =>  3.8, # L
+    "PHE" =>  2.8, # F
+    "CYS" =>  2.5, # C
+    "MET" =>  1.9, # M
+    "ALA" =>  1.8, # A
+    "GLY" => -0.4, # G
+    "THR" => -0.7, # T
+    "SER" => -0.8, # S
+    "TRP" => -0.9, # W
+    "TYR" => -1.3, # Y
+    "PRO" => -1.6, # P
+    "HIS" => -3.2, # H
+    "HIE" => -3.2, # H
+    "HID" => -3.2, # H
+    "ASN" => -3.5, # N
+    "GLU" => -3.5, # E
+    "GLN" => -3.5, # Q
+    "ASP" => -3.5, # D
+    "LYS" => -3.9, # K
+    "ARG" => -4.5  # R
 )
 
 const doolitle_hydrophobicity_mod1 = Dict{String, ProtoSyn.Units.defaultFloat}(
