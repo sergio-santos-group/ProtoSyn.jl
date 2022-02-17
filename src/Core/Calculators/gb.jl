@@ -2,55 +2,35 @@ module GB
 
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
-    # using PyCall
-
-    # const tf     = PyNULL()
-    # const models_keras = Dict{String, PyObject}(
-    #     "C" => PyNULL(),
-    #     "N" => PyNULL(),
-    #     "H" => PyNULL(),
-    #     "O" => PyNULL(),
-    #     "S" => PyNULL(),
-    # )
-
-    # function __init__()
-    #     copy!(tf, pyimport("tensorflow"))
-    #     filedir = joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN")
-        
-    #     # Setting debug level on tensorflow
-    #     if ProtoSyn.verbose.mode === false
-    #         ENV["KMP_WARNINGS"] = "0"
-    #         tf.get_logger().setLevel("ERROR")
-    #         ENV["TF_CPP_MIN_LOG_LEVEL"] = "3"
-    #     end
-        
-    #     # Load model from the corresponding json and h5 file
-    #     function model_from_json!(t::PyObject, json_m::String, weight_m::String)
-    #         json_file = open(joinpath(filedir, json_m), "r")
-    #         loaded_model_json = read(json_file, String)
-    #         close(json_file)
-    #         copy!(t, tf.keras.models.model_from_json(loaded_model_json))
-    #         t.load_weights(weight_m)
-    #     end
-
-    #     # Populate the models
-    #     for key in keys(models_keras)
-    #         model_from_json!(models_keras[key], "model_$key.json", "model_$key.h5")
-    #     end
-    # end
-
     using ONNX
     using Ghost
-    const models_onnx = Dict{String, Ghost.Tape}(
-        "C" => ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_C.onnx"), rand(Float64, 400, 1)),
-        "N" => ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_N.onnx"), rand(Float64, 400, 1)),
-        "H" => ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_H.onnx"), rand(Float64, 400, 1)),
-        "O" => ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_O.onnx"), rand(Float64, 400, 1)),
-        "S" => ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_S.onnx"), rand(Float64, 400, 1)),
-    )
+
+    mutable struct GBModels
+        C::Opt{Ghost.Tape}
+        N::Opt{Ghost.Tape}
+        H::Opt{Ghost.Tape}
+        O::Opt{Ghost.Tape}
+        S::Opt{Ghost.Tape}
+    end
+
+    const models_onnx = GBModels(
+        ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_C.onnx"), rand(Float64, 400, 1)),
+        ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_N.onnx"), rand(Float64, 400, 1)),
+        ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_H.onnx"), rand(Float64, 400, 1)),
+        ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_O.onnx"), rand(Float64, 400, 1)),
+        ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_S.onnx"), rand(Float64, 400, 1)))
+
+    Base.show(io::IO, models::GBModels) = begin
+        s = ""
+        for elem in fieldnames(typeof(models))
+            s *= string(elem) * ": "
+            s *= getproperty(models, elem) === nothing ? "⨯ | " : "✓ | "
+        end
+        print(io, s[1:end-2])
+    end
 
 
-    function predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::Dict{String, <: Any} = models_keras, batch_mode::Bool = true) where {T <: AbstractFloat}
+    function predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx) where {T <: AbstractFloat}
         
         # 1. Calculate distance matrix, if required
         if dm === nothing
@@ -59,27 +39,15 @@ module GB
         
         # 2. Pre-calculate histogram for born radii prediction
         hist = ProtoSyn.hist_by_distance_by_elem(pose, selection, dm = dm)
-                        
         
         # 3. Predict born-radii
-        if batch_mode
-            # Batch processing (≈ 2x slower)
-            born_radii = zeros(eltype(pose.state), size(hist)[1])
-            for (elem, model) in models
-                sele  = FieldSelection{Atom}(elem, :symbol) & selection
-                # radii = model.predict(hist)
-                radii = Ghost.play!(model, hist')
-                mask  = sele(pose).content
-                born_radii[mask] .= radii[mask]
-            end
-        else
-            # Element-wise processing
-            born_radii = Vector{eltype(pose.state)}()
-            for (i, atom) in enumerate(eachatom(pose.graph))
-                lane = hist[i, :]
-                # push!(born_radii, models[atom.symbol].predict(lane)[1])
-                push!(born_radii, Ghost.play!(models[atom.symbol], lane)[1])
-            end
+        born_radii = zeros(eltype(pose.state), size(hist)[1])
+        for elem in fieldnames(typeof(models))
+            model = getproperty(models, elem)
+            sele  = FieldSelection{Atom}(string(elem), :symbol) & selection
+            radii = Ghost.play!(model, hist')
+            mask  = sele(pose).content
+            born_radii[mask] .= radii[mask]
         end
 
         return born_radii
@@ -89,15 +57,16 @@ module GB
     # TODO DOCUMENTATION
 
     """
-    function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Opt{Vector{T}} = nothing, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::Dict{String, <: Any} = models_keras, batch_mode::Bool = true) where {T <: AbstractFloat}
+    function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat}
 
         # Pre-calculate atomic distances
         atoms  = collect(eachatom(pose.graph))
         natoms = length(atoms)
         dm     = collect(ProtoSyn.Calculators.distance_matrix(pose, selection))
 
-        if born_radii === nothing
-            born_radii = predict_igbr_nn_born_radii(pose, selection, dm = dm, models = models, batch_mode = batch_mode)
+        # Predict born radii if necessary
+        if isa(born_radii, Function)
+            born_radii = born_radii(pose, selection, dm = dm, models = models)
         end
 
         env = (1/(8*π*ϵ_protein)) * (1 - (1/ϵ_solvent)) # Dieletric term
@@ -132,8 +101,8 @@ module GB
         return e, nothing
     end
 
-    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Opt{Vector{T}} = nothing, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::Dict{String, <: Any} = models_keras, batch_mode::Bool = true) where {T <: AbstractFloat} = begin
-        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models, batch_mode = batch_mode)
+    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat} = begin
+        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models)
     end
 
     function get_default_gb(;α::T = 1.0) where {T <: AbstractFloat}
@@ -142,11 +111,11 @@ module GB
             calc_gb,
             nothing,
             Dict{Symbol, Any}(
-                born_radii => nothing,
-                ϵ_protein  => 1.0,
-                ϵ_solvent  => 80.0,
-                models     => models_onnx,
-                batch_mode => true),
+                :born_radii => predict_igbr_nn_born_radii,
+                :ϵ_protein  => 1.0,
+                :ϵ_solvent  => 80.0,
+                :models     => models_onnx
+            ),
             α,
             false)
     end

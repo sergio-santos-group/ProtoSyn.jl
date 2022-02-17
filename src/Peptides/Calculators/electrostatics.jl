@@ -20,7 +20,11 @@ module Electrostatics
 
             last_res_id = segment[end].id
             Cs = ProtoSyn.identify_atom_by_bonding_pattern(segment[end], ["C", "C", "N", "C"])
-            C = [c for c in Cs if length(c.bonds) <= 3][1]
+            if isa(Cs, Atom)
+                C = copy(Cs)
+            else
+                C = [c for c in Cs if length(c.bonds) <= 3][1]
+            end
             if length(C.bonds) > 2 
                 pose.state[segment[last_res_id, "OXT"]].δ = -0.7800
             end

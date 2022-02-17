@@ -13,6 +13,8 @@ function find_tautomer(tautomer::Tautomer, target::Residue)
         template_atoms = ProtoSyn.travel_graph(template_res[1], sort_bonds = true)
         template_graph = [a.symbol for a in template_atoms]
 
+        length(target_graph) !== length(template_graph) && continue
+
         match = all(target_graph .=== template_graph)
         match && return template_residue
     end

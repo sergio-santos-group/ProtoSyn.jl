@@ -124,7 +124,8 @@ function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: Abstract
         @printf(io, "%14s : -", "Setings")
     else
         @printf(io, "%14s :\n", "Setings")
-        for (key, value) in efc.settings
+        for key in sort(collect(keys(efc.settings)))
+            value = efc.settings[key]
             @printf(io, "%15s => ", ":"*string(key))
             if typeof(value) == Matrix{T}
                 print(io, "Matrix{$T}($(size(value))\n")

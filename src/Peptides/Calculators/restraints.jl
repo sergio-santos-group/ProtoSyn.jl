@@ -154,7 +154,7 @@ module Restraints
     function get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
         _sele = an"CA"
         if mask === nothing
-            mask = ProtoSyn.Calculators.get_diagonal_mask(_sele)
+            mask = ProtoSyn.Calculators.get_diagonal_mask
         end
         return EnergyFunctionComponent(
             "Cα-Cα_Clash_Restraint",

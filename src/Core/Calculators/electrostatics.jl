@@ -33,7 +33,14 @@ module Electrostatics
             if isa(template, Tautomer)
                 # If multiple templates exist for a particular residue type,
                 # find the correct tautomer matching the strucure's graph
-                template = ProtoSyn.find_tautomer(template, residue)
+                tautomer = ProtoSyn.find_tautomer(template, residue)
+                if tautomer === nothing
+                    # In case we don't have a template, for example, in
+                    # no-sidechain models, try to apply the first tautomer
+                    template = template.list[1]
+                else
+                    template = tautomer
+                end
             end
             
             # Apply the template atom's charge to each of the residue's atoms
