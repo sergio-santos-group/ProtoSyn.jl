@@ -441,9 +441,9 @@ version = "4.7.1"
 
 [[deps.LLVMExtra_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "62115afed394c016c2d3096c5b85c407b48be96b"
+git-tree-sha1 = "67cc5406b15bd04ff72a45f628bec61d36078908"
 uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
-version = "0.0.13+1"
+version = "0.0.13+3"
 
 [[deps.LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -622,8 +622,8 @@ version = "0.4.9"
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 
 [[deps.ONNX]]
-deps = ["Ghost", "NNlib", "Pkg", "ProtoBuf", "Statistics", "Test"]
-git-tree-sha1 = "da6a306d64c5832182e2cd2c0f71eb86cfab0333"
+deps = ["Ghost", "LinearAlgebra", "NNlib", "Pkg", "ProtoBuf", "Statistics", "Test"]
+git-tree-sha1 = "ff6966bc92d830abed0c67b981ff406133594269"
 repo-rev = "ops-fix"
 repo-url = "https://github.com/JosePereiraUA/ONNX.jl.git"
 uuid = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
