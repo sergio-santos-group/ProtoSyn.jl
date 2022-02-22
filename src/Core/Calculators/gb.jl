@@ -32,22 +32,45 @@ module GB
 
     function predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx) where {T <: AbstractFloat}
         
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+        
         # 1. Calculate distance matrix, if required
         if dm === nothing
-            dm = collect(ProtoSyn.Calculators.distance_matrix(pose, selection))
+            dm = collect(ProtoSyn.Calculators.distance_matrix(pose, sele))
         end
         
         # 2. Pre-calculate histogram for born radii prediction
-        hist = ProtoSyn.hist_by_distance_by_elem(pose, selection, dm = dm)
+        hist = ProtoSyn.hist_by_distance_by_elem(pose, sele, dm = dm)
         
         # 3. Predict born-radii
-        born_radii = zeros(eltype(pose.state), size(hist)[1])
+        n_selected_atoms = size(hist)[1]
+        born_radii = zeros(eltype(pose.state), n_selected_atoms)
         for elem in fieldnames(typeof(models))
             model = getproperty(models, elem)
+            elem  = string(elem)
             sele  = FieldSelection{Atom}(string(elem), :symbol) & selection
             radii = Ghost.play!(model, hist')
-            mask  = sele(pose).content
-            born_radii[mask] .= radii[mask]
+
+            # 3.1) For this specific case, the mask needs to consider only the
+            # selected atoms (not all the atoms in the pose). Currently (in
+            # ProtoSyn 1.01), only the whole pose or individual graph containers
+            # (Residue & Segment) have resolving functions for the selections.
+            # In future iterations, selection resolving methods for vectors of
+            # Atoms (& Residues, Segments) can be implemented. For now, the 
+            # following custom implementation resolves the selection only on the
+            # selected atoms.
+            mask = Mask{Atom}(n_selected_atoms)
+            for (index, atom) in enumerate(sele(pose, gather = true))
+                if atom.symbol == elem
+                    mask[index] = true
+                end
+            end
+
+            born_radii[mask.content] .= radii[mask.content]
         end
 
         return born_radii

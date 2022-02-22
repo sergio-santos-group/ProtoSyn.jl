@@ -16,7 +16,7 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
     end
 
     # Define useful counts
-    atoms  = collect(eachatom(pose.graph))
+    atoms  = sele(pose, gather = true)
     natoms = length(atoms)
     nbins  = convert(Int, cutoff / bin)
     nelems = length(elems)
