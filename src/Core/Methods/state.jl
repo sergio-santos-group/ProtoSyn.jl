@@ -235,6 +235,11 @@ function i2c!(state::State{T}, top::Topology) where T
         b = istate.b # distance
         sθ, cθ = sincos(istate.θ)  # angle
         sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
+
+        if atom.id === 726
+            println(istate)
+        end
+
         x_1 = -b*cθ
         x_2 =  b*cϕ*sθ
         x_3 =  b*sϕ*sθ
@@ -379,7 +384,7 @@ State{Float64}:
 @inline rotate_dihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat} = begin
     atom2 = atom.ascendents[2]
     state[atom2].Δϕ += value
-    ProtoSyn.request_i2c!(state)
+    ProtoSyn.request_i2c!(state, all = true) # ! Unknown bug when all = false
     return state
 end
 
