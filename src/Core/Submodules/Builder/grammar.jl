@@ -282,12 +282,18 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
     for letter in derivation
         if isop(grammar, letter)
             op = getop(grammar, letter)
-            push!(opstack, op)
+            push!(opstack, op.op)
         elseif letter == "["
             push!(stack, parent)
         elseif letter == "]"
             parent = pop!(stack)
         elseif isvar(grammar, letter)
+
+            # ! This is a quick fix and should be changed in future versions
+            if letter === "P"
+                push!(opstack, grammar.operators["γ"].op)
+            end
+
             frag = getvar(grammar, letter)
 
             frag2 = copy(frag)
@@ -295,6 +301,7 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
             if parent !== nothing
+                # println("$letter ($(typeof(letter)))-> $opstack")
                 join = isempty(opstack) ? grammar.defop : pop!(opstack)
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
@@ -341,6 +348,7 @@ function opfactory(args::Any)
         else
             r2 = f2.graph[segment_index][residue_index]
         end
+
         ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state
         
