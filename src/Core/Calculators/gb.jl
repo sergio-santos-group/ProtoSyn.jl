@@ -40,7 +40,7 @@ module GB
         
         # 1. Calculate distance matrix, if required
         if dm === nothing
-            dm = collect(ProtoSyn.Calculators.distance_matrix(pose, sele))
+            dm = collect(ProtoSyn.Calculators.full_distance_matrix(pose, sele))
         end
         
         # 2. Pre-calculate histogram for born radii prediction
@@ -85,7 +85,7 @@ module GB
         # Pre-calculate atomic distances
         atoms  = collect(eachatom(pose.graph))
         natoms = length(atoms)
-        dm     = collect(ProtoSyn.Calculators.distance_matrix(pose, selection))
+        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(pose, selection))
 
         # Predict born radii if necessary
         if isa(born_radii, Function)

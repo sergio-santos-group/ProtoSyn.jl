@@ -1,6 +1,7 @@
 """
 # TODO DOCUMENTATION
 # USAGE IN GENERALIZED BORN NN
+# INCLUDE LINK TO EXPLANATION README?
 """
 function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} = nothing; cutoff::T = 16.0, bin::T = 0.2, elems::Vector{String} = ["H", "O", "N", "C", "S"], dm::Opt{Matrix{T}} = nothing) where {T <: AbstractFloat}
 
@@ -12,7 +13,7 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
 
     # Pre-calculate distance matrix
     if dm === nothing
-        dm = collect(ProtoSyn.Calculators.distance_matrix(pose, selection))
+        dm = collect(ProtoSyn.Calculators.full_distance_matrix(pose, selection))
     end
 
     # Define useful counts
@@ -45,7 +46,7 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
 
             # Find the initial element position in the histogram
             init_elem_pos = elempos[atoms[j].symbol]
-
+            
             # Find the bin position after the initial element position
             bin_pos = ceil(Int, d / bin)
 
