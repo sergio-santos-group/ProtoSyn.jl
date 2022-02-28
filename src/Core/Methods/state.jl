@@ -236,10 +236,6 @@ function i2c!(state::State{T}, top::Topology) where T
         sθ, cθ = sincos(istate.θ)  # angle
         sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
 
-        if atom.id === 726
-            println(istate)
-        end
-
         x_1 = -b*cθ
         x_2 =  b*cϕ*sθ
         x_3 =  b*sϕ*sθ
