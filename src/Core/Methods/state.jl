@@ -328,7 +328,7 @@ State{Float64}:
 @inline setdihedral!(state::State, atom::Atom, value::T) where {T <: AbstractFloat} = begin
     atom2 = atom.ascendents[2]
     state[atom2].Δϕ += value - getdihedral(state, atom)
-    ProtoSyn.request_i2c!(state)
+    ProtoSyn.request_i2c!(state, all = true)
     return state
 end
 
