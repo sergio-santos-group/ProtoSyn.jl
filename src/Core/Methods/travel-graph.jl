@@ -46,6 +46,10 @@ end
 
 export travel_graph
 
+abstract type SearchAlgorithm end
+abstract type BFS <: SearchAlgorithm end
+abstract type DFS <: SearchAlgorithm end
+
 """
     travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
 
@@ -72,9 +76,9 @@ julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
  Atom{/UNK:1/UNK:1/LEU:21/HD11:335}
 ```
 """
-function travel_graph(start::Atom; stop::Opt{Atom} = nothing, sort_bonds::Bool = false)::Vector{Atom}
+function travel_graph(start::Atom; stop::Opt{Atom} = nothing, search_algorithm::Type{<: SearchAlgorithm} = ProtoSyn.BFS)
     atoms = Vector{Atom}([start])
-    if sort_bonds === true
+    if search_algorithm === ProtoSyn.BFS
         init_bonds = copy(sort_children(start))
     else
         init_bonds = copy(start.children)
@@ -84,7 +88,7 @@ function travel_graph(start::Atom; stop::Opt{Atom} = nothing, sort_bonds::Bool =
     while length(stack) > 0
         atom_i = pop!(stack)
         if atom_i != stop
-            if sort_bonds === true
+            if search_algorithm === ProtoSyn.BFS
                 bonds = copy(sort_children(atom_i))
             else
                 bonds = copy(atom_i.children)

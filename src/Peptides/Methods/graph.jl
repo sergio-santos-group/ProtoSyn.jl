@@ -49,19 +49,24 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
         end
 
         last_res_id = segment[end].id
+        # Identify C
         Cs = ProtoSyn.identify_atom_by_bonding_pattern(segment[end], ["C", "C", "N", "C"])
         if isa(Cs, Atom)
             C = Cs
         else
-            C = [c for c in Cs if (length(c.bonds) <= 3)][1]
+            C = [c for c in Cs if (length(c.bonds) <= 3)]
+            if length(C) > 1
+                C = [c for c in C if c.container["CA"] in c.bonds]
+            end
+            C = C[1]
         end
         if length(C.bonds) > 2 
             Peptides.cap!(template, SerialSelection{Residue}(last_res_id, :id))
         end
     end
     
-    t_atoms = ProtoSyn.travel_graph(template.graph[1, 1, 1], sort_bonds = true)
-    p_atoms = ProtoSyn.travel_graph(pose.graph[1, 1, 1], sort_bonds = true)
+    t_atoms = ProtoSyn.travel_graph(template.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
+    p_atoms = ProtoSyn.travel_graph(pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
     
     if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
         for (t_atom, p_atom) in zip(t_atoms, p_atoms)
@@ -80,7 +85,7 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
         pose_res_name = string(ProtoSyn.three_2_one[pose_residue.name.content])
         ind_pose_res  = copy(pose_residue) # Removes inter-residue connections
         pose_N        = ProtoSyn.identify_atom_by_bonding_pattern(ind_pose_res, ["N", "C", "C", "O"])
-        pose_atoms    = ProtoSyn.travel_graph(pose_N, sort_bonds = true)
+        pose_atoms    = ProtoSyn.travel_graph(pose_N, search_algorithm = ProtoSyn.BFS)
         pose_graph    = [a.symbol for a in pose_atoms]
         # println("Residue $pose_residue (Graph: $pose_graph)")
 
@@ -88,7 +93,7 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
             found_match = false
             for tautomer in grammar.variables[pose_res_name].list
                 temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(tautomer.graph[1], ["N", "C", "C", "O"])
-                temp_atoms = ProtoSyn.travel_graph(temp_N, sort_bonds = true)
+                temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
                 temp_graph = [a.symbol for a in temp_atoms]
 
                 if all(pose_graph .=== temp_graph)
@@ -105,7 +110,7 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
         else
             temp_res   = copy(template_residue)
             temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(temp_res, ["N", "C", "C", "O"])
-            temp_atoms = ProtoSyn.travel_graph(temp_N, sort_bonds = true)
+            temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
             temp_graph = [a.symbol for a in temp_atoms]
 
             if all(pose_graph .=== temp_graph)

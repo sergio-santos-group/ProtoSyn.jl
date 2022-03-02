@@ -547,6 +547,30 @@ function is_C_terminal(res::Residue)
 end
 
 
+function identify_c_terminal(seg::Segment)
+
+    # Criterium 1. Identify atom by the bonding pattern
+    #  - The C terminal is connected to a C, which is connected to a N, which is
+    # connected to a C, in the last residue of the segment (based on the graph)
+    last_r = ProtoSyn.travel_graph(seg[1, 1], search_algorithm = ProtoSyn.BFS)
+    last_r = last_r[end].container
+    Cs = ProtoSyn.identify_atom_by_bonding_pattern(last_r, ["C", "C", "N", "C"])
+    if isa(Cs, Atom)
+        C = Cs
+    else
+        # Criterium 2. Identify atom by the number of bonds
+        #  - The C terminal cannot have more than 3 bonded atoms.
+        C = [c for c in Cs if (length(c.bonds) <= 3)]
+        if length(C) > 1
+            # Criterium 3. Identify atom by a specific bond
+            #  - The C terminal should be connected to an atom called "CA"
+            C = [c for c in C if c.container["CA"] in c.bonds]
+        end
+        C = C[1]
+    end
+end
+
+
 """
     uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
