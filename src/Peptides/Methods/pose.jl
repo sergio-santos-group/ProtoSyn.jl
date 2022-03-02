@@ -551,9 +551,9 @@ function identify_c_terminal(seg::Segment)
 
     # Criterium 1. Identify atom by the bonding pattern
     #  - The C terminal is connected to a C, which is connected to a N, which is
-    # connected to a C, in the last residue of the segment (based on the graph)
-    last_r = ProtoSyn.travel_graph(seg[1, 1], search_algorithm = ProtoSyn.BFS)
-    last_r = last_r[end].container
+    # connected to a C, in the last residue of the segment (based on the residue
+    # numbering only)
+    last_r = seg[end]
     Cs = ProtoSyn.identify_atom_by_bonding_pattern(last_r, ["C", "C", "N", "C"])
     if isa(Cs, Atom)
         C = Cs
