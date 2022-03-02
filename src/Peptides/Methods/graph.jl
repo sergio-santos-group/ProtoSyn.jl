@@ -48,18 +48,9 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
             Peptides.cap!(template, rid"1")
         end
 
+        # C-terminal
         last_res_id = segment[end].id
-        # Identify C
-        Cs = ProtoSyn.identify_atom_by_bonding_pattern(segment[end], ["C", "C", "N", "C"])
-        if isa(Cs, Atom)
-            C = Cs
-        else
-            C = [c for c in Cs if (length(c.bonds) <= 3)]
-            if length(C) > 1
-                C = [c for c in C if c.container["CA"] in c.bonds]
-            end
-            C = C[1]
-        end
+        C = identify_c_terminal(segment) # Uses multiple criteria to identify
         if length(C.bonds) > 2 
             Peptides.cap!(template, SerialSelection{Residue}(last_res_id, :id))
         end
