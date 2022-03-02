@@ -48,27 +48,31 @@ module Electrostatics
                 if template.graph[1][atom.name] === nothing
                     !supress_warn && @warn "Template doesn't have atom $atom"
                     continue
-                end
+                end # if
                 δ = template.state[template.graph[1][atom.name]].δ
                 pose.state[atom].δ = δ
-            end
-        end
+            end # for
+        end # for
 
         # Adjust the overall charge of all atoms so that the resulting charge of
         # the structure is ≈ 0.0
         cc = sum(getproperty.(pose.state.items, :δ)) / length(pose.state.items)
         for (i, atom) in enumerate(pose.state.items)
             atom.δ    -= cc
-        end
+        end # for
 
         return getproperty.(pose.state.items, :δ)
-    end
+    end # function
 
     # ---
 
     function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType}
         cp = ProtoSyn.Calculators.coulomb_potential
         e, f = ProtoSyn.Calculators.apply_potential(A, pose, cp, update_forces, vlist, selection, mask)
+        if e === 0.0 && any(x -> x.δ !== 0.0, pose.state.items)
+            @warn "The calculated Coulomb energy is 0.0 and it seems the evaluated Pose does not have any assigned charges. Consider using the `ProtoSyn.Calculators.Electrostatics.assign_default_charges!` method."
+        end # if
+
         return e, f
     end # function
 

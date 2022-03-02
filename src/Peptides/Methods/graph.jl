@@ -70,7 +70,9 @@ function assign_default_atom_names!(pose::Pose, grammar::LGrammar = Peptides.gra
     end
     
     # In case the direct approach wasn't successful
-    @warn "Possible tautomers identified, assigning default names residue by residue ..."
+    if ProtoSyn.verbose.mode
+        @warn "Possible tautomers identified, assigning default names residue by residue ..."
+    end
     pose_temp_res = zip(eachresidue(pose.graph), eachresidue(template.graph))
     for (pose_residue, template_residue) in pose_temp_res
         # println("\n$pose_residue - $template_residue")
