@@ -80,10 +80,22 @@ module REF15
         _pose = pyrosetta.pose_from_pdb(filename)
 
         # 3. Return the evaluated energy
-        return ref15(_pose)
+        return ref15(_pose), nothing
     end
 
     calc_ref15(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false) = begin
         calc_ref15(ProtoSyn.acceleration.active, pose, selection, update_forces)
+    end
+
+    """
+    """
+    function get_default_ref15(;α::T = 1.0) where {T <: AbstractFloat}
+        return EnergyFunctionComponent(
+            "REF15",
+            calc_ref15,
+            nothing,
+            Dict{Symbol, Any}(),
+            α,
+            true)
     end
 end
