@@ -62,22 +62,44 @@ module REF15
     Does not care for acceleration type
     Selection?
     """
-    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false)
+    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject})
 
         # * Another (faster) option is to create a pyrosetta poe without using
         # * the filesystem. For example, using the pose_from_sequence method.
         # * This, however, had to take into consideration the terminal cap
         # * status, presence of tautomers, hydrogentation status, missing atoms
         # * in either ProtoSyn or PyRosetta poses, etc.
-        
-        # 1. Write pose to a temporary file. File is added to the tempdir()
-        # directory and deleted after completion of the current Julia process
-        filename, io = Base.Filesystem.mktemp()
-        ProtoSyn.write(io, pose.graph, pose.state, ProtoSyn.PDB)
-        close(io)
 
-        # 2. Load pose as a pyrosetta pose
-        _pose = pyrosetta.pose_from_pdb(filename)
+        # * For some unknown reason, when using a pre-existing rosetta_pose, the
+        # * resulting energy is slightly different.
+        
+        if rosetta_pose === nothing
+            # A.1. Write pose to a temporary file. File is added to the tempdir()
+            # directory and deleted after completion of the current Julia process
+            filename, io = Base.Filesystem.mktemp()
+            ProtoSyn.write(io, pose.graph, pose.state, ProtoSyn.PDB)
+            close(io)
+
+            # A.2. Load pose as a pyrosetta pose
+            _pose = pyrosetta.pose_from_pdb(filename)
+        else
+            # B.1. Update atomic coordinates on the pre-existing rosetta_pose
+            _pose = rosetta_pose
+            i = 0
+            for r in _pose.residues
+                for (atom_index, atom) in enumerate(r.atoms())
+                    r.is_virtual(atom_index) && begin
+                        continue
+                    end
+                    i += 1
+                    xyz = pyrosetta.rosetta.numeric.xyzVector_double_t(pose.state[i].t...)
+                    r.set_xyz(atom_index, xyz)
+                end
+            end
+        end
+
+        _pose.update_residue_neighbors()
+        _pose.dump_pdb("teste.pdb")
 
         # 3. Return the evaluated energy
         return ref15(_pose), nothing
@@ -89,12 +111,34 @@ module REF15
 
     """
     """
+    function fixate_rosetta_pose!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
+        if (:rosetta_pose in keys(efc.settings))
+            if efc.settings[:rosetta_pose] === PyCall.PyObject
+                @warn "It seems the current EnergyFunctionComponent already has a set :rosetta_pose setting. ProtoSyn will replace the pre-exisitng :rosetta_pose."
+            end
+
+            # 1. Write pose to a temporary file. File is added to the tempdir()
+            # directory and deleted after completion of the current Julia process
+            filename, io = Base.Filesystem.mktemp()
+            ProtoSyn.write(io, pose.graph, pose.state, ProtoSyn.PDB)
+            close(io)
+
+            # 2. Load pose as a pyrosetta pose
+            _pose = pyrosetta.pose_from_pdb(filename)
+
+            # 3. Save as the efc setting
+            efc.settings[:rosetta_pose] = _pose
+        end
+    end
+
+    """
+    """
     function get_default_ref15(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "REF15",
             calc_ref15,
             nothing,
-            Dict{Symbol, Any}(),
+            Dict{Symbol, Any}(:rosetta_pose => nothing),
             α,
             true)
     end
