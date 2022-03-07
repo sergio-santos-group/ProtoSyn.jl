@@ -10,6 +10,10 @@ end
 
 verbose = Verbose(false)
 
+if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+    ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+end
+
 @info "Loading required packages"
 using CpuId
 using Printf
@@ -128,4 +132,3 @@ end
 version()
 
 end # module
-

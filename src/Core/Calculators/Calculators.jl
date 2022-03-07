@@ -38,4 +38,6 @@ module Calculators
     @info " | Loading Energy Function"
     include("energy_function.jl")
 
+    include("ref15.jl")
+
 end
