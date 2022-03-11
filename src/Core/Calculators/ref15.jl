@@ -99,7 +99,6 @@ module REF15
         end
 
         _pose.update_residue_neighbors()
-        _pose.dump_pdb("teste.pdb")
 
         # 3. Return the evaluated energy
         return ref15(_pose), nothing

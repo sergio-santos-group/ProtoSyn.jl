@@ -25,8 +25,11 @@ Pose{Topology}(Topology{/2a3d:61708}, State{Float64}:
  Energy: Dict(:Total => Inf)
 )
 ```
+
+# TODO: Update Documentation
+
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") where {T <: AbstractFloat}
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat}
 
     if !bonds_by_distance && ProtoSyn.verbose.mode
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
@@ -43,6 +46,8 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     for pose in poses
         for segment in eachsegment(pose.graph)
 
+            string(segment.code) in ignore_chains && continue
+
             n_residues = ProtoSyn.count_residues(segment)
 
             # Intra-residue parenthood (on residue 1)
@@ -50,33 +55,56 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
             # but the Peptides module makes sure that all intra-residue graphs
             # emerge from the N atom, matching the default Peptides grammar.
             residue = segment[1]
+
+            residue.name.content in ignore_residues && continue
+
             starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
+            if isa(starting_atom, Vector{Atom})
+                if length(starting_atom) === 0
+                    @warn "No starting atom found on residue $residue. Will use atom $(collect(eachatom(residue))[1]), check if this is the desired behaviour."
+                    starting_atom = collect(eachatom(residue))[1]
+                else
+                    @warn "Multiple starting atoms identified on residue $residue. Will use atom $(starting_atom[1]), check if this is the desired behaviour."
+                    starting_atom = starting_atom[1]
+                end
+            end
             ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
 
             for residue_index in 2:n_residues
                 residue = segment[residue_index]
 
+                residue.name.content in ignore_residues && continue
+
                 # Intra-residue parenthood
                 starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
+                if isa(starting_atom, Vector{Atom})
+                    if length(starting_atom) === 0
+                        @warn "No starting atom found on residue $residue. Will use atom $(collect(eachatom(residue))[1]) to set intra-residue graph, check if this is the desired behaviour."
+                        starting_atom = collect(eachatom(residue))[1]
+                    else
+                        @warn "Multiple starting atoms identified on residue $residue. Will use atom $(starting_atom[1]) to set intra-residue graph, check if this is the desired behaviour."
+                        starting_atom = starting_atom[1]
+                    end
+                end
                 ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
 
                 # Inter-residue parenthood
-                if !(residue.name in available_aminoacids)
-                    @warn "Found a possible ligand or unknown NCAA at residue $residue. ProtoSyn will skip it when setting up residue parenthoods."
+                if !(residue.name in available_aminoacids) && !(residue.name in include_residues)
+                    @warn "Found a possible ligand or unknown NCAA at residue $residue. ProtoSyn will skip it when setting up inter residue parenthoods. This behaviour can be changed by adding this residue name to the 'include_residues' vector."
                     continue
                 end
                 
                 # Re-set the inter-residue parenthood to match the default
                 # Peptides grammar
                 popparent!(residue) # Was root before.
-                popparent!(residue["N"]) # Was root before.
-                # println("Bonds of $(residue["N"]): $(residue["N"].bonds)")
-                C_bond_index = findfirst(x -> x.symbol == "C", residue["N"].bonds)
-                @assert C_bond_index !== nothing "No atom \"C\" found in atom $(residue["N"]) bonds list ($(residue["N"].bonds))."
-                parent_residue = residue["N"].bonds[C_bond_index].container
+                popparent!(starting_atom) # Was root before.
+                # println("Bonds of $(starting_atom): $(starting_atom.bonds)")
+                C_bond_index = findfirst(x -> x.symbol == "C", starting_atom.bonds)
+                @assert C_bond_index !== nothing "No atom \"C\" found in atom $(starting_atom) bonds list ($(starting_atom.bonds))."
+                parent_residue = starting_atom.bonds[C_bond_index].container
                 setparent!(residue, parent_residue)
-                setparent!(residue["N"], residue["N"].bonds[C_bond_index])
-                # println("$(residue["N"].bonds[C_bond_index])-$(residue["N"])")
+                setparent!(starting_atom, starting_atom.bonds[C_bond_index])
+                # println("$(starting_atom.bonds[C_bond_index])-$(starting_atom)")
             end
         end
     end
@@ -87,8 +115,8 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     return poses
 end
 
-load(filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") = begin
-    Peptides.load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+load(filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) = begin
+    Peptides.load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, include_residues = include_residues, ignore_residues = ignore_residues, ignore_chains = ignore_chains)
 end
 
 
@@ -108,15 +136,18 @@ directory. If `T` is specified, the downloaded file will be loaded into a
 ```jldoctest
 julia> ProtoSyn.download("2A3D")
 ```
+
+# TODO: Update Documentation
+
 """
-function ProtoSyn.Peptides.download(::Type{T}, pdb_code::String; bonds_by_distance::Bool = false) where {T <: AbstractFloat}
+function ProtoSyn.Peptides.download(::Type{T}, pdb_code::String; bonds_by_distance::Bool = false, include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat}
     if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
     filename = pdb_code * ".pdb"
     url = "https://files.rcsb.org/download/" * filename
     download(url, filename)
-    return ProtoSyn.Peptides.load(T, filename, bonds_by_distance = bonds_by_distance)
+    return ProtoSyn.Peptides.load(T, filename, bonds_by_distance = bonds_by_distance, include_residues = include_residues, ignore_residues = ignore_residues, ignore_chains = ignore_chains)
 end
 
-ProtoSyn.Peptides.download(pdb_code::String; bonds_by_distance::Bool = false) = begin
-    ProtoSyn.Peptides.download(ProtoSyn.Units.defaultFloat, pdb_code, bonds_by_distance = bonds_by_distance)
+ProtoSyn.Peptides.download(pdb_code::String; bonds_by_distance::Bool = false, include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) = begin
+    ProtoSyn.Peptides.download(ProtoSyn.Units.defaultFloat, pdb_code, bonds_by_distance = bonds_by_distance, include_residues = include_residues, ignore_residues = ignore_residues, ignore_chains = ignore_chains)
 end

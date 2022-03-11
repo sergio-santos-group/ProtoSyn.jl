@@ -53,6 +53,7 @@ ncaa:
   variables:
     a: Peptides/NCAA/yml/cma.yml
     b: Peptides/NCAA/yml/mse.yml
+    c: Peptides/NCAA/yml/cq1.yml
   operators:
     α: # N.ϕ is defined based on parent residue
       residue1: C

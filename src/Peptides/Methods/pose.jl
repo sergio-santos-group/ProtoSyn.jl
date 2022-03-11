@@ -315,18 +315,26 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
     phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    
     psi_atom = Peptides.Dihedral.psi(residue)
     if psi_atom !== nothing
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
     else
         psi = 0.0
     end
-    omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
+    
+    omega_atom = Peptides.Dihedral.omega(residue)
+    if omega_atom !== nothing
+        omega = ProtoSyn.getdihedral(pose.state, omega_atom)
+    else
+        omega = 0.0
+    end
+
     T     = eltype(pose.state)
     ss    = ProtoSyn.Peptides.SecondaryStructureTemplate{T}(phi, psi, omega)
     old_r_pos = findfirst(residue, residue.container.items)
     Peptides.insert_fragment!(pose, residue, grammar, derivation,
-        ss = ss, op = op)
+        ss = nothing, op = op)
     new_residue = residue.container.items[old_r_pos]
 
     # 2) Remove old residue (now in position R + 1)
@@ -341,7 +349,7 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
     # the root).
     downstream_r_pos = old_r_pos
-    if downstream_r_pos < length(Peptides.sequence(pose))
+    if downstream_r_pos < length(ProtoSyn.sequence(pose))
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
         

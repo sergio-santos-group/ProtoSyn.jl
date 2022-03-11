@@ -291,4 +291,5 @@ module TorchANI
     end
 
     include("torchani_xmlrpc.jl")
+    include("torchani_ref_energy.jl")
 end

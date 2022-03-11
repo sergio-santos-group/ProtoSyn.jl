@@ -23,6 +23,9 @@ Base.ncodeunits(rn::ProtoSyn.ResidueName) = length(rn.content)
 Base.:(==)(s1::String, s2::ResidueName)      = s2 == s1
 Base.:(==)(s1::ResidueName, s2::ResidueName) = s1 == s2.content
 Base.:(==)(s1::ResidueName, s2::String)      = begin
+    !(s1.content in keys(ProtoSyn.alt_residue_names)) && begin
+        return s1.content === s2
+    end
     return s2 in ProtoSyn.alt_residue_names[s1.content]
 end
 

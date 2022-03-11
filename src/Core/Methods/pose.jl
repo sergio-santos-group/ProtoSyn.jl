@@ -241,7 +241,7 @@ function fragment(pose::Pose{Topology})
 end
 
 
-function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
+function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; sort_atoms_by_graph::Bool = false)
     # Assumes all residues selected belong to the same Segment
 
     sele = promote(selection, Residue)
@@ -273,18 +273,26 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
                 j = findfirst(bond, atom.bonds)
                 j !== nothing && deleteat!(atom.bonds, j)
 
-                # Remove parenthood
+                # Remove parenthood (Atom level)
+                ProtoSyn.isparent(bond, atom) && begin
+                    ProtoSyn.popparent!(atom)
+                end
+                ProtoSyn.isparent(atom, bond) && begin
+                    ProtoSyn.popparent!(bond)
+                end
+
+                # Remove parenthood (Residue level)
                 ProtoSyn.isparent(bond.container, atom.container) && begin
                     ProtoSyn.popparent!(atom.container) 
                 end
                 ProtoSyn.isparent(atom.container, bond.container) && begin
                     ProtoSyn.popparent!(bond.container) 
                 end
-               
             end
         end
     end
 
+    # Set the residue container
     for residue in segment.items
         residue.container = segment
     end
@@ -297,6 +305,32 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
         state.items[index + state.index_offset].parent = state
         state.items[index + state.index_offset].index  = index
         state.x[:, index] = copy(pose.state.x[:, atom.index])
+    end
+
+    # Sort atoms to follow the graph
+    if sort_atoms_by_graph
+
+        function find_atom_sortperm(old_atoms::Vector{Atom}, new_atoms::Vector{Atom})
+            _sortperm = Vector{Int}()
+            for atom in new_atoms
+                push!(_sortperm, findfirst((a) -> a === atom, old_atoms))
+            end
+
+            return _sortperm
+        end
+
+        atoms = ProtoSyn.travel_graph(ProtoSyn.origin(segment))
+        state_sortperm = Vector{Int}([1, 2, 3])
+        for residue in eachresidue(segment)
+            old_atoms      = Vector{Atom}(collect(eachatom(residue)))
+            new_atoms      = [a for a in atoms if a.container === residue]
+            _sortperm      = find_atom_sortperm(old_atoms, new_atoms)
+            _sortperm    .+= maximum(state_sortperm)
+            state_sortperm = vcat(state_sortperm, _sortperm)
+            residue.items  = [a for a in atoms if a.container === residue]
+        end
+
+        state.items = state.items[state_sortperm]
     end
 
     segment.id = state.id = genid()
@@ -444,7 +478,8 @@ function append_fragment_as_new_segment!(pose::Pose{Topology}, frag::Fragment)
     setparent!(root_residue, root(pose.graph).container)
 
     # Re-index the pose to account for the new segment/residue/atoms
-    reindex(pose.graph)
+    reindex(pose.graph, set_ascendents = true
+    )
     pose
 end
 

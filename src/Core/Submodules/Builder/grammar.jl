@@ -379,6 +379,7 @@ function opfactory(args::Any)
                         error("No 'measure' key found in dependence record")
                     end
                     measured_atom = dependence["measure"]
+                    r1[measured_atom] === nothing && continue
                     value = state[r1[measured_atom]].ϕ + state[r1[measured_atom].parent].Δϕ
 
                     haskey(dependence, "offset") && begin

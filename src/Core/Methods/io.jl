@@ -244,13 +244,6 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
 
     atoms   = collect(eachatom(container))
 
-    # if start !== nothing
-    #     index   = findfirst(atom -> atom.index == start.index, atoms)
-    #     tmp          = atoms[1]
-    #     atoms[1]     = atoms[index]
-    #     atoms[index] = tmp
-    # end
-
     if start === nothing
         start = collect(eachatom(container))[1]
     end
@@ -261,10 +254,10 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
 
     # First atom is always connected to root
     _root = ProtoSyn.root(container)
-    if overwrite && hasparent(atoms[1])
-        ProtoSyn.popparent!(atoms[1])
+    if overwrite && hasparent(start)
+        ProtoSyn.popparent!(start)
     end
-    ProtoSyn.setparent!(atoms[1], _root)
+    ProtoSyn.setparent!(start, _root)
 
     # Note the usage of breath-first search (BFS) algorithm. This is the most
     # chemically correct was of attributing parenthood relationships, in
@@ -272,25 +265,25 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
     stack = Vector{Atom}([start])
     levls = Vector{Int}([1])
     p_lvl = 1
-    # for (i, atom_i) in enumerate(atoms)
+    
     while length(stack) > 0
         if levls[end] !== p_lvl
             # sort the next level
-            # println("Sorting next level")
-            # println("Current stack: $([x.symbol for x in stack])")
+            ProtoSyn.verbose.mode && println("Sorting next level")
+            ProtoSyn.verbose.mode && println("Current stack: $([x.symbol for x in stack])")
             sort!(stack, by=(x)->x.symbol, rev = true)
         end
         atom_i = pop!(stack)
         levl_i = pop!(levls)
         p_lvl  = levl_i
         i      = findfirst((a)->a === atom_i, atoms)
-        # println("Focus on atom $atom_i - $i")
+        ProtoSyn.verbose.mode && println("Focus on atom $atom_i - $i")
         visited[i] = true
         atom_i_bonds = sort(atom_i.bonds, by=(b)->b.symbol)
-        # println("$atom_i (Lvl: $levl_i) ---> $atom_i_bonds")
+        ProtoSyn.verbose.mode && println("$atom_i (Lvl: $levl_i) ---> $atom_i_bonds")
         for atom_j in atom_i_bonds
             j = findfirst(atom -> atom === atom_j, atoms)
-            # println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
+            ProtoSyn.verbose.mode && j !== nothing && println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
             if j !== nothing && !(visited[j]) && !(changed[j])
                 insert!(stack, 1, atom_j)
                 insert!(levls, 1, levl_i + 1)
@@ -298,11 +291,11 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                     ProtoSyn.popparent!(atom_j)
                 end
                 if !hasparent(atom_j)
-                    # println("  Setting $atom_i as parent of $atom_j")
+                    ProtoSyn.verbose.mode && println("  Setting $atom_i as parent of $atom_j")
                     ProtoSyn.setparent!(atom_j, atom_i)
                     changed[j] = true
                 else
-                    # println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                    ProtoSyn.verbose.mode && println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
                 end
             end
         end

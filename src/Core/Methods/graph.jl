@@ -188,6 +188,7 @@ function reindex(topology::Topology; set_ascendents::Bool = true)
     # of possible problems with index assignment)
     if set_ascendents
         for atom in eachatom(topology)
+            # println("\n Setting ascendents on atom: $atom")
             atom.ascendents = ascendents(atom, 4)
         end
     end
