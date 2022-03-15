@@ -12,17 +12,74 @@ module TorchANI
     const _model   = PyNULL()
 
     function __init__()
-        copy!(torch, pyimport("torch"))
-        copy!(torchani, pyimport("torchani"))
 
-        if torch.cuda.is_available()
-            copy!(device, torch.device("cuda"))
-        else
-            copy!(device, torch.device("cpu"))
+        torch_is_available = false
+        try
+            copy!(torch, pyimport("torch"))
+            torch_is_available = true
+        catch LoadError
+            if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
+                println()
+                @warn """
+                📍 ProtoSyn was not able to identify `torch` in this system.
+                PyCall is currently configured to use the Python version at $(PyCall.current_python()).
+                In order to use the TorchANI energy function component, make sure to:
+                    - Set ENV["PYTHON"] to the path of python executable you wish to use, run Pkg.build("PyCall") and re-launch Julia and ProtoSyn.
+                    - Make sure `torch` is installed in the machine trying to load ProtoSyn.
+
+                In order to install `torch`, follow the following instructions:
+                (1) Install TorchANI: pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu100/torch_nightly.html
+                (2) Re-launch Julia and ProtoSyn
+
+                ProtoSyn will continue loading, but the `Calculators.TorchANI` module will be unavailable.
+                To surpress further warnings for unavailable energy function components, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
+                \$ export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false
+                Optionally, add the above line to ~/.bashrc to persistently supress warnings in further sessions.
+
+                """
+            end
         end
-        
-        copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
-        if ProtoSyn.verbose.mode
+
+        torchani_is_available = false
+        try
+            copy!(torchani, pyimport("torchani"))
+            torchani_is_available = true
+        catch LoadError
+            if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
+                println()
+                @warn """
+                📍 ProtoSyn was not able to identify `torchani` in this system.
+                PyCall is currently configured to use the Python version at $(PyCall.current_python()).
+                In order to use the TorchANI energy function component, make sure to:
+                    - Set ENV["PYTHON"] to the path of python executable you wish to use, run Pkg.build("PyCall") and re-launch Julia and ProtoSyn.
+                    - Make sure `torchani` is installed in the machine trying to load ProtoSyn.
+
+                In order to install `torchani`, follow the following instructions:
+                (1) Install TorchANI: pip install torchani
+                (2) Re-launch Julia and ProtoSyn
+
+                ProtoSyn will continue loading, but the `Calculators.TorchANI` module will be unavailable.
+                To surpress further warnings for unavailable energy function components, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
+                \$ export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false
+                Optionally, add the above line to ~/.bashrc to persistently supress warnings in further sessions.
+
+                """
+            end
+        end
+
+        if torch_is_available
+            if torch.cuda.is_available()
+                copy!(device, torch.device("cuda"))
+            else
+                copy!(device, torch.device("cpu"))
+            end
+        end
+
+        if torchani_is_available
+            copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
+        end
+
+        if torch_is_available && torchani_is_available && ProtoSyn.verbose.mode
             @info "TorchANI is using:"
             @info " torch version $(torch.__version__)"
             @info " cuda-toolkit version $(torch.version.cuda)"

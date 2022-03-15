@@ -31,7 +31,7 @@ module REF15
                 (4) Re-launch Julia and ProtoSyn
 
                 ProtoSyn will continue loading, but the `Calculators.REF15` module will be unavailable.
-                To surpress further warnings for unavailable energy function componenets, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
+                To surpress further warnings for unavailable energy function components, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
                 \$ export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false
                 Optionally, add the above line to ~/.bashrc to persistently supress warnings in further sessions.
 
