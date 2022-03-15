@@ -29,7 +29,7 @@ function fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, sel
     end
 end
 
-function get_torchani_internal_energy(;α::T = 1.0) where {T <: AbstractFloat}
+function get_default_torchani_internal_energy(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "TorchANI_Ref_Energy",
         calc_torchani_internal_energy,
