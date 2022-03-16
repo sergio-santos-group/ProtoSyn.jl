@@ -9,7 +9,7 @@ function calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationT
         else
             _e, _ = ProtoSyn.Calculators.TorchANI.calc_torchani_model(M, pose, SerialSelection{Residue}(residue.id, :id), false, model = model)
         end
-        e += _e
+        e -= _e
     end
 
     return e + static_ref_energy, nothing
@@ -25,7 +25,7 @@ end
 
 function fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, selection::Opt{AbstractSelection})
     if :static_ref_energy in keys(efc.settings)
-        efc.settings[:static_ref_energy] = calc_torchani_internal_energy(pose, selection, use_ensemble = efc.settings[:use_ensemble], model = efc.settings[:model])
+        efc.settings[:static_ref_energy] = calc_torchani_internal_energy(pose, selection, use_ensemble = efc.settings[:use_ensemble], model = efc.settings[:model])[1]
     end
 end
 

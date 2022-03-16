@@ -462,4 +462,33 @@ println("-----------\n Calculators:")
             @test m.calc === ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc
         end
     end
+
+    @testset verbose = true "$(@sprintf "%-54s" "TorchANI & TorchANI REF Energy")" begin
+        pose_complete = ProtoSyn.Peptides.load("../teste_2.pdb")
+        lys = Pose(ProtoSyn.getvar(ProtoSyn.Peptides.grammar, "K"))
+        ala = Pose(ProtoSyn.getvar(ProtoSyn.Peptides.grammar, "A"))
+        ef = ProtoSyn.Calculators.EnergyFunction([
+            ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble(),
+            ProtoSyn.Calculators.TorchANI.get_default_torchani_internal_energy()
+        ])
+        ef["TorchANI_Ref_Energy"].settings[:use_ensemble] = true
+
+        @test ef(lys) ≈ 0.0 atol = 1e-5
+        @test ef(ala) ≈ 0.0 atol = 1e-5
+
+        e1 = ef(pose_complete)
+        @test e1 ≈ -11.833378314971924 atol = 1e-5
+        ProtoSyn.Peptides.mutate!(pose_complete, pose_complete.graph[1, 46], ProtoSyn.Peptides.grammar, seq"A")
+        e2 = ef(pose_complete)
+        @test e2 ≈ -11.807236531283706 atol = 1e-5
+
+        # Static energy contribution
+        pose_complete = ProtoSyn.Peptides.load("../teste_2.pdb")
+        ProtoSyn.Calculators.TorchANI.fixate_static_ref_energy!(
+            ef["TorchANI_Ref_Energy"], pose_complete, !rid"46")
+        ef["TorchANI_Ref_Energy"].selection = rid"46"
+        @test ef(pose_complete) ≈ e1 atol = 1e-5
+        ProtoSyn.Peptides.mutate!(pose_complete, pose_complete.graph[1, 46], ProtoSyn.Peptides.grammar, seq"A")
+        @test ef(pose_complete) ≈ e2 atol = 1e-5
+    end 
 end
