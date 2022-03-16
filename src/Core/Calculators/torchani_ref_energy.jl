@@ -12,7 +12,7 @@ function calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationT
         e += _e
     end
 
-    return e + static_ref_energy
+    return e + static_ref_energy, nothing
 end
 
 function calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Nothing, update_forces::Bool = false; static_ref_energy::T = 0.0, use_ensemble::Bool = false, model::Int = 3) where {T <: AbstractFloat}
