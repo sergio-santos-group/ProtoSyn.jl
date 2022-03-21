@@ -75,7 +75,7 @@ end
 
 function (design_mutator::DesignMutator)(pose::Pose)
     if design_mutator.selection === nothing
-        atoms = collect(eachatom(pose.graph))
+        atoms = Vector{Atom}(collect(eachatom(pose.graph)))
     else
         sele  = design_mutator.selection
         atoms = ProtoSyn.promote(sele, Atom)(pose, gather = true)
