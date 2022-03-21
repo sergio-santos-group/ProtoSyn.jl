@@ -49,6 +49,7 @@ module GB
         # 3. Predict born-radii
         n_selected_atoms = size(hist)[1]
         born_radii = zeros(eltype(pose.state), n_selected_atoms)
+        atoms = sele(pose, gather = true)
         for elem in fieldnames(typeof(models))
             model = getproperty(models, elem)
             elem  = string(elem)
@@ -64,7 +65,7 @@ module GB
             # following custom implementation resolves the selection only on the
             # selected atoms.
             mask = Mask{Atom}(n_selected_atoms)
-            for (index, atom) in enumerate(sele(pose, gather = true))
+            for (index, atom) in enumerate(atoms)
                 if atom.symbol == elem
                     mask[index] = true
                 end
@@ -78,30 +79,36 @@ module GB
 
     """
     # TODO DOCUMENTATION
-
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4361090/
     """
     function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat}
 
+        if selection !== nothing
+            sele = ProtoSyn.promote(selection, Atom)
+        else
+            sele = TrueSelection{Atom}()
+        end
+
         # Pre-calculate atomic distances
-        atoms  = collect(eachatom(pose.graph))
+        atoms  = sele(pose, gather = true)
         natoms = length(atoms)
-        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(pose, selection))
+        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(pose, sele))
 
         # Predict born radii if necessary
         if isa(born_radii, Function)
-            born_radii = born_radii(pose, selection, dm = dm, models = models)
+            born_radii = born_radii(pose, sele, dm = dm, models = models)
         end
 
-        env = (1/(8*π*ϵ_protein)) * (1 - (1/ϵ_solvent)) # Dieletric term
+        env = - (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
         int = T(0.0)
 
-        for i in 1:natoms
+        for i in 1:(natoms-1)
             atomi = atoms[i]
             qi = pose.state[atomi].δ
             αi = born_radii[i]
 
-            for j in 1:natoms
-                i === j && continue
+            for j in (i+1):natoms
+                # i === j && continue
 
                 atomj = atoms[j]
                 qj    = pose.state[atomj].δ
@@ -135,7 +142,7 @@ module GB
             nothing,
             Dict{Symbol, Any}(
                 :born_radii => predict_igbr_nn_born_radii,
-                :ϵ_protein  => 1.0,
+                :ϵ_protein  => 4.0,
                 :ϵ_solvent  => 80.0,
                 :models     => models_onnx
             ),

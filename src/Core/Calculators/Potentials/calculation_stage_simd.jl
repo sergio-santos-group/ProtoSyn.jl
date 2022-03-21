@@ -59,7 +59,7 @@ using SIMD
                 dij = sqrt(sum(rij * rij))
 
                 if !update_forces
-                    energies[j, i] = potential(dij)
+                    energies[j, i] = potential(dij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 else
                     rij = rij / dij # normalization
                     energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)

@@ -35,3 +35,4 @@ end
 
 include("flat_bottom_potential.jl")
 include("coulomb_potential.jl")
+include("bump_potential.jl")

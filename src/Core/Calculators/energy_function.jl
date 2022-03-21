@@ -171,6 +171,7 @@ end
 function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Opt{Bool} = nothing)
     e              = 0.0
     performed_calc = false
+
     for component in energy_function.components
 
         # Calculate component only if α > 0.0

@@ -45,18 +45,20 @@ module HydrogenBonds
     made).
 
     """
-    function calc_hydrogen_bond_network(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), d0::T = 3.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_hydrogen_bond_network(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x) -> 0.0) where {A <: ProtoSyn.AbstractAccelerationType}
         
         if isa(hydrogen_bond_network, Function)
             hydrogen_bond_network = hydrogen_bond_network(pose, selection)
         end
 
+        T = eltype(pose.state)
         ehb = T(0.0)
         hb_list = Vector{Tuple{Atom, Atom}}()
         for acceptor in hydrogen_bond_network.acceptors
     
             c = pose.state[acceptor.base].t
             o = pose.state[acceptor.charged].t
+            qi = pose.state[acceptor.charged].δ
             voc = c .- o
             doc = norm(voc)
     
@@ -64,6 +66,7 @@ module HydrogenBonds
     
                 n = pose.state[donor.base].t
                 h = pose.state[donor.charged].t
+                qj = pose.state[donor.charged].δ
                 vhn = n .- h
                 dhn = norm(vhn)
     
@@ -74,11 +77,11 @@ module HydrogenBonds
                 cos1 = dot(vho, vhn) / (dho * dhn)
                 cos2 = dot(voc, voh) / (doc * dho)
     
-                d = (dho - d0)^2
+                d = potential(dho, qi = qi, qj = qj)
                 c1 = cos1 <= 0.0 ? cos1 : 0.0
                 c2 = cos2 <= 0.0 ? cos2 : 0.0
     
-                ehb_i = d - c1 * c2
+                ehb_i = d * c1 * c2
                 ehb_i = ehb_i < 0.0 ? ehb_i : 0.0
                 ehb += ehb_i
                 
@@ -91,8 +94,8 @@ module HydrogenBonds
         return ehb, nothing, hb_list
     end
 
-    calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), d0::T = 3.0) where {T <: AbstractFloat} = begin
-        calc_hydrogen_bond_network(ProtoSyn.acceleration.active, pose, selection, update_forces; hydrogen_bond_network = hydrogen_bond_network, d0 = d0)
+    calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x) -> 0.0) = begin
+        calc_hydrogen_bond_network(ProtoSyn.acceleration.active, pose, selection, update_forces; hydrogen_bond_network = hydrogen_bond_network, potential = potential)
     end
 
     """
@@ -144,7 +147,7 @@ module HydrogenBonds
             nothing,
             Dict{Symbol, Any}(
                 :hydrogen_bond_network => generate_hydrogen_bond_network,
-                :d0 => 3.0),
+                :potential => ProtoSyn.Calculators.get_bump_potential_charges(c = 3.0, r = 1.5)),
             α,
             false)
     end

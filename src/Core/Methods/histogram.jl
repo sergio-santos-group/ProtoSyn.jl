@@ -49,6 +49,10 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
             
             # Find the bin position after the initial element position
             bin_pos = ceil(Int, d / bin)
+            
+            if bin_pos === 0 # Case distance between particles is 0.0
+                continue
+            end
 
             # Increment count of this element in this distance bin
             hist[i, init_elem_pos + bin_pos] += 1

@@ -66,18 +66,17 @@ module Electrostatics
 
     # ---
 
-    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) where {A <: ProtoSyn.AbstractAccelerationType}
-        cp = ProtoSyn.Calculators.coulomb_potential
-        e, f = ProtoSyn.Calculators.apply_potential(A, pose, cp, update_forces, vlist, selection, mask)
-        if e === 0.0 && any(x -> x.δ !== 0.0, pose.state.items)
+    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Function = (x) -> 0.0) where {A <: ProtoSyn.AbstractAccelerationType}
+        e, f = ProtoSyn.Calculators.apply_potential(A, pose, potential, update_forces, vlist, selection, mask)
+        if e === 0.0 && all(x -> x.δ === 0.0, pose.state.items[4:end])
             @warn "The calculated Coulomb energy is 0.0 and it seems the evaluated Pose does not have any assigned charges. Consider using the `ProtoSyn.Calculators.Electrostatics.assign_default_charges!` method."
         end # if
 
         return e, f
     end # function
 
-    calc_coulomb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing) = begin
-        calc_coulomb(ProtoSyn.acceleration.active, pose, selection, update_forces; mask = mask, vlist = vlist)
+    calc_coulomb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Function = (x) -> 0.0) = begin
+        calc_coulomb(ProtoSyn.acceleration.active, pose, selection, update_forces; mask = mask, vlist = vlist, potential = potential)
     end
 
     function get_default_coulomb(;α::T = 1.0) where {T <: AbstractFloat}
@@ -88,7 +87,10 @@ module Electrostatics
             calc_coulomb,
             # !SidechainSelection(),
             nothing, 
-            Dict{Symbol, Any}(:mask => nothing, :vlist => nothing),
+            Dict{Symbol, Any}(
+                :mask => nothing,
+                :vlist => nothing,
+                :potential => ProtoSyn.Calculators.get_bump_potential_charges(c = 11.0, r = 8.5)),
             α,
             true)
     end

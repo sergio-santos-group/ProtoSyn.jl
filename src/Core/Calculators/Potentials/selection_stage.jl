@@ -25,7 +25,7 @@ function resolve_selection(A::Type{<: ProtoSyn.AbstractAccelerationType},
     verlet_list::Union{VerletList, Nothing},
     selection::AbstractSelection,
     mask::Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}}})
-
+    
     sele = ProtoSyn.promote(selection, Atom)(pose).content
     N = count(sele)
     if N == 0

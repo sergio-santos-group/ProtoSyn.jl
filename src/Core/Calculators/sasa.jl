@@ -3,20 +3,28 @@ module SASA
     using ProtoSyn
     using LinearAlgebra
 
-    function calc_sasa(::Type{A}, pose::Pose, selection::AbstractSelection = an"CA", update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, Ω::T = 4.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
-        dm = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
+    function calc_sasa(::Type{A}, pose::Pose, selection::Opt{AbstractSelection} = an"CA", update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+        
+        if selection !== nothing
+            sele = ProtoSyn.promote(selection, Atom)
+        else
+            sele = TrueSelection{Atom}()
+        end
+
+        dm = ProtoSyn.Calculators.full_distance_matrix(A, pose, sele)
         if A === ProtoSyn.CUDA_2
             dm = collect(dm)
         end
         
-        atoms = selection(pose, gather = true)
+        atoms          = sele(pose, gather = true)
+        n_atoms         = length(atoms)
         probe_radius_2 = 2 * probe_radius
         
         # Define sphere
         sphere = ProtoSyn.fibonacci_sphere(T, n_points)
 
-        Ωis   = Vector{T}() # !
-        esols = Vector{T}() # !
+        # Ωis   = Vector{T}() # !
+        # esols = Vector{T}() # !
         esol  = T(0.0)
         for i in 1:size(dm)[1]
             Ωi = 0
@@ -41,32 +49,30 @@ module SASA
                 end
             end
 
-            Ωi = length(cloud_i) - Ω
-            esol_i = Ωi * hydrophobicity_map[atoms[i].container.name]
-            esol += esol_i
+            Ωi = length(cloud_i)
+            esol += Ωi
+
             
-            push!(Ωis, Ωi) # !
-            push!(esols, esol_i) # !
+            # push!(Ωis, Ωi) # !
+            # push!(esols, esol_i) # !
         end
 
-        # return esol, nothing
-        return esol, nothing, Ωis, esols 
+        return esol - (n_points * n_atoms), nothing
+        # return esol, nothing, Ωis, esols 
     end
 
-    calc_sasa(pose::Pose, selection::AbstractSelection = an"CA", update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, Ω::T = 4.0) where {T <: AbstractFloat} = begin
-        calc_sasa(ProtoSyn.acceleration.active, pose, update_forces, selection = selection, probe_radius = probe_radius, n_points = n_points, hydrophobicity_map = hydrophobicity_map, Ω = Ω)
+    calc_sasa(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100) where {T <: AbstractFloat} = begin
+        calc_sasa(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points)
     end
 
     function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "SASA",
             calc_sasa,
-            an"CA",
+            nothing,
             Dict{Symbol, Any}(
-                :Ω                  => 4.0,
                 :n_points           => 100,
                 :probe_radius       => 6.0,
-                :hydrophobicity_map => ProtoSyn.Peptides.doolitle_hydrophobicity,
             ),
             α,
             false
