@@ -102,13 +102,13 @@ module GB
         env = - (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
         int = T(0.0)
 
-        for i in 1:(natoms-1)
+        for i in 1:natoms
             atomi = atoms[i]
             qi = pose.state[atomi].δ
             αi = born_radii[i]
 
-            for j in (i+1):natoms
-                # i === j && continue
+            for j in 1:natoms
+                i === j && continue
 
                 atomj = atoms[j]
                 qj    = pose.state[atomj].δ

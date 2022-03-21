@@ -174,8 +174,8 @@ function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::
 
     for component in energy_function.components
 
-        # Calculate component only if α > 0.0
-        if component.α > 0.0
+        # Calculate component only if α ≠ 0.0
+        if component.α !== 0.0
 
             # Intersect update forces
             if update_forces_overwrite !== nothing
