@@ -34,6 +34,7 @@ module Calculators
     @info " | Loading Restraint Models"
     include("Potentials/potentials.jl")
     include("restraints.jl")
+    include("custom_ref_energy.jl")
 
     @info " | Loading Energy Function"
     include("energy_function.jl")

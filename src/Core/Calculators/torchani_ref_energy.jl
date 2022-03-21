@@ -1,3 +1,6 @@
+"""
+# TODO: Documentation
+"""
 function calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::AbstractSelection, update_forces::Bool = false; static_ref_energy::T = 0.0, use_ensemble::Bool = false, model::Int = 3) where {T <: AbstractFloat}
 
     sele = ProtoSyn.promote(selection, Residue)
