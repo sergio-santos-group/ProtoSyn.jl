@@ -3,7 +3,7 @@ module SASA
     using ProtoSyn
     using LinearAlgebra
 
-    function calc_sasa(::Type{A}, pose::Pose, selection::Opt{AbstractSelection} = an"CA", update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+    function calc_sasa(::Type{A}, pose::Pose, selection::Opt{AbstractSelection} = an"CA", update_forces::Bool = false; probe_radius::T = 1.4, n_points::Int = 100) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         
         if selection !== nothing
             sele = ProtoSyn.promote(selection, Atom)
@@ -53,10 +53,10 @@ module SASA
             push!(sasas, Ωi)
         end
 
-        return esol - (n_points * n_atoms), nothing, sasas
+        return esol, nothing, sasas
     end
 
-    calc_sasa(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100) where {T <: AbstractFloat} = begin
+    calc_sasa(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 1.4, n_points::Int = 100) where {T <: AbstractFloat} = begin
         calc_sasa(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points)
     end
 
@@ -67,7 +67,7 @@ module SASA
             nothing,
             Dict{Symbol, Any}(
                 :n_points           => 100,
-                :probe_radius       => 6.0,
+                :probe_radius       => 1.4,
             ),
             α,
             false
@@ -79,14 +79,17 @@ module SASA
     function calc_sasa_energy(::Type{A}, pose::Pose,
         selection::Opt{AbstractSelection} = an"CA",
         update_forces::Bool = false;
-        probe_radius::T = 6.0,
+        probe_radius::T = 1.4,
         n_points::Int = 100,
         residue_selection::AbstractSelection = TrueSelection{Residue}(),
         hydrophobicity_map::Opt{Dict{String, T}} = nothing,
-        reference_energies::Opt{Dict{String, T}} = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+        max_sasas::Opt{Dict{String, T}} = nothing,
+        Ω::T = 0.0) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+
+        @assert 0.0 < Ω < 1.0 "Average exposure value (Ω) must be between 0.0 and 1.0!"
         
         if hydrophobicity_map === nothing; hydrophobicity_map = Dict{String, T}(); end
-        if reference_energies === nothing; reference_energies = Dict{String, T}(); end
+        if max_sasas === nothing; max_sasas = Dict{String, T}(); end
 
         esol = T(0.0)
 
@@ -96,32 +99,33 @@ module SASA
             sele = TrueSelection{Atom}()
         end
 
-        a_resi_names = [a.container.name for a in sele(pose, gather = true)]
+        a_resi_ids = [a.container.id for a in sele(pose, gather = true)]
 
-        _, _, sasas = calc_sasa(A, pose, sele, update_forces,
+        s, _, sasas = calc_sasa(A, pose, sele, update_forces,
             probe_radius = probe_radius, n_points = n_points)
 
         resi_sele = ProtoSyn.promote(residue_selection, Residue)
         residues = resi_sele(pose, gather = true)
         for residue in residues
             rname = residue.name
-            resi_atoms_indexes = findall(==(rname), a_resi_names)
+            resi_atoms_indexes = findall(==(residue.id), a_resi_ids)
             resi_sasa = sum(sasas[resi_atoms_indexes])
             σi  = hydrophobicity_map[rname]
-            if rname in keys(reference_energies)
-                ref = reference_energies[rname]
+            if rname in keys(max_sasas)
+                ref = max_sasas[rname]
             else
-                @warn "No reference energy found for Residue type $rname."
+                @warn "No max SASA entry found for Residue type $rname."
                 ref = 0.0
             end
-            esol += (σi * resi_sasa) - ref
+            ProtoSyn.verbose.mode && println("Esol in residue $(residue.id)-$(residue.name): $σi * ($resi_sasa - ($ref * $Ω ($(ref * Ω)))) = $(σi * (resi_sasa - (ref * Ω)))")
+            esol += σi * (resi_sasa - (ref * Ω))
         end
 
         return esol, nothing
     end
 
-    calc_sasa_energy(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 6.0, n_points::Int = 100, residue_selection::AbstractSelection = TrueSelection{Residue}(), hydrophobicity_map::Opt{Dict{String, T}} = nothing, reference_energies::Opt{Dict{String, T}} = nothing) where {T <: AbstractFloat} = begin
-        calc_sasa_energy(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points, residue_selection = residue_selection, hydrophobicity_map = hydrophobicity_map, reference_energies = reference_energies)
+    calc_sasa_energy(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 1.4, n_points::Int = 100, residue_selection::AbstractSelection = TrueSelection{Residue}(), hydrophobicity_map::Opt{Dict{String, T}} = nothing, max_sasas::Opt{Dict{String, T}} = nothing, Ω::T = 0.0) where {T <: AbstractFloat} = begin
+        calc_sasa_energy(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points, residue_selection = residue_selection, hydrophobicity_map = hydrophobicity_map, max_sasas = max_sasas, Ω = Ω)
     end
     
     function get_default_sasa_energy(;α::T = 1.0) where {T <: AbstractFloat}
@@ -130,7 +134,7 @@ module SASA
             calc_sasa_energy,
             nothing,
             Dict{Symbol, Any}(
-                :probe_radius                 => 6.0,
+                :probe_radius                 => 1.4,
                 :n_points                     => 100,
                 :hydrophobicity_map           => ProtoSyn.Peptides.doolitle_hydrophobicity,
                 :reference_energies           => Dict{String, Float64}()

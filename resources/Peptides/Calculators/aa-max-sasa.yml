@@ -1,0 +1,24 @@
+#    Selection: (SidechainSelection() & !as"H") | an"CA"
+# Probe radius: 2.8 Å
+GLN: 218.0
+LYS: 222.0
+GLY: 100.0
+ASN: 187.0
+TRP: 264.0
+THR: 172.0
+VAL: 172.0
+HIS: 211.0
+SER: 147.0
+PRO: 154.0
+ASP: 188.0
+PHE: 230.0
+ILE: 194.0
+HIE: 211.0
+TYR: 249.0
+ARG: 260.0
+LEU: 194.0
+ALA: 128.0
+HID: 211.0
+MET: 212.0
+GLU: 213.0
+CYS: 157.0
