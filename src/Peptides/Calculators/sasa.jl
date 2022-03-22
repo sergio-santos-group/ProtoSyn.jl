@@ -10,7 +10,7 @@ module SASA
         for residue in residue_list
             res = string(residue)
             pose = Peptides.build(grammar, [res])
-            ref_energy[res] = ProtoSyn.Calculators.SASA.calc_sasa_energy(pose, selection, false,
+            ref_energy[ProtoSyn.one_2_three[residue]] = ProtoSyn.Calculators.SASA.calc_sasa_energy(pose, selection, false,
                 probe_radius = probe_radius,
                 n_points = n_points,
                 hydrophobicity_map = hydrophobicity_map,
@@ -20,13 +20,14 @@ module SASA
         return ref_energy
     end
 
-    const default_sidechain_sasa_reference_energy = YAML.load_file(
-        joinpath(ProtoSyn.Peptides.resource_dir, "Calculators", "aa-sasa-ref.yml"))
+    const default_sidechain_sasa_reference_energy = Dict{String, ProtoSyn.Units.defaultFloat}(
+        YAML.load_file(
+            joinpath(ProtoSyn.Peptides.resource_dir, "Calculators", "aa-sasa-ref.yml")))
 
     function get_default_sasa_energy(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "SASA_Solvation",
-            calc_sasa_energy,
+            ProtoSyn.Calculators.SASA.calc_sasa_energy,
             nothing,
             Dict{Symbol, Any}(
                 :probe_radius                 => 6.0,
