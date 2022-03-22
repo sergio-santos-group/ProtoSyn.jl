@@ -9,4 +9,5 @@ module Calculators
     include("natural_frequency.jl")
     include("ss_propensity.jl")
     include("electrostatics.jl")
+    include("sasa.jl")
 end

@@ -22,7 +22,6 @@ include("Submodules/Selections/sidechains.jl")
 include("Submodules/Selections/secondary-structure.jl") # Requires types.jl
 
 include("constants.jl")
-include("Calculators/Calculators.jl")
 include("Submodules/Rotamers/Rotamers.jl")
 include("Methods/io.jl")
 include("Methods/graph.jl")
@@ -31,6 +30,7 @@ include("Methods/pose.jl")
 include("Methods/other.jl") # Requires constants.jl
 include("Submodules/Builder/Builder.jl")
 include("Submodules/Builder/grammar.jl")
+include("Calculators/Calculators.jl") # Requires grammar.jl
 include("Mutators/Mutators.jl") # Requires Rotamers.jl
 include("Drivers/drivers.jl")
 
