@@ -28,7 +28,7 @@ module SASA
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "SASA_Solvation",
             ProtoSyn.Calculators.SASA.calc_sasa_energy,
-            nothing,
+            SidechainSelection() & !as"H",
             Dict{Symbol, Any}(
                 :probe_radius                 => 6.0,
                 :n_points                     => 100,
