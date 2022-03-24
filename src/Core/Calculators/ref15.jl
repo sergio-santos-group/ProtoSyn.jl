@@ -62,7 +62,7 @@ module REF15
     Does not care for acceleration type
     Selection?
     """
-    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject})
+    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject})::Tuple{T, Nothing} where {T <: AbstractFloat}
 
         # * Another (faster) option is to create a pyrosetta poe without using
         # * the filesystem. For example, using the pose_from_sequence method.
@@ -104,7 +104,7 @@ module REF15
         return ref15(_pose), nothing
     end
 
-    calc_ref15(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false) = begin
+    calc_ref15(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false)::Tuple{T, Nothing} where {T <: AbstractFloat} = begin
         calc_ref15(ProtoSyn.acceleration.active, pose, selection, update_forces)
     end
 
@@ -132,7 +132,7 @@ module REF15
 
     """
     """
-    function get_default_ref15(;α::T = 1.0) where {T <: AbstractFloat}
+    function get_default_ref15(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "REF15",
             calc_ref15,

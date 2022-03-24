@@ -98,9 +98,13 @@ module Restraints
             :d3 => 8.0
     ```
     """
-    function get_default_contact_restraint(filename::String; α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+    function get_default_contact_restraint(;filename::String = "", α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
         _sele = an"CA"
-        mask  = ProtoSyn.Calculators.load_map(T, filename)
+        if filename === ""
+            mask = nothing
+        else
+            mask  = ProtoSyn.Calculators.load_map(T, filename)
+        end
         return EnergyFunctionComponent(
             "Contact_Map",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,

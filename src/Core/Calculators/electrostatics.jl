@@ -79,18 +79,15 @@ module Electrostatics
         calc_coulomb(ProtoSyn.acceleration.active, pose, selection, update_forces; mask = mask, vlist = vlist, potential = potential)
     end
 
-    function get_default_coulomb(;α::T = 1.0) where {T <: AbstractFloat}
-        # _mask = ProtoSyn.Calculators.get_bonded_mask()
-        # _mask = ProtoSyn.Calculators.get_intra_residue_mask(!SidechainSelection())
+    function get_default_coulomb(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "Coulomb",
             calc_coulomb,
-            # !SidechainSelection(),
             nothing, 
             Dict{Symbol, Any}(
-                :mask => nothing,
+                :mask => ProtoSyn.Calculators.get_intra_residue_mask,
                 :vlist => nothing,
-                :potential => ProtoSyn.Calculators.get_bump_potential_charges(c = 11.0, r = 8.5)),
+                :potential => ProtoSyn.Calculators.get_bump_potential_charges(c = 0.0, r = 20.0)),
             α,
             true)
     end

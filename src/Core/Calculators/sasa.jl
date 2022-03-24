@@ -175,7 +175,7 @@ module SASA
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "Radius_Gyration",
             calc_radius_gyration_energy,
-            selection,
+            nothing,
             Dict{Symbol, Any}(),
             α,
             false

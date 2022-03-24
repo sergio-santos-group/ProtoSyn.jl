@@ -41,4 +41,65 @@ module Calculators
 
     include("ref15.jl")
 
+    # --- Show available Energy Function Components
+
+    """
+    # TODO: Documentation
+    """
+    function get_available_energy_function_components(m::Module)
+        energy_function_components = Vector{Function}()
+        
+        # 1. Get all functions inside the module
+        all_functions = [x for x in names(m, all=true) if x ∉ (:eval, :include, :proxy) && getproperty(m, x) isa Function && !occursin("#", string(x))]
+
+        # 2. Filter for functions that return an EnergyFunctionComponent
+        for _function in all_functions
+            return_types = Base.return_types(getfield(m, _function))
+            is_energy_function_component = false
+            for return_type in return_types
+                if return_type <: ProtoSyn.Calculators.EnergyFunctionComponent && return_type !== Union{}
+                    is_energy_function_component = true
+                    break
+                end
+            end
+
+            # 3. Save function that returns EnergyFunctionComponent
+            if is_energy_function_component
+                push!(energy_function_components, getfield(m, _function))
+            end
+        end
+
+        # 4. List loaded modules
+        loaded_modules = [x for x in names(m, all=true) if x ∉ (:eval, :include, :proxy) && getproperty(m,x) isa Module && string(x) != split(string(m), ".")[end]]
+
+        # 5. Recursively search in the inner modules
+        for loaded_module in loaded_modules
+            _m = getfield(m, loaded_module)
+            nefc = get_available_energy_function_components(_m)
+            energy_function_components = vcat(energy_function_components, nefc)
+        end
+
+        return energy_function_components
+    end
+
+    """
+    # TODO: Documentation
+    """
+    function show_available_energy_function_components(io::IO, m::Module)
+        energy_function_components = get_available_energy_function_components(m)
+
+        println(io, "+"*repeat("-", 120)*"+")
+        @printf(io, "| %-5s | %-25s | %-82s |\n", "Index", "Component name", "Function")
+        println(io, "+"*repeat("-", 120)*"+")
+        for (index, component) in enumerate(energy_function_components)
+            c = component()
+            @printf(io, "| %-5d | %-25s | %-82s |\n", index, c.name, string(methods(component)[1].module)*"."*string(component))
+        end
+        println(io, "+"*repeat("-", 120)*"+")
+        println("  └── Consider using the `?` menu to learn more about each EnergyFunctionComponent.\n")
+    end
+
+    show_available_energy_function_components(m::Module) = show_available_energy_function_components(stdout, m)
+    show_available_energy_function_components() = show_available_energy_function_components(stdout, ProtoSyn.Calculators)
+    get_available_energy_function_components() = get_available_energy_function_components(ProtoSyn.Calculators)
 end
