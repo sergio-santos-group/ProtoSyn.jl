@@ -24,6 +24,7 @@ module SASA
         sphere = ProtoSyn.fibonacci_sphere(T, n_points)
 
         sasas = Vector{T}()
+        clouds = Vector{Vector{T}}()
         esol  = T(0.0)
         for i in 1:size(dm)[1]
             Ωi = 0
@@ -49,11 +50,12 @@ module SASA
             end
 
             Ωi = length(cloud_i)
+            clouds = vcat(clouds, cloud_i)
             esol += Ωi
             push!(sasas, Ωi)
         end
 
-        return esol, nothing, sasas
+        return esol, nothing, sasas, clouds
     end
 
     calc_sasa(pose::Pose, selection::Opt{AbstractSelection} = nothing, update_forces::Bool = false; probe_radius::T = 1.4, n_points::Int = 100) where {T <: AbstractFloat} = begin

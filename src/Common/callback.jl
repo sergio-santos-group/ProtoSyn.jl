@@ -34,7 +34,8 @@ export default_energy_step_frame_callback
 
 Returns a simple [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
 current step and total energy value of the [`Pose`](@ref) every `n` steps, while
-printing the current structure to the given `filename` (in PDB format).
+printing the current structure to the given `filename` (format infered from
+`filename` extension).
 
 # Examples
 ```jldoctest
@@ -58,10 +59,31 @@ function default_energy_step_frame_callback(n::Int, filename::String)::Callback
 end
 
 
+@doc """
+    default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
+
+Returns a detailed [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
+current step and all energy components of the [`Pose`](@ref) every `n` steps.
+An optional `msg` String can be provided as a header. Output can be colored by
+setting the `color` flag. For a list of available colors, check the
+`printstyled` documentation. By default, `default_energy_step_detailed` prints
+the output to the stdout. This can be toggled by setting the `print_to_sdtout`
+flag. Optionally, if a `file_out` is provided (as a String), output is also
+printed to that file.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Common.default_energy_step_detailed(1)
+✉  Callback:
++----------------------------------------------------------------------+
+| Index | Field                     | Value                            |
++----------------------------------------------------------------------+
+| 1     | Event                     | energy_step_detailed             |
+| 2     | Frequency                 | 1                                |
++----------------------------------------------------------------------+
+```
 """
-# TODO DOCUMENTATION
-"""
-function default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)
+function default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
     function energy_step_detailed(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
         if file_out !== nothing
             io = open(file_out, "a")
@@ -99,7 +121,32 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
 end
 
 
-function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)
+@doc """
+default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
+
+Returns a detailed [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
+current step and all energy components of the [`Pose`](@ref) every `n` steps,
+while printing the current structure to the given `filename` (format infered
+from `filename` extension). An optional `msg` String can be provided as a
+header. Output can be colored by setting the `color` flag. For a list of
+available colors, check the `printstyled` documentation. By default,
+`default_energy_step_detailed` prints the output to the stdout. This can be
+toggled by setting the `print_to_sdtout` flag. Optionally, if a `file_out` is
+provided (as a String), output is also printed to that file.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Common.default_energy_step_detailed(1)
+✉  Callback:
++----------------------------------------------------------------------+
+| Index | Field                     | Value                            |
++----------------------------------------------------------------------+
+| 1     | Event                     | energy_step_detailed             |
+| 2     | Frequency                 | 1                                |
++----------------------------------------------------------------------+
+```
+"""
+function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
     function energy_step_frame_detailed(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
         
         # Write structure to output file

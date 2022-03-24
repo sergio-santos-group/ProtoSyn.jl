@@ -5,6 +5,7 @@ using Downloads: download
 const PDB = Val{1}
 const YML = Val{2}
 const PQR = Val{3}
+const XYZ = Val{4}
 
 """
     load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false, alternative_location::String = "A"]) where {T <: AbstractFloat}
@@ -387,7 +388,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3})))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?:\w)*\s+(?<as>\w(?:\-|\+)*)\s*$"
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?:\w)*\s+(?<as>\w{1,2}(?:\-|\+)*)\s*$"
     
     aid = 0
     seekstart(io)
@@ -560,6 +561,32 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
 
 end
 
+write(io::IO, top::AbstractContainer, state::State, ::Type{XYZ}) = begin
+    
+    for atom in eachatom(top)
+        sti = state[atom.index]
+        s = @sprintf("%3s %8.3f %8.3f %8.3f", atom.symbol, sti.t[1], sti.t[2],
+            sti.t[3])
+        println(io, s)
+    end
+end
+
+write(io::IO, v::Vector{Vector{T}}) where {T <: AbstractFloat} = begin
+    
+    for atom in v
+        s = @sprintf("%3s %8.3f %8.3f %8.3f", "X", atom[1], atom[2], atom[3])
+        println(io, s)
+    end
+end
+
+write(filename::String, v::Vector{Vector{T}}) where {T <: AbstractFloat} = begin
+    if split(filename, ".")[2] != "xyz"
+        @error "ProtoSyn doesn't allow Vector{Vector{T}} print to formats other than .xyz!"
+    end
+    open(filename, "w") do io
+        write(io, v)
+    end
+end
 
 """
     ProtoSyn.write(pose::Pose, filename::String)
