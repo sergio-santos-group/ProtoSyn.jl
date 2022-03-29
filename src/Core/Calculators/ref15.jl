@@ -62,7 +62,7 @@ module REF15
     Does not care for acceleration type
     Selection?
     """
-    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject})::Tuple{T, Nothing} where {T <: AbstractFloat}
+    function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject} = nothing)::Tuple{<: AbstractFloat, Nothing}
 
         # * Another (faster) option is to create a pyrosetta poe without using
         # * the filesystem. For example, using the pose_from_sequence method.
@@ -72,7 +72,7 @@ module REF15
 
         # * For some unknown reason, when using a pre-existing rosetta_pose, the
         # * resulting energy is slightly different.
-        
+
         if rosetta_pose === nothing
             # A.1. Write pose to a temporary file. File is added to the tempdir()
             # directory and deleted after completion of the current Julia process
@@ -104,8 +104,8 @@ module REF15
         return ref15(_pose), nothing
     end
 
-    calc_ref15(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false)::Tuple{T, Nothing} where {T <: AbstractFloat} = begin
-        calc_ref15(ProtoSyn.acceleration.active, pose, selection, update_forces)
+    calc_ref15(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject} = nothing)::Tuple{<: AbstractFloat, Nothing} = begin
+        calc_ref15(ProtoSyn.acceleration.active, pose, selection, update_forces, rosetta_pose = rosetta_pose)
     end
 
     """
