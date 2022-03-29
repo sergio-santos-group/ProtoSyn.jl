@@ -74,6 +74,12 @@ module REF15
         # * resulting energy is slightly different.
 
         if rosetta_pose === nothing
+            # Note: For some reason, PyRosetta requires HIE & HID residues to be
+            # named HIS.
+            for r in rn"HIE"(pose, gather = true)
+                r.name.content = "HIS"
+            end
+            
             # A.1. Write pose to a temporary file. File is added to the tempdir()
             # directory and deleted after completion of the current Julia process
             filename, io = Base.Filesystem.mktemp()
