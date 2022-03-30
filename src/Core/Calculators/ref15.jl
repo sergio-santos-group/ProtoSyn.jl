@@ -64,7 +64,9 @@ module REF15
     """
     function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject} = nothing)::Tuple{<: AbstractFloat, Nothing}
 
-        # * Another (faster) option is to create a pyrosetta poe without using
+        @assert pyrosetta != PyCall.PyNULL() "PyRosetta doesn't seem to be available on this machine."
+
+        # * Another (faster) option is to create a pyrosetta pose without using
         # * the filesystem. For example, using the pose_from_sequence method.
         # * This, however, had to take into consideration the terminal cap
         # * status, presence of tautomers, hydrogentation status, missing atoms
@@ -79,7 +81,7 @@ module REF15
             for r in rn"HIE"(pose, gather = true)
                 r.name.content = "HIS"
             end
-            
+
             # A.1. Write pose to a temporary file. File is added to the tempdir()
             # directory and deleted after completion of the current Julia process
             filename, io = Base.Filesystem.mktemp()

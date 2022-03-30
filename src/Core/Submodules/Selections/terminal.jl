@@ -43,9 +43,9 @@ selection_type(::TerminalSelection{M, T})  where {M, T} = T
 function select(sele::TerminalSelection{Stateless, Residue}, container::AbstractContainer)
     @assert typeof(container) > Residue "Can't apply TerminalSelection{Residue} to container of type $(typeof(container))"
     
-    _root = ProtoSyn.root(container).container
+    _root      = ProtoSyn.root(container).container
     n_residues = counter(Residue)(container)
-    mask = Mask{Residue}(n_residues)
+    mask       = Mask{Residue}(n_residues)
 
     for res in iterator(Residue)(container)
         if res.parent == _root || length(res.children) == 0
@@ -62,4 +62,92 @@ function Base.show(io::IO, ts::TerminalSelection{M, T}, level_code::Opt{LevelCod
         level_code = LevelCode()
     end
     println(io, lead*"TerminalSelection ($T)")
+end
+
+# ------------------------------------------------------------------------------
+
+export NTerminalSelection
+# Note: NTerminalSelection is a LEAF selection.
+
+"""
+# TODO DOCUMENTATION
+"""
+mutable struct NTerminalSelection{M, T} <: AbstractSelection
+    NTerminalSelection() = begin
+        new{Stateless, Residue}()
+    end
+end
+
+state_mode_type(::NTerminalSelection{M, T}) where {M, T} = M
+selection_type(::NTerminalSelection{M, T})  where {M, T} = T
+
+
+# --- Select -------------------------------------------------------------------
+
+function select(sele::NTerminalSelection{Stateless, Residue}, container::AbstractContainer)
+    @assert typeof(container) > Residue "Can't apply NTerminalSelection{Residue} to container of type $(typeof(container))"
+    
+    _root      = ProtoSyn.root(container).container
+    n_residues = counter(Residue)(container)
+    mask       = Mask{Residue}(n_residues)
+
+    for (index, res) in enumerate(iterator(Residue)(container))
+        if res.parent == _root
+            mask[index] = true
+        end
+    end
+    return mask
+end
+
+# --- Show ---------------------------------------------------------------------
+function Base.show(io::IO, ts::NTerminalSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
+    end
+    println(io, lead*"N-TerminalSelection ($T)")
+end
+
+# ------------------------------------------------------------------------------
+
+export CTerminalSelection
+# Note: CTerminalSelection is a LEAF selection.
+
+"""
+# TODO DOCUMENTATION
+"""
+mutable struct CTerminalSelection{M, T} <: AbstractSelection
+    CTerminalSelection() = begin
+        new{Stateless, Residue}()
+    end
+end
+
+state_mode_type(::CTerminalSelection{M, T}) where {M, T} = M
+selection_type(::CTerminalSelection{M, T})  where {M, T} = T
+
+
+# --- Select -------------------------------------------------------------------
+
+function select(sele::CTerminalSelection{Stateless, Residue}, container::AbstractContainer)
+    @assert typeof(container) > Residue "Can't apply CTerminalSelection{Residue} to container of type $(typeof(container))"
+    
+    _root      = ProtoSyn.root(container).container
+    n_residues = counter(Residue)(container)
+    mask       = Mask{Residue}(n_residues)
+
+    for (index, res) in enumerate(iterator(Residue)(container))
+        if length(res.children) == 0
+            mask[index] = true
+        end
+    end
+    return mask
+end
+
+# --- Show ---------------------------------------------------------------------
+function Base.show(io::IO, ts::CTerminalSelection{M, T}, level_code::Opt{LevelCode} = nothing) where {M, T}
+    lead = ProtoSyn.get_lead(level_code)
+    if level_code === nothing
+        level_code = LevelCode()
+    end
+    println(io, lead*"C-TerminalSelection ($T)")
 end

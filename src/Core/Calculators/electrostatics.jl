@@ -8,11 +8,21 @@ module Electrostatics
     """
     # TODO
     """
-    function assign_acc2_eem_charges_from_file!(pose::Pose, filename::String)
-        data = split(open(f->read(f, String), filename), "\n")[2]
-        T = eltype(pose.state)
+    function assign_acc2_eem_charges_from_file!(pose::Pose, filename::String, selection::Opt{AbstractSelection})
+
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        data    = split(open(f->read(f, String), filename), "\n")[2]
+        T       = eltype(pose.state)
         charges = map((value) -> parse(T, value), split(data))
-        for (i, atom) in enumerate(eachatom(pose.graph))
+
+        atoms = sele(pose, gather = true)
+        @assert lenght(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(lenght(atoms)) selected atoms."
+        for (i, atom) in enumerate(atoms)
             pose.state[atom].δ = charges[i]
         end
 
@@ -23,12 +33,24 @@ module Electrostatics
     """
     # TODO
     """
-    function assign_default_charges!(pose::Pose, res_lib::LGrammar; supress_warn::Bool = false)
+    function assign_default_charges!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection}; supress_warn::Bool = false)
 
-        for residue in eachresidue(pose.graph)
+        if selection === nothing
+            sele = TrueSelection{Residue}()
+        else
+            sele = ProtoSyn.promote(selection, Residue)
+        end
+
+        residues = sele(pose, gather = true)
+
+        for residue in residues
 
             # Get template residue by residue name
-            name = string(ProtoSyn.three_2_one[residue.name.content])          
+            if !(residue.name.content in keys(ProtoSyn.three_2_one))
+                @warn "Attempted to set default charge on residue $(residue.name.content) but the residue was not found on the ProtoSyn.three_2_one dictionary. Make sure the necessary LGrammar is loaded. Skipping this residue."
+                continue
+            end
+            name = string(ProtoSyn.three_2_one[residue.name.content])
             template = res_lib.variables[name]
             if isa(template, Tautomer)
                 # If multiple templates exist for a particular residue type,

@@ -555,7 +555,7 @@ function is_C_terminal(res::Residue)
 end
 
 
-function identify_c_terminal(seg::Segment)
+function identify_c_terminal(seg::Segment; supress_warn::Bool = false)
 
     # Criterium 1. Identify atom by the bonding pattern
     #  - The C terminal is connected to a C, which is connected to a N, which is
@@ -574,8 +574,18 @@ function identify_c_terminal(seg::Segment)
             #  - The C terminal should be connected to an atom called "CA"
             C = [c for c in C if c.container["CA"] in c.bonds]
         end
-        C = C[1]
+        if length(C) > 1
+            !supress_warn && @warn "Multiple candidates for C terminal identification found. Assuming $(C[1]) as C terminal. Check if this is the desired behaviour".
+            C = C[1]
+        elseif length(C) === 1
+            C = C[1]
+        elseif length(C) === 0
+            !supress_warn && @warn "Terminal C was not found on $seg"
+            return Atom[]
+        end
     end
+
+    return C
 end
 
 
