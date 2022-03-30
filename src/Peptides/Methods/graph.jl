@@ -47,8 +47,11 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
 
         residues = sele(segment, gather = true)
         
-        if ProtoSyn.verbose.mode && length(residues) === 0
-            @warn "Skipping $segment : No selected residues in this segment!"
+        if length(residues) === 0
+            if ProtoSyn.verbose.mode
+                @warn "Skipping $segment : No selected residues in this segment!"
+            end
+            
             continue
         end
 

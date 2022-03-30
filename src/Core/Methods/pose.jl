@@ -342,6 +342,52 @@ end
 
 
 """
+# TODO Documentation
+Expects reindexed structure
+"""
+function sort_atoms_by_graph!(state::State, container::AbstractContainer, start::Opt{Atom} = nothing)
+
+    function find_atom_sortperm(state::State, old_atoms_indexes::Vector{Int}, new_atoms_indexes::Vector{Int})
+        _sortperm = Vector{Int}()
+        found = 0
+        for as in state.items
+            if as.index in old_atoms_indexes
+                found += 1
+                push!(_sortperm, new_atoms_indexes[found])
+            else
+                push!(_sortperm, as.index)
+            end
+        end
+
+        @assert found === length(old_atoms_indexes) "From the provided atoms travelled from the graph ($(length(old_atoms_indexes))), only $found were found by the atom.index (in comparison with the atomstate.index). Check if both the graph and state are correctly indexed."
+
+        return _sortperm
+    end
+
+    old_atoms_indexes = [a.index for a in collect(eachatom(container))]
+    println("\nOld atom indexes: $old_atoms_indexes")
+
+    if start === nothing
+        start = ProtoSyn.origin(container)
+    end
+    atoms         = ProtoSyn.travel_graph(start)
+    atoms_indexes = [a.index for a in atoms if a in container.items]
+    println("New atom indexes: $atoms_indexes")
+
+    @assert length(atoms_indexes) === length(old_atoms_indexes) "Starting on $start, the inter-container graph traveled only accounts for $(length(atoms_indexes)) of the original $(length(old_atoms_indexes)) atoms. Make sure parenthoods are set and that the defined `start` atom is correct."
+
+    _sortperm = find_atom_sortperm(state, old_atoms_indexes, atoms_indexes)
+    println("Sort perm: $(_sortperm[4:end])\n")
+
+    # Apply sort perm (ignoring the first 3 entries)
+    state.items[4:end] = state.items[4:end][_sortperm[4:end]]
+    container.items    = [a for a in atoms if a in container.items]
+
+    reindex(state)
+    return state, container
+end
+
+"""
     fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
 
 Return a [Fragment](@ref) from a list of `coords`. Each coordinate creates a new
