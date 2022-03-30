@@ -21,7 +21,7 @@ module Electrostatics
         charges = map((value) -> parse(T, value), split(data))
 
         atoms = sele(pose, gather = true)
-        @assert lenght(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(lenght(atoms)) selected atoms."
+        @assert length(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(lenght(atoms)) selected atoms."
         for (i, atom) in enumerate(atoms)
             pose.state[atom].δ = charges[i]
         end
