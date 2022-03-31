@@ -87,6 +87,10 @@ ProtoSyn.eval(:(begin
         mask = Mask{Atom}(n_atoms)
 
         for atom in eachatom(container)
+            if !(atom.container.name in keys(Peptides.Dihedral.chi_dict))
+                mask[atom.index] = false
+                continue
+            end
             chi_list = Peptides.Dihedral.chi_dict[atom.container.name]
             if atom.name in chi_list[2:end]
                 mask[atom.index] = true

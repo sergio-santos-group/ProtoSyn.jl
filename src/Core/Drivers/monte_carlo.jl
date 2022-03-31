@@ -139,7 +139,7 @@ function (driver::MonteCarlo)(pose::Pose)
     T = eltype(pose.state)
     driver_state = MonteCarloState{T}()
     driver_state.temperature = driver.temperature(0)
-    
+
     previous_energy = driver.eval!(pose)
     previous_state  = copy(pose)
     driver.callback !== nothing && driver.callback(pose, driver_state)
@@ -156,7 +156,7 @@ function (driver::MonteCarlo)(pose::Pose)
         if (energy < previous_energy) || (n < m)
             # println("Accepted")
             previous_energy = energy
-            previous_state = copy(pose)
+            ProtoSyn.recoverfrom!(previous_state, pose) # If copy, the chain is broken
             driver_state.acceptance_count += 1
         else
             # println("Rejected")

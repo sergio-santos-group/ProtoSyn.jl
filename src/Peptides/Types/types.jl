@@ -77,7 +77,7 @@ module Dihedral
 
     function get_chi(residue::Residue, chi::Int)
         available_chis = chi_dict[residue.name.content]
-        @assert chi <= length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis)) chi angles defined"
+        @assert chi < length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis) - 1) chi angles defined."
         chi_atom = available_chis[chi + 1] # Note the "+ 1"
         if residue[chi_atom] === nothing
             ProtoSyn.verbose.mode && @warn "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
