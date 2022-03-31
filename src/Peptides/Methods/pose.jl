@@ -896,3 +896,20 @@ function predict_hydrogens!(pose, selection::Opt{AbstractSelection} = nothing)
     reindex(pose.state)
     ProtoSyn.request_i2c!(pose.state; all = true)
 end
+
+"""
+# TODO
+"""
+function remove_hydrogens!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing)
+    if selection !== nothing
+        atoms = ProtoSyn.promote(selection & as"H", Atom)(pose, gather = true)
+    else
+        atoms = as"H"(pose, gather = true)
+    end
+
+    for atom in reverse(atoms)
+        ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = false)
+    end
+
+    return pose
+end
