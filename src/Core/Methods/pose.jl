@@ -365,22 +365,20 @@ function sort_atoms_by_graph!(state::State, container::AbstractContainer, start:
     end
 
     old_atoms_indexes = [a.index for a in collect(eachatom(container))]
-    println("\nOld atom indexes: $old_atoms_indexes")
 
     if start === nothing
         start = ProtoSyn.origin(container)
     end
     atoms         = ProtoSyn.travel_graph(start)
     atoms_indexes = [a.index for a in atoms if a in container.items]
-    println("New atom indexes: $atoms_indexes")
 
     @assert length(atoms_indexes) === length(old_atoms_indexes) "Starting on $start, the inter-container graph traveled only accounts for $(length(atoms_indexes)) of the original $(length(old_atoms_indexes)) atoms. Make sure parenthoods are set and that the defined `start` atom is correct."
 
     _sortperm = find_atom_sortperm(state, old_atoms_indexes, atoms_indexes)
-    println("Sort perm: $(_sortperm[4:end])\n")
 
     # Apply sort perm (ignoring the first 3 entries)
     state.items[4:end] = state.items[4:end][_sortperm[4:end]]
+    state.x.coords     = state.x.coords[:, _sortperm[4:end]]
     container.items    = [a for a in atoms if a in container.items]
 
     reindex(state)
