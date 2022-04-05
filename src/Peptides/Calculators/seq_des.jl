@@ -1,6 +1,7 @@
 module SeqDes
 
     using ProtoSyn
+    using ProtoSyn.Calculators: EnergyFunctionComponent
     using PyCall
     using CUDA
 
@@ -271,15 +272,14 @@ module SeqDes
     """
     # TODO: DOCUMENTATION
     # ! Only works with use_cuda = true
+    Update forces does nothing.
     """
-    function calc_seqdes(pose::Pose; use_cuda::Bool = true)
-        atom_coords, atom_data, residue_bb_index_list, res_data, res_label, chis = get_pdb_data(pose)
+    function calc_seqdes(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true)
+        atom_coords, atom_data, residue_bb_index_list, res_data, res_label, chis = get_pdb_data(pose, selection)
 
         atom_coords           = PyObject(np.array(atom_coords, dtype = np.float32))
         atom_data             = PyObject(np.array(atom_data))
         residue_bb_index_list = PyObject(np.array(residue_bb_index_list))
-        # res_data              = PyObject(np.array(res_data))
-        # res_label             = PyObject(np.array(res_label))
         chis                  = PyObject(np.array(chis))
 
         logits, chi_feat, y, chi_1_logits, chi_2_logits, chi_3_logits, chi_4_logits, chi_1, chi_2, chi_3, chi_4, chi_angles, chi_mask = sampler_util.get_conv_feat(
@@ -305,7 +305,21 @@ module SeqDes
             use_cuda=use_cuda,
         )
 
-        return log_p_mean
+        return float(log_p_mean)(), nothing
+    end
+
+    calc_seqdes(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true) = begin
+        calc_seqdes(ProtoSyn.acceleration.active, pose, selection, update_forces, use_cuda = use_cuda)
+    end
+
+    function get_default_seqdes(;α::T = 1.0) where {T <: AbstractFloat}
+        EnergyFunctionComponent(
+            "SeqDes_ML_Model",
+            calc_seqdes,
+            nothing,
+            Dict{Symbol, Any}(:use_cuda => true),
+            α,
+            false)
     end
 
 end # module
