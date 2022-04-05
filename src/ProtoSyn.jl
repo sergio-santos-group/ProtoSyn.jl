@@ -45,7 +45,6 @@ catch LoadError
     @warn "SIMD package not loaded."
 end
 
-cuda_available = false
 try
     if CUDA.has_cuda() && CUDA.has_cuda_gpu()
         acceleration.active = CUDA_2
@@ -66,6 +65,7 @@ export Opt
 const Opt = Union{Nothing, T} where T
 
 include("Core/Units/Units.jl")
+include("Core/Methods/python-packages.jl")
 include("Core/Methods/other.jl") # Requires Units.jl
 include("Core/Types/constants.jl")
 include("Core/Types/other.jl")

@@ -28,7 +28,7 @@ module TorchANI
                     - Make sure `torch` is installed in the machine trying to load ProtoSyn.
 
                 In order to install `torch`, follow the following instructions:
-                (1) Install TorchANI: pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu100/torch_nightly.html
+                (1) Install Torch: pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu100/torch_nightly.html
                 (2) Re-launch Julia and ProtoSyn
 
                 ProtoSyn will continue loading, but the `Calculators.TorchANI` module will be unavailable.
