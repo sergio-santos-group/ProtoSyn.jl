@@ -6,7 +6,7 @@ module Electrostatics
     """
     # TODO
     """
-    function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar, selection::Opt{AbstractSelection}; supress_warn::Bool = false)
+    function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Bool = false)
 
         for segment in eachsegment(pose.graph)
             # Check caps
