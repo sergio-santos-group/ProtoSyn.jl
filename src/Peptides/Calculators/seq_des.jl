@@ -109,7 +109,9 @@ module SeqDes
     )
 
     residue_types = Dict{String, Int}(
-        "HIS" => 0,
+        "HIS" => 0, # Should be loaded from grammar
+        "HIE" => 0, # Should be loaded from grammar
+        "HID" => 0, # Should be loaded from grammar
         "LYS" => 1,
         "ARG" => 2,
         "ASP" => 3,
