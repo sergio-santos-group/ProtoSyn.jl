@@ -6,7 +6,7 @@ module Electrostatics
     """
     # TODO
     """
-    function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar)
+    function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar, selection::Opt{AbstractSelection}; supress_warn::Bool = false)
 
         for segment in eachsegment(pose.graph)
             # Check caps
@@ -31,6 +31,6 @@ module Electrostatics
         end
 
         return ProtoSyn.Calculators.Electrostatics.assign_default_charges!(
-            pose, res_lib, supress_warn = true)
+            pose, res_lib, selection, supress_warn = supress_warn)
     end
 end
