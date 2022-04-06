@@ -49,53 +49,54 @@ module SeqDes
             copy!(seq_des, pyimport("seq_des"))
             copy!(models, pyimport("seq_des.models"))
             copy!(sampler_util, pyimport("seq_des.util.sampler_util"))
-        end # if
+        
 
-        function load_model(model_path::String; use_cuda::Bool = false)
-            model = models.seqPred(nic = 28)
-            if use_cuda
-                model.cuda()
-            end # if
-            if use_cuda
-                state = torch.load(model_path)
-            else
-                state = torch.load(model_path, map_location="cpu")
-            end # if
-            for k in state.keys
-                if occursin("module", k)
-                    model = torch.nn.DataParallel(model)
+            function load_model(model_path::String; use_cuda::Bool = false)
+                model = models.seqPred(nic = 28)
+                if use_cuda
+                    model.cuda()
+                end # if
+                if use_cuda
+                    state = torch.load(model_path)
+                else
+                    state = torch.load(model_path, map_location="cpu")
+                end # if
+                for k in state.keys
+                    if occursin("module", k)
+                        model = torch.nn.DataParallel(model)
+                    end
+                    break
+                end # for
+                if use_cuda
+                    model.load_state_dict(torch.load(model_path))
+                else
+                    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+                end # if
+
+                return model
+            end # function
+
+            function load_models(models_list::Vector{String}; use_cuda::Bool = false, models_dir::String = models_default_dir)
+                loaded_models = []
+                for model in models_list
+                    push!(loaded_models, load_model(joinpath(models_dir, model),
+                        use_cuda = use_cuda))
                 end
-                break
+
+                return loaded_models
+            end # function
+
+            use_cuda = CUDA.has_cuda() && CUDA.has_cuda_gpu()
+            _models  = load_models(readdir(models_default_dir), use_cuda = use_cuda)
+
+            @assert length(_models) === 4 "Expected 4 models to be loaded, but only $(length(models)) were found at $models_default_dir"
+
+            for model in _models
+                model.eval()
             end # for
-            if use_cuda
-                model.load_state_dict(torch.load(model_path))
-            else
-                model.load_state_dict(torch.load(model_path, map_location="cpu"))
-            end # if
 
-            return model
-        end # function
-
-        function load_models(models_list::Vector{String}; use_cuda::Bool = false, models_dir::String = models_default_dir)
-            loaded_models = []
-            for model in models_list
-                push!(loaded_models, load_model(joinpath(models_dir, model),
-                    use_cuda = use_cuda))
-            end
-
-            return loaded_models
-        end # function
-
-        use_cuda = CUDA.has_cuda() && CUDA.has_cuda_gpu()
-        _models  = load_models(readdir(models_default_dir), use_cuda = use_cuda)
-
-        @assert length(_models) === 4 "Expected 4 models to be loaded, but only $(length(models)) were found at $models_default_dir"
-
-        for model in _models
-            model.eval()
-        end # for
-
-        copy!(loaded_models, _models)
+            copy!(loaded_models, _models)
+        end # if
     end # function
 
 
