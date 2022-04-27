@@ -3,8 +3,6 @@ module Electrostatics
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent, VerletList, MaskMap
     
-    # TODO: Documentation
-
     """
         assign_acc2_eem_charges_from_file!(pose::Pose, filename::String, [selection::Opt{AbstractSelection}])
 
@@ -133,7 +131,51 @@ module Electrostatics
 
     # ---
 
-    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Function = (x) -> 0.0) where {A <: ProtoSyn.AbstractAccelerationType}
+    """
+        calc_coulomb([::A], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; [mask::MaskMap = nothing], [vlist::Opt{VerletList} = nothing], [potential::Function = (x) -> 0.0]) where {A}
+        
+    Calculate the [`Pose`](@ref) `pose` Coulomb energy according to the given
+    `potential` function, based on the cartesian coordinates (make sure the
+    [`Pose`](@ref) `pose` is synched, see [`sync!`](@ref)). By default, the
+    `potential` returns 0.0 for each atom-pair. This function iterates over all
+    [`Atom`](@ref) instances in the provided [`Pose`](@ref) `pose` (See
+    [Counters and Iterators](@ref)), unless an `AbstractSelection` `selection`
+    is provided, limiting the selected [`Atom`](@ref) instances. If the
+    `update_forces` flag is set to `true` (`false`, by default), also return the
+    calculated forces based on this potential. Note that this function assumes
+    [`Atom`](@ref)`.id` entries are synched between the
+    [Graph](@ref graph-types) and [State](@ref state-types) (See
+    [Indexation](@ref core-graph-methods-indexation)). An optional parameter
+    `Type{<: AbstractAccelerationType}` can be provided, stating the
+    acceleration type used to calculate this energetic contribution (See
+    [ProtoSyn acceleration types](@ref)). Uses `ProtoSyn.acceleration.active` by
+    default. This function makes use of the
+    [`apply_potential`](@ref ProtoSyn.Calculators.apply_potential) framework. As
+    such, an optional `mask` and `VerletList` `vlist` can be provided to limit
+    the calculation. Make sure the [`Pose`](@ref) `pose` has charges assigned
+    (see [`assign_acc2_eem_charges_from_file!`](@ref) and
+    [`assign_default_charges!`](@ref)).
+
+    # See also
+    [`get_default_coulomb`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Calculators.Electrostatics.calc_coulomb(pose, nothing, false)
+    (0.0, [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0])
+
+    julia> ProtoSyn.Calculators.Electrostatics.calc_coulomb(pose, nothing, false, mask = ProtoSyn.Calculators.get_intra_residue_mask, potential = ProtoSyn.Calculators.get_bump_potential_charges(c = 0.0, r = 20.0))
+    (-2.6046789109428206, nothing)
+    ```
+    """
+    function calc_coulomb(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Opt{Function} = nothing) where {A <: ProtoSyn.AbstractAccelerationType}
+        
+        if potential === nothing
+            potential = function default(d::T; v::Opt{Tuple{T, T, T}} = nothing, qi::T = 0.0, qj::T = 0.0) where {T <: AbstractFloat}
+                return 0.0, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)
+            end
+        end
+
         e, f = ProtoSyn.Calculators.apply_potential(A, pose, potential, update_forces, vlist, selection, mask)
         if e === 0.0 && all(x -> x.δ === 0.0, pose.state.items[4:end])
             @warn "The calculated Coulomb energy is 0.0 and it seems the evaluated Pose does not have any assigned charges. Consider using the `ProtoSyn.Calculators.Electrostatics.assign_default_charges!` method."
@@ -142,10 +184,42 @@ module Electrostatics
         return e, f
     end # function
 
-    calc_coulomb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Function = (x) -> 0.0) = begin
+    calc_coulomb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; mask::MaskMap = nothing, vlist::Opt{VerletList} = nothing, potential::Opt{Function} = nothing) = begin
         calc_coulomb(ProtoSyn.acceleration.active, pose, selection, update_forces; mask = mask, vlist = vlist, potential = potential)
     end
 
+
+    """
+        get_default_coulomb(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default Coulomb [`EnergyFunctionComponent`](@ref). `α` sets the
+    component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_coulomb`](@ref) method, therefore defining a
+    [`Pose`](@ref) energy based on a given potential. By default, this 
+    [`EnergyFunctionComponent`](@ref) uses the
+    [`get_bump_potential_charges`](@ref ProtoSyn.Calculators.get_bump_potential_charges)
+    potential, with an intra-residue mask (see
+    [`get_intra_residue_mask`](@ref ProtoSyn.Calculators.get_intra_residue_mask)).
+
+    # Settings
+    * `mask::Function` - Defines which atom-pairs to mask out of the result;
+    * `vlist::VerletList` - If defined, the [`apply_potential`](@ref ProtoSyn.Calculators.apply_potential) method will only calculate the given atom-pairs in the `VerletList`;
+    * `potential::Function` - Which potential to apply to each atom-pair;
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.Electrostatics.get_default_coulomb()
+             Name : Coulomb
+       Weight (α) : 1.0
+    Update forces : true
+        Selection : nothing
+          Setings :
+             :mask => get_intra_residue_mask
+        :potential => bump_potential_charges
+            :vlist => nothing
+    ```
+    """
     function get_default_coulomb(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "Coulomb",
@@ -158,5 +232,4 @@ module Electrostatics
             α,
             true)
     end
-
 end

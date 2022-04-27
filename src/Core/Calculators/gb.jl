@@ -30,6 +30,31 @@ module GB
     end
 
 
+    """
+        predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx) where {T <: AbstractFloat}
+
+    Returns the Born Radii for each [`Atom`](@ref) instance in the given
+    [`Pose`](@ref) `pose` (selected by the `AbstractSelection` `selection` -
+    [`TrueSelection`](@ref), by default), according to the IGBR neural network
+    model (See Fogolari et al. work - https://pubmed.ncbi.nlm.nih.gov/31693089/).
+    By default, uses the pre-trained `ProtoSyn.Calculators.GB.models_onnx`
+    models, but can be set to use other models with the `models` argument.
+    Optionally, a pre-calculated full distance matrix `dm` can be provided,
+    otherwise will calculate one using the `ProtoSyn.acceleration.active` mode.
+
+    # See also
+    [`calc_gb`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.GB.predict_igbr_nn_born_radii(pose)
+    1140-element Vector{Float64}:
+     0.4011280834674835
+     0.3859025537967682
+     0.5258529782295227
+     (...)
+    ```
+    """
     function predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx) where {T <: AbstractFloat}
         
         if selection === nothing
@@ -77,9 +102,42 @@ module GB
         return born_radii
     end
 
+
     """
-    # TODO DOCUMENTATION
-    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4361090/
+        calc_gb([::A], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii], [ϵ_protein::T = 1.0], [ϵ_solvent::T = 80.0], [models::GBModels = models_onnx]) where {A}
+        
+    Calculate the [`Pose`](@ref) `pose` solvation energy according to the
+    Generalized Born function (make sure the [`Pose`](@ref) `pose` is synched,
+    see [`sync!`](@ref)). ProtoSyn uses the Generalzied Born function as
+    described in Simmerling et al. work (See
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4361090/). The protein and
+    solvent dieletric constants can be defined using the `ϵ_protein` and
+    `ϵ_solvent` arguments (default is 1.0 and 80.0, respectively). The Born
+    Radii can be statically provided in the `born_radii` argument. Optionally,
+    this argument can be a `Function` instance, in which case the Born Radii
+    will be re-calculated, using the provided `models`
+    (uses `ProtoSyn.Calculators.GB.models_onnx`, by default). Custom Born Radii
+    predictors can be defined, using the following signature:
+
+    ```my_born_radii_predictor(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx)```
+
+    Note the presence of pre-calculated full-distance matrix `dm` in the
+    `Function` arguments. Even if no `GBModels` are used in the Born Radii
+    prediction, `calc_gb` still provides them and as such the custom `Function`
+    signature should expect them (or use kwargs). An optional parameter `A`
+    (`Type{<: AbstractAccelerationType}`) can be provided, stating the
+    acceleration type used to calculate this energetic contribution (See
+    [ProtoSyn acceleration types](@ref)). Uses `ProtoSyn.acceleration.active` by
+    default.
+
+    # See also
+    [`get_default_gb`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.GB.calc_gb(pose, nothing)
+    (124.4289232784785, nothing)
+    ```
     """
     function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat}
 
@@ -135,6 +193,40 @@ module GB
         calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models)
     end
 
+
+    """
+        get_default_gb(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default Generalized Born [`EnergyFunctionComponent`](@ref). `α`
+    sets the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_gb`](@ref) method, therefore defining a
+    [`Pose`](@ref) energy based on the Generalized Born function. By default,
+    this [`EnergyFunctionComponent`](@ref) uses the
+    [`predict_igbr_nn_born_radii`](@ref ProtoSyn.Calculators.GB.predict_igbr_nn_born_radii)
+    function to predict Born Radii every call. Define
+    `efc.settings[:born_radii]` as a `Vector{Float64}` to use static born radii.
+
+    # Settings
+    * `born_radii::Union{Function, Vector{T}}` - Defines either the born radii predictor function or static list of born radii (where T <: AbstractFloat);
+    * `ϵ_protein::T` - Define the protein dieletric constant (where T <: AbstractFloat);
+    * `ϵ_solvent::T` - Define the solvent dieletric constant (where T <: AbstractFloat);
+    * `models::GBModels` - Define the `GBModels` to use if `:born_radii` is a predictor function.
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.GB.get_default_gb()
+          Name : GB_Solvation
+    Weight (α) : 1.0
+ Update forces : false
+     Selection : nothing
+       Setings :
+    :born_radii => predict_igbr_nn_born_radii
+        :models => C: ✓ | N: ✓ | H: ✓ | O: ✓ | S: ✓ 
+     :ϵ_protein => 4.0
+     :ϵ_solvent => 80.0
+    ```
+    """
     function get_default_gb(;α::T = 1.0) where {T <: AbstractFloat}
         EnergyFunctionComponent(
             "GB_Solvation",

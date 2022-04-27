@@ -1,19 +1,23 @@
 using Printf
 
 """
-# TODO Update Examples
-
-    EnergyFunction(components::Vector{EnergyFunctionComponent}, clean_cache_every::Int16, cache::Int16, components_by_name::Dict{String, Int})
+    EnergyFunction(components::Vector{EnergyFunctionComponent}, clean_cache_every::Int16, cache::Int16, components_by_name::Dict{String, Int}, selection::AbstractSelection, update_forces::Bool)
 
 Construct and return a new [`EnergyFunction`](@ref) instance. An
 [`EnergyFunction`](@ref) is a collection of [`EnergyFunctionComponent`](@ref)
 instances, where each of these components calculates an energetic contribution
 to the `:total` energy and forces acting on a system. An
 [`EnergyFunctionComponent`](@ref) can be retrieved by its index or by its name
-(as saved in `components_by_name`). The Julia cache is automatically cleaned by
+(as saved in `components_by_name`). The `AbstractSelection` `selection` defines
+the [`Atom`](@ref) selection this [`EnergyFunction`](@ref) is applied to. If 
+inner [`EnergyFunctionComponent`](@ref) instances also have `AbstractSelection`
+selections defined, the resulting selection will be the intersection between 
+both. The `update_forces` sets whether to calculate and update the
+[`Pose`](@ref) [State](@ref) forces. The Julia cache is automatically cleaned by
 garbage collection. However, in certain cases (such as using the
 [TorchANI](@ref) [`EnergyFunctionComponent`](@ref)), a manual call to garbage
-collection is necessary (see [Issue 55140](https://discourse.julialang.org/t/using-gpu-via-pycall-causes-non-reusable-memory-allocation/55140/4)).
+collection is necessary (see
+[Issue 55140](https://discourse.julialang.org/t/using-gpu-via-pycall-causes-non-reusable-memory-allocation/55140/4)).
 In such cases, the [`EnergyFunction`](@ref) object has an internal `cache` that
 is cleaned (by calling garbage collection) at intervals of `clean_cache_every`
 calls. This interval is automatically adjusted down by measuring the current
@@ -23,19 +27,25 @@ greater than `ProtoSyn.Units.max_gpu_allocation`.
     EnergyFunction([::Type{T}])
 
 Construct and return an empty [`EnergyFunction`](@ref) instance. The
-`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`.
+`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`, 
+the `AbstractSelection` `selection` field is defined as an atomic
+[`TrueSelection`](@ref) and `update_forces` is set to `false.`
 
     EnergyFunction(components::Vector{EnergyFunctionComponent{T}}) where {T <: AbstractFloat}
 
 Construct and return a new [`EnergyFunction`](@ref) instance filled with the
 given list of [`EnergyFunctionComponent`](@ref) instances `components`. The
-`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`.  
+`:clean_cache_every` field is set to `ProtoSyn.Units.defaultCleanCacheEvery`,
+the `AbstractSelection` `selection` field is defined as an atomic
+[`TrueSelection`](@ref) and `update_forces` is set to `false.`
 
 # Fields
 * `components::Vector{EnergyFunctionComponent}` - The list of [`EnergyFunctionComponent`](@ref) instances in this [`EnergyFunction`](@ref);
 * `clean_cache_every::Int16` - Forcefully call garbage collection every `N` calls;
 * `cache::Int16` - Current number of calls performed. Resets to zero every `clean_cache_every`;
-* `components_by_name::Dict{String, Int}` - The list of [`EnergyFunctionComponent`](@ref) instances in this [`EnergyFunction`](@ref), indexed by `:name`.
+* `components_by_name::Dict{String, Int}` - The list of [`EnergyFunctionComponent`](@ref) instances in this [`EnergyFunction`](@ref), indexed by `:name`;
+* `selection::AbstractSelection` - The `AbstractSelection` selecting [`Atom`](@ref) instances to apply this [`EnergyFunction`](@ref) to;
+* `update_forces::Bool` - Whether to calculate and update forces with this [`EnergyFunction`](@ref).
 
 # See also
 [`EnergyFunctionComponent`](@ref)
@@ -43,34 +53,42 @@ given list of [`EnergyFunctionComponent`](@ref) instances `components`. The
 # Examples
 ```
 julia> energy_function = ProtoSyn.Calculators.EnergyFunction()
-🗲  Energy Function (0 components):
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-+----------------------------------------------------------+
+⚡  Energy Function (0 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
++----------------------------------------------------------------------+
+ ● Update forces: false
+ ● Selection: Set
+ └── TrueSelection (Atom)
 
 julia> push!(energy_function, Calculators.Restraints.get_default_bond_distance_restraint())
-🗲  Energy Function (1 components):
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | Bond_Distance_Restraint             | 1.000      |
-+----------------------------------------------------------+
+⚡  Energy Function (1 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
+| 1     | Bond_Distance_Rest                            |      1.000   |
++----------------------------------------------------------------------+
+ ● Update forces: false
+ ● Selection: Set
+ └── TrueSelection (Atom)
 
-julia> energy_function["Bond_Distance_Restraint"].α = 0.5
-0.5
+ julia> energy_function["Bond_Distance_Rest"].α = 0.5
+ 0.5
 
 julia> energy_function
-🗲  Energy Function (1 components):
-+----------------------------------------------------------+
-| Index | Component name                      | Weight (α) |
-+----------------------------------------------------------+
-| 1     | Bond_Distance_Restraint             | 0.500      |
-+----------------------------------------------------------+
+⚡  Energy Function (1 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
+| 1     | Bond_Distance_Rest                            |      0.500   |
++----------------------------------------------------------------------+
+ ● Update forces: false
+ ● Selection: Set
+ └── TrueSelection (Atom)
 ```
 """
 mutable struct EnergyFunction
-
     components::Vector{EnergyFunctionComponent}
     clean_cache_every::Int16
     cache::Int16
@@ -250,7 +268,7 @@ function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = not
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    println(io, lead*"🗲  Energy Function ($(length(efc.components)) components):")
+    println(io, lead*"⚡  Energy Function ($(length(efc.components)) components):")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-45s | %-12s |\n", inner_lead, "Index", "Component name", "Weight (α)")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")

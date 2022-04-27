@@ -5,7 +5,22 @@ module HydrogenBonds
     using ProtoSyn.Calculators: EnergyFunctionComponent
 
     """
-    # TODO
+        HydrogenBondPair(charged::Atom, base::Atom)
+
+    Define a new [`HydrogenBondPair`](@ref). An [`HydrogenBondPair`](@ref) is a
+    set of two bonded [`Atom`](@ref) instances, the `charged` and `base` atom.
+    As an example, in a carbonyl group (-C=O), the carbon is the `base` and the
+    oxygen is the `charged` atom. It's expected that this
+    [`HydrogenBondPair`](@ref) is involved in hydrogen bonding interactions.
+
+    # See also
+    [`HydrogenBondNetwork`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.HydrogenBonds.HydrogenBondPair(pose.graph[1, 1, "C"], pose.graph[1, 1, "O"])
+    MET:1:O - MET:1:C
+    ```
     """
     struct HydrogenBondPair
         charged::Atom
@@ -16,13 +31,36 @@ module HydrogenBonds
         level_code = level_code === nothing ? ProtoSyn.LevelCode() : level_code
         lead       = ProtoSyn.get_lead(level_code)
     
-        b = "$(hbp.base.parent.name):$(hbp.base.parent.index):$(hbp.base.name)"
-        c = "$(hbp.charged.parent.name):$(hbp.charged.parent.index):$(hbp.charged.name)"
+        b = "$(hbp.base.container.name):$(hbp.base.container.index):$(hbp.base.name)"
+        c = "$(hbp.charged.container.name):$(hbp.charged.container.index):$(hbp.charged.name)"
         println(io, lead*"$b - $c")
     end
     
+
     """
-    # TODO
+        HydrogenBondNetwork(donors::Vector{HydrogenBondPair}, acceptors::Vector{HydrogenBondPair})
+
+    Define a new [`HydrogenBondNetwork`](@ref), a set of `donors`
+    [`HydrogenBondPair`](@ref) instances (strongly electronegative
+    [`Atom`](@ref) instances, such as N, O or F) and `acceptors`
+    [`HydrogenBondPair`](@ref) instances (electronegative [`Atom`](@ref)
+    instances with a lone electron pair).
+
+        HydrogenBondNetwork()
+
+    Define an empty [`HydrogenBondNetwork`](@ref).
+
+    # See also
+    [`calc_hydrogen_bond_network`](@ref) [`generate_hydrogen_bond_network`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network(pose)
+    Donors: 131 | Acceptors: 104
+
+    julia> ProtoSyn.Calculators.HydrogenBonds.HydrogenBondNetwork()
+    Donors: 0 | Acceptors: 0
+    ```
     """
     struct HydrogenBondNetwork
         donors::Vector{HydrogenBondPair}
@@ -37,6 +75,39 @@ module HydrogenBonds
         HydrogenBondNetwork(Vector{HydrogenBondPair}(), Vector{HydrogenBondPair}())
     end
 
+
+    """
+    # TODO
+    H connected to only 1 N
+    O connected to only 1 C
+    """
+    function generate_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        hbn  = HydrogenBondNetwork()
+
+        for atom in sele(pose, gather = true)
+            
+            if (atom.symbol === "H") && (length(atom.bonds) === 1) && (atom.bonds[1].symbol === "N")
+                push!(hbn.donors, HydrogenBondPair(atom, atom.bonds[1]))
+            end
+
+            if (atom.symbol === "O") && (length(atom.bonds) === 1) && (atom.bonds[1].symbol === "C")
+                push!(hbn.acceptors, HydrogenBondPair(atom, atom.bonds[1]))
+            end
+        end
+
+        return hbn
+    end
+
+    generate_hydrogen_bond_network(pose::Pose) = generate_hydrogen_bond_network(pose, nothing)
+
+    
     """
     # TODO
 
@@ -97,37 +168,6 @@ module HydrogenBonds
     calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x) -> 0.0) = begin
         calc_hydrogen_bond_network(ProtoSyn.acceleration.active, pose, selection, update_forces; hydrogen_bond_network = hydrogen_bond_network, potential = potential)
     end
-
-    """
-    # TODO
-    H connected to only 1 N
-    O connected to only 1 C
-    """
-    function generate_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection})
-
-        if selection === nothing
-            sele = TrueSelection{Atom}()
-        else
-            sele = ProtoSyn.promote(selection, Atom)
-        end
-
-        hbn  = HydrogenBondNetwork()
-
-        for atom in sele(pose, gather = true)
-            
-            if (atom.symbol === "H") && (length(atom.bonds) === 1) && (atom.bonds[1].symbol === "N")
-                push!(hbn.donors, HydrogenBondPair(atom, atom.bonds[1]))
-            end
-
-            if (atom.symbol === "O") && (length(atom.bonds) === 1) && (atom.bonds[1].symbol === "C")
-                push!(hbn.acceptors, HydrogenBondPair(atom, atom.bonds[1]))
-            end
-        end
-
-        return hbn
-    end
-
-    generate_hydrogen_bond_network(pose::Pose) = generate_hydrogen_bond_network(pose, nothing)
 
     """
     # TODO
