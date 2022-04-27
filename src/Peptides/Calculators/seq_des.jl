@@ -262,7 +262,8 @@ module SeqDes
                     chi_val  = ProtoSyn.getdihedral(pose.state, chi_atom)
                     chi_ex   = 1.0
                 end # if
-                push!(chi_vals, chi_val)
+                # Note that chi values must be in the [-π, π[ range.
+                push!(chi_vals, ProtoSyn.half_unit_circle(chi_val))
                 push!(chi_exs, chi_ex)
             end # for
             push!(chis, Vector{Vector{T}}([chi_vals, chi_exs]))
@@ -279,6 +280,13 @@ module SeqDes
     """
     function calc_seqdes(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true)
         atom_coords, atom_data, residue_bb_index_list, res_data, res_label, chis = get_pdb_data(pose, selection)
+        # println("   Atom coords: $(size(atom_coords))")
+        # println("     Atom data: $(size(atom_data))")
+        # println("Backbone Index: $(size(residue_bb_index_list))")
+        # # println("  Residue data: $(size(res_data))")
+        # println(" Residue label: $(size(res_label))")
+        # println("          Chis: $(size(chis))")
+        # println("Chi @ Resi. 18: $(chis[18])")
 
         atom_coords           = PyObject(np.array(atom_coords, dtype = np.float32))
         atom_data             = PyObject(np.array(atom_data))

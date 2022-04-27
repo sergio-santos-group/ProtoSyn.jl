@@ -97,6 +97,26 @@ end
 
 
 """
+    half_unit_circle(value::T) where {T <: AbstractFloat}
+
+Maps an angle value (in radians) from ]-∞, +∞[ to [-π, π[ range. Returns value
+in radians.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.half_unit_circle(-2pi)
+0.0
+
+julia> ProtoSyn.half_unit_circle(-(3/2)pi)
+-1.5707963267948966
+```
+"""
+function half_unit_circle(value::T) where {T <: AbstractFloat}
+    return value % pi
+end
+
+
+"""
     gpu_allocation()
 
 Return the current fraction of the GPU memory allocated (in range [0, 1]).
