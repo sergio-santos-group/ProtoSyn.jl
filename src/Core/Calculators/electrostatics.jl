@@ -6,9 +6,29 @@ module Electrostatics
     # TODO: Documentation
 
     """
-    # TODO
+        assign_acc2_eem_charges_from_file!(pose::Pose, filename::String, [selection::Opt{AbstractSelection}])
+
+    Open and load ACC2 charges from a file `filename`, apply them to the given
+    [`Pose`](@ref) `pose`. If an `AbstractSelection` `selection` is provided,
+    the loaded charge are only applied to the selected [`Atom`](@ref) instances
+    (note that both the number of loaded charge values and number of selected
+    atoms must match). For more information on ACC2 charges, check
+    https://acc2.ncbr.muni.cz/
+
+    # See also
+    [`assign_default_charges!`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.Electrostatics.assign_acc2_eem_charges_from_file!(pose, "charges.txt", aid"1:30")
+    30-element Vector{Float64}:
+      0.26429
+     -0.1422
+     -0.17175
+     (...)
+    ```
     """
-    function assign_acc2_eem_charges_from_file!(pose::Pose, filename::String, selection::Opt{AbstractSelection})
+    function assign_acc2_eem_charges_from_file!(pose::Pose, filename::String, selection::Opt{AbstractSelection} = nothing)
 
         if selection === nothing
             sele = TrueSelection{Atom}()
@@ -21,7 +41,7 @@ module Electrostatics
         charges = map((value) -> parse(T, value), split(data))
 
         atoms = sele(pose, gather = true)
-        @assert length(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(lenght(atoms)) selected atoms."
+        @assert length(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(length(atoms)) selected atoms."
         for (i, atom) in enumerate(atoms)
             pose.state[atom].δ = charges[i]
         end
@@ -31,9 +51,34 @@ module Electrostatics
     
 
     """
-    # TODO
+        assign_default_charges!(pose::Pose, res_lib::LGrammar, [selection::Opt{AbstractSelection}]; [supress_warn::Bool = false])
+
+    Assign default charges to [`Pose`](@ref) `pose` from the given
+    [`LGrammar`](@ref) `res_lib` entry, by [`Atom`](@ref) name. If an
+    `AbstractSelection` `selection` is provided, only apply charges to the
+    selected [`Atom`](@ref) instances. For non-canonical aminoacids and ligands
+    (any [`Residue`](@ref) without an entry on `ProtoSyn.three_2_one`
+    dictionary) and any [`Residue`](@ref) whose template have different
+    [`Atom`](@ref) names, a warning is shown. Set `supress_warn` to `true` to
+    ignore these warnings (`false`, by default).
+
+    !!! ukw "Note:"
+        Consider setting default atom names (from the same [`LGrammar`](@ref)), for example, using the [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) method.
+
+    # See also
+    [`assign_acc2_eem_charges_from_file!`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.Electrostatics.assign_default_charges!(pose, ProtoSyn.Peptides.grammar)
+    1143-element Vector{Float64}:
+     -0.025115728872692304
+     -0.025115728872692304
+     -0.025115728872692304
+     (...)
+    ```
     """
-    function assign_default_charges!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection}; supress_warn::Bool = false)
+    function assign_default_charges!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Bool = false)
 
         if selection === nothing
             sele = TrueSelection{Residue}()

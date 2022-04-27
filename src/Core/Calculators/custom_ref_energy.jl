@@ -1,9 +1,30 @@
 """
-# TODO: Documentation
-Careful with selection. Promotes to bigger selection type.
-"""
-function calc_custom_ref_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::AbstractSelection, update_forces::Bool = false; map::Dict{AbstractSelection, T} = 0.0) where {T <: AbstractFloat}
+    Calculators.calc_custom_ref_energy([::A], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; [map::Opt{Dict{AbstractSelection, T}} = nothing]) where {A, T <: AbstractFloat}
+    
+Calculate and return the [`Pose`](@ref) `pose` energy according to the given
+`map`. The `map` is a 1 to 1 correspondence between `AbstractSelection`
+instances and energy values. If provided, an `AbstractSelection` `selection`
+limits the selected range of [`Atom`](@ref) instances considered for this
+[`EnergyFunctionComponent`](@ref) calculation. Note that any provided
+`selection` and `map` `AbstractSelection` type are promoted to the biggest
+value: `selection` is promoted to the `AbstractSelection` type of `map` if the
+`map` type is larger or vice-versa. `update_forces` `Bool` has no effect in this
+[`EnergyFunctionComponent`](@ref) calculation and is only included to provide
+a standard function signature between all [`EnergyFunctionComponent`](@ref)
+instances. If no `map` is provided, returns 0.0.
 
+# Examples
+```
+julia> ProtoSyn.Calculators.calc_custom_ref_energy(pose, nothing, false)
+(0.0, nothing)
+
+julia> ProtoSyn.Calculators.calc_custom_ref_energy(pose, nothing, false, map = Dict{AbstractSelection, Float64}(rn"ALA" => 3.0, rn"GLU" => 2.4))
+(71.4, nothing)
+```
+"""
+function calc_custom_ref_energy(A::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::AbstractSelection, update_forces::Bool = false; map::Opt{Dict{AbstractSelection, T}} = nothing) where {T <: AbstractFloat}
+
+    map === nothing && return 0.0, nothing
     selection_type = ProtoSyn.selection_type(selection)
 
     e = 0.0
@@ -21,14 +42,39 @@ function calc_custom_ref_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, p
     return e, nothing
 end
 
-function calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Nothing, update_forces::Bool = false; static_ref_energy::T = 0.0, use_ensemble::Bool = false, model::Int = 3) where {T <: AbstractFloat}
-    calc_torchani_internal_energy(M, pose, TrueSelection{Residue}(), update_forces, static_ref_energy = static_ref_energy, use_ensemble = use_ensemble, model = model)
+function calc_custom_ref_energy(A::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Nothing, update_forces::Bool = false; map::Opt{Dict{AbstractSelection, T}} = nothing) where {T <: AbstractFloat}
+    calc_custom_ref_energy(A, pose, TrueSelection{Atom}(), update_forces, map = map)
 end
 
-calc_torchani_internal_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; static_ref_energy::T = 0.0, use_ensemble::Bool = false, model::Int = 3) where {T <: AbstractFloat} = begin
-    calc_torchani_internal_energy(ProtoSyn.acceleration.active, pose, selection, update_forces, static_ref_energy = static_ref_energy, use_ensemble = use_ensemble, model = model)
+calc_custom_ref_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; map::Opt{Dict{AbstractSelection, T}} = nothing) where {T <: AbstractFloat} = begin
+    calc_custom_ref_energy(ProtoSyn.acceleration.active, pose, selection, update_forces, map = map)
 end
 
+
+"""
+    get_default_custom_ref_energy(;α::T = 1.0) where {T <: AbstractFloat}
+
+Return the default custom reference energy [`EnergyFunctionComponent`](@ref).
+`α` sets the component weight (on an
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+component employs the [`calc_custom_ref_energy`](@ref) method, therefore
+defining a [`Pose`](@ref) energy based on a user-defined map between
+`AbstractSelection` instances and energy values.
+
+# Settings
+* `map::Dict{AbstractSelection, T}` - Defines which map the custom reference energy should use;
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.get_default_custom_ref_energy()
+          Name : Custom_Ref_Energy
+    Weight (α) : 1.0
+ Update forces : true
+     Selection : nothing
+       Setings :
+           :map => Dict{AbstractSelection, Float64}()
+```
+"""
 function get_default_custom_ref_energy(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "Custom_Ref_Energy",
