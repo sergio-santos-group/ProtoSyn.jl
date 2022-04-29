@@ -43,6 +43,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
     if isa(poses, Pose) 
         poses = Vector{Pose}([poses])
     end
+
     for pose in poses
         for segment in eachsegment(pose.graph)
 

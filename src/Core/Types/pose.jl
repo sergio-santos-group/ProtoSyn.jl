@@ -54,3 +54,8 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
 end
 
 Pose(frag::Fragment) = Pose(Units.defaultFloat, frag)
+
+function reindex(pose::Pose)
+    reindex(pose.graph)
+    reindex(pose.state)
+end

@@ -1039,3 +1039,173 @@ function sequence(container::ProtoSyn.AbstractContainer)::String
 end
 
 sequence(pose::Pose) = sequence(pose.graph)
+
+
+"""
+    add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
+
+Predict and add hydrogens to the provided [`Pose`](@ref) `pose`, according to
+the templates in the given [`LGrammar`](@ref) `res_lib`. Note that both residues
+and atoms are retrieved from the `res_lib` based on their name. If provided,
+an `AbstractSelection` `selection` limits the selected atoms to receive
+hydrogens (defaults to an [`Atom`](@ref) level `AbstractSelection`, expects
+[`Atom`](@ref) instances in the given [`Pose`](@ref) `pose` to be correctly
+indexed). This function applies internal coordinates based on the template from
+`res_lib` where the dihedral angle is rotated in order to match the current
+dihedral angles in the [`Pose`](@ref) `pose`. Make sure the internal coordinates
+are synched (using the [`sync!`](@ref) method).
+
+# Examples
+```jldoctest
+julia> ProtoSyn.add_hydrogens!(pose, Peptides.grammar, rid"1:10")
+Pose{Topology}(Topology{/1bkr:47568}, State{Float64}:
+ Size: 975
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
+
+    if selection !== nothing
+        atoms = ProtoSyn.promote(selection, Atom)(pose, gather = true)
+    else
+        atoms = TrueSelection{Atom}()(pose, gather = true)
+    end
+
+    # Gather all atom names involved in inter-residue bonds (from the LGrammar
+    # operators list)
+    r1s = [res_lib.operators[op].r1 for op in keys(res_lib.operators)]
+    r2s = [res_lib.operators[op].r2 for op in keys(res_lib.operators)]
+
+    i = 1 # For hydrogen naming. It's recommender to re-name atoms after
+    for residue in eachresidue(pose.graph)
+
+        # Create the residue template from residue name (with full hydrogens)
+        code = string(ProtoSyn.three_2_one[residue.name])
+        template = ProtoSyn.getvar(res_lib, code)
+
+        for atom in residue.items
+            
+            # Ignore hydrogen already placed in the original pose
+            atom.symbol === "H" && continue
+
+            # Ignore non-selected atoms
+            !(atom in atoms) && continue
+            
+            # Get the corresponding template atom (by name) 
+            temp                = template.graph[1][atom.name]
+
+            # Predict the current coordination (number of bonds) for this atom.
+            # 1. Check inter-residue operators in the provided LGrammar to see
+            # if this atom (in the template) can be involved in any
+            # inter-residue bond. This doesn't mean that the corresponding atom
+            # in the original pose is indeed involved in an inter-residue bond,
+            # but the current version of ProtoSyn assumes that it is. In a
+            # future iteration, checking the atom-pair distance to atoms in
+            # other residues (with the right name, as defined in the LGrammar
+            # operation) might help to better determine inter-residue bonds.
+            inter_residue_bonds = 0
+            if atom.name in r1s
+                inter_residue_bonds += 1
+            end
+            if atom.name in r2s
+                inter_residue_bonds += 1
+            end
+            # 2. Add the intra-residue bonds. The number of hydrogens missing
+            # (N) is defined as the difference between the number of bonds in
+            # the template and the original pose (considering that all atoms
+            # that can form inter-residue bonds do).
+            temp_bonds = length(temp.bonds) + inter_residue_bonds
+            N          = temp_bonds - length(atom.bonds)
+
+            # If no hydrogens are missing, ignore next steps.
+            N < 1 && continue
+
+            # The missing hydrogens will be copied from the template (via the
+            # internal coordinates). However, the internal coordinates in the
+            # template are only in accordance to the template dihedral angles.
+            # Any different dihedral angles (phi, psi, omega and chis) wil break
+            # the structure and induce super-positions. The final internal
+            # coordinates to the introduced hydrogens need to reflect the
+            # current dihedral angles the parent atom is involved.
+            # 1. Measure current dihedral angle on the parent atom. This depends
+            # on the chosen child atom to measure the dihedral. Since the final
+            # internal coordinates of the newly introduced hdyrogens will be
+            # "relative" to this measured dihedral, it is indiferent which child
+            # atom is picked for measurement. Note that this function expects
+            # the original pose to be synched (will measure dihedrals from
+            # internal coordinates). If the currently focused atom doesn't have
+            # children, then the dihedral angle doesn't have any interference
+            # with the default tempalte internal coordinates (the relative
+            # difference to apply is 0.0).
+            if length(atom.children) === 0
+                Δχ = 0.0
+            else
+                pose_child = atom.children[1]
+                χ_pose     = ProtoSyn.getdihedral(pose.state, pose_child)
+                temp_child = temp.children[findfirst((a) -> a.name === pose_child.name, temp.children)]
+                χ_temp     = ProtoSyn.getdihedral(template.state, temp_child)
+                Δχ         = χ_pose - χ_temp
+            end
+
+            for t in temp.bonds
+                t.symbol !== "H" && continue
+
+                temp_state = template.state[t]
+
+                h = Atom("H$i", -1, -1, "H")
+                h_state = AtomState()
+                h_state.b = temp_state.b
+                h_state.θ = temp_state.θ
+                h_state.ϕ = temp_state.ϕ - pose.state[atom.parent].Δϕ
+                h_state.ϕ = h_state.ϕ + Δχ
+                ProtoSyn.insert_atom_as_children!(pose, atom, h, h_state)
+                
+                i += 1
+            end
+        end
+    end
+
+    reindex(pose.graph; set_ascendents = true)
+    reindex(pose.state)
+    ProtoSyn.request_i2c!(pose.state; all = true)
+    sync!(pose)
+end
+
+
+"""
+    pop_atoms!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing; keep_downstream_position::Bool = false)
+
+Remove all selected atoms (by the given `AbstractSelection` `selection`) from
+the provided [`Pose`](@ref) `pose`. `keep_downstream_position` sets whether to
+re-calculate the internal coordinates of downstream [`Atom`](@ref) instances
+(children) from cartesian coordinates (set to `false`, by default).
+
+# See also
+[`pop_atom!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.pop_atoms!(pose, as"H")
+Pose{Topology}(Topology{/1bkr:24417}, State{Float64}:
+ Size: 887
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function pop_atoms!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = nothing; keep_downstream_position::Bool = false)
+    
+    if selection !== nothing
+        atoms = ProtoSyn.promote(selection, Atom)(pose, gather = true)
+    else
+        atoms = TrueSelection{Atom}(pose, gather = true)
+    end
+
+    for atom in reverse(atoms)
+        ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = keep_downstream_position)
+    end
+
+    return pose
+end

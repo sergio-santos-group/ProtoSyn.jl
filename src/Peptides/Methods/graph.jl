@@ -98,6 +98,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         t_atoms = ProtoSyn.travel_graph(N_terminal_template[1], search_algorithm = ProtoSyn.BFS)
         p_atoms = ProtoSyn.travel_graph(N_terminal_pose[1], search_algorithm = ProtoSyn.BFS)
         
+        @assert length(t_atoms) === length(p_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_atoms))) don't match in number."
         if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
             for (t_atom, p_atom) in zip(t_atoms, p_atoms)
                 ProtoSyn.rename!(p_atom, t_atom.name)

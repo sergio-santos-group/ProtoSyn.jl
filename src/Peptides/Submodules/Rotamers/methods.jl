@@ -25,9 +25,13 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
             continue
         end
         _value = (randn() * sd) + value
-        @assert chi(residue) !== nothing "Tried to apply $chi on residue $residue, but the requested atom was not found."
-        setdihedral!(state, chi(residue), _value)
-        chis[chi] = (_value, T(0))
+        if chi(residue) === nothing
+            @warn "Tried to apply $chi on residue $residue, but the requested atom was not found. Not performing any action."
+            chis[chi] = (NaN, T(0))
+        else
+            setdihedral!(state, chi(residue), _value)
+            chis[chi] = (_value, T(0))
+        end
     end
 
     return Rotamer(rotamer.name, chis)
@@ -161,9 +165,8 @@ function get_rotamer(pose::Pose, residue::Residue; ignore_non_existent::Bool = f
     chis = Dict{DihedralType, Tuple{Union{T, Nothing}, T}}()
     for chi_index in 1:(length(Dihedral.chi_dict[residue.name.content]) - 1)
         chi = getfield(ProtoSyn.Peptides.Dihedral, Symbol("chi$chi_index"))
-        #            Value                                  Standard Deviation
         c = chi(residue)
-        if c === nothing 
+        if c === nothing
             chis[chi] = (c, T(0))
         else
             chis[chi] = (getdihedral(pose.state, c), T(0))
