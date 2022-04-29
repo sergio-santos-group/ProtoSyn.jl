@@ -77,9 +77,19 @@ module HydrogenBonds
 
 
     """
-    # TODO
-    H connected to only 1 N
-    O connected to only 1 C
+        generate_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+    Attempts to predict the [`HydrogenBondNetwork`](@ref) of a given
+    [`Pose`](@ref) `pose` (restricted to the selected region provided by the
+    `AbstractSelection` `selection`). The following simple criteria are used:
+    * Donors are hydrogen (H) [`Atom`](@ref) instances connected to a single nitrogen (N) [`Atom`](@ref) instance;
+    * Acceptors are oxygen (O) [`Atom`](@ref) instances connected to a single carbon (C) [`Atom`](@ref) instance.
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network(pose)
+    Donors: 131 | Acceptors: 104
+    ```
     """
     function generate_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
@@ -107,16 +117,53 @@ module HydrogenBonds
 
     generate_hydrogen_bond_network(pose::Pose) = generate_hydrogen_bond_network(pose, nothing)
 
-    
-    """
-    # TODO
-
-    If a hydrogen bond network is provided (instead of a function), this
-    function assumes all provided pairs are within the selection (no check is
-    made).
 
     """
-    function calc_hydrogen_bond_network(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x) -> 0.0) where {A <: ProtoSyn.AbstractAccelerationType}
+        calc_hydrogen_bond_network([::Type{A}], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; [hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork()], [potential::Function = (x; qi = 0.0, qj = 0.0) -> 0.0]) where {A <: ProtoSyn.AbstractAccelerationType}
+        
+    Calculate the [`Pose`](@ref) `pose` hydrogen bond energy according to the
+    given `potential` function (make sure the [`Pose`](@ref) `pose` is synched,
+    see [`sync!`](@ref)). ProtoSyn loops through the provided
+    [`HydrogenBondNetwork`](@ref) `hydrogen_bond_network` and applied the
+    `potential` to each pair of charged [`Atom`](@ref) instances (based on the
+    inter-atomic distance). Besides this component, `calc_hydrogen_bond_network`
+    adds a geometric potential based on the angle between the charged
+    [`Atom`](@ref) instances and each base (rewards 180º conformations).
+    Optionally, `hydrogen_bond_network` can be a `Function`, in which case a new
+    [`HydrogenBondNetwork`](@ref) is calculated. Such a custom function should
+    have the following signature:
+
+    # ```my_hydrogen_bond_predictor(pose::Pose, selection::Opt{AbstractSelection} = nothing)```
+
+    If provided, an `AbstractSelection` `selection` limits the selected
+    [`Atom`](@ref) instances considered for [`HydrogenBondNetwork`](@ref)
+    prediction (if `hydrogen_bond_network` is a `Function`, otherwise the
+    provided [`HydrogenBondNetwork`](@ref) is static and `selection` has no
+    effect). An optional parameter `A` (`Type{<: AbstractAccelerationType}`) can
+    be provided, stating the acceleration type used to calculate this energetic
+    contribution (See [ProtoSyn acceleration types](@ref)). Uses
+    `ProtoSyn.acceleration.active` by default. Note that, depending on the
+    `potential` employed, atomic charges may be required (See
+    [`assign_default_charges`](@ref ProtoSyn.Calculators.Electrostatics.assign_default_charges!),
+    for example).
+
+    # See also
+    [`get_default_hydrogen_bond_network`](@ref)
+
+    # Examples
+    ```
+    julia> e, f, hb_pairs = ProtoSyn.Calculators.HydrogenBonds.calc_hydrogen_bond_network(pose, nothing, false, hydrogen_bond_network = hbn, potential = potential)
+    (-9.329167508668307, nothing, (...))
+
+    julia> hb_pairs
+    122-element Vector{Tuple{Atom, Atom}}:
+    (Atom{/2a3d:41940/A:1/MET:1/O:19}, Atom{/2a3d:41940/A:1/TRP:4/H:39})
+    (Atom{/2a3d:41940/A:1/MET:1/O:19}, Atom{/2a3d:41940/A:1/ALA:5/H:63})
+    (Atom{/2a3d:41940/A:1/GLY:2/O:26}, Atom{/2a3d:41940/A:1/ALA:5/H:63})
+    (...)
+    ```
+    """
+    function calc_hydrogen_bond_network(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x; qi = 0.0, qj = 0.0) -> 0.0) where {A <: ProtoSyn.AbstractAccelerationType}
         
         if isa(hydrogen_bond_network, Function)
             hydrogen_bond_network = hydrogen_bond_network(pose, selection)
@@ -165,22 +212,48 @@ module HydrogenBonds
         return ehb, nothing, hb_list
     end
 
-    calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x) -> 0.0) = begin
+    calc_hydrogen_bond_network(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork(), potential::Function = (x; qi = 0.0, qj = 0.0) -> 0.0) = begin
         calc_hydrogen_bond_network(ProtoSyn.acceleration.active, pose, selection, update_forces; hydrogen_bond_network = hydrogen_bond_network, potential = potential)
     end
 
-    """
-    # TODO
-    """
-    function fixate_hydrogen_bond_network!(efc::EnergyFunctionComponent, pose::Pose)
-        efc.settings[:hydrogen_bond_network] = efc.settings[:hydrogen_bond_network](pose)
-    end
-
 
     """
-    # TODO
+        get_default_hydrogen_bond_network(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default hydrogen bond [`EnergyFunctionComponent`](@ref). `α` sets
+    the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_hydrogen_bond_network`](@ref) method, therefore
+    defining a [`Pose`](@ref) energy based on a given potential function
+    multiplied by a geometric angle component for each pair defined in an
+    [`HydrogenBondNetwork`](@ref). By default, this
+    [`EnergyFunctionComponent`](@ref) uses the
+    [`generate_hydrogen_bond_network`](@ref) function to predict a new
+    [`HydrogenBondNetwork`](@ref) each call. Consider setting
+    `efc.settings[:hydrogen_bond_network]` as an [`HydrogenBondNetwork`](@ref)
+    to employ a static list of interacting [`Atom`](@ref) instances (for
+    improved performance).
+
+    # See also
+    [`fixate_hydrogen_bond_network!`](@ref)
+
+    # Settings
+    * `hydrogen_bond_network::Union{HydrogenBondNetwork, Function}` - Defines either the [`HydrogenBondNetwork`](@ref) predictor function or static [`HydrogenBondNetwork`](@ref);
+    * `potential::Function` - Define the potential to apply (calculates energy and force value from inter-atomic distance - and optionally atomic charges `qi` & `qj`);
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.HydrogenBonds.get_default_hydrogen_bond_network()
+          Name : Hydrogen_Bonds
+    Weight (α) : 1.0
+ Update forces : false
+     Selection : nothing
+       Setings :
+:hydrogen_bond_network => generate_hydrogen_bond_network
+     :potential => bump_potential_charges
+    ```
     """
-    function get_default_hydrogen_bond_network_comp(;α::T = 1.0) where {T <: AbstractFloat}
+    function get_default_hydrogen_bond_network(;α::T = 1.0) where {T <: AbstractFloat}
         return EnergyFunctionComponent(
             "Hydrogen_Bonds",
             calc_hydrogen_bond_network,
@@ -190,5 +263,30 @@ module HydrogenBonds
                 :potential => ProtoSyn.Calculators.get_bump_potential_charges(c = 3.0, r = 1.5)),
             α,
             false)
+    end
+
+
+    """
+        fixate_hydrogen_bond_network!(efc::EnergyFunctionComponent, pose::Pose)
+
+    If the given [`EnergyFunctionComponent`](@ref) `efc` is an Hydrogen Bonds
+    [`EnergyFunctionComponent`](@ref) (and the `:hydrogen_bond_network` setting
+    is a `Function`), calculate a new [`HydrogenBondNetwork`](@ref) and apply it
+    as a static list of interaction [`Atom`](@ref) instances (improved
+    performance).
+
+    # See also
+    [`get_default_hydrogen_bond_network`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Calculators.HydrogenBonds.fixate_hydrogen_bond_network!(efc, pose)
+    Donors: 131 | Acceptors: 104
+    ```
+    """
+    function fixate_hydrogen_bond_network!(efc::EnergyFunctionComponent, pose::Pose)
+        @assert :hydrogen_bond_network in keys(efc.settings) ":hydrogen_bond_network setting not found in the provided EnergyFunctionComponent. Are you sure this is an Hydrogen Bonds EnergyFunctionComponent?"
+        @assert isa(efc.settings[:hydrogen_bond_network], Function) ":hydrogen_bond_network doesn't seem to be a function. Perhaps it is already set as an HydrogenBondNetwork?"
+        efc.settings[:hydrogen_bond_network] = efc.settings[:hydrogen_bond_network](pose)
     end
 end

@@ -57,10 +57,30 @@ module REF15
 
 
     """
-    # TODO DOCUMENTATION
-    Uses the file system
-    Does not care for acceleration type
-    Selection?
+        calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject} = nothing)
+        
+    Calculate the [`Pose`](@ref) `pose` energy according to the external REF15
+    energy function from the PyRosetta Python package. [`calc_ref15`](@ref) uses
+    the filesystem to write the given [`Pose`](@ref) `pose` to a file and load
+    it using PyRosetta, for the calculation. This is performed each call.
+    Optionally, a static `PyCall.PyObject` `rosetta_pose` can be provided. In
+    this case, if the number of [`Atom`](@ref) instances match, only the
+    cartesian coordinates are updated (improved performance, note that any
+    design effort prevents the usage of the same `rosetta_pose`). The
+    `AbstractSelection` in this Calculator doesn't have any effect, and exists
+    only for standardization with other [Calculators](@ref). The parameter `A`
+    (`Type{<: AbstractAccelerationType}`) doesn't have any effect in this
+    Calculator doesn't have any effect, and exists only for standardization with
+    other [Calculators](@ref).
+
+    # See also
+    [`get_default_ref15`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Calculators.REF15.calc_ref15(pose, nothing, false)
+    (574.367631516687, nothing)
+    ```
     """
     function calc_ref15(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; rosetta_pose::Opt{PyCall.PyObject} = nothing)::Tuple{<: AbstractFloat, Nothing}
 
@@ -116,7 +136,67 @@ module REF15
         calc_ref15(ProtoSyn.acceleration.active, pose, selection, update_forces, rosetta_pose = rosetta_pose)
     end
 
+
     """
+        get_default_ref15(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the default PyRosetta's REF15 [`EnergyFunctionComponent`](@ref). `α`
+    sets the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_ref15`](@ref) method, therefore defining a
+    [`Pose`](@ref) energy based on PyRosetta's REF15 energy function. By
+    default, this [`EnergyFunctionComponent`](@ref) uses the filesystem to write
+    the current [`Pose`](@ref) to a file and load in PyRosetta. Optionally, a
+    static PyCall.Object can be used by setting
+    `efc.settings[:rosetta_pose] = static_pose`, where `static_pose` is a
+    previously loaded PyRosetta Pose. Any subsequent calculation only updates
+    the cartesian coordinates (the number of [`Atom`](@ref) instances must,
+    therefore, match).
+
+    # See also
+    [`fixate_rosetta_pose!`](@ref)
+
+    # Settings
+    * `rosetta_pose::Opt{PyCall.PyObject}` - Defines the static Rosetta Pose to update cartesian coordinates. If set to `nothing`, will use filesystem to create a new PyRosetta Pose;
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.REF15.get_default_ref15()
+          Name : REF15
+    Weight (α) : 1.0
+ Update forces : true
+     Selection : nothing
+       Setings :
+  :rosetta_pose => nothing
+    ```
+    """
+    function get_default_ref15(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
+        return EnergyFunctionComponent(
+            "REF15",
+            calc_ref15,
+            nothing,
+            Dict{Symbol, Any}(:rosetta_pose => nothing),
+            α,
+            true)
+    end
+
+
+    """
+        fixate_rosetta_pose!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
+
+    Uses the filesystem to write the given [`Pose`](@ref) `pose` to a file and
+    load as a PyRosetta Pose. Sets the provided
+    [`EnergyFunctionComponent`](@ref) `efc` `:rosetta_pose` setting to this
+    newly defined `PyCall.Object`.
+
+    # See also
+    [`get_default_ref15`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Calculators.REF15.fixate_rosetta_pose!(efc, pose)
+    PyObject <pyrosetta.rosetta.core.pose.Pose object at 0x7f89417d1ab0>
+    ```
     """
     function fixate_rosetta_pose!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
         if (:rosetta_pose in keys(efc.settings))
@@ -135,18 +215,8 @@ module REF15
 
             # 3. Save as the efc setting
             efc.settings[:rosetta_pose] = _pose
+        else
+            @error "The provided EnergyFunctionComponent doesn't seem to be a REF15 component."
         end
-    end
-
-    """
-    """
-    function get_default_ref15(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
-        return EnergyFunctionComponent(
-            "REF15",
-            calc_ref15,
-            nothing,
-            Dict{Symbol, Any}(:rosetta_pose => nothing),
-            α,
-            true)
     end
 end
