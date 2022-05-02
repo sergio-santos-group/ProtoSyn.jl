@@ -1,7 +1,28 @@
 """
-# TODO DOCUMENTATION
-# USAGE IN GENERALIZED BORN NN
-# INCLUDE LINK TO EXPLANATION README?
+    hist_by_distance_by_elem(pose::Pose, [selection::Opt{AbstractSelection} = nothing]; [cutoff::T = 16.0], [bin::T = 0.2], [elems::Vector{String} = ["H", "O", "N", "C", "S"]], [dm::Opt{Matrix{T}} = nothing]) where {T <: AbstractFloat}
+
+Calculates the given [`Pose`](@ref) `pose` distance histogram by [`Atom`](@ref)
+element. The output format matches the requirements for
+[`predict_igbr_nn_born_radii`](@ref ProtoSyn.Calculators.GB.predict_igbr_nn_born_radii)
+(for more information, see https://academic.oup.com/bioinformatics/article/36/6/1757/5613804).
+If an `AbstractSelection` `selection` is provided, only the selected subset of
+[`Atom`](@ref) instances is considered for the histogram calculation (promoted
+to [`Atom`](@ref) level using the [`promote`](@ref ProtoSyn.promote) method).
+The distance histogram is generated for all [`Atom`](@ref) instances within
+`cutoff` Å of the focused [`Atom`](@ref), sub-divided in bins of `bin` Å. If a
+[`full_distance_matrix`](@ref) `dm` is provided, use it for distance
+calculation, otherwise a new distance matrix is generated. Each [`Atom`](@ref)
+histogram is divided by elements: one histogram is generated for each atomic
+element in `elems` containing all neighbouring [`Atom`](@ref) instances of that
+type. 
+
+# Examples
+```jldoctest
+julia> ProtoSyn.hist_by_distance_by_elem(pose)
+1140×400 Matrix{Int64}:
+ (...)
+```
+
 """
 function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} = nothing; cutoff::T = 16.0, bin::T = 0.2, elems::Vector{String} = ["H", "O", "N", "C", "S"], dm::Opt{Matrix{T}} = nothing) where {T <: AbstractFloat}
 
@@ -13,7 +34,7 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
 
     # Pre-calculate distance matrix
     if dm === nothing
-        dm = collect(ProtoSyn.Calculators.full_distance_matrix(pose, selection))
+        dm = collect(ProtoSyn.Calculators.full_distance_matrix(pose, sele))
     end
 
     # Define useful counts

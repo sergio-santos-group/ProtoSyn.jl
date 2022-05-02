@@ -1,5 +1,5 @@
 """
-get_flat_bottom_potential(;d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
+    get_flat_bottom_potential(;d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf) where {T <: AbstractFloat}
 
 Return a flat-bottom potential function, using the specified distances. The
 potential is made up of 5 different sectors, each with the following functions:

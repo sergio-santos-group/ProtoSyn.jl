@@ -234,7 +234,10 @@ end
 
 
 """
-# TODO
+    rename!(atom::Atom, name::String)
+
+Rename the selected [`Atom`](@ref) instance to the given `name`. Also updates
+the [`Atom`](@ref) container `:itemsbyname` field.
 """
 function rename!(atom::Atom, name::String)
     similar = findfirst(atom -> atom.name === name, atom.container.items)
@@ -525,6 +528,98 @@ function is_contiguous(pose::Pose, selection::ProtoSyn.AbstractSelection)
 
     # Compare number of found marks with the number of selected residues
     return marks == length(selected_residues)
+end
+
+
+"""
+    infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing)
+
+Infers parenthood of [`Atom`](@ref) instances on the given `AbstractContainer`
+`container`. By default, the [Graph](@ref) origin is set to the first
+[`Atom`](@ref) instance in the `container`. This behaviour can be controlled by
+setting a `start` [`Atom`](@ref) as the origin of the new infered parenthood
+[Graph](@ref). If `overwrite` is set to `true` (`false`, by default), will
+overwrite existing pranthood information.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.infer_parenthood!(pose.graph[1], overwrite = true)
+Segment{/2a3d:8625/A:1}
+```
+"""
+function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing)
+
+    @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
+
+    atoms   = collect(eachatom(container))
+
+    if start === nothing
+        start = collect(eachatom(container))[1]
+    end
+
+    n_atoms = length(atoms)
+    visited = ProtoSyn.Mask{Atom}(n_atoms)
+    changed = ProtoSyn.Mask{Atom}(n_atoms)
+
+    # First atom is always connected to root
+    _root = ProtoSyn.root(container)
+    if overwrite && hasparent(start)
+        ProtoSyn.popparent!(start)
+    end
+    ProtoSyn.setparent!(start, _root)
+
+    # Note the usage of breath-first search (BFS) algorithm. This is the most
+    # chemically correct was of attributing parenthood relationships, in
+    # accordance with generally accepted conventions.
+    stack = Vector{Atom}([start])
+    levls = Vector{Int}([1])
+    p_lvl = 1
+    
+    while length(stack) > 0
+        if levls[end] !== p_lvl
+            # sort the next level
+            ProtoSyn.verbose.mode && println("Sorting next level")
+            ProtoSyn.verbose.mode && println("Current stack: $([x.symbol for x in stack])")
+            sort!(stack, by=(x)->x.symbol, rev = true)
+        end
+        atom_i = pop!(stack)
+        levl_i = pop!(levls)
+        p_lvl  = levl_i
+        i      = findfirst((a)->a === atom_i, atoms)
+        ProtoSyn.verbose.mode && println("Focus on atom $atom_i - $i")
+        visited[i] = true
+        atom_i_bonds = sort(atom_i.bonds, by=(b)->b.symbol)
+        ProtoSyn.verbose.mode && println("$atom_i (Lvl: $levl_i) ---> $atom_i_bonds")
+        for atom_j in atom_i_bonds
+            j = findfirst(atom -> atom === atom_j, atoms)
+            ProtoSyn.verbose.mode && j !== nothing && println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
+            if j !== nothing && !(visited[j]) && !(changed[j])
+                insert!(stack, 1, atom_j)
+                insert!(levls, 1, levl_i + 1)
+                if overwrite && hasparent(atom_j)
+                    ProtoSyn.popparent!(atom_j)
+                end
+                if !hasparent(atom_j)
+                    ProtoSyn.verbose.mode && println("  Setting $atom_i as parent of $atom_j")
+                    ProtoSyn.setparent!(atom_j, atom_i)
+                    changed[j] = true
+                else
+                    ProtoSyn.verbose.mode && println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                end
+            end
+        end
+    end
+
+    # Any non-connected atoms (by bonds) are children of root
+    for atom in atoms
+        !hasparent(atom) && ProtoSyn.setparent!(atom, _root)
+    end
+
+    if typeof(container) > Residue
+        reindex(container) # Sets ascedents
+    end
+
+    return container
 end
 
 # --- Visualize ----------------------------------------------------------------

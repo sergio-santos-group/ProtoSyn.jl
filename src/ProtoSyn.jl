@@ -34,6 +34,15 @@ mutable struct Acceleration
     active::Type{<: AbstractAccelerationType}
 end
 
+Base.show(io::IO, accel::Acceleration) = begin
+    check = accel.active === ProtoSyn.SISD_0 ? "✓" : ""
+    println(io, "SISD_0 $check")
+    check = accel.active === ProtoSyn.SIMD_1 ? "✓" : ""
+    println(io, "SIMD_1 $check")
+    check = accel.active === ProtoSyn.CUDA_2 ? "✓" : ""
+    println(io, "CUDA_2 $check")
+end
+
 acceleration = Acceleration(SISD_0)
 try
     if simdbits() >= 256

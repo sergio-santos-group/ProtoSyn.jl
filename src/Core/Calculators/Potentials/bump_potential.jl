@@ -1,5 +1,18 @@
 """
-# TODO: Documentation
+    get_bump_potential_charges(;[c::T = 1.0], [r::T = 1.0]) where {T <: AbstractFloat}
+
+Return a bump potential with charges included, as described in
+https://math.stackexchange.com/a/3236066. The bump function is centered around
+`c` with a radius `r`.
+
+# See also
+[`get_bump_potential`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.get_bump_potential_charges(c = 1.0, r = 1.0)
+(::ProtoSyn.Calculators.var"#bump_potential_charges#21"{ProtoSyn.Calculators.var"#bump_potential_charges#20#22"{Float64, Float64}}) (generic function with 1 method)
+```
 """
 function get_bump_potential_charges(;c::T = 1.0, r::T = 1.0) where {T <: AbstractFloat}
 
@@ -10,7 +23,7 @@ function get_bump_potential_charges(;c::T = 1.0, r::T = 1.0) where {T <: Abstrac
             m = qi * qj
 
             e = m * exp(-((log(1+a)*log(1+a)) + (log(1-a)*log(1-a))))
-            # println("a: $a | m: $m | e: $e")
+
             if v !== nothing
                 _f = m*exp((-log((d-c)/r+1)^2-log(1-(d-c)/r)^2)*((2*log(1-(d-c)/r))/(r*(1-(d-c)/r))-(2*log((d-c)/r+1))/(r*((d-c)/r+1))))
             end
@@ -34,7 +47,20 @@ end
 
 
 """
-# TODO: Documentation
+    get_bump_potential(;[c::T = 1.0], [r::T = 1.0]) where {T <: AbstractFloat}
+
+Return a bump potential without charges included, as described in
+https://math.stackexchange.com/a/3236066. The bump function is centered around
+`c` with a radius `r`.
+
+# See also
+[`get_bump_potential_charges`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.get_bump_potential(c = 1.0, r = 1.0)
+(::ProtoSyn.Calculators.var"#bump_potential#25"{ProtoSyn.Calculators.var"#bump_potential#24#26"{Float64, Float64, Float64}}) (generic function with 1 method)
+```
 """
 function get_bump_potential(;c::T = 1.0, r::T = 1.0, m::T = 1.0) where {T <: AbstractFloat}
 

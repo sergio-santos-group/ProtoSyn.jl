@@ -95,7 +95,7 @@ function Base.show(io::IO, m::Mask{T}) where {T <: AbstractContainer}
     print(io, "ProtoSyn.Mask\n")
     print(io, " ├── Type: $T\n")
     print(io, " ├── Size: $(size(m.content))\n")
-    print(io, " ├── Count: $(count(m.content))\n")
+    print(io, " ├── Count: $(count(m.content)) / $(length(m.content))\n")
     print(io, " └── Content: $c")
 end
 
