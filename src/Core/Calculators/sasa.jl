@@ -3,6 +3,9 @@ module SASA
     using ProtoSyn
     using LinearAlgebra
 
+    """
+    # TODO
+    """
     function calc_sasa(::Type{A}, pose::Pose, selection::Opt{AbstractSelection} = an"CA", update_forces::Bool = false; probe_radius::T = 1.4, n_points::Int = 100) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
         
         if selection !== nothing
@@ -62,6 +65,10 @@ module SASA
         calc_sasa(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points)
     end
 
+
+    """
+    # TODO
+    """
     function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "SASA",
@@ -72,12 +79,14 @@ module SASA
                 :probe_radius       => 1.4,
             ),
             α,
-            false
-        )
+            false)
     end
 
     # --------------------------------------------------------------------------
 
+    """
+    # TODO
+    """
     function calc_sasa_energy(::Type{A}, pose::Pose,
         selection::Opt{AbstractSelection} = an"CA",
         update_forces::Bool = false;
@@ -130,6 +139,10 @@ module SASA
         calc_sasa_energy(ProtoSyn.acceleration.active, pose, selection, update_forces, probe_radius = probe_radius, n_points = n_points, residue_selection = residue_selection, hydrophobicity_map = hydrophobicity_map, max_sasas = max_sasas, Ω = Ω)
     end
     
+
+    """
+    # TODO
+    """
     function get_default_sasa_energy(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "SASA_Solvation",
@@ -142,12 +155,14 @@ module SASA
                 :reference_energies           => Dict{String, Float64}()
             ),
             α,
-            false
-        )
+            false)
     end
 
     # --------------------------------------------------------------------------
 
+    """
+    # TODO
+    """
     function calc_radius_gyration(pose::Pose, selection::Opt{AbstractSelection})
         if selection === nothing
             sele = TrueSelection{Atom}()
@@ -166,11 +181,19 @@ module SASA
 
     calc_radius_gyration(pose::Pose) = calc_radius_gyration(pose, nothing)
 
+
+    """
+    # TODO
+    """
     function calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool)
         rg = calc_radius_gyration(pose, selection)
         return sum(rg), nothing
     end
 
+
+    """
+    # TODO
+    """
     function get_default_rg(;α::T = 1.0) where {T <: AbstractFloat}
         return ProtoSyn.Calculators.EnergyFunctionComponent(
             "Radius_Gyration",
@@ -178,7 +201,6 @@ module SASA
             nothing,
             Dict{Symbol, Any}(),
             α,
-            false
-        )
+            false)
     end
 end

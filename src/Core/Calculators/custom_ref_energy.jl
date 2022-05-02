@@ -67,12 +67,20 @@ defining a [`Pose`](@ref) energy based on a user-defined map between
 # Examples
 ```jldoctest
 julia> ProtoSyn.Calculators.get_default_custom_ref_energy()
-          Name : Custom_Ref_Energy
-    Weight (α) : 1.0
- Update forces : true
-     Selection : nothing
-       Setings :
-           :map => Dict{AbstractSelection, Float64}()
+🞧  Energy Function Component:
++---------------------------------------------------+
+| Name           | Custom_Ref_Energy                |
+| Alpha (α)      | 1.0                              |
+| Update forces  | true                             |
+| Calculator     | calc_custom_ref_energy           |
++---------------------------------------------------+
+ |    +----------------------------------------------------------------------------------+
+ ├──  ● Settings                      | Value                                            |
+ |    +----------------------------------------------------------------------------------+
+ |    | map                           | Dict{AbstractSelection, Float64}(0 components)   |
+ |    +----------------------------------------------------------------------------------+
+ |    
+ └──  ○  Selection: nothing
 ```
 """
 function get_default_custom_ref_energy(;α::T = 1.0) where {T <: AbstractFloat}

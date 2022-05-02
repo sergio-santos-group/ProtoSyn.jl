@@ -162,12 +162,20 @@ module REF15
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.REF15.get_default_ref15()
-          Name : REF15
-    Weight (α) : 1.0
- Update forces : true
-     Selection : nothing
-       Setings :
-  :rosetta_pose => nothing
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | REF15                            |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_ref15                       |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | rosetta_pose                  | nothing                                          |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_ref15(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}

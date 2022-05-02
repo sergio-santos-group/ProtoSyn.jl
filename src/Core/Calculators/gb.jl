@@ -216,15 +216,23 @@ module GB
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.GB.get_default_gb()
-          Name : GB_Solvation
-    Weight (α) : 1.0
- Update forces : false
-     Selection : nothing
-       Setings :
-    :born_radii => predict_igbr_nn_born_radii
-        :models => C: ✓ | N: ✓ | H: ✓ | O: ✓ | S: ✓ 
-     :ϵ_protein => 4.0
-     :ϵ_solvent => 80.0
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | GB_Solvation                     |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | false                            |
+    | Calculator     | calc_gb                          |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | ϵ_solvent                     | 80.0                                             |
+     |    | models                        | C: ✓ | N: ✓ | H: ✓ | O: ✓ | S: ✓                 |
+     |    | ϵ_protein                     | 4.0                                              |
+     |    | born_radii                    | predict_igbr_nn_born_radii                       |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_gb(;α::T = 1.0) where {T <: AbstractFloat}

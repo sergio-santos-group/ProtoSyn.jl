@@ -268,7 +268,7 @@ function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = not
     lead       = ProtoSyn.get_lead(level_code)
     inner_lead = ProtoSyn.get_inner_lead(level_code)
 
-    println(io, lead*"⚡  Energy Function ($(length(efc.components)) components):")
+    println(io, lead*"🗲  Energy Function ($(length(efc.components)) components):")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     @printf(io, "%s| %-5s | %-45s | %-12s |\n", inner_lead, "Index", "Component name", "Weight (α)")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")

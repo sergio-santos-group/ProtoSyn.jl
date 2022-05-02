@@ -184,11 +184,20 @@ new XMLRPC server (in parallel) if necessary.
 # Examples
 ```
 julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc()
-         Name : TorchANI_ML_Model_XMLRPC
-   Weight (α) : 1.0
-Update forces : true
-      Setings :
-         :model => 3
+🞧  Energy Function Component:
++---------------------------------------------------+
+| Name           | TorchANI_ML_Model_XMLRPC         |
+| Alpha (α)      | 1.0                              |
+| Update forces  | true                             |
+| Calculator     | calc_torchani_model_xmlrpc       |
++---------------------------------------------------+
+ |    +----------------------------------------------------------------------------------+
+ ├──  ● Settings                      | Value                                            |
+ |    +----------------------------------------------------------------------------------+
+ |    | model                         | 3                                                |
+ |    +----------------------------------------------------------------------------------+
+ |    
+ └──  ○  Selection: nothing
 ```
 """
 function get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}

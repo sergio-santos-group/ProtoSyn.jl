@@ -141,7 +141,7 @@ module TorchANI
     # --- SINGLE MODEL
     
     """
-        Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
+        calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
         
     Calculate and return the [`Pose`](@ref) `pose` energy according to a single
     TorchANI model neural network. The model can be defined using `model_index`
@@ -298,11 +298,20 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
-    Name : TorchANI_ML_Model
-    Weight (α) : 1.0
- Update forces : true
-       Setings :
-         :model => 3
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | TorchANI_ML_Model                |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_torchani_model              |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | model                         | 3                                                |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
@@ -331,10 +340,14 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
-    Name : TorchANI_ML_Ensemble
-    Weight (α) : 1.0
- Update forces : true
-       Setings : -
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | TorchANI_ML_Ensemble             |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_torchani_ensemble           |
+    +---------------------------------------------------+
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}

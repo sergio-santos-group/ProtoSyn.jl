@@ -62,13 +62,17 @@ Base.setproperty!(efc::EnergyFunctionComponent{T}, key::Symbol, val) where {T <:
             This depends on the mask being used.
             As an example, for a diagonal mask, this can be set by calling `comp.settings[:mask] = ProtoSyn.Calculators.get_diagonal_mask(comp.selection)`.
             For non-design efforts, consider fixating the mask to a single pose, in order to improve performance.
-            This can be set by calling `comp.settings[:mask] = comp.settings[:mask](pose)` or `ProtoSyn.Calculators.fixate_mask!(comp, pose)`."""
+            This can be set by calling `comp.settings[:mask] = comp.settings[:mask](pose)` or `ProtoSyn.Calculators.fixate_mask!(comp, pose)`.
+            
+            """
         end
         if :hydrogen_bond_network in keys(efc.settings) && !isa(efc.settings[:hydrogen_bond_network], Function)
             @info """The EnergyFunctionComponent selection has been changed, but this component seems to have a static `hydrogen_bond_network`.
             You may update this component `hydrogen_bond_network` by setting it to a Function (`comp.settings[:hydrogen_bond_network] = ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network`).
             For non-design efforts, consider fixating the mask to a single pose, in order to improve performance.
-            This can be set by calling `ProtoSyn.Calculators.HydrogenBonds.fixate_hydrogen_bond_network!(comp, pose)`."""
+            This can be set by calling `ProtoSyn.Calculators.HydrogenBonds.fixate_hydrogen_bond_network!(comp, pose)`.
+            
+            """
         end
         setfield!(efc, :selection, val)
     else
@@ -86,6 +90,7 @@ function Base.copy(efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
         copy(efc.α),
         copy(efc.update_forces))
 end
+
 
 """
     fixate_mask!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
@@ -115,23 +120,53 @@ end
 
 # * Show -----------------------------------------------------------------------
 
-function Base.show(io::IO, efc::EnergyFunctionComponent{T}) where {T <: AbstractFloat}
-    @printf(io, "%14s : %-s\n", "Name", efc.name)
-    @printf(io, "%14s : %-s\n", "Weight (α)", efc.α)
-    @printf(io, "%14s : %-s\n", "Update forces", string(efc.update_forces))
-    @printf(io, "%14s : %-s\n", "Selection", string(efc.selection))
-    if length(efc.settings) == 0
-        @printf(io, "%14s : -", "Setings")
-    else
-        @printf(io, "%14s :\n", "Setings")
-        for key in sort(collect(keys(efc.settings)))
-            value = efc.settings[key]
-            @printf(io, "%15s => ", ":"*string(key))
-            if typeof(value) == Matrix{T}
-                print(io, "Matrix{$T}($(size(value))\n")
+function Base.show(io::IO, efc::EnergyFunctionComponent{T}, level_code::Opt{LevelCode} = nothing) where {T <: AbstractFloat}
+    init_level_code = level_code === nothing ? LevelCode() : level_code
+    init_lead       = ProtoSyn.get_lead(level_code)
+
+    println(io, init_lead*"🞧  Energy Function Component:")
+
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
+
+    println(io, inner_lead*"+"*repeat("-", 51)*"+")
+    @printf(io, "%s|%-15s | %-30s   |\n", inner_lead, " Name", "$(efc.name)")
+    @printf(io, "%s|%-15s | %-30s   |\n", inner_lead, " Alpha (α)", "$(efc.α)")
+    @printf(io, "%s|%-15s | %-30s   |\n", inner_lead, " Update forces", "$(efc.update_forces)")
+    @printf(io, "%s|%-15s | %-30s   |\n", inner_lead, " Calculator", "$(efc.calc)")
+    println(io, inner_lead*"+"*repeat("-", 51)*"+")
+
+    level_code = vcat(init_level_code, 3)
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
+    if length(keys(efc.settings)) !== 0
+        println(io, inner_lead*" +"*repeat("-", 82)*"+")
+        @printf(io, "%s ●%-30s | %-46s   |\n", lead, " Settings", "Value")
+        println(io, inner_lead*" +"*repeat("-", 82)*"+")
+        for (key, value) in efc.settings
+            if isa(value, Dict)
+                p = eltype(value).parameters
+                N = length(keys(value))
+                e = N === 1 ? "" : "s"
+                val = "Dict{$(p[1]), $(p[2])}($N component$e)"
             else
-                print(io, "$value\n")
+                val = string(value)
             end
+
+            @printf(io, "%s |%-30s | %-46s   |\n", inner_lead, " $key", "$val")
         end
+        println(io, inner_lead*" +"*repeat("-", 82)*"+")
+        println(io, inner_lead*" ")
+    end
+
+    level_code = vcat(init_level_code, 4)
+    lead       = ProtoSyn.get_lead(level_code)
+    inner_lead = ProtoSyn.get_inner_lead(level_code)
+
+    if typeof(efc.selection) !== Nothing
+        println(io, lead*" ●  Selection:")
+        Base.show(io, efc.selection, vcat(level_code, 4))
+    else
+        println(io, lead*" ○  Selection: $(efc.selection)")
     end
 end

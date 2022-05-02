@@ -88,7 +88,7 @@ module Restraints
 
                         # * Assumes atom IDs are synched with pose.state
                         f[:, atom.index] -= v * factor1
-                        f[:, bond.index] += v * factor1 # TODO
+                        f[:, bond.index] += v * factor1
                     end
                 end
             end
@@ -131,11 +131,20 @@ module Restraints
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint()
-    Name : Bond_Distance_Restraint
-    Weight (α) : 1.0
- Update forces : true
-       Setings :
-            :x0 => 2.0
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | Bond_Distance_Rest               |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_bond_distance_restraint     |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | x0                            | 2.0                                              |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
@@ -170,8 +179,8 @@ module Restraints
     are named `MaskMap` for a simplicity of organization only. Return the total
     energy of the system and matrix of forces felt on each atom. Note that the
     calculation acceleration type can be set by providing an option parameter
-    `Type{<: ProtoSyn.AbstractAccelerationType}`. If not provided, the default
-    `ProtoSyn.acceleration.active` will be used instead.
+    `A` `Type{<: ProtoSyn.AbstractAccelerationType}`. If not provided, the
+    default `ProtoSyn.acceleration.active` will be used instead.
 
         calc_flat_bottom_restraint!([::Type{A}], pose::Pose, update_forces::Bool; d1::T = 0.0, d2::T = 0.0, d3::T = Inf, d4::T = Inf, selection::Opt{AbstractSelection} = nothing, mask::MaskMap = nothing) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
 
@@ -207,8 +216,51 @@ module Restraints
         calc_flat_bottom_restraint!(ProtoSyn.acceleration.active, pose, selection, update_forces, d1 = d1, d2 = d2, d3 = d3, d4 = d4, mask = mask, vlist = vlist)
     end
 
+
     """
-    # TODO
+        get_default_all_atom_clash_restraint(;α::T = 1.0) where {T <: AbstractFloat}
+
+    Return the all-atom clash [`EnergyFunctionComponent`](@ref). `α` sets the
+    component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
+    component employs the [`calc_flat_bottom_restraint`](@ref) method, therefore
+    defining a [`Pose`](@ref) energy based on a flat-bottom potential function
+    applied to all atom-pairs in the system (N² complexity). By default, this
+    [`EnergyFunctionComponent`](@ref) potential sets `:d1` and `:d2` of the
+    flat-bottom potential to be 1.0 and 2.0, and masks out bonded atom-pairs.
+
+    # See also
+    [`get_default_bond_distance_restraint`](@ref)
+
+    # Settings
+    * `d1::T` - The :d1 distance in the flat-bottom potential;
+    * `d2::T` - The :d2 distance in the flat-bottom potential;
+    * `d3::T` - The :d3 distance in the flat-bottom potential;
+    * `d4::T` - The :d4 distance in the flat-bottom potential;
+    * `mask::MaskMap` - The [`Mask`](@ref), `Matrix{T}` or `Function` (see [Creating custom masks](@ref)) that masks out our multiplied by a set of pre-defined [`Atom`](@ref) instances;
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Calculators.Restraints.get_default_all_atom_clash_restraint()
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | All_Atom_Clash_Rest              |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_flat_bottom_restraint       |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | d4                            | Inf                                              |
+     |    | d2                            | 2.0                                              |
+     |    | mask                          | get_bonded_mask                                  |
+     |    | d1                            | 1.0                                              |
+     |    | d3                            | Inf                                              |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
+    ```
     """
     function get_default_all_atom_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
         # * Note: The default :d1 and :d2 distances were parametrized based on

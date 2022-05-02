@@ -244,13 +244,21 @@ module HydrogenBonds
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.HydrogenBonds.get_default_hydrogen_bond_network()
-          Name : Hydrogen_Bonds
-    Weight (α) : 1.0
- Update forces : false
-     Selection : nothing
-       Setings :
-:hydrogen_bond_network => generate_hydrogen_bond_network
-     :potential => bump_potential_charges
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | Hydrogen_Bonds                   |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | false                            |
+    | Calculator     | calc_hydrogen_bond_network       |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | potential                     | bump_potential_charges                           |
+     |    | hydrogen_bond_network         | generate_hydrogen_bond_network                   |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_hydrogen_bond_network(;α::T = 1.0) where {T <: AbstractFloat}

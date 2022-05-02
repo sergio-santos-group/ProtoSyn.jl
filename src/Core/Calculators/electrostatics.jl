@@ -210,14 +210,22 @@ module Electrostatics
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.Electrostatics.get_default_coulomb()
-             Name : Coulomb
-       Weight (α) : 1.0
-    Update forces : true
-        Selection : nothing
-          Setings :
-             :mask => get_intra_residue_mask
-        :potential => bump_potential_charges
-            :vlist => nothing
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | Coulomb                          |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_coulomb                     |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | potential                     | bump_potential_charges                           |
+     |    | vlist                         | nothing                                          |
+     |    | mask                          | get_intra_residue_mask                           |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_coulomb(;α::T = 1.0)::EnergyFunctionComponent where {T <: AbstractFloat}
