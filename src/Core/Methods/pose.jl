@@ -342,10 +342,29 @@ end
 
 
 """
-# TODO Documentation
-Expects reindexed structure
+    sort_atoms_by_graph!(state::State, container::AbstractContainer, start::Opt{Atom} = nothing)
+
+Sorts the [`Atom`](@ref) instances in the given [`Residue`](@ref) `container`
+to match its graph. By default, employs
+[`travel_graph`](@ref ProtoSyn.travel_graph) to get the new sorted list of
+[`Atom`](@ref) instances (from the first [`Atom`](@ref) in the
+[`Residue`](@ref) `container`, set `start` argument to define a new starting
+point). Also updates the [`Atom`](@ref) order in the corresponding and provided
+[`State`](@ref) `state`. Expects both the [`State`](@ref) and respective
+[Graph](@ref) to be correctly re-indexed (see
+[`reindex`](@ref ProtoSyn.reindex)).
+
+# Examples
+```
+julia> ProtoSyn.sort_atoms_by_graph!(pose.state, pose.graph[1, 1])
+(State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+, Residue{/2a3d:3900/A:1/MET:1})
+```
 """
-function sort_atoms_by_graph!(state::State, container::AbstractContainer, start::Opt{Atom} = nothing)
+function sort_atoms_by_graph!(state::State, container::Residue, start::Opt{Atom} = nothing)
 
     function find_atom_sortperm(state::State, old_atoms_indexes::Vector{Int}, new_atoms_indexes::Vector{Int})
         _sortperm = Vector{Int}()
@@ -377,13 +396,14 @@ function sort_atoms_by_graph!(state::State, container::AbstractContainer, start:
     _sortperm = find_atom_sortperm(state, old_atoms_indexes, atoms_indexes)
 
     # Apply sort perm (ignoring the first 3 entries)
-    state.items[4:end] = state.items[4:end][_sortperm[4:end]]
-    state.x.coords     = state.x.coords[:, _sortperm[4:end]]
-    container.items    = [a for a in atoms if a in container.items]
+    state.items[4:end] = state.items[4:end][_sortperm[4:end]] # Atom states
+    state.x.coords     = state.x.coords[:, _sortperm[4:end]]  # Coords matrix
+    container.items    = [a for a in atoms if a in container.items] # Graph
 
     reindex(state)
     return state, container
 end
+
 
 """
     fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
@@ -920,7 +940,34 @@ end
 
 
 """
-# TODO
+    replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
+
+Replace the selected [`Atom`](@ref) `atom` instance (and any downstream children
+atom, uses [`travel_graph`](@ref) stating on [`Atom`](@ref) `atom` to define the
+downstream region) with the given [`Fragment`](@ref) `fragment`, in the context
+of the provided [`Pose`](@ref) `pose` (updates the [`State`](@ref) and
+[Graph](@ref), etc). The first [`Atom`](@ref) in the [`Fragment`](@ref)
+`fragment` (also known as root or R [`Atom`](@ref)) is placed in the same
+position as the chosen [`Atom`](@ref) `atom` for replacement, and then removed.
+This serves only to orient the remaining [`Fragment`](@ref) `fragment`. Requests
+internal to cartesian coordinates.
+
+# Examples
+```
+julia> frag = ProtoSyn.getvar(ProtoSyn.modification_grammar, "PO4")
+Fragment(Segment{/po4:18413}, State{Float64}:
+ Size: 5
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+
+julia> ProtoSyn.replace_by_fragment!(pose, pose.graph[1, 3, "HG"], frag)
+Pose{Topology}(Topology{/2a3d:3900}, State{Float64}:
+ Size: 1143
+ i2c: true | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
     
@@ -946,7 +993,7 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
 
     # 2. Add fragment to residue
     frag_origin = ProtoSyn.origin(fragment.graph)
-    first_atom = frag_origin.children[1]
+    first_atom  = frag_origin.children[1]
     insert!(parent.container, parent_index_in_res + 1, first_atom)
     ProtoSyn.popparent!(first_atom)
     ProtoSyn.unbond!(fragment, first_atom, frag_origin)
@@ -974,7 +1021,24 @@ end
 
 
 """
-# TODO
+    identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+Returns one or more candidate [`Atom`](@ref) instances from the given
+`AbstractContainer` `container` that match the provided `pattern` (a Vector of
+[`Atom`](@ref) elements). This method follows the following hierarchical criteria:
+
+# Examples
+```
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["H", "N", "C", "C"])
+3-element Vector{Atom}:
+ Atom{/2a3d:3900/A:1/MET:1/H1:2}
+ Atom{/2a3d:3900/A:1/MET:1/H2:3}
+ Atom{/2a3d:3900/A:1/MET:1/H3:4}
+
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["C", "C", "C", "C", "H"])
+Atom{/2a3d:3900/A:1/MET:1/C:18}
+```
+
 """
 function identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
 

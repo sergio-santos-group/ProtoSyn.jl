@@ -10,15 +10,19 @@ Return the first `Atom` in `AbstractContainer` `container` that has no parent.
 The iteration follows the [`Atom`](@ref) instance `:id` field, if correctly
 indexed. If no [`Atom`](@ref) instance without parent is found (i.e.: circular
 structures), return `nothing`. Note that the [`root`](@ref) atoms are not
-considered. 
+considered. Note that if multiple origin [`Atom`](@ref) instances exists, this
+method return only the first found, based on the current [`Atom`](@ref) order
+in the given `AbstractContainer` `container`.
 
 # See also
-[`root`](@ref) [`reindex`](@ref)
+[`root`](@ref) [`reindex`](@ref) [`sort_atoms_by_graph!`](@ref)
 
 """
 origin(container::AbstractContainer) = begin
+    root = ProtoSyn.root(container)
     for atom in eachatom(container)
         !hasparent(atom) && return atom
+        atom.parent === root && return atom
     end
     return nothing
 end
@@ -621,6 +625,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
 
     return container
 end
+
 
 # --- Visualize ----------------------------------------------------------------
 # Note: This functions are incomplete, as they cannot work with ramifications.

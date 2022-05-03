@@ -162,6 +162,7 @@ module SeqDes
             corresponding chi dihedral exists or nor, respectively.
 
         Note: `N` is the number of atoms and `Nr` is the number of residues.
+        Hydrogens (with symbol H) are always ignored.
     """
     function get_pdb_data(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
@@ -182,7 +183,13 @@ module SeqDes
         end # if
 
         atoms       = atom_sele(pose, gather = true)
-        residues    = collect(eachresidue(pose.graph))
+
+        if selection !== nothing
+            res_sele = ProtoSyn.promote(selection, Residue)
+        else
+            res_sele = TrueSelection{Residue}()
+        end # if
+        residues    = res_sele(pose, gather = true)
         
         # Atomic descriptors (atom_coords & atom_data)
         T           = eltype(pose.state)
@@ -259,8 +266,14 @@ module SeqDes
                 else
                     chi_fcn  = getproperty(ProtoSyn.Peptides.Dihedral, chi)
                     chi_atom = chi_fcn(residue)
-                    chi_val  = ProtoSyn.getdihedral(pose.state, chi_atom)
-                    chi_ex   = 1.0
+                    if chi_atom === nothing
+                        @warn "Tried to retrieve $chi_fcn from $residue, but couldn't find the necessary atom by name."
+                        chi_val = 0.0
+                        chi_ex  = 0.0
+                    else
+                        chi_val = ProtoSyn.getdihedral(pose.state, chi_atom)
+                        chi_ex  = 1.0
+                    end
                 end # if
                 # Note that chi values must be in the [-π, π[ range.
                 push!(chi_vals, ProtoSyn.half_unit_circle(chi_val))
@@ -280,13 +293,12 @@ module SeqDes
     """
     function calc_seqdes(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true)
         atom_coords, atom_data, residue_bb_index_list, res_data, res_label, chis = get_pdb_data(pose, selection)
-        # println("   Atom coords: $(size(atom_coords))")
-        # println("     Atom data: $(size(atom_data))")
-        # println("Backbone Index: $(size(residue_bb_index_list))")
-        # # println("  Residue data: $(size(res_data))")
-        # println(" Residue label: $(size(res_label))")
-        # println("          Chis: $(size(chis))")
-        # println("Chi @ Resi. 18: $(chis[18])")
+        # println("   Atom coords: $(atom_coords)")
+        # println("     Atom data: $(atom_data)")
+        # println("Backbone Index: $(residue_bb_index_list)")
+        # println("  Residue data: $(res_data)")
+        # println(" Residue label: $(res_label)")
+        # println("          Chis: $(chis)")
 
         atom_coords           = PyObject(np.array(atom_coords, dtype = np.float32))
         atom_data             = PyObject(np.array(atom_data))
@@ -312,11 +324,11 @@ module SeqDes
             chi_4,
             chi_angles,
             chi_mask,
-            include_rotamer_probs=0,
+            include_rotamer_probs=1,
             use_cuda=use_cuda,
         )
 
-        return float(log_p_mean)(), nothing
+        return float(log_p_mean)(), nothing, log_p_per_res, logits
     end
 
     calc_seqdes(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true) = begin

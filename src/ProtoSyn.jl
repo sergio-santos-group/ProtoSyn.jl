@@ -64,7 +64,7 @@ catch LoadError
     @warn "CUDA package not loaded."
 end
 
-@info "Current acceleration set to $acceleration"
+@info "Current acceleration set to $(acceleration.active)"
 
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
@@ -99,7 +99,6 @@ include("Core/Submodules/Builder/modifications.jl") # Requires pose.jl
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
-include("Core/Methods/pose-solvation.jl") # Requires selections.jl; distance_matrix.jl
 include("Core/Methods/histogram.jl") # Requires distance_matrix.jl
 
 @info "Loading Mutators"
