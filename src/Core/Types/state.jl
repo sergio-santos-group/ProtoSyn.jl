@@ -341,9 +341,20 @@ end
 Base.getindex(s::State, i::Int) = begin
     s.items[i + s.index_offset]
 end
+
 Base.getindex(s::State, at::Atom) = begin
     s.items[at.index + s.index_offset]
 end
+
+Base.getindex(s::State, ats::Vector{Atom}) = begin
+    tr = Vector{AtomState}()
+    for at in ats
+        push!(tr, s[at])
+    end
+    
+    return tr
+end
+
 Base.getindex(s::State, seg::Segment) = begin
     s.items[(seg[1][1].index + s.index_offset):(seg[end][end].index + s.index_offset)]
 end

@@ -35,7 +35,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
     end
 
-    poses = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+    poses = ProtoSyn.load(T, filename, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 
     available_aminoacids = [ProtoSyn.ProtoSyn.one_2_three[x] for x in keys(ProtoSyn.Peptides.available_aminoacids)]
     

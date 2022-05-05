@@ -185,6 +185,8 @@ end # function
 
 export fragment
 """
+# TODO: Explain sort_atoms
+
     fragment(pose::Pose{Topology})
     
 Return a [Fragment](@ref) from a given [Pose](@ref) `pose`. The pose must have a
@@ -307,8 +309,16 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; s
         state.x[:, index] = copy(pose.state.x[:, atom.index])
     end
 
+    segment.id = state.id = genid()
+    reindex(segment)
+    reindex(state)
+
     # Sort atoms to follow the graph
     if sort_atoms_by_graph
+
+        # for residue in eachresidue(segment)
+        #     sort_atoms_by_graph!(state, residue)
+        # end
 
         function find_atom_sortperm(old_atoms::Vector{Atom}, new_atoms::Vector{Atom})
             _sortperm = Vector{Int}()
@@ -332,10 +342,6 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; s
 
         state.items = state.items[state_sortperm]
     end
-
-    segment.id = state.id = genid()
-    reindex(segment)
-    reindex(state)
 
     return Pose(segment, state)
 end
@@ -542,8 +548,7 @@ function append_fragment_as_new_segment!(pose::Pose{Topology}, frag::Fragment)
     setparent!(root_residue, root(pose.graph).container)
 
     # Re-index the pose to account for the new segment/residue/atoms
-    reindex(pose.graph, set_ascendents = true
-    )
+    reindex(pose.graph, set_ascendents = true)
     pose
 end
 

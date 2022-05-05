@@ -213,11 +213,11 @@ function i2c!(state::State{T}, top::Topology) where T
     
     while !isempty(queue)
         atom = popfirst!(queue)
-        (i, j, k) = atom.ascendents
-        
-        istate = state[i]
 
-        for child in atom.children
+        (i, j, k) = atom.ascendents
+        istate = state[i]
+        
+        for child in sort_children(atom)
             # Updates state[child].changed to "true" only if 'istate.changed' is
             # true. (which is, if root_changed is true)
             state[child].changed |= istate.changed

@@ -277,8 +277,8 @@ Base.copy(s0::Segment) = begin
     end
 
     # deal with atom graph and bonds
-    # for at0 in eachatom(s0)
-    for at0 in ProtoSyn.travel_graph(s0[1, 1])
+    for at0 in eachatom(s0)
+    # for at0 in ProtoSyn.travel_graph(s0[1, 1]) # This option doesn't set all relationships
         at1 = old2new[at0]
         if hasparent(at0) && !isparent(root, at0) && at0.parent in keys(old2new)
             setparent!(at1, old2new[at0.parent])

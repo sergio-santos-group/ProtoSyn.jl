@@ -42,12 +42,13 @@ information, without the ability to be directly incorporated in simulations.
 const Fragment = Pose{Segment}
 
 Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
-    frag2 = copy(frag)
-    top = Topology(frag2.graph.name, 1)
+    top = Topology(frag.graph.name, 1)
     state = State{T}()
     state.id = top.id
     pose = Pose(top, state)
-    ProtoSyn.append_fragment_as_new_segment!(pose, frag2)
+
+    # Note: Frag gets copied in append_fragment_as_new_segment
+    ProtoSyn.append_fragment_as_new_segment!(pose, frag)
 
     ProtoSyn.request_i2c!(state; all=true)
     return pose

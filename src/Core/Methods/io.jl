@@ -7,25 +7,34 @@ const YML = Val{2}
 const PQR = Val{3}
 const XYZ = Val{4}
 
-"""
-    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false, alternative_location::String = "A"]) where {T <: AbstractFloat}
+const supported_formats = [
+    ".PDB => Read: ✓ | Write: ✓",
+    ".YML => Read: ✓ | Write: ✓",
+    ".PQR => Read: ✗ | Write: ✓",
+    ".XYZ => Read: ✗ | Write: ✓"]
 
-Load the given `filename` into a pose, parametrized by `T`. If this is not
-provided, the default `ProtoSyn.Units.defaultFloat` is used. The file format is
-infered from the extension (Supported: .pdb, .yml). If `bonds_by_distance` is
-set to `true` (`false`, by default), the CONECT records will be complemented
-with bonds infered by distance. The distances for each pair of atoms
-is defined in `ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard
-deviation threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance. By
-default, and when available, ProtoSyn will use `alternative_location` `A`,
-unless specified in the flag `alternative_location`. If the input file if of
-type PDB and a trajectory, returns a vector of [`Pose`](@ref) instances instead.
+"""
+    load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false], [alternative_location::String = "A"], [ignore_residues::Vector{String} = Vector{String}()], [ignore_chains::Vector{String} = Vector{String}()]) where {T <: AbstractFloat}
+
+Load the given `filename` into a [`Pose`](@ref), parametrized by `T`. If this is
+not provided, the default `ProtoSyn.Units.defaultFloat` is used. The file format
+is infered from the extension (See `ProtoSyn.supported_formats` for all
+supported formats). If `bonds_by_distance` is set to `true` (`false`, by
+default), the CONECT records will be complemented with bonds infered by
+distance. The distances for each pair of atoms is defined in
+`ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard deviation
+threshold of 0.1 Å). Return the resulting [`Pose`](@ref) instance. By default,
+and when available, ProtoSyn will use `alternative_location` `A`, unless
+specified in the flag `alternative_location`. If the input file if of type PDB
+and a trajectory, returns a vector of [`Pose`](@ref) instances instead.
+Optionally, by setting `ignore_residues` and `ignore_chains`, ProtoSyn will skip
+the load of any atom belonging to either the given residues or chains (by name).
 
 # See also
 [`distance`](@ref)
 
 !!! ukw "Note:"
-    This function tries to infer information of the parenthood and ascendents of each atom, using the CONECT records of infered `bonds_by_distance`. The parents are arbitrarily defined as the first bond found, by order, and any atom without parent is connected to the [`root`](@ref ProtoSyn.root). All [`Residue`](@ref) instances have the [`root`](@ref ProtoSyn.root)`.container` as parent. Note that this infered information may need to be manually corrected.
+    This function tries to infer information of the parenthood and ascendents of each atom, using the CONECT records or infered `bonds_by_distance`. The parents are arbitrarily defined as the first bond found, by order, and any atom without parent is connected to the [`root`](@ref ProtoSyn.root). All [`Residue`](@ref) instances have the [`root`](@ref ProtoSyn.root)`.container` as parent. Note that this infered information may need to be manually corrected.
 
 # Examples
 ```
@@ -37,19 +46,30 @@ Pose{Topology}(Topology{/2a3d:6263}, State{Float64}:
 )
 ```
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A") where {T <: AbstractFloat}
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat}
     if endswith(filename, ".pdb")
         # Check if this is a trajectory
         if !is_trajectory(filename)
-            return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+            return load(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
         else
-            return load_trajectory(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+            return load_trajectory(T, filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
         end
     elseif endswith(filename, ".yml")
         return load(T, filename, YML, bonds_by_distance = bonds_by_distance, infer_parenthood = false)
+    elseif endwith(filename, ".xyz")
+        return load(T, filename, XYZ, bonds_by_distance = bonds_by_distance, infer_parenthood = false)
+    elseif endwith(filename, ".pqr")
+        return load(T, filename, PQR, bonds_by_distance = bonds_by_distance, infer_parenthood = false)
     else
         error("Unable to load '$filename': unsupported file type")
     end
+end
+
+load(filename::AbstractString; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) = begin
+    ProtoSyn.verbose.mode && begin
+        @info "Consider using Peptides.load when dealing with peptide chains."
+    end
+    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
 
@@ -80,14 +100,6 @@ function is_trajectory(filename::String)
     end
 
     return false
-end
-
-
-load(filename::AbstractString; bonds_by_distance = false, alternative_location::String = "A") = begin
-    ProtoSyn.verbose.mode && begin
-        @info "Consider using Peptides.load when dealing with peptide chains."
-    end
-    load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location)
 end
 
 
@@ -138,7 +150,7 @@ end
 
 
 """
-    load_trajectory([::Type{T}], filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K}
+    load_trajectory([::Type{T}], filename::AbstractString, ::Type{K}; [bonds_by_distance = false], [alternative_location::String = "A"], [ignore_residues::Vector{String} = Vector{String}()], [ignore_chains::Vector{String} = Vector{String}()]) where {T <: AbstractFloat, K}
 
 Load the given `filename` into a vector of [`Pose`](@ref) instances,
 parametrized by `T`, separated by new "MODEL" entries. If `T` is not provided,
@@ -149,7 +161,9 @@ infered by distance. The distances for each pair of atoms is defined in
 `ProtoSyn.Units.bond_lengths` (in Angstrom Å, with a standard deviation
 threshold of 0.1 Å). Return the resulting vector of [`Pose`](@ref) instances. By
 default, and when available, ProtoSyn will use `alternative_location` `A`,
-unless specified in the flag `alternative_location`.
+unless specified in the flag `alternative_location`. Optionally, by setting
+`ignore_residues` and `ignore_chains`, ProtoSyn will skip the load of any atom
+belonging to either the given residues or chains (by name).
 
 # See also
 [`is_trajectory`](@ref) [`splice_trajectory`](@ref)
@@ -170,7 +184,7 @@ julia> ProtoSyn.load_trajectory("teste.pdb")
 )
 ```
 """
-function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K}
+function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat, K}
     models = splice_trajectory(filename)
     a = readdir(models)
     files = sort([parse(Int, split(x, ".")[1]) for x in a if endswith(x, ".pdb")])
@@ -182,7 +196,7 @@ function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_b
         if ProtoSyn.verbose.mode
             println("Loading pose $i out of $N")
         end
-        pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+        pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
         push!(poses, pose)
     end
 
@@ -191,17 +205,21 @@ function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_b
     return poses
 end
 
-load_trajectory(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where {T <: AbstractFloat, K} = begin
-    load_trajectory(ProtoSyn.Units.defaultFloat, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+load_trajectory(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat, K} = begin
+    load_trajectory(ProtoSyn.Units.defaultFloat, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
-load_trajectory(filename; bonds_by_distance::Bool = false, alternative_location::String = "A") = begin
-    load_trajectory(filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+load_trajectory(filename; bonds_by_distance::Bool = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) = begin
+    load_trajectory(filename, PDB, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
-load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", infer_parenthood::Bool = true) where {T <: AbstractFloat, K} = begin
+# The function bellow is similar to the first `load`, excepts it already
+# receives the ::Type{K}. The only purpose is to perform `bonds by distance` and
+# `infer_parenthood!` operations. In future version of ProtoSyn, the two methods
+# might be combined in 1.
+load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", infer_parenthood::Bool = true, ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T <: AbstractFloat, K} = begin
     
-    pose = load(T, open(filename), K; alternative_location = alternative_location)
+    pose = load(T, open(filename), K; alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
     name, _ = splitext(basename(filename))
     pose.graph.name = name
 
@@ -236,13 +254,13 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, 
     pose
 end
 
-
-load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A") where K = begin
-    load(Float64, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location)
+load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where K = begin
+    load(Float64, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
+# --- YML ----------------------------------------------------------------------
 
-load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A", kwargs...) where {T<:AbstractFloat} = begin
     
     yml = YAML.load(io)
     natoms = length(yml["atoms"])
@@ -294,8 +312,9 @@ load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A") where {
     sync!(Pose(top, state))
 end
 
+# --- PDB ----------------------------------------------------------------------
 
-load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {T<:AbstractFloat} = begin
+load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T<:AbstractFloat} = begin
     
     top  = Topology("UNK", -1)
     seg  = Segment("", -1)     # orphan segment
@@ -311,10 +330,11 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?:\w)*\s+(?<as>[^\d\s]*)"
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w+[+-]*)\s*)|(\s*))"
     
     aid = 0
     seekstart(io)
+    ignored_atoms = Vector{Int}()
     for line in eachline(io)
         
         # if startswith(line, "TITLE")
@@ -323,6 +343,11 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
         if startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
+
+            if in(atom["rn"], ignore_residues) || in(atom["sn"], ignore_chains)
+                push!(ignored_atoms, parse(Int, atom["aid"]))
+                continue
+            end
 
             # * Choose alternative locations
             al = string(atom["al"])
@@ -374,6 +399,11 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
         elseif startswith(line, "CONECT")
             idxs = map(s -> parse(Int, s), split(line)[2:end])
 
+            # Consider ignored atoms in previous steps
+            if idxs[1] in ignored_atoms
+                continue
+            end
+
             if !(idxs[1] in keys(id2atom))
                 @warn "Found CONECT record $(idxs[1]) but not the corresponding atom."
                 continue
@@ -396,6 +426,8 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A") where {
     Pose(top, state)
 end
 
+# --- WRITE --------------------------------------------------------------------
+# --- PDB ----------------------------------------------------------------------
 
 write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1, B_factors::Vector{Float64} = Float64[]) = begin
     
@@ -426,6 +458,8 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{PDB}; model::Int = 1,
     println(io, "ENDMDL")
 end
 
+# --- PQR ----------------------------------------------------------------------
+
 write(io::IO, top::AbstractContainer, state::State, ::Type{PQR}; model::Int = 1) = begin
     
     @printf(io, "MODEL %8d\n", model)
@@ -450,6 +484,8 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{PQR}; model::Int = 1)
     end
     println(io, "ENDMDL")
 end
+
+# --- YML ----------------------------------------------------------------------
 
 write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
     println(io, "name: ", top.name)
@@ -484,6 +520,8 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{YML}) = begin
 
 end
 
+# --- XYZ ----------------------------------------------------------------------
+
 write(io::IO, top::AbstractContainer, state::State, ::Type{XYZ}) = begin
     
     for atom in eachatom(top)
@@ -494,6 +532,9 @@ write(io::IO, top::AbstractContainer, state::State, ::Type{XYZ}) = begin
     end
 end
 
+# The following two function allow ProtoSyn to write a
+# Vector{T <: AbstractFloat} in a semi-XYZ format (atoms are set to be 'X').
+# This allows for a quick visualization is common molecular viz tools.
 write(io::IO, v::Vector{Vector{T}}) where {T <: AbstractFloat} = begin
     
     for atom in v
@@ -511,13 +552,15 @@ write(filename::String, v::Vector{Vector{T}}) where {T <: AbstractFloat} = begin
     end
 end
 
+
 """
     ProtoSyn.write(pose::Pose, filename::String)
 
 Write to file the given [`Pose`](@ref) `pose`. The file format is infered from
-the `filename` extension (Supported: .pdb, .yml). The [`Pose`](@ref) `pose`
-structure is automatically synched (using the[`sync!`](@ref) method) when
-writting to file, as only the cartesian coordinates are used.
+the `filename` extension (See `ProtoSyn.supported_formats` for all supported
+formats). The [`Pose`](@ref) `pose` structure is automatically synched (using
+the [`sync!`](@ref) method) when writting to file, as only the cartesian
+coordinates are used.
 
 # See also
 [`append`](@ref)
@@ -530,12 +573,14 @@ julia> ProtoSyn.write(pose, "new_file.pdb")
 function write(pose::Pose{Topology}, filename::String)
     sync!(pose)
     io = open(filename, "w")
-    if endswith(filename, ".pdb") 
+    if endswith(filename, ".pdb")
         write(io, pose.graph, pose.state, PDB)
     elseif endswith(filename, ".yml")
         write(io, pose.graph, pose.state, YML)
     elseif endswith(filename, ".pqr")
         write(io, pose.graph, pose.state, PQR)
+    elseif endswith(filename, ".xyz")
+        write(io, pose.graph, pose.state, XYZ)
     else
         error("Unable to write to '$filename': unsupported file type")
     end
@@ -552,9 +597,10 @@ end
 
 Append to file the given [`Pose`](@ref) `pose` (as a new frame, identified by
 the model number `model`: default is 1). The file format is infered from the
-`filename` extension (Supported: .pdb, .yml). The [`Pose`](@ref) `pose`
-structure is automatically synched (using the[`sync!`](@ref) method) when
-writting to file, as only the cartesian coordinates are used.
+`filename` extension (See `ProtoSyn.supported_formats` for all supported
+formats). The [`Pose`](@ref) `pose` structure is automatically synched (using
+the [`sync!`](@ref) method) when writting to file, as only the cartesian
+coordinates are used.
 
 # See also
 [`write`](@ref)
@@ -571,19 +617,24 @@ function append(pose::Pose, filename::String; model::Int = 1)
         write(io, pose.graph, pose.state, PDB, model = model)
     elseif endswith(filename, ".yml")
         write(io, pose.graph, pose.state, YML)
+    elseif endswith(filename, ".pqr")
+        write(io, pose.graph, pose.state, PQR)
+    elseif endswith(filename, ".xyz")
+        write(io, pose.graph, pose.state, XYZ)
     else
         error("Unable to write to '$filename': unsupported file type")
     end
     close(io)
 end
 
+
 """
     ProtoSyn.download([::T], pdb_code::String) where {T <: AbstractFloat}
 
 Download the PDB file (for the given PDB code) from the RCSB
-Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the current working
-directory. If `T` is specified, the downloaded file will be loaded into a
-[`Pose`](@ref) parametrized by `T`, otherwise uses the default
+Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the
+current working directory. If `T` is specified, the downloaded file will be
+loaded into a [`Pose`](@ref) parametrized by `T`, otherwise uses the default
 `ProtoSyn.Units.defaultFloat`.
 
 # See also
@@ -606,12 +657,14 @@ ProtoSyn.download(pdb_code::String; bonds_by_distance::Bool = false) = begin
     ProtoSyn.download(ProtoSyn.Units.defaultFloat, pdb_code; bonds_by_distance = bonds_by_distance)
 end
 
+
 """
     write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
 
-Write the `pose` forces to `filename` in a specific format to be read by the
-companion Python script "cgo_arrow.py". `α` sets a multiplying factor to make
-the resulting force vectors longer/shorter (for visualization purposes only).
+Write the [`Pose`](@ref) `pose` forces to `filename` in a specific format to be
+read by the companion Python script "cgo_arrow.py". `α` sets a multiplying
+factor to make the resulting force vectors longer/shorter (for visualization
+purposes only).
 
 # Examples
 ```jldoctest

@@ -16,12 +16,12 @@ end
 """
 # TODO: Documentation
 """
-function sort_children(atom::Atom)
+function sort_children(atom::Atom; rev::Bool = false)
 
     # 1. Sort by the graph size: small chains first
     atoms = atom.children
     sizes = [get_graph_size(a) for a in atoms]
-    order = sortperm(sizes, rev = true)
+    order = sortperm(sizes, rev = rev)
     atoms = atoms[order]
     sizes = sizes[order]
 
@@ -51,6 +51,8 @@ abstract type BFS <: SearchAlgorithm end
 abstract type DFS <: SearchAlgorithm end
 
 """
+# TODO Update Documentation
+
     travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
 
 Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
@@ -79,19 +81,23 @@ julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
 function travel_graph(start::Atom; stop::Opt{Atom} = nothing, search_algorithm::Type{<: SearchAlgorithm} = ProtoSyn.BFS)
     atoms = Vector{Atom}([start])
     if search_algorithm === ProtoSyn.BFS
-        init_bonds = copy(sort_children(start))
+        # Note: without `rev = true`, `sort_children` sorts from large to small
+        init_bonds = copy(sort_children(start, rev = true))
     else
-        init_bonds = copy(start.children)
+        init_bonds = copy(sort_children(start))
     end 
     stack = Vector{Atom}(init_bonds)
 
     while length(stack) > 0
         atom_i = pop!(stack)
-        if atom_i != stop
+        if atom_i == stop
+            push!(atoms, atom_i)
+            return atoms
+        else
             if search_algorithm === ProtoSyn.BFS
-                bonds = copy(sort_children(atom_i))
+                bonds = copy(sort_children(atom_i, rev = true))
             else
-                bonds = copy(atom_i.children)
+                bonds = copy(sort_children(atom_i))
             end 
             stack = vcat(stack, bonds)
         end

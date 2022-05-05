@@ -228,7 +228,7 @@ julia> ascendents(pose.graph[1][1][4], 4)
 ```
 """
 function ascendents(container::AbstractContainer, level::Int)
-    # println("$container (Level $level)")
+    # println("$container (Level $level) (Next: $(container.parent))")
     if level > 1
         return (container.index, ascendents(container.parent, level - 1)...)
     else
