@@ -4,7 +4,33 @@ module Electrostatics
     using ProtoSyn.Peptides
 
     """
-    # TODO
+        assign_default_charges!(pose::Pose, [res_lib::LGrammar = Peptides.grammar], [selection::Opt{AbstractSelection}]; [supress_warn::Bool = false])
+
+    Assign default charges to [`Pose`](@ref) `pose` from the given
+    [`LGrammar`](@ref) `res_lib` entry, by [`Atom`](@ref) name. If an
+    `AbstractSelection` `selection` is provided, only apply charges to the
+    selected [`Atom`](@ref) instances. For non-canonical aminoacids and ligands
+    (any [`Residue`](@ref) without an entry on `ProtoSyn.three_2_one`
+    dictionary) and any [`Residue`](@ref) whose template have different
+    [`Atom`](@ref) names, a warning is shown. Set `supress_warn` to `true` to
+    ignore these warnings (`false`, by default).
+
+    !!! ukw "Note:"
+        This method is an overload of [`assign_default_charges!`](@ref ProtoSyn.Calculators.Electrostatics.assign_default_charges!). Check it's documentation page for more information.
+        In comparison, this method is specialized for Peptides (automatically identifies terminal atoms and adds correct charges their caps).
+
+    # See also
+    [`assign_acc2_eem_charges_from_file!`](@ref ProtoSyn.Calculators.Electrostatics.assign_acc2_eem_charges_from_file!)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Peptides.Calculators.Electrostatics.assign_default_charges!(pose)
+    1143-element Vector{Float64}:
+     -0.025115728872692304
+     -0.025115728872692304
+     -0.025115728872692304
+     (...)
+    ```
     """
     function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Bool = false)
 

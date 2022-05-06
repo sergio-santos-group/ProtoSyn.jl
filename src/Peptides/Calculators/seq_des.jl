@@ -100,7 +100,6 @@ module SeqDes
     end # function
 
 
-
     atom_types = Dict{String, Int}(
         "N" => 1,
         "C" => 2,
@@ -108,6 +107,7 @@ module SeqDes
         "S" => 4,
         "P" => 5,
     )
+
 
     residue_types = Dict{String, Int}(
         "HIS" => 0, # Should be loaded from grammar
@@ -135,34 +135,53 @@ module SeqDes
         "MSE" => 13,
     )
 
+    
     """
-    # TODO: DOCUMENTATION
-    Should return:
-        - atom_coords: N x 3 Vector (atomic positions)
-        - atom_data: N x 4 Vector(atomic data)
-            • [residue_id, bb_ind, atom_type, residue_type], where `residue_id`
-            is 0-indexed; `bb_ind` is either 1 or 0, if the corresponding atom
-            is in the protein backbone or not, respectively; `atom_type` is the
-            index of the atom element in the `Calculators.SeqDes.atom_types`
-            dictionary; and `residue_type` is the index of the residue type in
-            the  `Calculators.SeqDes.residue_types` dictionary.
-        - residue_bb_index: Nr x 4 (atomic index of all backbone atoms + CB)
-            • [N, CA, C, CB], where all atomic indexes are 0-indexed; for
-            residues without CB, the -1 index is used.
-        - residue_data: Dict('chain_code' => Nr x 4) (residue data)
-            • [residue_id, residue_id_code, residue_index, residue_type], where
-            `residue_id_code` can be ignored and set to ' ', residue_index is
-            0-indexed and `residue_type` is the index of the residue type in the
-            `Calculators.SeqDes.residue_types` dictionary.
-        - residue_label: Nr x 1 (list of residue types)
-        - chis: Nr x 2 x 4 (chi dihedral angle values)
-            • [[chi1_v, chi2_v, chi3_v, chi4_v], [chi1, chi2, chi3, chi4]],
-            where chi1_v, chi2_v, etc is the actual dihedral value (in a 4
-            element array) and chi1, chi2, etc is either 1 or 0, if the
-            corresponding chi dihedral exists or nor, respectively.
+        get_pdb_data(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
-        Note: `N` is the number of atoms and `Nr` is the number of residues.
+    Returns all PDB data necessary for [`calc_seqdes`](@ref) from the given
+    [`Pose`](@ref) `pose`. If an `AbstractSelection` `selection` is provided,
+    consider only the selected [`Atom`](@ref) instances (for [`Residue`](@ref)
+    level data, since the `selection` is promoted, any [`Residue`](@ref) with at
+    least 1 selected [`Atom`](@ref) is considered).
+
+    Should return:
+    - atom_coords: N x 3 Vector (atomic positions)
+    - atom_data: N x 4 Vector(atomic data):
+      - [residue\\_id, bb\\_ind, atom\\_type, residue\\_type], where
+        `residue_id` is 0-indexed; `bb_ind` is either 1 or 0, if the
+        corresponding atom is in the protein backbone or not, respectively;
+        `atom_type` is the index of the atom element in the
+        `Calculators.SeqDes.atom_types` dictionary; and `residue_type` is
+        the index of the residue type in the  `Calculators.SeqDes.residue_types`
+        dictionary.
+    - residue\\_bb_index: Nr x 4 (atomic index of all backbone atoms + CB)
+      - [N, CA, C, CB], where all atomic indexes are 0-indexed; for residues
+        without CB, the -1 index is used.
+    - residue\\_data: Dict('chain_code' => Nr x 4) (residue data)
+      - [residue\\_id, residue\\_id\\_code, residue\\_index, residue\\_type],
+        where `residue_id_code` can be ignored and set to ' ',
+        `residue_index` is 0-indexed and `residue_type` is the index of the
+        residue type in the `Calculators.SeqDes.residue_types` dictionary.
+    - residue\\_label: Nr x 1 (list of residue types)
+    - chis: Nr x 2 x 4 (chi dihedral angle values)
+      - [[chi1\\_v, chi2\\_v, chi3\\_v, chi4\\_v], [chi1, chi2, chi3, chi4]],
+        where `chi1_v`, `chi2_v`, etc is the actual dihedral value (in a 4
+        element array) and `chi1`, `chi2`, etc is either 1 or 0, if the
+        corresponding chi dihedral exists or nor, respectively.
+
+    !!! ukw "Note:"
+        `N` is the number of atoms and `Nr` is the number of residues.
         Hydrogens (with symbol H) are always ignored.
+
+    # See also
+    [`calc_seqdes`](@ref)
+    
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.Calculators.SeqDes.get_pdb_data(pose)
+    (...)
+    ```
     """
     function get_pdb_data(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 

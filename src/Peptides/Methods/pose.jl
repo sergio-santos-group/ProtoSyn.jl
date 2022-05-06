@@ -164,8 +164,9 @@ single aminoacid at a time.
 !!! ukw "Note:"
     Sidechains are selected based on the [`Atom`](@ref)`.name` (backbone
     [`Atom`](@ref) instances must be named N, H, CA, C and O, exclusively. Non
-    backbone [`Atom`](@ref) instances should have other names, such as H1, H2,
-    etc.)
+    backbone [`Atom`](@ref) instances should have other names, such as HB1, HB2,
+    etc.) This function attempts to keep terminal caps intact (doesn't remove
+    any atom named H1, H2, etc or OXT).
 
 # See also
 [`force_mutate!`](@ref)
@@ -185,7 +186,8 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     T = eltype(pose.state)
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
-    sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
+    # ! The definition of sidechain could be improved in future versions !
+    sidechain = (!an"^CA$|^N$|^C$|^H\d*$|^O$|^OXT$"r)(residue, gather = true)
 
     same_aminoacid = string(ProtoSyn.ProtoSyn.three_2_one[residue.name]) == derivation[1]
     if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
@@ -747,3 +749,5 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
     return pose
 end
+
+include("pose-diagnose.jl")

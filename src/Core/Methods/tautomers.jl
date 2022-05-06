@@ -1,8 +1,27 @@
-
-
 """
-# TODO
-# uses first atom of template
+    find_tautomer(tautomer::Tautomer, target::Residue)
+
+Given a `target` [`Residue`](@ref), search the provided [`Tautomer`](@ref)
+`tautomer` list for the corresponding template [`Residue`](@ref), based on the
+[Graph](@ref) (employs the [`travel_graph!`](@ref ProtoSyn.travel_graph!)
+method).
+
+# Examples
+```
+julia> tautomer = Peptides.grammar.variables["H"]
+Fragment(Segment{/HIE:22535}, State{Float64}:
+ Size: 17
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)(And 1 other tautomer(s) available.)
+
+julia> ProtoSyn.find_tautomer(tautomer, pose.graph[1][72])
+Fragment(Segment{/HID:3247}, State{Float64}:
+ Size: 17
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function find_tautomer(tautomer::Tautomer, target::Residue)
     target_res   = copy(target)

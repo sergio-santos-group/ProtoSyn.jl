@@ -149,7 +149,6 @@ function (driver::MolecularDynamics)(cb::Opt{F}, state::State) where {F <: Funct
         end
         
         # update nonbonded lists if required
-        # TODO: check nblists 
         if (driver.pairlist_freq > 0) &&
             (driver_state.step > 0) &&
             (driver_state.step % driver.pairlist_freq == 0)

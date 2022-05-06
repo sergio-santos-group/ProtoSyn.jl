@@ -13,7 +13,6 @@ include("ILS.jl")
 include("compound.jl")
 include("thermostats.jl")
 
-# TODO - Molecular Dynamics
 #include("md.jl")
 
 end

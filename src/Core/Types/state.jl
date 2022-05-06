@@ -7,8 +7,7 @@ using Printf
 export AtomState, StateMatrix
 
 """
-# TODO: Update to add charge
-    AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
+    AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, δ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
     
 An [`AtomState`](@ref) instance. Holds information regarding the state of the atom,
 including the cartesian and internal coordinates.
@@ -33,6 +32,7 @@ Return an empty [`AtomState`](@ref) instance, with all default values.
 * `b::T` - Distance (in Angstrom Å) to parent atom (default: 0)
 * `θ::T` - Angle (in radians) to ascendent atoms (default: 0)
 * `ϕ::T` - Dihedral angle (in radians) to ascendent atoms (default: 0)
+* `δ::T` - Atomic partial charge (default: 0.0)
 * `Δϕ::T` - Dihedral angle change (in radians) to be applied to children atoms (default: 0)
 * `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions such as [`i2c!`](@ref ProtoSyn.i2c!) and [`c2i!`](@ref ProtoSyn.c2i!)) (default: false)
 
@@ -50,9 +50,9 @@ AtomState{Float64}:
  Index: -1
  T: [0.000, 0.000, 0.000]
  b: 0.000 Å | θ:  0.000 rad (   0.00°) | ϕ:  0.000 rad (   0.00°) | Δϕ:  0.000 rad (   0.00°)
+ δ: 0.000
  Changed: false
 ```
-
 """
 mutable struct AtomState{T <: AbstractFloat}
     parent
@@ -66,7 +66,7 @@ mutable struct AtomState{T <: AbstractFloat}
     ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral
 
     # charge
-    δ::T                     # partial charge
+    δ::T                    # partial charge
     
     Δϕ::T                   # change in dihedral angles (to be applied to children)
     changed::Bool           # flag

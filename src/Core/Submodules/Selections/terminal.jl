@@ -6,7 +6,7 @@ export TerminalSelection
 
 A [`TerminalSelection`](@ref) returns a [`Mask`](@ref) selecting only the
 terminal [`Residue`](@ref) instances in a [`Pose`](@ref) or `AbstractContainer`.
-Terminal [`Residue`](@ref) instancs are considered when either:
+Terminal [`Residue`](@ref) instances are considered when either:
 
 - Are children of the respective pose's root residue;
 - Are residues without children;
@@ -70,7 +70,30 @@ export NTerminalSelection
 # Note: NTerminalSelection is a LEAF selection.
 
 """
-# TODO DOCUMENTATION
+    NTerminalSelection()
+
+A [`NTerminalSelection`](@ref) returns a [`Mask`](@ref) selecting only the N
+terminal [`Residue`](@ref) instances in a [`Pose`](@ref) or `AbstractContainer`.
+N terminal [`Residue`](@ref) instances are considered when they are residues
+without children;
+
+# State mode
+
+The state mode of [`NTerminalSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`NTerminalSelection`](@ref) `T` is forced to be
+[`Residue`](@ref).
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
+
+# Examples
+```jldoctest
+julia> sele = NTerminalSelection()
+N-TerminalSelection (Residue)
+```
 """
 mutable struct NTerminalSelection{M, T} <: AbstractSelection
     NTerminalSelection() = begin
@@ -114,7 +137,30 @@ export CTerminalSelection
 # Note: CTerminalSelection is a LEAF selection.
 
 """
-# TODO DOCUMENTATION
+    CTerminalSelection()
+
+A [`CTerminalSelection`](@ref) returns a [`Mask`](@ref) selecting only the C
+terminal [`Residue`](@ref) instances in a [`Pose`](@ref) or `AbstractContainer`.
+C terminal [`Residue`](@ref) instances are considered when they are children of
+the respective pose's [`root`](@ref ProtoSyn.root) residue;
+
+# State mode
+
+The state mode of [`CTerminalSelection`](@ref) `M` is forced to be `Stateless`.
+
+# Selection type
+
+The selection type of [`CTerminalSelection`](@ref) `T` is forced to be
+[`Residue`](@ref).
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
+
+# Examples
+```jldoctest
+julia> sele = CTerminalSelection()
+C-TerminalSelection (Residue)
+```
 """
 mutable struct CTerminalSelection{M, T} <: AbstractSelection
     CTerminalSelection() = begin

@@ -24,6 +24,7 @@ origin(container::AbstractContainer) = begin
         !hasparent(atom) && return atom
         atom.parent === root && return atom
     end
+    
     return nothing
 end
 
@@ -238,18 +239,36 @@ end
 
 
 """
-    rename!(atom::Atom, name::String)
+    rename!(atom::Atom, name::String; force_rename::Bool = false)
 
 Rename the selected [`Atom`](@ref) instance to the given `name`. Also updates
-the [`Atom`](@ref) container `:itemsbyname` field.
+the [`Atom`](@ref) container `:itemsbyname` field. If `force_rename` is set to
+`true` (`false`, by default), will change existing [`Atom`](@ref) instances with
+the same `name` trying to be introduced to adopt a temporary name (current name
+with \"_o\" appendix).
+
+# Examples
+```
+julia> ProtoSyn.rename!(pose.graph[1][1]["N"], "N1")
+Atom{/2a3d:51894/A:1/MET:1/N1:1}
+```
 """
-function rename!(atom::Atom, name::String)
+function rename!(atom::Atom, name::String; force_rename::Bool = false)
     similar = findfirst(atom -> atom.name === name, atom.container.items)
 
     # Change to same name
     similar !== nothing && atom.container.items[similar] === atom && return atom 
 
-    @assert similar === nothing "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar]))"
+    if !(similar === nothing)
+        if force_rename
+            ProtoSyn.verbose.mode && "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar])). Changing existing atom to temporary placeholder."
+            similar_atom = atom.container.items[similar]
+            ProtoSyn.rename!(similar_atom, "$(similar_atom.name)_o") # Temporary
+        else
+            @assert similar === nothing "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar]))"
+        end
+    end
+
     pop!(atom.container.itemsbyname, atom.name)
     atom.name = name
     atom.container.itemsbyname[name] = atom
@@ -543,7 +562,11 @@ Infers parenthood of [`Atom`](@ref) instances on the given `AbstractContainer`
 [`Atom`](@ref) instance in the `container`. This behaviour can be controlled by
 setting a `start` [`Atom`](@ref) as the origin of the new infered parenthood
 [Graph](@ref). If `overwrite` is set to `true` (`false`, by default), will
-overwrite existing pranthood information.
+overwrite existing pranthood information. After infering parenthood, if changes
+to the [Graph](@ref) occurred, the existing internal coordinates match different
+cartesian coordinates. It's suggested to update internal coordinates
+([`request_i2c!`]((@ref ProtoSyn.request_i2c!)) &
+[`sync!`](@ref ProtoSyn.sync!)).
 
 # Examples
 ```jldoctest
@@ -623,8 +646,95 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
         reindex(container) # Sets ascedents
     end
 
+    ProtoSyn.verbose.mode && @warn "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_i2c & sync!)."
+
     return container
 end
+
+
+"""
+    identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+Returns one or more candidate [`Atom`](@ref) instances from the given
+`AbstractContainer` `container` that match the provided `pattern` (a Vector of
+[`Atom`](@ref) elements). This method follows the following hierarchical criteria:
+
+# Examples
+```
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["H", "N", "C", "C"])
+3-element Vector{Atom}:
+ Atom{/2a3d:3900/A:1/MET:1/H1:2}
+ Atom{/2a3d:3900/A:1/MET:1/H2:3}
+ Atom{/2a3d:3900/A:1/MET:1/H3:4}
+
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["C", "C", "C", "C", "H"])
+Atom{/2a3d:3900/A:1/MET:1/C:18}
+```
+
+"""
+function identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+    function seek_pattern(atom::Atom, inner_pattern::Vector{String}, previous::Opt{Atom})
+        inner_candidates = [a for a in atom.bonds if (a.symbol === inner_pattern[1]) && (a !== previous)]
+        length(inner_candidates) === 0 && return false
+        deleteat!(inner_pattern, 1)
+        length(inner_pattern) === 0 && return true
+        return [seek_pattern(c, copy(inner_pattern), atom) for c in inner_candidates]
+    end
+
+    candidates = [a for a in eachatom(container) if a.symbol === pattern[1]]
+    length(candidates) === 1 && return candidates[1]
+    deleteat!(pattern, 1)
+    length(pattern) === 0 && return candidates
+
+    c = [seek_pattern(c, copy(pattern), nothing) for c in candidates]
+
+    # Unravel results
+    _c = Vector{Bool}([])
+    for group in c
+        for _ in 1:length(pattern)
+            group = reduce(vcat, group)
+        end
+        push!(_c, any(group))
+    end
+
+    hits = candidates[_c]
+    if length(hits) === 1
+        return hits[1]
+    else
+        return hits
+    end
+end
+
+
+"""
+    sequence(container::ProtoSyn.AbstractContainer)::String
+    sequence(pose::Pose)::String
+
+Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
+as a string.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.sequence(pose)
+"SESEAEFKQRLAAIKTRLQAL"
+```
+"""
+function sequence(container::ProtoSyn.AbstractContainer)::String
+
+    sequence = ""
+    for residue in eachresidue(container)
+        try
+            sequence *= ProtoSyn.three_2_one[residue.name.content]
+        catch KeyError
+            sequence *= '?'
+        end
+    end
+
+    return sequence
+end
+
+sequence(pose::Pose) = sequence(pose.graph)
 
 
 # --- Visualize ----------------------------------------------------------------
@@ -660,4 +770,3 @@ visualize(io::IO, frag::Fragment) = begin
 end
 
 visualize(frag::Fragment) = visualize(stdout, frag)
-

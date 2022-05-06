@@ -11,7 +11,7 @@ ProtoSyn.eval(:(begin
 
     A [`SidechainSelection`](@ref) outputs a [`Mask`](@ref) of [`Atom`](@ref)
     instances where the sidechain atoms are marked as true (all atoms not named
-    `C`, `H`, `CA`, `N` or `O`).
+    `C`, `H`, `CA`, `N` or `O` - marks caps as true).
 
     # State mode
     The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateless
