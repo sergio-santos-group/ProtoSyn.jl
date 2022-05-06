@@ -29,7 +29,7 @@ Pose{Topology}(Topology{/2a3d:61708}, State{Float64}:
 # TODO: Update Documentation
 
 """
-function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}(), sort_atoms_by_graph::Bool = true) where {T <: AbstractFloat}
+function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}(), sort_atoms_by_graph::Bool = false) where {T <: AbstractFloat}
 
     if !bonds_by_distance && ProtoSyn.verbose.mode
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
@@ -73,7 +73,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                 end
             end
             ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
-            sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, starting_atom)
+            sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
             for residue_index in 2:n_residues
                 residue = segment[residue_index]
@@ -92,7 +92,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                     end
                 end
                 ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
-                sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, starting_atom)
+                sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
                 # Inter-residue parenthood
                 if !(residue.name in available_aminoacids) && !(residue.name in include_residues)
@@ -119,10 +119,10 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
         ProtoSyn.request_c2i!(pose.state; all = true)
         sync!(pose)
     end
+
     if length(poses) == 1
         poses = poses[1]
     end
-
 
     return poses
 end

@@ -1,5 +1,18 @@
 """
-# TODO
+    get_graph_size(atom::Atom; depth::Int = 1, max_depth::Int = 10)
+
+Recursivelly search the the [Graph](@ref) starting from [`Atom`](@ref) `atom`
+(inclusive) until no children are identified or the `depth` > `max_depth` (10,
+by default).
+
+# Examples
+```
+julia> ProtoSyn.get_graph_size(pose.graph[1][73]["CA"])
+13
+
+julia> ProtoSyn.get_graph_size(pose.graph[1][73]["C"])
+3
+```
 """
 function get_graph_size(atom::Atom; depth::Int = 1, max_depth::Int = 10)
     size  = 1
@@ -14,7 +27,26 @@ end
 
 
 """
-# TODO: Documentation
+    sort_children(atom::Atom; rev::Bool = false)
+
+Sort the given [`Atom`](@ref) `atom` children, by the following criteria:
+ 1. By [Graph](@ref) size (follow [Graph](@ref) by employing the [`get_graph_size`](@ref), small chains first)
+ 2. By [`Atom`](@ref) name (in case all children chains have the same size; alphabetical order)
+By setting `rev` to `true` (`false`, by default), reverses the provided order.
+
+    sort_children!(atom::Atom; rev::Bool = false)
+
+Sort the given [`Atom`](@ref) `atom` children and save the newly sorted childen
+in `atom.bonds`.
+
+# Examples
+```
+julia> ProtoSyn.sort_children!(pose.graph[1][72]["CA"])
+3-element Vector{Atom}:
+ Atom{/2a3d:31788/A:1/HIS:72/HA:1112}
+ Atom{/2a3d:31788/A:1/HIS:72/CB:1113}
+ Atom{/2a3d:31788/A:1/HIS:72/C:1124}
+```
 """
 function sort_children(atom::Atom; rev::Bool = false)
 
@@ -39,67 +71,127 @@ function sort_children(atom::Atom; rev::Bool = false)
     return atoms
 end
 
-function sort_children!(atom::Atom)
-    atom.bonds = sort_children(atom)
+function sort_children!(atom::Atom; rev::Bool = false)
+    atom.bonds = sort_children(atom, rev = rev)
 end
 
+# --- TRAVEL GRAPH SECTION -----------------------------------------------------
 
 export travel_graph
 
 abstract type SearchAlgorithm end
-abstract type BFS <: SearchAlgorithm end
-abstract type DFS <: SearchAlgorithm end
+
+struct BFSA <: ProtoSyn.SearchAlgorithm end
+
+function (sa::BFSA)(atom::Atom, stack::Vector{Atom})
+    bonds = copy(sort_children(atom))
+    return vcat(stack, bonds)
+end
 
 """
-# TODO Update Documentation
+    (ProtoSyn.BFS)(atom::Atom, stack::Vector{Atom})
 
-    travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
+Breath first search algorithm for [`travel_graph!`](@ref). Correctly sorts the
+given [`Atom`](@ref) `atom` children instances and concatenates with the current
+`stack`.
+
+# Examples
+```
+julia> ProtoSyn.BFS(pose.graph[1][1]["CA"], Vector{Atom}())
+3-element Vector{Atom}:
+ Atom{/test:36441/A:1/MET:1/HA:6}
+ Atom{/test:36441/A:1/MET:1/C:7}
+ Atom{/test:36441/A:1/MET:1/CB:8}
+```
+"""
+BFS = BFSA()
+
+
+struct DFSA <: ProtoSyn.SearchAlgorithm end
+
+function (sa::DFSA)(atom::Atom, stack::Vector{Atom})
+    bonds = copy(sort_children(atom, rev = true))
+    return vcat(bonds, stack)
+end
+
+"""
+    (ProtoSyn.DFS)(atom::Atom, stack::Vector{Atom})
+
+Depth first search algorithm for [`travel_graph!`](@ref). Correctly sorts the
+given [`Atom`](@ref) `atom` children instances and concatenates with the current
+`stack`.
+
+# Examples
+```
+julia> ProtoSyn.DFS(pose.graph[1][1]["CA"], Vector{Atom}())
+3-element Vector{Atom}:
+ Atom{/test:36441/A:1/MET:1/CB:8}
+ Atom{/test:36441/A:1/MET:1/C:7}
+ Atom{/test:36441/A:1/MET:1/HA:6}
+```
+"""
+DFS = DFSA()
+
+
+"""
+    travel_graph(start::Atom; [stop::Opt{Atom} = nothing], [search_algorithm::F = ProtoSyn.BFS]) where {F <: SearchAlgorithm})
 
 Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
-and `stop`, while following the structure's [Graph](@ref state-types). If no `stop`
-[`Atom`](@ref) instance is provided or if it isn't found as a downstream parent
-of the `start` [`Atom`](@ref), all instances until no children [`Atom`](@ref)
-instances are found are returned (for example, until the end of the current
-[Pose](@ref) of [`Segment`](@ref)). Note that the order of the returned
-[`Atom`](@ref) instances reflects the organization of the graph followed, and
-not the distance/parenthood to the `start` [`Atom`](@ref), and should therefore
-be ignored in most cases.
+and `stop` (inclusive), while following the structure's
+[Graph](@ref state-types). If no `stop` [`Atom`](@ref) instance is provided or
+if it isn't found as a downstream parent of the `start` [`Atom`](@ref), all
+instances until no children [`Atom`](@ref) instances are found are returned (for
+example, until the end of the current [Pose](@ref) of [`Segment`](@ref)). By
+default, uses Breath First Search (BFS) algorithm (all [`Atom`](@ref) instances
+at the same "graph-distance" to the `start` [`Atom`](@ref) are consumed before
+the next level is considered, order is given by [`sort_children`](@ref)).
+Optionally, by setting `search_algorithm` to `ProtoSyn.DFS`, can employ Depth
+First Algorithm (DFS) (the largest chain of `atom.children` is recursively
+exhausted before consuming the smaller chains, order is given by
+[`sort_children`](@ref)).
 
 # See also
 [`is_contiguous`](@ref) [`hasparent`](@ref) [`setparent!`](@ref)
  
 # Examples
 ```jldoctest
-julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
+julia> ProtoSyn.travel_graph(pose.graph[1][5]["N"], stop = pose.graph[1][6]["N"], search_algorithm = ProtoSyn.BFS)
+11-element Vector{Atom}:
+ Atom{/2a3d:31788/A:1/ALA:5/N:62}
+ Atom{/2a3d:31788/A:1/ALA:5/H:63}
+ Atom{/2a3d:31788/A:1/ALA:5/CA:64}
+ Atom{/2a3d:31788/A:1/ALA:5/HA:65}
+ Atom{/2a3d:31788/A:1/ALA:5/CB:66}
+ Atom{/2a3d:31788/A:1/ALA:5/C:70}
+ Atom{/2a3d:31788/A:1/ALA:5/HB3:69}
+ Atom{/2a3d:31788/A:1/ALA:5/HB2:68}
+ Atom{/2a3d:31788/A:1/ALA:5/HB1:67}
+ Atom{/2a3d:31788/A:1/ALA:5/O:71}
+ Atom{/2a3d:31788/A:1/GLU:6/N:72}
+
+julia> ProtoSyn.travel_graph(pose.graph[1][5]["N"], stop = pose.graph[1][6]["N"], search_algorithm = ProtoSyn.DFS)
 4-element Vector{Atom}:
- Atom{/UNK:1/UNK:1/LEU:21/CD1:334}
- Atom{/UNK:1/UNK:1/LEU:21/HD13:337}
- Atom{/UNK:1/UNK:1/LEU:21/HD12:336}
- Atom{/UNK:1/UNK:1/LEU:21/HD11:335}
+ Atom{/2a3d:31788/A:1/ALA:5/N:62}
+ Atom{/2a3d:31788/A:1/ALA:5/CA:64}
+ Atom{/2a3d:31788/A:1/ALA:5/C:70}
+ Atom{/2a3d:31788/A:1/GLU:6/N:72}
 ```
 """
-function travel_graph(start::Atom; stop::Opt{Atom} = nothing, search_algorithm::Type{<: SearchAlgorithm} = ProtoSyn.BFS)
+function travel_graph(start::Atom; stop::Opt{Atom} = nothing, search_algorithm::F = BFS) where {F <: SearchAlgorithm}
+
     atoms = Vector{Atom}([start])
-    if search_algorithm === ProtoSyn.BFS
-        # Note: without `rev = true`, `sort_children` sorts from large to small
-        init_bonds = copy(sort_children(start, rev = true))
-    else
-        init_bonds = copy(sort_children(start))
-    end 
-    stack = Vector{Atom}(init_bonds)
+    stack = search_algorithm(start, Vector{Atom}())
 
     while length(stack) > 0
-        atom_i = pop!(stack)
+
+        atom_i = stack[1]
+        deleteat!(stack, 1)
+
         if atom_i == stop
             push!(atoms, atom_i)
             return atoms
         else
-            if search_algorithm === ProtoSyn.BFS
-                bonds = copy(sort_children(atom_i, rev = true))
-            else
-                bonds = copy(sort_children(atom_i))
-            end 
-            stack = vcat(stack, bonds)
+            stack = search_algorithm(atom_i, stack)
         end
 
         push!(atoms, atom_i)

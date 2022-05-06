@@ -35,7 +35,7 @@ end
 # TODO
 # SHOULD USE FIND_TAUTOMER?
 """
-function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing, grammar::LGrammar = Peptides.grammar)
+function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing, grammar::LGrammar = Peptides.grammar; force_rename::Bool = false)
 
     if selection === nothing
         sele = TrueSelection{Residue}()
@@ -95,13 +95,13 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
             end
         end
         
-        t_atoms = ProtoSyn.travel_graph(N_terminal_template[1], search_algorithm = ProtoSyn.BFS)
-        p_atoms = ProtoSyn.travel_graph(N_terminal_pose[1], search_algorithm = ProtoSyn.BFS)
+        t_atoms = ProtoSyn.travel_graph(N_terminal_template[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
+        p_atoms = ProtoSyn.travel_graph(N_terminal_pose[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
         
         @assert length(t_atoms) === length(p_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_atoms))) don't match in number."
         if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
             for (t_atom, p_atom) in zip(t_atoms, p_atoms)
-                ProtoSyn.rename!(p_atom, t_atom.name)
+                ProtoSyn.rename!(p_atom, t_atom.name, force_rename = force_rename)
             end
         end
         
@@ -132,7 +132,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
                         for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
                             pri = pose_residue.items
                             actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
-                            ProtoSyn.rename!(pri[actual_pose_a], t_atom.name)
+                            ProtoSyn.rename!(pri[actual_pose_a], t_atom.name, force_rename = force_rename)
                         end
                         found_match = true
                     end
@@ -150,7 +150,11 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
                         pri = pose_residue.items
                         actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
                         # println("renaming atom $(pri[actual_pose_a]) to $(t_atom.name)")
-                        ProtoSyn.rename!(pri[actual_pose_a], t_atom.name)
+                        try
+                            ProtoSyn.rename!(pri[actual_pose_a], t_atom.name, force_rename = force_rename)
+                        catch AssertionError
+                            error("Multiple Atom instances with the same name identified. Suggested fix: run `assign_default_atom_names!` with `force_rename` set to `true`.")
+                        end
                     end
                 else
                     @warn "Available template for $pose_residue ($(template_residue)) doesn't match the graph."

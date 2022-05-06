@@ -25,6 +25,7 @@ include("constants.jl")
 include("Submodules/Rotamers/Rotamers.jl")
 include("Methods/io.jl")
 include("Methods/graph.jl")
+include("Methods/travel-graph.jl")
 include("Methods/state.jl")
 include("Methods/pose.jl")
 include("Methods/other.jl") # Requires constants.jl
