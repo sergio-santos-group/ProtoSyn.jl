@@ -146,7 +146,7 @@ function center_of_mass(pose::Pose)
 end
 
 function center_of_mass(pose::Pose, selection::AbstractSelection)
-    idxs = findall(selection(pose).content)
+    idxs = findall(promote(selection, Atom)(pose).content)
     return center_of_mass(pose, idxs)
 end
 

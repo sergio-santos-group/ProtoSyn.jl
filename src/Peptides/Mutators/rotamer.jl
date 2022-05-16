@@ -3,7 +3,7 @@ using ProtoSyn: TrueSelection, getdihedral
 using Printf
 
 """
-    RotamerMutator(rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}, p_mut::AbstractFloat, n_first::Int, selection::Opt{AbstractSelection}
+    RotamerMutator(rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}, p_mut::AbstractFloat, n_first::Int, selection::Opt{AbstractSelection}, randomize_inexistent_phi_psi::Bool)
 
 Return a [`RotamerMutator`](@ref) instance. This `AbstractMutator` is a
 _functor_, called with the following signature:
@@ -17,21 +17,26 @@ instances in the given [`Pose`](@ref) and applies a [`Rotamer`](@ref ProtoSyn.Pe
 conformation change if a random number (`rand()`) is bellow a given probability
 of mutation `p_mut` (will skip any [`Residue`](@ref) with unnaccessible phi or
 psi [`Dihedral`](@ref) angles, such as the first and last [`Residue`](@ref) of a
-chain). A [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) conformation change is a concerted rotation of all
-sidechain [`Atom`](@ref) instances in the [`Residue`](@ref) of the selected
-[`Atom`](@ref) (therefore for a single attempt at [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) change,
-unique [`Atom`](@ref) names should be selected, `an"CA"`, for example). If an
-`AbstractSelection` `selection` is provided, only [`Atom`](@ref) instances
-marked as `true` in this selection are considered for [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
-conformational change. The applied [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) is sampled from the
-[`RotamerMutator`](@ref)`.rotamer_library`, based on the name of the
-[`Residue`](@ref) and current phi and psi [`Dihedral`](@ref) angle values. The
-`n_first` most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances are taken into account during
-this sampling step. Note that the [`RotamerMutator`](@ref) syncs any pending
-cartesian to internal coordinate conversion (using the
-[`c2i!`](@ref ProtoSyn.c2i!) method). Requests internal to cartesian coordinates
-conversion (using [`request_i2c!`](@ref ProtoSyn.request_i2c!) method). Does not
-[`sync!`](@ref) the given [`Pose`](@ref) afterwards.
+chain, unless `randomize_inexistent_phi_psi` flag is set to `true`, `false` by
+default. Is this case, will randomize the missing phi or psi dihedral angles in
+order to sample a semi-random [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) from
+`rotamer_library`). A [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) conformation
+change is a concerted rotation of all sidechain [`Atom`](@ref) instances in the
+[`Residue`](@ref) of the selected [`Atom`](@ref) (therefore for a single attempt
+at [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) change, unique [`Atom`](@ref)
+names should be selected, `an"CA"`, for example). If an `AbstractSelection`
+`selection` is provided, only [`Atom`](@ref) instances marked as `true` in this
+selection are considered for [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
+conformational change. The applied [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
+is sampled from the [`RotamerMutator`](@ref)`.rotamer_library`, based on the
+name of the [`Residue`](@ref) and current phi and psi [`Dihedral`](@ref) angle
+values. The `n_first` most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
+instances are taken into account during this sampling step. Note that the
+[`RotamerMutator`](@ref) syncs any pending cartesian to internal coordinate
+conversion (using the [`c2i!`](@ref ProtoSyn.c2i!) method). Requests internal to
+cartesian coordinates conversion (using
+[`request_i2c!`](@ref ProtoSyn.request_i2c!) method). Does not [`sync!`](@ref)
+the given [`Pose`](@ref) afterwards.
 
 The [`RotamerMutator`](@ref) `AbstractMutator` can also be optionally called
 using the following signature, in which case only the provided list of

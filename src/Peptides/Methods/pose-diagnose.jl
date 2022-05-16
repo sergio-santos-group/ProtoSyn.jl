@@ -21,9 +21,17 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
     N = NTerminalSelection()(pose, gather = true)[1]["N"]
     C = CTerminalSelection()(pose, gather = true)[1]["C"]
     for res in eachresidue(pose.graph)
+        ukw_res = !(res.name in keys(ProtoSyn.three_2_one))
+        if ukw_res
+            push!(ukws_res, res.id)
+            continue
+        end
         code = ProtoSyn.three_2_one[res.name]
         ukw_res = !(code in keys(Peptides.available_aminoacids))
-        ukw_res && push!(ukws_res, res.id)
+        if ukw_res
+            push!(ukws_res, res.id)
+            continue
+        end
         
         template = res_lib.variables[string(code)]
         if isa(template, Tautomer)
@@ -46,7 +54,7 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
     end
     if length(ukws_res) > 0
         s = length(ukws_res) > 1 ? "s" : ""
-        push!(graph_naming_issues, "Unknown residue$s name$s (Not found in Peptides.available_aminoacids).\nCheck residue$s $(Base.join(ukws_res, ", ", " and ")).")
+        push!(graph_naming_issues, "Unknown residue$s name$s (Not found in Peptides.available_aminoacids or ProtoSyn.three_2_one).\nCheck residue$s $(Base.join(ukws_res, ", ", " and ")).")
     end
     ai = "" # additional information
     if length(ukw_atoms) < 10

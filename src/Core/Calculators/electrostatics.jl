@@ -34,6 +34,7 @@ module Electrostatics
             sele = ProtoSyn.promote(selection, Atom)
         end
 
+        # Ignores first line (title)
         data    = split(open(f->read(f, String), filename), "\n")[2]
         T       = eltype(pose.state)
         charges = map((value) -> parse(T, value), split(data))

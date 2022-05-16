@@ -273,7 +273,11 @@ function Base.show(io::IO, efc::EnergyFunction, level_code::Opt{LevelCode} = not
     @printf(io, "%s| %-5s | %-45s | %-12s |\n", inner_lead, "Index", "Component name", "Weight (α)")
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
     for (index, component) in enumerate(efc.components)
-        @printf(io, "%s| %-5d | %-45s | %10.3f   |\n", inner_lead, index, component.name, component.α)
+        if component.α < 0.01
+            @printf(io, "%s| %-5d | %-45s | %10.2e   |\n", inner_lead, index, component.name, component.α)
+        else
+            @printf(io, "%s| %-5d | %-45s | %10.2f   |\n", inner_lead, index, component.name, component.α)
+        end
     end
     println(io, inner_lead*"+"*repeat("-", 70)*"+")
 

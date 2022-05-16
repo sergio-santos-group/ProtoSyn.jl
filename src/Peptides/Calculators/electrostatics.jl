@@ -34,7 +34,13 @@ module Electrostatics
     """
     function assign_default_charges!(pose::Pose, res_lib::LGrammar = Peptides.grammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Bool = false)
 
-        for segment in eachsegment(pose.graph)
+        if selection !== nothing
+            segments = ProtoSyn.promote(selection, Segment)(pose, gather = true)
+        else
+            segments = collect(eachsegment(pose.graph))
+        end
+        
+        for segment in segments
             # Check caps
             # N-terminal
             N = ProtoSyn.identify_atom_by_bonding_pattern(segment[1], ["N", "C", "C", "O"])

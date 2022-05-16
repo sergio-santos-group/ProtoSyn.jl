@@ -96,16 +96,18 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
     end
 
     # 3. Check if atom-level graph matches atom list (number and order)
-    atoms_from_graph = ProtoSyn.travel_graph(pose.graph[1][1][1], search_algorithm = atom_order_search_algorithm)
-    atoms_from_list  = collect(eachatom(pose.graph))
-    NAG              = length(atoms_from_graph)
-    NAL              = length(atoms_from_list)
-    if !(NAG === NAL)
-        push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on the pose list, not all atoms were visited (From graph: $NAG | From list: $NAL).\nCheck for breaks in the parenthood relationships. Suggested fix: consider using the infer_parenthood! function.")
-    else
-        N = findall((x) -> x === false, atoms_from_list .=== atoms_from_graph)
-        if length(N) > 0
-            push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on the pose list, the atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
+    for segment in eachsegment(pose.graph)
+        atoms_from_graph = ProtoSyn.travel_graph(segment[1][1], search_algorithm = atom_order_search_algorithm)
+        atoms_from_list  = collect(eachatom(segment))
+        NAG              = length(atoms_from_graph)
+        NAL              = length(atoms_from_list)
+        if !(NAG === NAL)
+            push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment, not all atoms were visited (From graph: $NAG | From list: $NAL).\nCheck for breaks in the parenthood relationships. Suggested fix: consider using the infer_parenthood! function.")
+        else
+            N = findall((x) -> x === false, atoms_from_list .=== atoms_from_graph)
+            if length(N) > 0
+                push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment, the atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
+            end
         end
     end
 
@@ -125,6 +127,7 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
     # 5. Indexation
     indexation_issues = Vector{String}()
 
+    atoms_from_list = collect(eachatom(pose.graph))
     ids = [a.id for a in atoms_from_list]
     N   = findall((x) -> x === false, ids .=== sort(ids))
     if length(N) > 0
