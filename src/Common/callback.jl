@@ -99,7 +99,7 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
                 s *= @sprintf("%20s", string(component))
             end
             s*= "\n"
-            print_to_sdtout && printstyled(s, color = :cyan)
+            print_to_sdtout && printstyled(s, color = color)
             if file_out !== nothing
                 print(io, s)
             end
@@ -118,6 +118,24 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
     end
 
     return Callback(energy_step_detailed, n)
+end
+
+
+"""
+# TODO
+"""
+function detailed_message(msg::String, color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true, N::Int = 100)
+    if file_out !== nothing
+        io = open(file_out, "a")
+    end
+    N = N - length(msg)
+    M = floor(Int, N/2) - 3
+    E = N-6-(M*2)
+    s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
+    print_to_sdtout && printstyled(s, color = color)
+    if file_out !== nothing
+        print(io, s)
+    end
 end
 
 
