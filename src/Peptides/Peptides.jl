@@ -19,6 +19,7 @@ include("Types/types.jl")
 # Selections
 include("Submodules/Selections/polar.jl")
 include("Submodules/Selections/sidechains.jl")
+include("Submodules/Selections/protein.jl")
 include("Submodules/Selections/secondary-structure.jl") # Requires types.jl
 
 include("constants.jl")
@@ -34,5 +35,8 @@ include("Submodules/Builder/grammar.jl")
 include("Calculators/Calculators.jl") # Requires grammar.jl
 include("Mutators/Mutators.jl") # Requires Rotamers.jl
 include("Drivers/drivers.jl")
+
+# External packages
+include("Submodules/ExternalPackages/GROMACS/gromacs.jl")
 
 end

@@ -96,6 +96,7 @@ include("Core/Methods/tautomers.jl") # Requires grammar.jl
 include("Core/Submodules/Builder/Builder.jl")
 include("Core/Methods/pose.jl") # Requires grammar.jl & graph.jl
 include("Core/Submodules/Builder/modifications.jl") # Requires pose.jl
+include("Core/Submodules/ExternalPackages/GROMACS/gromacs.jl") # Requires pose.jl
 
 @info "Loading Calculators"
 include("Core/Calculators/Calculators.jl")
