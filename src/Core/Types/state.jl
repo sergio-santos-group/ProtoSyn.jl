@@ -421,6 +421,14 @@ Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
         as.b, as.θ, as.ϕ, as.Δϕ, as.δ, as.changed)
 end
 
+Base.push!(s::State{T}, as::AtomState{T}) where T = begin
+    push!(s.items, as)
+    s.x.coords = hcat(s.x.coords, as.t)
+    s.f = hcat(s.f, [T(0.0), T(0.0), T(0.0)])
+    s.size += 1
+    return s
+end
+
 #endregion State
 
 

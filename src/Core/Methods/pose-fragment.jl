@@ -73,6 +73,7 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     segment        = Segment(residues[1].container.name, 1)
     segment.items  = residues
     segment.size   = length(segment.items)
+    segment.code   = segment.name[1]
 
     # Pop parent of any Atom instance connected outside the new fragment (and
     # corresponding Residue container)

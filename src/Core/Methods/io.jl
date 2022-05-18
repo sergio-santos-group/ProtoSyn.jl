@@ -588,7 +588,7 @@ function write(pose::Pose{Topology}, filename::String)
 end
 
 function write(pose::Pose{Segment}, filename::String)
-    error("MethodError: no method ProtoSyn.write is available for Fragment instances.")
+    error("MethodError: no method ProtoSyn.write is available for Fragment instances. Consider generating a Pose from the fragment, using `Pose(frag)`.")
 end
 
 

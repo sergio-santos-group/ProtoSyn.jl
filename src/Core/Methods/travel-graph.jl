@@ -65,7 +65,21 @@ function sort_children(atom::Atom; rev::Bool = false)
     for size in sort(collect(sizes_set))
         sizes_indexes = findall(x -> x === size, sizes)
         v = view(atoms, sizes_indexes)
-        sort!(v, by=(a)->a.name, rev = true)
+
+        # Note: Sorting by name is a two step operation.
+        # Atoms should be sorted based on the symbol in reverse order (H < C)
+        # But equal symbols should be sorted by name in normal order (H1 < H2)
+
+        sort!(v, by=(a) -> a.name, rev = true)
+        symbols = collect([a.symbol for a in v])
+        length(symbols) === 1 && continue
+        symbols_set = collect(Set(symbols))
+        for symbol in symbols_set
+            symbol_indexes = findall(x -> x === symbol, symbols)
+            length(symbol_indexes) === 1 && continue
+            v = view(v, symbol_indexes)
+            sort!(v, by=(a) -> a.name, rev = false)
+        end
     end
 
     return atoms
@@ -198,4 +212,23 @@ function travel_graph(start::Atom; stop::Opt{Atom} = nothing, search_algorithm::
     end
 
     return atoms
+end
+
+
+"""
+# TODO: Documentation
+"""
+function travel_bonds(start::Atom, level::Int = 1, previous::Opt{Atom} = nothing)
+    if level === 1
+        return push!([bond for bond in start.bonds if bond !== previous], start)
+    else
+        bonds = Vector{Atom}([start])
+        for bond in start.bonds
+            if bond !== previous
+                found_bonds = travel_bonds(bond, level - 1, start)
+                bonds = vcat(bonds, found_bonds)
+            end
+        end
+        return bonds
+    end
 end

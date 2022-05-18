@@ -576,9 +576,13 @@ Segment{/2a3d:8625/A:1}
 """
 function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing)
 
+    w = Dict{String, Int}("H" => 1, "N" => 5, "C" => 15, "O" => 10, "S" => 20)
+
     @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
 
     atoms   = collect(eachatom(container))
+
+    aromatics = AromaticSelection()(container)
 
     if start === nothing
         start = collect(eachatom(container))[1]
@@ -599,39 +603,111 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
     # chemically correct was of attributing parenthood relationships, in
     # accordance with generally accepted conventions.
     stack = Vector{Atom}([start])
-    levls = Vector{Int}([1])
-    p_lvl = 1
     
     while length(stack) > 0
-        if levls[end] !== p_lvl
-            # sort the next level
-            ProtoSyn.verbose.mode && println("Sorting next level")
-            ProtoSyn.verbose.mode && println("Current stack: $([x.symbol for x in stack])")
-            sort!(stack, by=(x)->x.symbol, rev = true)
-        end
+
         atom_i = pop!(stack)
-        levl_i = pop!(levls)
-        p_lvl  = levl_i
-        i      = findfirst((a)->a === atom_i, atoms)
+        i      = findfirst((a) -> a === atom_i, atoms)
         ProtoSyn.verbose.mode && println("Focus on atom $atom_i - $i")
         visited[i] = true
-        atom_i_bonds = sort(atom_i.bonds, by=(b)->b.symbol)
-        ProtoSyn.verbose.mode && println("$atom_i (Lvl: $levl_i) ---> $atom_i_bonds")
+
+        atom_i_bonds = Vector{Atom}()
+        for atom_j in atom_i.bonds
+            atom_j_index = findfirst((a) -> a === atom_j, atoms)
+            if atom_j_index !== nothing && !visited[atom_j_index]
+                push!(atom_i_bonds, atom_j)
+            end
+        end
+
+        if length(atom_i_bonds) === 0
+            continue
+        end
+
+        atom_i_bond_weight = [w[a.symbol] for a in atom_i_bonds]
+        atom_i_arom_weight = Vector{Int}()
+        for atom_j in atom_i_bonds
+            atom_j_index = findfirst((a) -> a === atom_j, atoms)
+            if atom_j_index === nothing
+                aw = 0
+            else
+                aw = aromatics[atom_j_index] ? 25 : 0
+            end
+            push!(atom_i_arom_weight, aw)
+        end
+        atom_i_weight      = atom_i_bond_weight .+ atom_i_arom_weight
+        ProtoSyn.verbose.mode && println("Atom: $atom_i")
+        ProtoSyn.verbose.mode && println(" Non-visited Bonds: $([x.name for x in atom_i_bonds])")
+        ProtoSyn.verbose.mode && println("     Symbol weight: $atom_i_bond_weight")
+        ProtoSyn.verbose.mode && println("   Aromatic weight: $atom_i_arom_weight")
+
+        # Case exists same symbol & same aromaticity
+        atom_i_weight_set = collect(Set(atom_i_weight))
+        if length(atom_i_weight_set) < length(atom_i_weight)
+            for weight in atom_i_weight_set
+                eq_weight = findall((w) -> w === weight, atom_i_weight)
+                length(eq_weight) === 1 && continue
+                eq_weight_atoms = atom_i_bonds[eq_weight]
+
+                # Solve equalization with size of downstream bond graph
+                lengths = Vector{Int}()
+                for eq_weight_atom in eq_weight_atoms
+                    contacts_visited = false
+                    for range in 1:3
+                        atoms_in_range = ProtoSyn.travel_bonds(eq_weight_atom, range, atom_i)
+                        ProtoSyn.verbose.mode && println("For range $range, atoms in range of $eq_weight_atom : $atoms_in_range")
+                        for atom_in_range in atoms_in_range[2:end]
+                            atom_in_range_index = findfirst((a)->a === atom_in_range, atoms)
+                            if atom_in_range_index === nothing
+                                continue
+                            elseif visited[atom_in_range_index]
+                                push!(lengths, range)
+                                contacts_visited = true
+                                break
+                            end
+                        end
+                        contacts_visited && break
+                    end
+                    if !contacts_visited
+                        push!(lengths, 4)
+                    end
+                end
+
+                # If first one is, all equal weighted atoms are
+                # Aromatic     : longer first
+                # Non-aromatic : shorter first
+                permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
+                ProtoSyn.verbose.mode && println("       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])")
+                atom_i_weight[eq_weight] .+= permvec
+            end
+        end
+
+        permvec = sortperm(atom_i_weight, rev = false)
+        atom_i_bonds = atom_i_bonds[permvec]
+        ProtoSyn.verbose.mode && println(repeat("-", 40))
+        ProtoSyn.verbose.mode && println("      Final weight: $atom_i_weight")
+        ProtoSyn.verbose.mode && println("       Final order: $([a.name for a in atom_i_bonds]) (Note: Atoms are consumed in reverse.)\n")
+
         for atom_j in atom_i_bonds
             j = findfirst(atom -> atom === atom_j, atoms)
             ProtoSyn.verbose.mode && j !== nothing && println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
             if j !== nothing && !(visited[j]) && !(changed[j])
-                insert!(stack, 1, atom_j)
-                insert!(levls, 1, levl_i + 1)
+
+                push!(stack, atom_j)
+
                 if overwrite && hasparent(atom_j)
                     ProtoSyn.popparent!(atom_j)
                 end
                 if !hasparent(atom_j)
-                    ProtoSyn.verbose.mode && println("  Setting $atom_i as parent of $atom_j")
                     ProtoSyn.setparent!(atom_j, atom_i)
                     changed[j] = true
                 else
                     ProtoSyn.verbose.mode && println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                end
+
+                # Deal with aromatics
+                if atom_j.symbol !== "H" && aromatics[j]
+                    ProtoSyn.verbose.mode && println("  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ...")
+                    break
                 end
             end
         end

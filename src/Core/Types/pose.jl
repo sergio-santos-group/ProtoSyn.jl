@@ -20,7 +20,7 @@ graph contents are copied to the new [Pose](@ref). If no type
 mutable struct Pose{T <: AbstractContainer}
     graph::T
     state::State
-    Pose(c::T, s::State) where {T <: AbstractContainer}= begin
+    Pose(c::T, s::State) where {T <: AbstractContainer} = begin
         c.id != s.id && error("unpairable container (ID: $(c.id)) and state (ID: $(s.id))")
         new{T}(c, s)
     end
@@ -55,6 +55,8 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
 end
 
 Pose(frag::Fragment) = Pose(Units.defaultFloat, frag)
+
+Pose() = Pose(Topology("unk", -1), State())
 
 function reindex(pose::Pose)
     reindex(pose.graph)

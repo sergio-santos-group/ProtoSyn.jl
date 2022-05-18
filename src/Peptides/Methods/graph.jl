@@ -157,7 +157,9 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
                         end
                     end
                 else
-                    @warn "Available template for $pose_residue ($(template_residue)) doesn't match the graph."
+                    println("    Graph: $([x.name for x in pose_atoms])")
+                    println(" Template: $([x.name for x in temp_atoms])")
+                    @warn "Available template for $pose_residue doesn't match the graph.\n    Graph: $pose_graph\n Template: $temp_graph"
                 end
             end
         end

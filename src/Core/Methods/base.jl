@@ -262,9 +262,10 @@ end
 
 
 Base.copy(s0::Segment) = begin
-    s1 = Segment(s0.name, s0.id)
+    s1      = Segment(s0.name, s0.id)
+    s1.code = s0.code
     old2new = IdDict{AbstractContainer, AbstractContainer}()
-    root = ProtoSyn.root(s0)
+    root    = ProtoSyn.root(s0)
 
     # copy residues and atoms
     for r0 in eachresidue(s0)

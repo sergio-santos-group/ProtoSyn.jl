@@ -82,6 +82,11 @@ function sort_atoms_by_graph!(state::State, container::Residue; start::Opt{Atom}
     atoms         = ProtoSyn.travel_graph(start, search_algorithm = search_algorithm)
     atoms_indexes = [a.index for a in atoms if a in container.items]
 
+    if length(atoms_indexes) !== length(old_atoms_indexes)
+        println([x.name for x in atoms if x in container.items])
+        println([x.name for x in collect(eachatom(container))])
+    end
+
     @assert length(atoms_indexes) === length(old_atoms_indexes) "Starting on $start, the inter-container graph traveled only accounts for $(length(atoms_indexes)) of the original $(length(old_atoms_indexes)) atoms. Make sure parenthoods are set and that the defined `start` atom is correct."
 
     _sortperm = find_atom_sortperm(state, old_atoms_indexes, atoms_indexes)
@@ -97,8 +102,16 @@ function sort_atoms_by_graph!(state::State, container::Residue; start::Opt{Atom}
     return state, container
 end
 
-function sort_atoms_by_graph!(state::State, container::Union{Topology, Segment}; start::Opt{Atom} = nothing, search_algorithm::F = ProtoSyn.DFS) where {F <: SearchAlgorithm}
-    for residue in eachresidue(container)
+function sort_atoms_by_graph!(state::State, container::Union{Topology, Segment}; start::Opt{Atom} = nothing, search_algorithm::F = ProtoSyn.DFS, ignore_selection::Opt{AbstractSelection} = nothing) where {F <: SearchAlgorithm}
+    
+    if ignore_selection === nothing
+        ignore_sele = !TrueSelection{Residue}()
+    else
+        ignore_sele = ProtoSyn.promote(ignore_selection, Residue)
+    end
+    
+    residues = (!ignore_sele)(container, gather = true)
+    for residue in residues
         ProtoSyn.sort_atoms_by_graph!(state, residue, start = start, search_algorithm = search_algorithm)
     end
 
@@ -106,8 +119,15 @@ function sort_atoms_by_graph!(state::State, container::Union{Topology, Segment};
     return state, container
 end
 
-function sort_atoms_by_graph!(pose::Pose; start::Opt{Atom} = nothing, search_algorithm::F = ProtoSyn.DFS) where {F <: SearchAlgorithm}
-    return sort_atoms_by_graph!(pose.state, pose.graph, start = start, search_algorithm = search_algorithm)
+function sort_atoms_by_graph!(pose::Pose; start::Opt{Atom} = nothing, search_algorithm::F = ProtoSyn.DFS, ignore_selection::Opt{AbstractSelection} = nothing) where {F <: SearchAlgorithm}
+
+    if ignore_selection === nothing
+        ignore_sele = !TrueSelection{Residue}()
+    else
+        ignore_sele = ProtoSyn.promote(ignore_selection, Residue)
+    end
+
+    return sort_atoms_by_graph!(pose.state, pose.graph, start = start, search_algorithm = search_algorithm, ignore_selection = ignore_sele)
 end
 
 
