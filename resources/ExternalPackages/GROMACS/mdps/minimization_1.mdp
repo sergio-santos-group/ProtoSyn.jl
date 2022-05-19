@@ -1,0 +1,27 @@
+;**********************************************************
+;  STEEPEST-DESCENT MINIMIZATION
+;**********************************************************
+; RUN CONTROL PARAMETERS
+;----------------------------------------------------------
+integrator               = steep 
+nsteps                   = 
+; OUTPUT CONTROL OPTIONS
+;----------------------------------------------------------
+nstxout                  = 
+nstenergy                = 
+nstlog                   = 
+nstxout-compressed       = 
+; NEIGHBORSEARCHING PARAMETERS
+;----------------------------------------------------------
+cutoff-scheme            = Verlet
+PBC                      = xyz
+; OPTIONS FOR ELECTROSTATICS AND VDW
+;----------------------------------------------------------
+coulombtype              = PME
+rcoulomb                 = 1.2
+vdwtype                  = Cut-off
+rvdw                     = 1.2
+DispCorr                 = EnerPres
+; OPTIONS FOR BONDS
+;----------------------------------------------------------
+constraints              = none  ;

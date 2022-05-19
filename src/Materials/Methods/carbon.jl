@@ -2,8 +2,10 @@ function new_layer(x::Int, y::Int, r::T = 1.4) where {T <: AbstractFloat}
 
     state = State()
     topol = Topology("CRV", -1)
+    root  = ProtoSyn.root(topol)
     Segment!(topol, "CRV", -1)
     Residue!(topol[1], "CRV", -1)
+    ProtoSyn.setparent!(topol[1][1], root.container)
     res   = topol[1][1]
 
     # 1. Define starting positions of the 2 atom template
@@ -40,7 +42,6 @@ function new_layer(x::Int, y::Int, r::T = 1.4) where {T <: AbstractFloat}
 
     topol.id = state.id = genid()
     pose     = Pose(topol, state)
-    root     = ProtoSyn.root(pose.graph)
     for atom in eachatom(pose.graph)
         ProtoSyn.setparent!(atom, root)
     end
