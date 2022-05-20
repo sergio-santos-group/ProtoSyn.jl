@@ -113,7 +113,7 @@ module Restraints
 
 
     """
-        get_default_bond_distance_restraint(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_bond_distance_restraint(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default bond distance restraint
     [`EnergyFunctionComponent`](@ref). `α` sets the component weight (on an
@@ -218,7 +218,7 @@ module Restraints
 
 
     """
-        get_default_all_atom_clash_restraint(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_all_atom_clash_restraint(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the all-atom clash [`EnergyFunctionComponent`](@ref). `α` sets the
     component weight (on an

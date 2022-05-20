@@ -216,7 +216,48 @@ end
 
 
 """
-# TODO: Documentation
+    travel_graph(start::Atom; [stop::Opt{Atom} = nothing], [search_algorithm::F = ProtoSyn.BFS]) where {F <: SearchAlgorithm})
+
+Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
+and `stop` (inclusive), while following the structure's
+[Graph](@ref state-types). If no `stop` [`Atom`](@ref) instance is provided or
+if it isn't found as a downstream parent of the `start` [`Atom`](@ref), all
+instances until no children [`Atom`](@ref) instances are found are returned (for
+example, until the end of the current [Pose](@ref) of [`Segment`](@ref)). By
+default, uses Breath First Search (BFS) algorithm (all [`Atom`](@ref) instances
+at the same "graph-distance" to the `start` [`Atom`](@ref) are consumed before
+the next level is considered, order is given by [`sort_children`](@ref)).
+Optionally, by setting `search_algorithm` to `ProtoSyn.DFS`, can employ Depth
+First Algorithm (DFS) (the largest chain of `atom.children` is recursively
+exhausted before consuming the smaller chains, order is given by
+[`sort_children`](@ref)).
+
+# See also
+[`is_contiguous`](@ref) [`hasparent`](@ref) [`setparent!`](@ref)
+ 
+# Examples
+```jldoctest
+julia> ProtoSyn.travel_graph(pose.graph[1][5]["N"], stop = pose.graph[1][6]["N"], search_algorithm = ProtoSyn.BFS)
+11-element Vector{Atom}:
+ Atom{/2a3d:31788/A:1/ALA:5/N:62}
+ Atom{/2a3d:31788/A:1/ALA:5/H:63}
+ Atom{/2a3d:31788/A:1/ALA:5/CA:64}
+ Atom{/2a3d:31788/A:1/ALA:5/HA:65}
+ Atom{/2a3d:31788/A:1/ALA:5/CB:66}
+ Atom{/2a3d:31788/A:1/ALA:5/C:70}
+ Atom{/2a3d:31788/A:1/ALA:5/HB3:69}
+ Atom{/2a3d:31788/A:1/ALA:5/HB2:68}
+ Atom{/2a3d:31788/A:1/ALA:5/HB1:67}
+ Atom{/2a3d:31788/A:1/ALA:5/O:71}
+ Atom{/2a3d:31788/A:1/GLU:6/N:72}
+
+julia> ProtoSyn.travel_graph(pose.graph[1][5]["N"], stop = pose.graph[1][6]["N"], search_algorithm = ProtoSyn.DFS)
+4-element Vector{Atom}:
+ Atom{/2a3d:31788/A:1/ALA:5/N:62}
+ Atom{/2a3d:31788/A:1/ALA:5/CA:64}
+ Atom{/2a3d:31788/A:1/ALA:5/C:70}
+ Atom{/2a3d:31788/A:1/GLU:6/N:72}
+```
 """
 function travel_bonds(start::Atom, level::Int = 1, previous::Opt{Atom} = nothing)
     if level === 1

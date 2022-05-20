@@ -138,7 +138,7 @@ module REF15
 
 
     """
-        get_default_ref15(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_ref15(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default PyRosetta's REF15 [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an

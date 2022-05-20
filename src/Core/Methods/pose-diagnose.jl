@@ -1,5 +1,18 @@
 """
-# TODO
+    print_diagnose_results(title::String, issues::Vector{String}, init_level_code::LevelCode, level::Int)
+
+Prints a list of `issues` (under the scop of `title` grouping) in a stylized way
+(uses `init_level_code` and adds inner `LevelCode` instances at `level`). To be
+employed from [`diagnose`](@ref).
+
+# Examples
+```
+julia> ProtoSyn.print_diagnose_results("Charges", ["Missing charges", "Charges sum is not 0.0"], LevelCode(), 4)
+ |
+ └──  • Charges (2 issues identified)
+      ├── Missing charges
+      └── Charges sum is not 0.0
+```
 """
 function print_diagnose_results(title::String, issues::Vector{String}, init_level_code::LevelCode, level::Int)
     level_code        = vcat(init_level_code, level)

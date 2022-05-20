@@ -191,7 +191,7 @@ module Electrostatics
 
 
     """
-        get_default_coulomb(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_coulomb(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default Coulomb [`EnergyFunctionComponent`](@ref). `α` sets the
     component weight (on an

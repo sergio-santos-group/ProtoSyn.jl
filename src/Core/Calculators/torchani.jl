@@ -281,7 +281,7 @@ module TorchANI
     # * Default Energy Components ----------------------------------------------
 
     """
-        get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_torchani_model(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default TorchANI model [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an
@@ -325,7 +325,7 @@ module TorchANI
     end
     
     """
-        get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_torchani_ensemble(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default TorchANI ensemble [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an

@@ -24,6 +24,7 @@ module Calculators
 
     @info " | Loading SASA"
     include("sasa.jl")
+    include("radius_gyration.jl")
 
     @info " | Loading GB"
     include("gb.jl")

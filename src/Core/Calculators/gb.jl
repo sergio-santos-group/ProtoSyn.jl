@@ -195,7 +195,7 @@ module GB
 
 
     """
-        get_default_gb(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_gb(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default Generalized Born [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an

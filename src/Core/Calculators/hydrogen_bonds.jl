@@ -218,7 +218,7 @@ module HydrogenBonds
 
 
     """
-        get_default_hydrogen_bond_network(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_hydrogen_bond_network(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default hydrogen bond [`EnergyFunctionComponent`](@ref). `α` sets
     the component weight (on an

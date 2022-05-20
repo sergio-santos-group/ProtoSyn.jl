@@ -61,7 +61,7 @@ end
 
 
 """
-    get_default_torchani_internal_energy(;α::T = 1.0) where {T <: AbstractFloat}
+    get_default_torchani_internal_energy(;[α::T = 1.0]) where {T <: AbstractFloat}
 
 Return the default TorchANI internal energy model
 [`EnergyFunctionComponent`](@ref). `α` sets the component weight (on an

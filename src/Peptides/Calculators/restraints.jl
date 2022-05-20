@@ -6,7 +6,7 @@ module Restraints
     # * Default Energy Components ----------------------------------------------
 
     """
-        get_default_sidechain_clash_restraint(;α::T = 1.0, mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        get_default_sidechain_clash_restraint(;[α::T = 1.0], [mask::Opt{ProtoSyn.Mask} = nothing]) where {T <: AbstractFloat}
 
     Return the default sidechain clash restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent).
@@ -116,7 +116,7 @@ module Restraints
 
 
     """
-        get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+        get_default_ca_clash_restraint(;[α::T = 1.0]) where {T <: AbstractFloat}
     
     Return the default Cα-Cα clash restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent).

@@ -122,9 +122,22 @@ end
 
 
 """
-# TODO
+    detailed_message(msg::String; color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true, N::Int = 100)
+
+Print a detailed message `msg` in the same style as
+[`default_energy_step_detailed`](@ref), with the given `color` (uses the 
+`printstyled` method). If `file_out` is set to a `String` (`nothing`, by
+default), also print to a file with the given file name. If `print_to_stdout` is
+set to `false` (`true`, by default), skip printing to the stdout. `N` sets the
+length of the final stylized message.
+
+# Examples
+```
+julia> ProtoSyn.Common.detailed_message("Simulation (Stage 3) ...", color = :blue, N = 120)
+| --------------------------------------------- Simulation (Stage 3) ... --------------------------------------------- |
+```
 """
-function detailed_message(msg::String, color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true, N::Int = 100)
+function detailed_message(msg::String; color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true, N::Int = 100)
     if file_out !== nothing
         io = open(file_out, "a")
     end

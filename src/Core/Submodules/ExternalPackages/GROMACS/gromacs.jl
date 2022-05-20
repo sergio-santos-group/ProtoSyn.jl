@@ -1,5 +1,7 @@
 """
-# TODO Documentation
+    GMX (Module)
+
+Holds utilitary methods for preparing and launching GROMCAS simulations.
 """
 module GMX
 
@@ -36,7 +38,7 @@ module GMX
 
         # Check acpype instalation
         try
-            read(`acpype -v`)
+            read(`acpype -h`)
         catch
             error("It seems acpype is not installed in your machine. ProtoSyn tried to call acpype with the following command, but no installation was found: `acpype -v`. Check if acpype installation directory is in this system's PATH.")
         end

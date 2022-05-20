@@ -52,7 +52,7 @@ end
 
 
 """
-    get_default_custom_ref_energy(;α::T = 1.0) where {T <: AbstractFloat}
+    get_default_custom_ref_energy(;[α::T = 1.0]) where {T <: AbstractFloat}
 
 Return the default custom reference energy [`EnergyFunctionComponent`](@ref).
 `α` sets the component weight (on an
