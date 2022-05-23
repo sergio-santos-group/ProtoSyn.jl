@@ -1,5 +1,8 @@
 """
-# TODO Documentation
+    GMX (module)
+
+Holds auxiliary methods for generating .itp, .top and other necessary files for
+GROMACS simulations.
 """
 module GMX
 
@@ -8,9 +11,38 @@ module GMX
     using Printf
 
     """
-    # TODO: Documentation
+        generate_gmx_itp(pose::Pose, [selection::Opt{AbstractSelection} = nothing]; [molecule_itp_filename::String = "protein.itp"], [overwrite::Bool = true], [keep_temp_files::Bool = false], [gmx_histidine_type::Int = 0], [gmx_water_model::String = "tip3p"], [gmx_forcefield::String = "amber99sb-ildn"])
+
+    Generate a protein .itp file for usage in Gromacs using the `gmx pdb2gmx`
+    utility program with forcefield parameters for the given [`Pose`](@ref)
+    `pose`. If an `AbstractSelection` `selection` is provided, only the selected
+    [`Atom`](@ref) instances will be considered (in a [`Fragment`](@ref)) for
+    .itp generation. Note that since `gmx pdb2gmx` is being used, non-protein
+    [`Residue`](@ref) instance may cause problems or undesired parameters in the
+    resulting .itp file. It is reccomended to select protein [`Residue`](@ref)
+    instances only. The .itp data will be written to `molecule_itp_filename` (if
+    file exists, setting `overwrite` to `true` will overwrite any existing file
+    with the same name, set to `true` by default). Setting `keep_temp_files` to
+    `true` (`false`, by default) prevents ProtoSyn from deleting any temporary
+    files and directories generated during the method call (this includes
+    Gromacs backups ending with "#" and any file or directory starting with
+    "jl_"). During `gmx pdb2gmx` call, automatically sets:
+
+    * Histidines to be of type `gmx_histidine_type` (default: 0);
+    * Water model to be of type `gmx_water_model` (default: "tip3p");
+    * Forcefield to be of type `gmx_forcefield` (default: "amber99sb-ildn").
+
+    # See also
+    [`generate_gmx_topology`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.generate_gmx_itp(pose)
+    ✓ All necessary packages were found!
+     (...)
+    ```
     """
-    function generate_gmx_itp(pose::Pose, selection::Opt{AbstractSelection};
+    function generate_gmx_itp(pose::Pose, selection::Opt{AbstractSelection} = nothing;
         molecule_itp_filename::String  = "protein.itp",
         overwrite::Bool            = true,
         keep_temp_files::Bool      = false,
@@ -19,6 +51,10 @@ module GMX
         gmx_forcefield::String     = "amber99sb-ildn")
 
         ProtoSyn.GMX.check_installation()
+
+        if selection === nothing
+            selection = TrueSelection{Atom}()
+        end
 
         # Generate Pose to file from just the selected region. No check on
         # validity on the given selection is done.
@@ -82,8 +118,45 @@ module GMX
 
 
     """
-    # TODO: Documentation
-    Untested on proteins with multiple ligands.
+        generate_gmx_topology(pose::Pose; [protein_itp_filename::String = "protein.itp"], [atomtypes_itp_filename::String = "atomtypes.itp"], [molecule_itp_filename::String = "molecule.itp"], [overwrite::Bool = true], [keep_temp_files::Bool = false], [gmx_histidine_type::Int = 0], [gmx_water_model::String = "tip3p"], [gmx_forcefield::String = "amber99sb-ildn"], [topology_filename::String = "topol.top"], [include_atomtypes::Bool = false])
+    
+    Generate a system .top file for usage in Gromacs (using the `gmx pdb2gmx`
+    and `acpype` utility programs) with forcefield parameters for the given
+    [`Pose`](@ref) `pose`. This method automatically tries to select protein
+    [`Residue`](@ref) instances using the [`ProteinSelection`](@ref). The
+    selected [`Residue`](@ref) instances forcefield parameters will be compiled
+    into `protein_itp_filename` using the `gmx pdb2gmx` utility program (if
+    file exists, setting `overwrite` to `true` will overwrite any existing file
+    with the same name, set to `true` by default). During `gmx pdb2gmx` call,
+    automatically sets:
+
+    * Histidines to be of type `gmx_histidine_type` (default: 0);
+    * Water model to be of type `gmx_water_model` (default: "tip3p");
+    * Forcefield to be of type `gmx_forcefield` (default: "amber99sb-ildn").
+
+    Any remaining [`Residue`](@ref) instances will be considered as ligand
+    molecules, and the forcefield information will be compiled into
+    `molecule_itp_filename` and `atomtypes_itp_filename` using the `acpype`
+    utility program. Setting `keep_temp_files` to `true` (`false`, by default)
+    prevents ProtoSyn from deleting any temporary files and directories
+    generated during the method call (this includes Gromacs backups ending with
+    "#" and any file or directory starting with "jl_"). The resulting .itp files
+    are combined into the final `topology_filename` .top file (if
+    `include_atomtypes` is set to `true`, the ligand molecule's atomtypes file
+    is also included in the topology, `false` by default).
+
+    !!! ukw "Note:"
+        This method is untested on proteins with multiple ligands and may fail. This may change in future versions of ProtoSyn.
+
+    # See also
+    [`generate_gmx_itp`](@ref) [`generate_gmx_files`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.generate_gmx_topology(pose)
+    ✓ All necessary packages were found!
+     (...)
+    ```
     """
     function generate_gmx_topology(pose::Pose;
         protein_itp_filename::String   = "protein.itp",
@@ -163,9 +236,15 @@ module GMX
 
     function (sa::GMXSA)(atom::Atom, stack::Vector{Atom})
 
+        # In THR, CG2 comes before OG1
         if atom.container.name == "THR" && atom.name == "CB"
             bonds = copy(ProtoSyn.sort_children(atom))
-            bonds = bonds[[1, 3, 2]]
+
+            if length(bonds) === 2 # Case no hydrogens
+                bonds = bonds[[2, 1]]
+            elseif length(bonds) === 3 # Normal case
+                bonds = bonds[[1, 3, 2]]
+            end
         else
             bonds = copy(ProtoSyn.sort_children(atom))
         end
@@ -184,7 +263,26 @@ module GMX
 
 
     """
-    # TODO: Documentation
+        sort_atoms_and_graph_gmx!(pose::Pose)
+
+    Sorts [`Atom`](@ref) instances in the encompassing `AbstractContainer`
+    structures and the resulting [Graph](@ref) for Gromacs simulations (Gromacs
+    expects a given atom order to match with the `gmx pdb2gmx` and `acpype`
+    generated .itp and .top files - this does not necessarilly match the IUPAC
+    conventions).
+
+    # See also
+    [`assign_gmx_atom_names!`](@ref) [`generate_gmx_files`](@ref)
+
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx!(pose)
+    Pose{Topology}(Topology{/2a3d:60945}, State{Float64}:
+     Size: 1140
+     i2c: false | c2i: false
+     Energy: Dict(:Total => Inf)
+    )
+    ```
     """
     function sort_atoms_and_graph_gmx!(pose::Pose)
 
@@ -220,7 +318,27 @@ module GMX
 
 
     """
-    # TODO: Documentation
+        assign_gmx_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+    Rename [`Atom`](@ref) instances in the given [`Pose`](@ref) `pose` to match
+    with the `gmx pdb2gmx` and `acpype` generated .itp and .top files - this
+    does not necessarilly match the IUPAC conventions. If an `AbstractSelection`
+    `selection` is provided, consider only the selected [`Atom`](@ref) instances
+    (any given `selection` will be promoted to be of [`Atom`](@ref) type - see
+    [`ProtoSyn.promote`](@ref)).
+
+    # See also
+    [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) [`rename`](@ref ProtoSyn.rename) [`sort_atoms_and_graph_gmx!`](@ref) [`generate_gmx_files`](@ref)
+    
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.assign_gmx_atom_names!(pose)
+    Pose{Topology}(Topology{/2a3d:55318}, State{Float64}:
+     Size: 1140
+     i2c: false | c2i: false
+     Energy: Dict(:Total => Inf)
+    )
+    ```
     """
     function assign_gmx_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
@@ -248,7 +366,6 @@ module GMX
         ct_sele     = ProtoSyn.promote((sele & CTerminalSelection()), Residue)
         c_terminals = ct_sele(pose, gather = true)
         for c_terminal in c_terminals
-            println("Focus on c_terminal: $(c_terminal)")
             if c_terminal["O"] === nothing
                 @warn "Tried to rename terminal atoms in residue $c_terminal, but no \"O\" atom was found. Check atom names: consider using Peptides.assign_default_atom_names!.\n        Available atoms: $([a.name for a in c_terminal.items])"
             else
@@ -265,6 +382,9 @@ module GMX
     end
 
 
+    """
+    # TODO
+    """
     function generate_gmx_files(pose::Pose;
         protein_itp_filename::String   = "protein.itp",
         output_pdb_filename::String    = "system.pdb",

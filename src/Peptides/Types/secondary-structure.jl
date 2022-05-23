@@ -26,6 +26,9 @@ psi_β_potential    = open(deserialize, joinpath(Peptides.resource_dir, "ramacha
 phi_coil_potential = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/phi-coil-potential.jls"))
 psi_coil_potential = open(deserialize, joinpath(Peptides.resource_dir, "ramachandran/psi-coil-potential.jls"))
 
+"""
+# TODO
+"""
 function sample(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
     selected = probs(dnp) .> min_prob
     x = support(dnp)[selected]

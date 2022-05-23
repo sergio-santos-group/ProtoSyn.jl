@@ -72,12 +72,14 @@ module SASA
     other selected [`Residue`](@ref) instances. This generally tens to return a
     much higher average SASA value.
 
+    !!! ukw "Note:"
+        In the default Peptides SASA [`EnergyFunctionComponent`](@ref) (see [`get_default_sasa_energy`](@ref)), a `Ω` value sets the average SASA value for a [`Residue`](@ref) instance in the evaluated [`Pose`](@ref). [`calculate_average_sasa`](@ref) can help setting this value.
+
     # Examples
     ```
     julia> ProtoSyn.Peptides.Calculators.SASA.calculate_average_sasa(pose, ((SidechainSelection() & !as"H") | an"CA"), Peptides.Calculators.SASA.default_sidechain_max_sasa, probe_radius = 2.8)
     0.49055441526123295
-    ```
-        
+    ``` 
     """
     function calculate_average_sasa(pose::Pose, selection::AbstractSelection, max_sasas::Dict{String, T}; probe_radius::T = 1.4, n_points::Int = 100) where {T <: AbstractFloat}
 
@@ -121,7 +123,7 @@ module SASA
     * `probe_radius::T` - The distance of each point in a generated sphere to the central [`Atom`](@ref) instance. Any point within `probe_radius` of any other atom is considered buried [`Residue`](@ref) name (where T <: AbstractFloat);
     * `hydrophobicity_map::Dict{String, T}` - A dictionary of hydrophobicity values for each [`Residue`](@ref) name, positive values indicate hydrophobicity and vice-versa (where T <: AbstractFloat);
     * `max_sasas::Dict{String, T}` - A dictionary of max_sasa values (SASA values for fully-solvated [`Residue`](@ref) instances) for each [`Residue`](@ref) name (where T <: AbstractFloat);
-    * `Ω::T` - The average exposure value (between 0.0 and 1.0), any SASA value bellow this percentage of max_sasa is considered buried (where T <: AbstractFloat).
+    * `Ω::T` - The average exposure value (between 0.0 and 1.0), any SASA value bellow this percentage of max_sasa is considered buried (where T <: AbstractFloat) (see [`calculate_average_sasa`](@ref)).
 
     # See also
     [`calc_sasa_energy`](@ref ProtoSyn.Calculators.SASA.calc_sasa_energy)

@@ -151,6 +151,9 @@ function Base.show(io::IO, efc::EnergyFunctionComponent{T}, level_code::Opt{Leve
                 val = "Dict{$(p[1]), $(p[2])}($N component$e)"
             else
                 val = string(value)
+                if length(val) > 45
+                    val = val[1:40]*" (...)"
+                end
             end
 
             @printf(io, "%s |%-30s | %-46s   |\n", inner_lead, " $key", "$val")

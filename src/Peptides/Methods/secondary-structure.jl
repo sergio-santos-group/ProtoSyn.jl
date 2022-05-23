@@ -3,27 +3,30 @@ using ProtoSyn.Units
 using CurveFit: Polynomial
 
 """
-# TODO
-# * Add include variation explanation
-
-    setss!(state::State, ss::SecondaryStructureTemplate, residues::Vector{Residue})
+    setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vector{Residue}; [include_variation::Bool = false], [min_prob::T = 0.0]) where {T <: AbstractFloat}
 
 Set the phi `ϕ`, psi `ψ` and omega `ω` backbone angles of all [`Residue`](@ref)
 instances in the given `residues` vector to match the provided
 [`SecondaryStructureTemplate`](@ref). This function acts on the internal
 coordinates and does not update cartesian coordinates (using the
 [`sync!`](@ref ProtoSyn.sync!) method), although a request for conversion is
-made (by calling the [`request_i2c!`](@ref ProtoSyn.request_i2c!)).
+made (by calling the [`request_i2c!`](@ref ProtoSyn.request_i2c!)). If
+`include_variation` is set to `true` (`false, by default`), the phi `ϕ`, psi `ψ`
+and omega `ω` backbone angles are sampled from each dsitribution, instead of
+using the ideal angle. `min_prob` defines the minimum probability of the sampled
+angle (from 0.0 to 1.0). Using higher `min_prob` values results in variations
+conformationally closer to the ideal dihedral angle values.
 
-    setss!(pose::Pose, ss::SecondaryStructureTemplate)
-    setss!(pose::Pose, ss::SecondaryStructureTemplate, sele::ProtoSyn.AbstractSelection)
-    setss!(pose::Pose, ss::SecondaryStructureTemplate, residue::Residue)
+    setss!(pose::Pose, ss::SecondaryStructureTemplate; [include_variation::Bool = false], [min_prob::T = 0.0])
+    setss!(pose::Pose, ss::SecondaryStructureTemplate, sele::ProtoSyn.AbstractSelection; [include_variation::Bool = false], [min_prob::T = 0.0])
+    setss!(pose::Pose, ss::SecondaryStructureTemplate, residue::Residue; [include_variation::Bool = false], [min_prob::T = 0.0])
 
 Set the phi `ϕ`, psi `ψ` and omega `ω` backbone angles of all [`Residue`](@ref)
 instances in the given [`Pose`](@ref) `pose` to match the provided
 [`SecondaryStructureTemplate`](@ref). If an optional `AbstractSelection` `sele`
 is provided, apply the transformation only to the selected [`Residue`](@ref)
-instances.
+instances. Optionally, a single [`Residue`](@ref) instance can also be provided:
+any changes will only apply to the selected [`Residue`](@ref) instance.
 
 # See also
 [`SecondaryStructure`](@ref)
@@ -87,7 +90,20 @@ end
 # ---
 
 """
-# TODO
+    read_ss_map(pose::Pose, filename::String, ss_type::String)
+
+Reads a [`SecondaryStructure`](@ref) map from `filename` into an
+`AbstractSelection` of [`Residue`](@ref) instances marked with the desired
+`ss_type` in the map. The map is checked against the given [`Pose`](@ref) for
+compatibility (number of [`Residue`](@ref) instances, etc). The expected map
+format follows the DeepConCNF_SS3 format (3-mode categorization), as given by
+[RaptorX prediction server](http://raptorx.uchicago.edu/StructurePropertyPred/predict/).
+
+# Examples
+```
+julia> ProtoSyn.Peptides.read_ss_map("ss_map.txt", "H")
+ (...)
+```
 """
 function read_ss_map(pose::Pose, filename::String, ss_type::String)
 
@@ -148,11 +164,27 @@ end
 
 
 """
-# TODO: Documentation
-# Compare with DSSP
+    categorize_ss_from_dihedral_angles(pose::Pose, [selection::Opt{ProtoSyn.AbstractSelection} = nothing]; [blur_amount::T = 0.5]) where {T <: AbstractFloat}
+
+This method attempts to categorize the given [`Pose`](@ref) `pose`
+[`Residue`](@ref) instances in a 3-mode categorization format: "H" for helix,
+"E" for beta sheets and "C" for coils. The categorization takes into account:
+
+ * Geometrical criteria: accordance of the current phi `ϕ`, psi `ψ` and omega `ω` backbone angles to known potentials. Make sure the [`Pose`](@ref) `pose` is synched (see [`sync!`](@ref ProtoSyn.sync!));
+ * Hydrogen bonding pattern: counts hydrogen bonds using [`generate_hydrogen_bond_network`](@ref ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network). Make sure the [`Pose`](@ref) `pose` has charges (see [`assign_default_charges!`](@ref ProtoSyn.Peptides.Calculators.Electrostatics.assign_default_charges!));
+ * Flanking [`Residue`](@ref) secondary structure: flanking [`Residue`](@ref)'s secondary structure "spills" over and influences neighboring [`Residue`](@ref) instances. The influence amount can be set with `blur_amount` (0.5, by default);
+ * Terminal [`Residue`](@ref) instances: Terminal [`Residue`](@ref) instances tend to adopt coil conformations. 
+
+!!! ukw "Note:"
+    In ProtoSyn 1.1, this method offers notoriously sub-par predictions. Using external tools such as DSSP or RaptorX secondary structure prediction server is reccomended.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.categorize_ss_from_dihedral_angles(pose)
+"CHHHHHHHHHHHHHHHHHHHCCCHHHHHHHHHHHHHHHHHHHHHHCCCHHHHHHHHHHHHHHHHHHHHHHHHC"
+```
 """
-function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.AbstractSelection})
-    T = eltype(pose.state)
+function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.AbstractSelection} = nothing; blur_amount::T = 0.5) where {T <: AbstractFloat}
 
     if selection === nothing
         sele = TrueSelection{Residue}()
@@ -169,51 +201,45 @@ function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn
 
     # 1. Get geometrical criteria ----------------------------------------------
 
-    phi_potentials = Dict{String, Polynomial}([
-        "1L" => ProtoSyn.Peptides.phi_α_L_potential,
-        "1R" => ProtoSyn.Peptides.phi_α_R_potential,
-        "2" => ProtoSyn.Peptides.phi_β_potential,
-        "3" => ProtoSyn.Peptides.phi_coil_potential])
+    phi_potentials = Vector{Polynomial}([
+        ProtoSyn.Peptides.phi_α_L_potential,
+        ProtoSyn.Peptides.phi_α_R_potential,
+        ProtoSyn.Peptides.phi_β_potential,
+        ProtoSyn.Peptides.phi_coil_potential])
 
-    phi_values = Dict{String, T}([
-        "1L" => 0.0, # Helix
-        "1R" => 0.0, # Helix
-        "2" => 0.0,  # Beta-sheet
-        "3" => 0.0]) # Coil
+    phi_keys   = [  1,   1,   2,   3]
+    phi_values = [0.0, 0.0, 0.0, 0.0]
 
-    psi_potentials = Dict{String, Polynomial}([
-        "1L" => ProtoSyn.Peptides.psi_α_L_potential,
-        "1R" => ProtoSyn.Peptides.psi_α_R_potential,
-        "2" => ProtoSyn.Peptides.psi_β_potential,
-        "3" => ProtoSyn.Peptides.psi_coil_potential])
+    psi_potentials = Vector{Polynomial}([
+        ProtoSyn.Peptides.psi_α_L_potential,
+        ProtoSyn.Peptides.psi_α_R_potential,
+        ProtoSyn.Peptides.psi_β_potential,
+        ProtoSyn.Peptides.psi_coil_potential])
 
-    psi_values = Dict{String, T}([
-        "1L" => 0.0, # Helix
-        "1R" => 0.0, # Helix
-        "2" => 0.0,  # Beta-sheet
-        "3" => 0.0]) # Coil
+    psi_keys   = [  1,   1,   2,   3]
+    psi_values = [0.0, 0.0, 0.0, 0.0]
 
     for (residue_index, residue) in enumerate(residues)
         phi_atom = ProtoSyn.Peptides.Dihedral.phi(residue)
         phi_atom === nothing && continue
         phi = ProtoSyn.getdihedral(pose.state, phi_atom)
         
-        for (ss, potential) in phi_potentials
+        for (ss_index, potential) in enumerate(phi_potentials)
             value = potential(phi)
-            phi_values[ss] = value
+            phi_values[ss_index] = value
         end
-        min_phi_values = argmin(collect(values(phi_values)))
-        phi_ss = parse(Int, collect(keys(phi_values))[min_phi_values][1])
+        ProtoSyn.verbose.mode && println("Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])")
+        phi_ss = phi_keys[argmin(phi_values)]
         
         psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
         psi_atom === nothing && continue
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
-        for (ss, potential) in psi_potentials
+        for (ss_index, potential) in enumerate(psi_potentials)
             value = potential(psi)
-            psi_values[ss] = value
+            psi_values[ss_index] = value
         end
-        min_psi_values = argmin(collect(values(psi_values)))
-        psi_ss = parse(Int, collect(keys(psi_values))[min_psi_values][1])
+        ProtoSyn.verbose.mode && println("Psi:\n values = $psi_values\n keys = $psi_keys\n Min value: $(argmin(psi_values))\n Chosen key: $(psi_keys[argmin(psi_values)])")
+        psi_ss = psi_keys[argmin(psi_values)]
 
         if phi_ss === psi_ss
             points[phi_ss, residue_index] += 2.0
@@ -230,7 +256,8 @@ function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn
     hbn = ProtoSyn.Calculators.HydrogenBonds.generate_hydrogen_bond_network(
         pose, sele & !SidechainSelection())
     _, _, hb_list = ProtoSyn.Calculators.HydrogenBonds.calc_hydrogen_bond_network(
-        pose, nothing, false; hydrogen_bond_network = hbn)
+        pose, nothing, false; hydrogen_bond_network = hbn,
+        potential = ProtoSyn.Calculators.get_bump_potential_charges(c = 3.0, r = 1.5))
 
     involved_in_hb = falses(N)
     for (acceptor, donor) in hb_list
@@ -254,15 +281,14 @@ function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn
 
     for (residue_index, _involved_in_hb) in enumerate(involved_in_hb)
         if !_involved_in_hb
-            points[1, residue_index] -= 2.0
-            points[2, residue_index] -= 2.0
-            points[3, residue_index] += 2.0
+            points[1, residue_index] -= 12.0
+            points[2, residue_index] -= 12.0
+            points[3, residue_index] += 12.0
         end
     end
 
     # 3. Flanking residue SS criteria ------------------------------------------
-    _points = copy(points)
-    blur_amount = 0.5
+    _points     = copy(points)
     points[:, 2] += _points[:, 1] .* blur_amount
     for i in 2:(N-1)
         value = _points[:, i] .* blur_amount
@@ -272,14 +298,10 @@ function catergorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn
     points[:, (N-1)] += _points[:, N] .* blur_amount
 
     # 4. Terminals criteria ----------------------------------------------------
-    points[3, 1] += 5.0
-    points[3, N] += 5.0
+    points[3, 1] += 12.0
+    points[3, N] += 12.0
 
     max_points = map((x) -> trunc(Int, ceil(x[1])), argmax(points, dims=1))
     converted_points = map((x) -> convert(Float64,x), max_points[1, :])
     return Base.join(map((x) -> ss_assignment[x], converted_points))
-end
-
-catergorize_ss_from_dihedral_angles(pose::Pose) = begin
-    catergorize_ss_from_dihedral_angles(pose, nothing)
 end

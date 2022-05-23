@@ -1,19 +1,19 @@
 """
-# TODO Update the selection call signature
-
-    ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector([::A], pose::Pose, update_forces::Bool = false; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A, T <: AbstractFloat}
+    ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector([::A], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [identification_curve::Function = null_identification_curve], [hydrophobicity_weight::Function = null_hydrophobicity_weight], [rmax::T = 9.0], [sc::T = 1.0], [Ω::Union{Int, T} = 750.0], [hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity]) where {A, T <: AbstractFloat}
     
 Calculate the given [`Pose`](@ref) `pose` caterpillar solvation energy using the
 Neighbour Vector (NV) algorithm (see [this article](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020853)).
-In this model, vectors `ωi` are defined between an [`Atom`](@ref) and all
-neighbouring [`Atom`](@ref) instances (within the defined `rmax` cut-off (in
-Angstrom Å)). Note that only the selected atoms by the `selection` are
-considered. A resulting vector `Ωi` is calculated by suming all `ωi` vectors,
-multiplied by a `w1` weight, provided by the `identification_curve` `Function`.
-This `Function` receives the distance between each pair of neighbouring atoms
-(as a float), the `rmax` value and, optionally, a slope control `sc` value, and
-return a weight `w1` (as a float). The `identification_curve` signature is as
-follows:
+If an `AbstractSelection` `selection` is provided, consider only the selected
+[`Atom`](@ref) instances (any given `selection` will be promoted to be of
+[`Atom`](@ref) type, see [`ProtoSyn.promote`](@ref)). In this model, vectors
+`ωi` are defined between an [`Atom`](@ref) and all neighbouring [`Atom`](@ref)
+instances (within the defined `rmax` cut-off (in Angstrom Å)). Note that only
+the selected atoms by the `selection` are considered. A resulting vector `Ωi` is
+calculated by suming all `ωi` vectors, multiplied by a `w1` weight, provided by
+the `identification_curve` `Function`. This `Function` receives the distance
+between each pair of neighbouring atoms (as a float), the `rmax` value and,
+optionally, a slope control `sc` value, and return a weight `w1` (as a float).
+The `identification_curve` signature is as follows:
 
 ```
 identification_curve(distance::T; rmax::T = 9.0, sc::T = 1.0) where {T <: AbstractFloat}

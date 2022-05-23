@@ -53,9 +53,9 @@ end
 
 
 """
-    diagnose(pose::Pose)
+    diagnose(pose::Pose; [return_issues::Bool = false], [atom_order_search_algorithm::F = ProtoSyn.BFS]) where {F <: SearchAlgorithm}
 
-Measure several agreement criteria:
+Measure several agreement criteria on the given [`Pose`](@ref) `pose`:
 
  1. Checks residue-level graph for any [`Residue`](@ref) instance without parent
  2. Checks atom-level graph for any [`Atom`](@ref) instance without parent
@@ -64,8 +64,10 @@ Measure several agreement criteria:
  5. Checks if any internal to cartesian coordinate conversion (or vice-versa) is pending
  6. Check if the [`Pose`](@ref) `pose` indexation matches the order of atoms (both in the :id and :index fields)
 
-If `return_issues` is set to `true` (`false`, by default) doesn't print results
-to `stdout`, returns them as a `Vector{String}` instead.
+Any [Graph](@ref) travel is done using the [`ProtoSyn.travel_graph`](@ref)
+method, employing the given `atom_order_search_algorithm` (`ProtoSyn.BFS`, by
+default). If `return_issues` is set to `true` (`false`, by default) doesn't
+print results to `stdout`, returns them as a `Vector{String}` instead.
 
 # Examples
 ```

@@ -32,8 +32,39 @@ end
 
 
 """
-# TODO
-# SHOULD USE FIND_TAUTOMER?
+    assign_default_atom_names!(pose::Pose, [selection::Opt{AbstractSelection} = nothing], [grammar::LGrammar = Peptides.grammar]; [force_rename::Bool = false])
+
+Assigns the default [`Atom`](@ref) names to the given [`Pose`](@ref) `pose`. If
+an `AbstractSelection` `selection` is provided, only rename the selected
+[`Residue`](@ref) instances (any given `selection` will be promoted to be of
+[`Residue`](@ref) level using [`ProtoSyn.promote`](@ref)). The [`Atom`](@ref)
+default names are retrieved from the given [`LGrammar`](@ref) `grammar`
+(`Peptides.grammar`, by default). Both the given [`Pose`](@ref) and the built
+template from the `grammar`'s [Graph](@ref) are travelled to generate a 1-to-1
+correspondence between [`Atom`](@ref) instances (the [`Pose`](@ref)
+[`Atom`](@ref) names are then renamed to match the template, uses the
+[`ProtoSyn.travel_graph`](@ref) method with the `ProtoSyn.Peptides.IUPAC` search
+algorithm). This approach may sometimes fail, for example, when tautomers are
+present, in wich case this method attempts to find tautomer candidates in a
+[`Residue`](@ref) by [`Residue`](@ref) case. This method also attempts to verify
+if terminal [`Residue`](@ref) instances are capped, in which case the correct
+naming attribution is automatically taken into consideration.
+
+!!! ukw "Note:"
+    Some methods (such as, for example, the [`assign_default_charges!`](@ref ProtoSyn.Peptides.Calculators.Electrostatics.assign_default_charges!) method) expect default atom names. Consider using [`ProtoSyn.Peptides.diagnose`](@ref) to check whether the current [`Atom`](@ref) names are known.
+
+# See also
+[`rename!`](@ref ProtoSyn.rename!)
+
+# Examples
+```
+julia> ProtoSyn.Peptides.assign_default_atom_names!(pose)
+Pose{Topology}(Topology{/2a3d:42429}, State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing, grammar::LGrammar = Peptides.grammar; force_rename::Bool = false)
 

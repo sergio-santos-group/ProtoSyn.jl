@@ -1,4 +1,5 @@
 name: CQ1
+code: c
 atoms:
   - {name:   N, id:   1, symbol:  N, b:   1.430660, theta:   2.117655, phi:  -0.856617}
   - {name: CA1, id:   2, symbol:  C, b:   1.437319, theta:   2.147497, phi:   3.017644}

@@ -1,17 +1,31 @@
 """
-    load([::Type{T}], filename::AbstractString; bonds_by_distance::Bool = false; alternative_location::String = "A") where {T <: AbstractFloat}
+    load([::Type{T}], filename::AbstractString; [bonds_by_distance::Bool = false], [alternative_location::String = "A"], [include_residues::Vector{String} = Vector{String}()], [ignore_residues::Vector{String} = Vector{String}()], [ignore_chains::Vector{String} = Vector{String}()], [sort_atoms_by_graph::Bool = false]) where {T <: AbstractFloat}
 
 Load the given `filename` into a [`Pose`](@ref), parametrized by `T`. If this is
 not provided, the default `ProtoSyn.Units.defaultFloat` is used instead. The
-file format is infered from the extension (Supported: .pdb, .yml). If
-`bonds_by_distance` is set to `true` (`false`, by default), the CONECT records
-will be complemented with bonds infered by distance. The threshold distances for
-each pair of atoms is defined in `ProtoSyn.bond_lengths`. Infers parenthood and
-ascedence from bonds (N-[`Residue`](@ref) instances have the connected
-C-[`Residue`](@ref) as child). By default, and when available, ProtoSyn will use
-`alternative_location` `A`, unless specified in the flag `alternative_location`.
-If the input file if of type PDB and a trajectory, returns a vector of
-[`Pose`](@ref) instances instead.
+file format is infered from the extension (See `ProtoSyn.supported_formats` for
+all supported formats). If `bonds_by_distance` is set to `true` (`false`, by
+default), the CONECT records will be complemented with bonds infered by
+distance. The threshold distances for each pair of atoms is defined in
+`ProtoSyn.bond_lengths`. Infers parenthood and ascedence from bonds
+(N-[`Residue`](@ref) instances have the connected C-[`Residue`](@ref) as child).
+By default, and when available, ProtoSyn will use `alternative_location` `A`,
+unless specified in the flag `alternative_location`. If the input file if of
+type PDB and a trajectory, returns a vector of [`Pose`](@ref) instances instead.
+If provided, ProtoSyn will ignore any [`Residue`](@ref) and [`Segment`](@ref)
+instances in `ignore_residues` and `ignore_chains`, respectivelly (by name).
+If a [`Residue`](@ref) instance is not found in
+`ProtoSyn.Peptides.available_aminoacids` (for example, a ligand or a
+non-canonical aminoacid), ProtoSyn will skip setting inter-residue parenthoods.
+This can be overwritten by adding the [`Residue`](@ref) name in
+`include_residues`, in which case ProtoSyn will attempt to find and established
+all possible inter-residue parenthood relationships. In more complex cases this
+should be manually checked. Despite the overall [`Pose`](@ref)'s [Graph](@ref),
+[`Atom`](@ref) order in the encompassing `AbstractContainer` is, by default,
+maintained the same as the input `filename`. This can se re-ordered to match the
+infered parenthood by setting the `sort_atoms_by_graph` flag to `true` (`false`,
+by default), in which case the [`ProtoSyn.sort_atoms_by_graph!`](@ref) method
+will be used (employing the `ProtoSyn.Peptides.IUPAC` search algorithm).
 
 !!! ukw "Note:"
     This function is an extension of [`ProtoSyn.load`](@ref).
@@ -25,9 +39,6 @@ Pose{Topology}(Topology{/2a3d:61708}, State{Float64}:
  Energy: Dict(:Total => Inf)
 )
 ```
-
-# TODO: Update Documentation
-
 """
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}(), sort_atoms_by_graph::Bool = false) where {T <: AbstractFloat}
 
@@ -133,24 +144,20 @@ end
 
 
 """
-    ProtoSyn.download([::T], pdb_code::String) where {T <: AbstractFloat}
+    ProtoSyn.Peptides.download([::Type{T}], pdb_code::String; [bonds_by_distance::Bool = false], [include_residues::Vector{String} = Vector{String}()], [ignore_residues::Vector{String} = Vector{String}()], [ignore_chains::Vector{String} = Vector{String}()], [sort_atoms_by_graph::Bool = true]) where {T <: AbstractFloat}
 
 Download the PDB file (for the given PDB code) from the RCSB
-Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the current working
-directory. If `T` is specified, the downloaded file will be loaded into a
-[`Pose`](@ref) parametrized by `T`, otherwise uses the default
-`ProtoSyn.Units.defaultFloat`. Uses the specific `Peptides.load` method.
-
-# See also
-[`load`](@ref)
+Protein Data Bank into a [`Pose`](@ref). The downloaded file can be found in the
+current working directory. If `T` is specified, the downloaded file will be
+loaded into a [`Pose`](@ref) parametrized by `T`, otherwise uses the default
+`ProtoSyn.Units.defaultFloat`. Uses the specific `Peptides.load` method. For
+more information on the input arguments, check the
+[`load`](@ref ProtoSyn.Peptides.load) method documentation.
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.download("2A3D")
 ```
-
-# TODO: Update Documentation
-
 """
 function ProtoSyn.Peptides.download(::Type{T}, pdb_code::String; bonds_by_distance::Bool = false, include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}(), sort_atoms_by_graph::Bool = true) where {T <: AbstractFloat}
     if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end

@@ -305,10 +305,31 @@ module SeqDes
             residue_label, chis
     end # function
 
+
     """
-    # TODO: DOCUMENTATION
-    # ! Only works with use_cuda = true
-    Update forces does nothing.
+        calc_seqdes([::Type{ProtoSyn.CUDA_2}], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [use_cuda::Bool = true])
+
+    Calculates the [`Pose`](@ref) `pose` energy in accordance to the SeqDes
+    machine learning model (see https://www.nature.com/articles/s41467-022-28313-9).
+    If an `AbstractSelection` `selection` is given, only the selected
+    [`Atom`](@ref) instances are considered for the energy calculation. This
+    method does not calculate forces. As such, the `update_forces` flag has no
+    effect and serves only for standardization purposes between `Calculators`
+    methods. Currently, this method requires the usage of `ProtoSyn.CUDA_2`
+    acceleration type (and setting the `use_cuda` flag to `true`). Returns the
+    energy value, nothing (forces), energy per residue and the calculated
+    logits. Note that the calculated logits can be employed in the SeqDes ML
+    model to retrieve rotamers according to the model. Both the energy per
+    residue and logits are returned as PyObject tensors.
+
+    # See also
+    [`get_default_seqdes`](@ref)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Peptides.Calculators.SeqDes.calc_seqdes(pose, nothing)
+    (13.240120887756348, nothing, PyObject tensor(...), PyObject tensor(...))
+    ```
     """
     function calc_seqdes(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true)
         atom_coords, atom_data, residue_bb_index_list, res_data, res_label, chis = get_pdb_data(pose, selection)
@@ -348,12 +369,47 @@ module SeqDes
         )
 
         return float(log_p_mean)(), nothing, log_p_per_res, logits
-    end
+    end # function
 
     calc_seqdes(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true) = begin
         calc_seqdes(ProtoSyn.acceleration.active, pose, selection, update_forces, use_cuda = use_cuda)
-    end
+    end # function
 
+
+    """
+        get_default_seqdes(;[α::T = 1.0]) where {T <: AbstractFloat}
+
+    Return the default SeqDes energy [`EnergyFunctionComponent`](@ref). `α` sets
+    the component weight (on an
+    [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
+    by default). This function employs
+    [`calc_seqdes`](@ref ProtoSyn.Peptides.Calculators.SeqDes.calc_seqdes) as
+    the `:calc` function.
+
+    # Settings
+    * `use_cuda::Bool` - Whether to use CUDA acceleration type. Currently, this [`EnergyFunctionComponent`](@ref) requires `use_cuda` to be `true`.
+
+    # See also
+    [`calc_seqdes`](@ref ProtoSyn.Peptides.Calculators.SeqDes.calc_seqdes)
+
+    # Examples
+    ```jldoctest
+    julia> ProtoSyn.Peptides.Calculators.SeqDes.get_default_seqdes()
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | SeqDes_ML_Model                  |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | false                            |
+    | Calculator     | calc_seqdes                      |
+    +---------------------------------------------------+
+    |    +----------------------------------------------------------------------------------+
+    ├──  ● Settings                      | Value                                            |
+    |    +----------------------------------------------------------------------------------+
+    |    | use_cuda                      | true                                             |
+    |    +----------------------------------------------------------------------------------+
+    |    
+    └──  ○  Selection: nothing
+    """
     function get_default_seqdes(;α::T = 1.0) where {T <: AbstractFloat}
         EnergyFunctionComponent(
             "SeqDes_ML_Model",
@@ -362,6 +418,6 @@ module SeqDes
             Dict{Symbol, Any}(:use_cuda => true),
             α,
             false)
-    end
+    end # function
 
 end # module
