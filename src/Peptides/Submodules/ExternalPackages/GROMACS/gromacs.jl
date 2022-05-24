@@ -342,6 +342,8 @@ module GMX
     """
     function assign_gmx_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
+        ProtoSyn.Peptides.assign_default_atom_names!(pose, selection)
+
         conv = Dict{String, String}(
             "HD11" => "HD1",
             "HD12" => "HD2",
@@ -383,7 +385,25 @@ module GMX
 
 
     """
-    # TODO
+        generate_gmx_files(pose::Pose; protein_itp_filename::String ="protein.itp", output_pdb_filename::String ="system.pdb", atomtypes_itp_filename::String ="atomtypes.itp", molecule_itp_filename::String ="molecule.itp", overwrite::Bool =true, keep_temp_files::Bool =false, gmx_histidine_type::Int =0, gmx_water_model::String ="tip3p", gmx_forcefield::String ="amber99sb-ildn", topology_filename::String ="topol.top", include_atomtypes::Bool =false)
+    
+    Generate all the necessary files to launch a Gromacs MD simulation (.top,
+    .itp and correctly ordered/named .pdb files). For topology generation,
+    please check [`generate_gmx_topology`](@ref) documentation: all arguments
+    used in that method are also input arguments of this one. For .pdb
+    generation, ProtoSyn attempts to sort (using
+    [`sort_atoms_and_graph_gmx!`](@ref)) and rename (using
+    [`assign_gmx_atom_names!`](@ref)) [`Atom`](@ref) instances in accordance to
+    the expected values in Gromacs before exporting the given [`Pose`](@ref)
+    `pose` to a `output_pdb_filename` file. Check these methods documentation
+    for more details.
+
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.generate_gmx_files(pose)
+    ✓ All necessary packages were found!
+     (...)
+    ```
     """
     function generate_gmx_files(pose::Pose;
         protein_itp_filename::String   = "protein.itp",
@@ -399,8 +419,8 @@ module GMX
         include_atomtypes::Bool    = false)
 
         p = copy(pose)
+        assign_gmx_atom_names!(p) # Assign names first, as graph changes after
         sort_atoms_and_graph_gmx!(p)
-        assign_gmx_atom_names!(p)
         generate_gmx_topology(p,
             protein_itp_filename   = protein_itp_filename,
             atomtypes_itp_filename = atomtypes_itp_filename,

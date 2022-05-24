@@ -43,14 +43,13 @@ apply!(state::State, rotamer::Nothing, residue::Residue) = begin
 end
 
 """
-# TODO name change
-    sample(rs::RotamerStack{T}, [n::Int = -1]) where {T <: AbstractFloat}
+    sample(rs::BBI_RotamerLibrary{T}, [n::Int = -1]) where {T <: AbstractFloat}
 
-Sample a [`Rotamer`](@ref) instance from the given [`RotamerStack`](@ref) `rs`,
-taking the natural probability of occurrence into consideraction. If a `n` value
-is given, sample only from the `n` most likely [`Rotamer`](@ref) instances. If
-`n` is 0 or lower (-1, by default), sample from all [`Rotamer`](@ref) instances.
-Return the sampled [`Rotamer`](@ref) instance.
+Sample a [`Rotamer`](@ref) instance from the given [`BBI_RotamerLibrary`](@ref)
+`rs`, taking the natural probability of occurrence into consideraction. If a `n`
+value is given, sample only from the `n` most likely [`Rotamer`](@ref)
+instances. If `n` is 0 or lower (-1, by default), sample from all
+[`Rotamer`](@ref) instances. Return the sampled [`Rotamer`](@ref) instance.
 
 # Examples
 ```
@@ -72,6 +71,32 @@ Base.push!(rs::BBI_RotamerLibrary{T}, rotamer::Rotamer{T}, weight::T) where {T <
     push!(rs.rotamers, rotamer)
     rs.weights = Weights(vcat(rs.weights, Weights([weight])))
 end
+
+
+"""
+    sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
+
+Sample a [`Rotamer`](@ref) instance from the corresponding
+[`BBI_RotamerLibrary`](@ref) for the given [`Residue`](@ref) `residue` name.
+This method takes the natural probability of occurrence into consideraction. If
+a `n` value is given, sample only from the `n` most likely [`Rotamer`](@ref)
+instances. If `n` is 0 or lower (-1, by default), sample from all
+[`Rotamer`](@ref) instances. Return the sampled [`Rotamer`](@ref) instance.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.sample(rot_lib, pose.graph[1][24])
+Rotamer{Float64}: SER | Chi1:   179.7° ±  8.4 | Chi2: --              | Chi3: --              | Chi4: --      
+```
+"""
+function sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
+    
+    !(residue.name in keys(rl)) && return nothing
+    rotamer_stack = rl[residue.name]
+
+    return Peptides.sample(rotamer_stack, n)
+end
+
 
 function findnearest(a, x)
     length(a) > 0 || return nothing
@@ -95,7 +120,26 @@ end
 
 
 """
-# TODO
+    sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, [n::Int = -1], [random_inexistent_phi_psi::Bool = false])
+
+Sample a [`Rotamer`](@ref) instance from the corresponding
+[`BBD_RotamerLibrary`](@ref) for the given [`Residue`](@ref) `residue` name.
+Since the [`BBD_RotamerLibrary`](@ref) is backbone-dependent, the current
+[State](@ref) of the provided [`Pose`](@ref) `pose` is read to sample a
+[`Rotamer`](@ref). This method takes the natural probability of occurrence into
+consideraction. If a `n` value is given, sample only from the `n` most likely
+[`Rotamer`](@ref) instances. If `n` is 0 or lower (-1, by default), sample from
+all [`Rotamer`](@ref) instances. If `random_inexistent_phi_psi` is set to `true`
+(`false`, by default), randomly assigns a phi or psi angle value when none
+exists (for example, in terminal [`Residue`](@ref) instances), allowing for a
+[`Rotamer`](@ref) to still be sampled. Return the sampled [`Rotamer`](@ref)
+instance.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.sample(pose, rot_lib, pose.graph[1][6])
+Rotamer{Float64}: GLU | Chi1:   -65.5° ±  9.5 | Chi2:    81.7° ±  9.6 | Chi3:     7.3° ±  8.5 | Chi4: --       
+```
 """
 function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
 
@@ -134,25 +178,11 @@ end
 
 
 """
-# TODO
-"""
-function sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
-    
-    !(residue.name in keys(rl)) && return nothing
-    rotamer_stack = rl[residue.name]
-
-    return Peptides.sample(rotamer_stack, n)
-end
-
-
-"""
     get_rotamer(pose::Pose, residue::Residue)
 
 Measure the existent chi dihedral angles in [`Residue`](@ref) `residue` on the
 given [`Pose`](@ref) `pose`, saving the information in a new [`Rotamer`](@ref)
 instance.
-
-# TODO ignore_non_existent
 
 # Examples
 ```jldoctest
@@ -160,7 +190,7 @@ julia> ProtoSyn.Peptides.get_rotamer(pose, pose.graph[1][2])
 Rotamer{Float64}: GLU | Chi1:   180.0° ±  0.0 | Chi2:  -180.0° ±  0.0 | Chi3:    90.0° ±  0.0 | Chi4: --     
 ```
 """
-function get_rotamer(pose::Pose, residue::Residue; ignore_non_existent::Bool = false)
+function get_rotamer(pose::Pose, residue::Residue)
     T = eltype(pose.state)
     chis = Dict{DihedralType, Tuple{Union{T, Nothing}, T}}()
     for chi_index in 1:(length(Dihedral.chi_dict[residue.name.content]) - 1)

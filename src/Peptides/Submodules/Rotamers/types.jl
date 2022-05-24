@@ -56,12 +56,12 @@ end
 # ---
 
 """
-# TODO name change
-    RotamerStack{T <: AbstractFloat}(rotamers::Vector{Rotamer{T}}, weights::Weights{T, T, Array{T, 1}})
+    BBI_RotamerLibrary{T <: AbstractFloat}(rotamers::Vector{Rotamer{T}}, weights::Weights{T, T, Array{T, 1}})
 
-A [`RotamerStack`](@ref) is a smart list of [`Rotamer`](@ref) instances, ordered
-based on the natural probability of occurrence, where each position in the
-`rotamers` list has a corresponding position in the `weights` list.
+A [`BBI_RotamerLibrary`](@ref) is a backbone-independent list of
+[`Rotamer`](@ref) instances, ordered based on the natural probability of
+occurrence, where each position in the `rotamers` list has a corresponding
+position in the `weights` list.
 
 # See also
 [`sample`](@ref)

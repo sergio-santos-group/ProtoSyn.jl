@@ -72,7 +72,32 @@ ProtoSyn.eval(:(begin
     export ChiSelection
 
     """
-    # TODO DOCUMENTATION
+        ChiSelection()
+
+    A [`ChiSelection`](@ref) outputs a [`Mask`](@ref) of [`Atom`](@ref)
+    instances where the chi-controlling [`Atom`](@ref) instances of sidechain
+    are marked as true (all atoms defined in `Peptides.Dihedral.chi_dict`).
+
+    # State mode
+    The state mode of [`ChiSelection`](@ref) `M` is forced to be Stateless
+
+    # Selection type
+
+    The selection type of [`ChiSelection`](@ref) `T` is forced to be [`Atom`](@ref).
+
+    !!! ukw "Note:"
+        This selection does not have a short syntax version.
+
+    !!! ukw "Note:"
+        This selection is provided by the Peptides module but registered under
+        ProtoSyn Core module, in order to directly accessible and merged with
+        other `AbstractSelection` instances. 
+
+    # Examples
+    ```jldoctest
+    julia> ChiSelection()
+    ChiSelection › (Atom)
+    ```
     """
     mutable struct ChiSelection{M, T} <: AbstractSelection
         ChiSelection() = begin

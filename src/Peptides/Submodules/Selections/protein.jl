@@ -7,7 +7,33 @@ ProtoSyn.eval(:(begin
     export ProteinSelection
 
     """
-    # TODO: Documentation
+        ProteinSelection()
+
+    A [`ProteinSelection`](@ref) outputs a [`Mask`](@ref) of [`Residue`](@ref)
+    instances where the protein aminoacids are marked as true. A known aminoacid
+    is defined as having an entry both in `ProtoSyn.three_2_one` dictionary and
+    in the default `Peptides` [`LGrammar`](@ref).
+
+    # State mode
+    The state mode of [`ProteinSelection`](@ref) `M` is forced to be Stateless
+
+    # Selection type
+
+    The selection type of [`ProteinSelection`](@ref) `T` is forced to be [`Residue`](@ref).
+    
+    !!! ukw "Note:"
+        This selection does not have a short syntax version.
+
+    !!! ukw "Note:"
+        This selection is provided by the Peptides module but registered under
+        ProtoSyn Core module, in order to directly accessible and merged with
+        other `AbstractSelection` instances.
+
+    # Examples
+    ```jldoctest
+    julia> ProteinSelection()
+    ProteinSelection › (Residue)
+    ```
     """
     mutable struct ProteinSelection{M, T} <: AbstractSelection
         ProteinSelection() = begin
