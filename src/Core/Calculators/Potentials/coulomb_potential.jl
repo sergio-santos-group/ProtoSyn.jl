@@ -1,3 +1,22 @@
+"""
+    coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
+
+Return a simple coulomb potential with charges included, as described in
+https://www.softschools.com/formulas/physics/potential_energy_electrostatic_point_particles_formula/37/.
+The coulomb potential is measured between two charged point-like particles at
+distance `d` and charges `kwargs[:qi]` and `kwargs[:qj]`, respectivelly. If a
+vector `v` between the two particles is provided, also calculates the resulting
+forces.
+
+# See also
+[`get_bump_potential`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.Calculators.coulomb_potential(2.0, qi = 1.0, qj = -1.0)
+-0.5
+```
+"""
 function coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
     qi = kwargs[:qi]
     qj = kwargs[:qj]

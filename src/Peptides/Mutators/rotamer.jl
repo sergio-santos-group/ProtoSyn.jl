@@ -109,7 +109,7 @@ function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
             # println("Residue $residue")
             
             # 2) Sample a rotamer
-            rotamer = Peptides.sample(
+            rotamer = Peptides.sample_rotamer(
                 pose,
                 rotamer_mutator.rotamer_library,
                 residue, 

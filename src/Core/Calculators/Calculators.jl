@@ -99,6 +99,7 @@ module Calculators
         return energy_function_components
     end
 
+    
     """
         show_available_energy_function_components([io::IO = stdout], [m::Module = ProtoSyn.Calculators])
 

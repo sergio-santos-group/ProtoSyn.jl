@@ -1,5 +1,6 @@
-__precompile__(false)
+
 module ProtoSyn
+__precompile__()
 
 const _force_recompilation = 1
 const _version             = 1.01
@@ -120,7 +121,7 @@ include("Sugars/Sugars.jl")
 @info "Loading Common"
 include("Common/Common.jl")
 
-@info "ProtoSyn loaded successfully!"
+@info "Loading external models & packages" 
 
 function version()
     header = """
@@ -139,6 +140,9 @@ function version()
     println("                Sérgio Santos")
 end
 
-version()
+function __init__()
+    @info "ProtoSyn loaded successfully!"
+    version()
+end
 
 end # module

@@ -13,6 +13,7 @@ others. These are subdivided by topics, for organization purposes:
 + [Indexation](@ref core-graph-methods-indexation)
 + [Counters and Iterators](@ref)
 + [Bonds](@ref)
++ [Travelling the Graph](@ref)
 
 ## Root vs Origin
 
@@ -34,8 +35,8 @@ setparent!
 popparent!
 ascendents
 Base.detach
-travel_graph
 is_contiguous
+infer_parenthood!
 ```
 
 ![ProtoSyn graph](../../../assets/ProtoSyn-graph2.png)
@@ -52,6 +53,7 @@ Base.push!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.insert!(::AbstractContainer{T}, ::Integer, ::T) where {T <: AbstractContainer}
 Base.delete!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.copy(::Atom)
+rename!
 ```
 
 ## [Indexation](@id core-graph-methods-indexation)
@@ -135,4 +137,16 @@ The following methods deal with the bonding/unbonding of atoms (and respective
 bond
 unbond!
 join
+```
+
+## Traveling the Graph
+
+As further explored in the [Graph](@ref graph-types) section, the directed nature of the [`Pose`](@ref)'s [Graph](@id graph-types) allows for easy travelling of the system. The following methods facilitate that process.
+
+```@docs
+get_graph_size
+sort_children!
+travel_graph
+travel_bonds
+identify_atom_by_bonding_pattern
 ```

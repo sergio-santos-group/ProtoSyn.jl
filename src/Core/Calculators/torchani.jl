@@ -12,6 +12,7 @@ module TorchANI
     const _model   = PyNULL()
 
     function __init__()
+        @info " | Loading TorchANI"
 
         torch_is_available = false
         try

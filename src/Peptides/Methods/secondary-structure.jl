@@ -59,12 +59,12 @@ function setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vecto
             Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Dihedral.psi(r),  ss.ψ.angle)
             ProtoSyn.setdihedral!(state, Dihedral.omega(r), ss.ω.angle)
         else
-            _ϕ = ss.ϕ.sampler === nothing ? ss.ϕ.angle : Peptides.sample(ss.ϕ.sampler, min_prob = min_prob)
+            _ϕ = ss.ϕ.sampler === nothing ? ss.ϕ.angle : Peptides.sample_rotamer(ss.ϕ.sampler, min_prob = min_prob)
             ProtoSyn.setdihedral!(state, Dihedral.phi(r), _ϕ)
             # Last residues of chain might not have a psi angle.
-            _ψ = ss.ψ.sampler === nothing ? ss.ψ.angle : Peptides.sample(ss.ψ.sampler, min_prob = min_prob)
+            _ψ = ss.ψ.sampler === nothing ? ss.ψ.angle : Peptides.sample_rotamer(ss.ψ.sampler, min_prob = min_prob)
             Dihedral.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Dihedral.psi(r), _ψ)
-            _ω = ss.ω.sampler === nothing ? ss.ω.angle : Peptides.sample(ss.ω.sampler, min_prob = min_prob)
+            _ω = ss.ω.sampler === nothing ? ss.ω.angle : Peptides.sample_rotamer(ss.ω.sampler, min_prob = min_prob)
             ProtoSyn.setdihedral!(state, Dihedral.omega(r), _ω)
         end
     end

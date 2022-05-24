@@ -15,6 +15,7 @@ module SeqDes
     models_default_dir = joinpath(ProtoSyn.Peptides.resource_dir, "Calculators/SeqDes")
 
     function __init__()
+        @info " | Loading SeqDes"
         numpy_instructions = """
         (1) Install NumPy: pip install numpy
         (2) Re-launch Julia and ProtoSyn

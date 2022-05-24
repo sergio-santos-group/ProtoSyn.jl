@@ -53,7 +53,7 @@ the `AbstractSelection` `selection` field is defined as an atomic
 # Examples
 ```
 julia> energy_function = ProtoSyn.Calculators.EnergyFunction()
-⚡  Energy Function (0 components):
+🗲  Energy Function (0 components):
 +----------------------------------------------------------------------+
 | Index | Component name                                | Weight (α)   |
 +----------------------------------------------------------------------+
@@ -63,7 +63,7 @@ julia> energy_function = ProtoSyn.Calculators.EnergyFunction()
  └── TrueSelection (Atom)
 
 julia> push!(energy_function, Calculators.Restraints.get_default_bond_distance_restraint())
-⚡  Energy Function (1 components):
+🗲  Energy Function (1 components):
 +----------------------------------------------------------------------+
 | Index | Component name                                | Weight (α)   |
 +----------------------------------------------------------------------+
@@ -77,7 +77,7 @@ julia> push!(energy_function, Calculators.Restraints.get_default_bond_distance_r
  0.5
 
 julia> energy_function
-⚡  Energy Function (1 components):
+🗲  Energy Function (1 components):
 +----------------------------------------------------------------------+
 | Index | Component name                                | Weight (α)   |
 +----------------------------------------------------------------------+

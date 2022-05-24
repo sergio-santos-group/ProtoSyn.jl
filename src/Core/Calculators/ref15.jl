@@ -8,6 +8,7 @@ module REF15
     const ref15     = PyNULL()
 
     function __init__()
+        @info " | Loading PyRosetta"
         try
             copy!(pyrosetta, pyimport("pyrosetta"))
         catch LoadError

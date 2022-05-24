@@ -566,7 +566,7 @@ coordinates are used.
 [`append`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.write(pose, "new_file.pdb")
 ```
 """
@@ -606,7 +606,7 @@ coordinates are used.
 [`write`](@ref)
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.append(pose, "new_file.pdb")
 ```
 """
@@ -667,7 +667,7 @@ factor to make the resulting force vectors longer/shorter (for visualization
 purposes only).
 
 # Examples
-```jldoctest
+```
 julia> ProtoSyn.write_forces(pose, "forces.dat")
 ```
 """

@@ -1,5 +1,3 @@
-using StatsBase
-
 """
     apply!(state::State, rotamer::Rotamer, residue::Residue)
 
@@ -43,7 +41,7 @@ apply!(state::State, rotamer::Nothing, residue::Residue) = begin
 end
 
 """
-    sample(rs::BBI_RotamerLibrary{T}, [n::Int = -1]) where {T <: AbstractFloat}
+    sample_rotamer(rs::BBI_RotamerLibrary{T}, [n::Int = -1]) where {T <: AbstractFloat}
 
 Sample a [`Rotamer`](@ref) instance from the given [`BBI_RotamerLibrary`](@ref)
 `rs`, taking the natural probability of occurrence into consideraction. If a `n`
@@ -53,11 +51,11 @@ instances. If `n` is 0 or lower (-1, by default), sample from all
 
 # Examples
 ```
-julia> ProtoSyn.Peptides.sample(rot_lib["GLU"][35°, -35°])
+julia> ProtoSyn.Peptides.sample_rotamer(rot_lib["GLU"][35°, -35°])
 Rotamer{Float64}: GLU | Chi1:   -66.8° ±  8.2 | Chi2:   179.1° ± 11.8 | Chi3:   -35.0° ±  8.5 | Chi4: --         
 ```
 """
-function sample(rs::BBI_RotamerLibrary{T}, n::Int = -1) where {T <: AbstractFloat}
+function sample_rotamer(rs::BBI_RotamerLibrary{T}, n::Int = -1) where {T <: AbstractFloat}
     if n <= 0
         return StatsBase.sample(rs.rotamers, rs.weights)
     else
@@ -74,7 +72,7 @@ end
 
 
 """
-    sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
+    sample_rotamer(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
 
 Sample a [`Rotamer`](@ref) instance from the corresponding
 [`BBI_RotamerLibrary`](@ref) for the given [`Residue`](@ref) `residue` name.
@@ -85,16 +83,16 @@ instances. If `n` is 0 or lower (-1, by default), sample from all
 
 # Examples
 ```
-julia> ProtoSyn.Peptides.sample(rot_lib, pose.graph[1][24])
+julia> ProtoSyn.Peptides.sample_rotamer(rot_lib, pose.graph[1][24])
 Rotamer{Float64}: SER | Chi1:   179.7° ±  8.4 | Chi2: --              | Chi3: --              | Chi4: --      
 ```
 """
-function sample(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
+function sample_rotamer(rl::Dict{String, BBI_RotamerLibrary}, residue::Residue, n::Int = -1)
     
     !(residue.name in keys(rl)) && return nothing
     rotamer_stack = rl[residue.name]
 
-    return Peptides.sample(rotamer_stack, n)
+    return Peptides.sample_rotamer(rotamer_stack, n)
 end
 
 
@@ -120,7 +118,7 @@ end
 
 
 """
-    sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, [n::Int = -1], [random_inexistent_phi_psi::Bool = false])
+    sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, [n::Int = -1], [random_inexistent_phi_psi::Bool = false])
 
 Sample a [`Rotamer`](@ref) instance from the corresponding
 [`BBD_RotamerLibrary`](@ref) for the given [`Residue`](@ref) `residue` name.
@@ -137,11 +135,11 @@ instance.
 
 # Examples
 ```
-julia> ProtoSyn.Peptides.sample(pose, rot_lib, pose.graph[1][6])
+julia> ProtoSyn.Peptides.sample_rotamer(pose, rot_lib, pose.graph[1][6])
 Rotamer{Float64}: GLU | Chi1:   -65.5° ±  9.5 | Chi2:    81.7° ±  9.6 | Chi3:     7.3° ±  8.5 | Chi4: --       
 ```
 """
-function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
+function sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
 
     phi_atom = Peptides.Dihedral.phi(residue)
     if phi_atom === nothing
@@ -173,7 +171,7 @@ function sample(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Resid
     end
     rotamer_stack = rl[residue.name][phi, psi]
 
-    return Peptides.sample(rotamer_stack, n)
+    return Peptides.sample_rotamer(rotamer_stack, n)
 end
 
 

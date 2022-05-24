@@ -566,7 +566,10 @@ overwrite existing pranthood information. After infering parenthood, if changes
 to the [Graph](@ref) occurred, the existing internal coordinates match different
 cartesian coordinates. It's suggested to update internal coordinates
 ([`request_i2c!`]((@ref ProtoSyn.request_i2c!)) &
-[`sync!`](@ref ProtoSyn.sync!)).
+[`sync!`](@ref ProtoSyn.sync!)). For more details, see the [Travelling the Graph](@ref) section.
+
+# See also
+[`travel_bonds`](@ref)
 
 # Examples
 ```jldoctest

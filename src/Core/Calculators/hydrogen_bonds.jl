@@ -115,8 +115,6 @@ module HydrogenBonds
         return hbn
     end
 
-    generate_hydrogen_bond_network(pose::Pose) = generate_hydrogen_bond_network(pose, nothing)
-
 
     """
         calc_hydrogen_bond_network([::Type{A}], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; [hydrogen_bond_network::Union{HydrogenBondNetwork, Function} = HydrogenBondNetwork()], [potential::Function = (x; qi = 0.0, qj = 0.0) -> 0.0]) where {A <: ProtoSyn.AbstractAccelerationType}
