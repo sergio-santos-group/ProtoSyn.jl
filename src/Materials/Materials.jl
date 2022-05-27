@@ -7,5 +7,6 @@ materials (such as atomic lattices, etc).
 module Materials
 
     include("Methods/lattices.jl")
-    include("Methods/carbon.jl")
+    include("Methods/perlin.jl")
+    include("Methods/carbon.jl") # Requieres perlin.jl
 end

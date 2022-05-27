@@ -342,7 +342,7 @@ module GMX
     """
     function assign_gmx_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
-        ProtoSyn.Peptides.assign_default_atom_names!(pose, selection)
+        ProtoSyn.Peptides.assign_default_atom_names!(pose, selection & ProteinSelection())
 
         conv = Dict{String, String}(
             "HD11" => "HD1",

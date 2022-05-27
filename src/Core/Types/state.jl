@@ -426,6 +426,7 @@ Base.push!(s::State{T}, as::AtomState{T}) where T = begin
     s.x.coords = hcat(s.x.coords, as.t)
     s.f = hcat(s.f, [T(0.0), T(0.0), T(0.0)])
     s.size += 1
+    as.parent = s
     return s
 end
 

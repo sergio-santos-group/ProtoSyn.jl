@@ -337,7 +337,11 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     ProtoSyn.request_i2c!(pose.state)
 
     # Update container 'itemsbyname'
-    pop!(atom.container.itemsbyname, atom.name)
+    if atom.name in keys(atom.container.itemsbyname)
+        pop!(atom.container.itemsbyname, atom.name)
+    else
+        @warn "While popping atom $(atom.name), attempted to remove entry from the container.itemsbyname, but no entry was found."
+    end
 
     # Set common ID
     popped_atom.id = popped_state.id = genid()
