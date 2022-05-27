@@ -19,6 +19,8 @@ include("distance.jl")
 include("random.jl")
 include("terminal.jl")
 include("aromatic.jl")
+include("bond-count.jl")
+include("charge.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------

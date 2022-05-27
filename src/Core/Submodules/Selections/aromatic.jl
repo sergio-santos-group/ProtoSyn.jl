@@ -47,7 +47,7 @@ selection_type(::AromaticSelection{M, T}) where {M, T} = T
 function select(sele::AromaticSelection, container::AbstractContainer)
 
     n_items = count_atoms(container)
-    mask = Mask{Atom}(n_items)
+    mask    = Mask{Atom}(n_items)
 
     for (index, atom) in enumerate(eachatom(container))
         range = ProtoSyn.travel_bonds(atom, sele.d)
