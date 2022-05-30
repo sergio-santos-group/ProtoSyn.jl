@@ -261,8 +261,8 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
         start = pose.graph[1, 1, 1], linear_aromatics = false)
     ProtoSyn.request_c2i!(pose.state, all = true)
     sync!(pose)
-    # ProtoSyn.sort_atoms_by_graph!(pose, start = pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
-    # reindex(pose)
+    ProtoSyn.sort_atoms_by_graph!(pose, start = pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
+    reindex(pose)
 
     return pose
 end

@@ -1,5 +1,6 @@
 using Random
 using StatsBase
+using ProtoSyn.Units
 
 const edge           = BondCountSelection(3, <)
 const edge_or_center = BondCountSelection(4, <)
@@ -96,4 +97,38 @@ function functionalize(pose::Pose, functional_groups::Dict{Fragment, Int})
         end
     end
 
+end
+
+
+"""
+Assumes z = 0
+"""
+function add_functionalization(pose::Pose, fcn::Fragment, atom::Atom)
+
+    function clockwise(a1::Atom, a2::Atom, a3::Atom)
+        x1, y1, _ = pose.state[a1].t
+        x2, y2, _ = pose.state[a2].t
+        x3, y3, _ = pose.state[a3].t
+        e1 = (x2-x1)*(y2+y1)
+        e2 = (x3-x2)*(y3+y2)
+        e3 = (x1-x3)*(y1+y3)
+        return (e1 + e2 + e3) > 0.0
+    end
+
+    fcn = copy(fcn)
+
+    t  = [atom.parent.parent, atom.parent, atom, [a for a in atom.bonds if a !== atom.parent][1]]
+    d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
+    println("T: $t (d: $d)")
+    if d ≈ π
+        t = collect(reverse(t))
+        println("0.0 angle dihedral!")
+        # fcn.state[fcn.graph[1, 2]].ϕ += 180°
+        fcn.state[fcn.graph[1, 3]].ϕ += 180°
+    end
+    # println("Direction clockwise: $(clockwise(t...))\n$(fcn.state.items)\n$(collect(eachatom(fcn.graph)))")
+
+    ProtoSyn.replace_by_fragment!(pose, atom, fcn, 
+        remove_downstream_graph = false,
+        spread_excess_charge    = true)
 end

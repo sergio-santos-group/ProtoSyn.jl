@@ -231,7 +231,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     # spreading the excess charge)
     if spread_excess_charge
         old_bonds           = copy(atom.bonds)
-        println("Old bonds: $old_bonds")
         excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
         charge_per_bond     = excess_charge / length(old_bonds)
     end
@@ -264,7 +263,7 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
 
         old_children   = copy(atom.children)
         old_atomstates = [copy(pose.state[a]) for a in old_children]
-        ProtoSyn.pop_atom!(pose, atom) # Remove just the selected atom.
+        ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = false) # Remove just the selected atom.
     end
 
     # Add fragment to residue (start with the first atom in the fragment,
@@ -272,15 +271,11 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     frag_origin = ProtoSyn.origin(fragment.graph)
     first_atom  = frag_origin.children[1]
     insert!(parent.container, parent_index_in_res + 1, first_atom)
-    println("            First atom: $first_atom) (Parent: $parent)")
-    println("     First atom parent: $(first_atom.parent) (Parent index in residue: $parent_index_in_res)")
-    println("  First atom container: $(first_atom.container)")
-
 
     # Change the parenthood and bonds from the fake fragment root to the actual
     # pose atom, now acting as the parent
     ProtoSyn.popparent!(first_atom)
-    ProtoSyn.unbond!(fragment, first_atom, frag_origin)
+    ProtoSyn.unbond!(fragment, first_atom, frag_origin, keep_downstream_position = false)
     ProtoSyn.bond(first_atom, parent)
     ProtoSyn.setparent!(first_atom, parent)
 
@@ -293,7 +288,8 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     # introduced fragment
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
         insert!(parent.container, parent_index_in_res + i + 1, frag_atom)
-        insert!(pose.state, parent_index + i + 1, State([fragment.state[frag_atom]]))
+        insert!(pose.state, parent_index + i + 1, copy(State([fragment.state[frag_atom]])))
+        pose.state[parent_index + i + 1].parent = pose.state
     end
 
     if !remove_downstream_graph
@@ -308,7 +304,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
         # Re-attach old children to the new atom and re-apply the saved
         # atomstates
         for (i, child) in enumerate(old_children)
-            println("  Re-attaching $child to $first_atom")
             ProtoSyn.popparent!(child) # Already unbonded from pop_atom!
             ProtoSyn.bond(child, first_atom)
             ProtoSyn.setparent!(child, first_atom)
