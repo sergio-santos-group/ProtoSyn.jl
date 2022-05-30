@@ -3,3 +3,5 @@ modifications:
     MET: Modifications/yml/met.yml
     PO4: Modifications/yml/po4.yml
     INE: Modifications/yml/pyridine.yml
+    NYL: Modifications/yml/carbonyl.yml
+    ETH: Modifications/yml/ether.yml

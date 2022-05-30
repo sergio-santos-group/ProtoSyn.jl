@@ -79,7 +79,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         residues = sele(segment, gather = true)
         
         if length(residues) === 0
-            @debug "Skipping $segment : No selected residues in this segment!"
+            @info "Skipping $segment : No selected residues in this segment!"
             
             continue
         end

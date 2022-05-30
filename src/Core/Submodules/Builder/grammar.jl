@@ -422,7 +422,7 @@ function lgfactory(::Type{T}, template::Dict) where T
             poses = Vector{Fragment}()
             for (i, _name) in enumerate(name)
                 filename = joinpath(ProtoSyn.resource_dir, _name)
-                @debug "Loading variable '$key' (tautomer $i) from $filename"
+                @info "Loading variable '$key' (tautomer $i) from $filename"
                 pose = ProtoSyn.load(T, filename)
                 pose.graph.name = pose.graph[1].name # ! Hack for long filenames
                 push!(poses, fragment(pose))
@@ -430,7 +430,7 @@ function lgfactory(::Type{T}, template::Dict) where T
             grammar[key] = Tautomer(poses)
         else
             filename = joinpath(ProtoSyn.resource_dir, name)
-            @debug "Loading variable '$key' from $filename"
+            @info "Loading variable '$key' from $filename"
             pose = ProtoSyn.load(T, filename)
             pose.graph.name = pose.graph[1].name # ! Hack for long filenames
             grammar[key] = fragment(pose)
@@ -466,7 +466,7 @@ function lgfactory(::Type{T}, template::Dict) where T
                 end
             end
 
-            @debug "Loading operator $opname"
+            @info "Loading operator $opname"
             grammar[opname] = opfactory(opargs)
         end
     end
@@ -477,11 +477,11 @@ function lgfactory(::Type{T}, template::Dict) where T
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]
-            @debug "Loading productions for rule $key"
+            @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
-                @debug "  $sr"
+                @info "  $sr"
             end
         end
     end
@@ -514,7 +514,7 @@ julia> lgrammar = load_grammar_from_file(filename, "peptide")
 function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     ProtoSyn.load_grammar_extras_from_file!(T, filename, key)
     open(filename) do io
-        @debug "loading grammar from file $filename"
+        @info "loading grammar from file $filename"
         yml = YAML.load(io)
         return lgfactory(T, yml[key])
     end

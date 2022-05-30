@@ -145,36 +145,36 @@ function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractF
     previously_added_atoms = Vector{Atom}([])
     for i in y:-1:1
         for j in 1:x
-            @debug "($i, $j) => N: $(N[i, j]) | X: $(X[i, j]) | Y: $(Y[i, j])"
+            @info "($i, $j) => N: $(N[i, j]) | X: $(X[i, j]) | Y: $(Y[i, j])"
             start_atom  = A[i, j]
             a           = A[i, j]
             added_atoms = Vector{Atom}([])
-            @debug " Start atom: $start_atom"
+            @info " Start atom: $start_atom"
             for n in 1:N[i, j]
                 if i === y
                     ϕ = (n in [1, 2]) ? 180° : 0°
                 else
                     ϕ = n !== 1 ? 0° : 180°
                 end
-                @debug @printf(" Adding atom %d (Name: %s | Rotation %6.2f)\n", n, "C", rad2deg(ϕ))
+                @info @printf(" Adding atom %d (Name: %s | Rotation %6.2f)\n", n, "C", rad2deg(ϕ))
                 a = add_atom_from_internal_coordinates!(a, "C", r, ϕ)
                 push!(added_atoms, a)
             end
             
-            @debug "  Adding next X-axis atom: $(X[i, j] !== 0)"
+            @info "  Adding next X-axis atom: $(X[i, j] !== 0)"
             if X[i, j] !== 0
-                @debug "  Next X atom: $(added_atoms[X[i, j]])"
+                @info "  Next X atom: $(added_atoms[X[i, j]])"
                 A[i, j+1] = added_atoms[X[i, j]]
             end
 
-            @debug "  Adding next Y-axis atom: $(Y[i, j] !== 0 && i-1 > 0)"
+            @info "  Adding next Y-axis atom: $(Y[i, j] !== 0 && i-1 > 0)"
             if Y[i, j] !== 0 && i-1 > 0
-                @debug "  Next Y atom: $(added_atoms[Y[i, j]])"
+                @info "  Next Y atom: $(added_atoms[Y[i, j]])"
                 A[i-1, j] = added_atoms[Y[i, j]]
             end
 
             pattern = B[i, j]
-            @debug "Pattern: $pattern"
+            @info "Pattern: $pattern"
             add_bonds!(added_atoms, previously_added_atoms, start_atom, pattern)
             previously_added_atoms = copy(added_atoms)
         end
@@ -244,20 +244,25 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
         end
         
         if noise > pore_fraction
-            ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = false)
+            @info " Pore generation in carbon sheet: Popping atom $atom"
+            ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = true)
         end
     end
 
     for _ in 1:clean_sweeps
         for atom in eachatom(pose.graph)
             if length(atom.bonds) <= 1
-                ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = false)
+                ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = true)
             end
         end
     end
 
-    pose.state.i2c = false
-    ProtoSyn.request_c2i!(pose.state)
+    ProtoSyn.infer_parenthood!(pose.graph, overwrite = true,
+        start = pose.graph[1, 1, 1], linear_aromatics = false)
+    ProtoSyn.request_c2i!(pose.state, all = true)
     sync!(pose)
+    # ProtoSyn.sort_atoms_by_graph!(pose, start = pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
+    # reindex(pose)
+
     return pose
 end

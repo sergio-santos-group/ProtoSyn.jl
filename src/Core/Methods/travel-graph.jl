@@ -99,6 +99,7 @@ struct BFSA <: ProtoSyn.SearchAlgorithm end
 
 function (sa::BFSA)(atom::Atom, stack::Vector{Atom})
     bonds = copy(sort_children(atom))
+    @info "$atom -> $bonds"
     return vcat(stack, bonds)
 end
 

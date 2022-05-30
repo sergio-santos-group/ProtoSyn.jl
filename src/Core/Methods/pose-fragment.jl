@@ -375,7 +375,7 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
         for atom in residue.items
             for bond in atom.bonds
                 if bond in residue.parent.items
-                    @debug "Unbonding upstream connection ... $atom - $bond"
+                    @info "Unbonding upstream connection ... $atom - $bond"
                     ProtoSyn.unbond!(pose, atom, bond,
                         keep_downstream_position = false)
                 end
@@ -386,7 +386,7 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     # Insert the fragment residues in the pose.graph and set
     # frag_residue.container (of each residue in the fragment) to be the segment
     # of the "parent" residue (automatically on `insert!`)
-    @debug "Shifting $residue downstream by $frag_size residues ..."
+    @info "Shifting $residue downstream by $frag_size residues ..."
     insert!(residue.container, residue.index, frag.graph.items)
     insert!(pose.state, residue.items[1].index, frag.state)
 
@@ -402,30 +402,30 @@ function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGram
     if connect_to_root
         # Case needs to be connected to root
         _root = ProtoSyn.root(pose.graph)
-        @debug "Joining upstream $(_root.container) - $(pose.graph[1][r_index]) ..."
+        @info "Joining upstream $(_root.container) - $(pose.graph[1][r_index]) ..."
         for atom in pose.graph[1][r_index].items
             atom.parent === nothing && ProtoSyn.setparent!(atom, _root)
         end
         ProtoSyn.setparent!(pose.graph[1][r_index], _root.container)
     else
         anchor = residue.container[anchor_id]
-        @debug "Joining upstream $anchor - $(pose.graph[1][r_index]) ..."
+        @info "Joining upstream $anchor - $(pose.graph[1][r_index]) ..."
         grammar.operators[op](anchor, pose, residue_index = r_index)
     end
 
-    @debug "Connecting downstream ..."
+    @info "Connecting downstream ..."
     anchor = residue.container[r_index + frag_size - 1]
     
     # Remove all inter-residue parenthood relationships to upstream residue
     for atom in residue.items
         if !(atom.parent in residue.items)
-            @debug "Removing downstream parenthoods ... $atom & $residue"
+            @info "Removing downstream parenthoods ... $atom & $residue"
             ProtoSyn.popparent!(atom)
             ProtoSyn.popparent!(residue)
         end
     end
 
-    @debug "Joining downstream $anchor - $(pose.graph[1][residue.index])"
+    @info "Joining downstream $anchor - $(pose.graph[1][residue.index])"
     grammar.operators[op](anchor, pose, residue_index = residue.index)
 
     # Set correct ascedents

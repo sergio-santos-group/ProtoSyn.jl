@@ -231,7 +231,7 @@ module SASA
                 @warn "No max SASA entry found for Residue type $rname."
                 ref = 0.0
             end
-            @debug "Esol in residue $(residue.id)-$(residue.name): $σi * ($resi_sasa - ($ref * $Ω ($(ref * Ω)))) = $(σi * (resi_sasa - (ref * Ω)))"
+            @info "Esol in residue $(residue.id)-$(residue.name): $σi * ($resi_sasa - ($ref * $Ω ($(ref * Ω)))) = $(σi * (resi_sasa - (ref * Ω)))"
             esol += σi * (resi_sasa - (ref * Ω))
         end
 

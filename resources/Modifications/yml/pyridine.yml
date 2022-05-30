@@ -1,8 +1,8 @@
 name: ine
 atoms:
   - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
-  - {name:   N, id:   2, symbol:  N, b:   1.536460, theta:   0.000960, phi:  -2.100663}
-  - {name:   H, id:   3, symbol:  H, b:   0.999999, theta:   2.094395, phi:   3.141593}
+  - {name:   N, id:   2, symbol:  N, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.6130}
+  - {name:   H, id:   3, symbol:  H, b:   0.999999, theta:   2.094395, phi:   3.141593, c:  0.3872}
 bonds:
   R: [N]
   N: [H]

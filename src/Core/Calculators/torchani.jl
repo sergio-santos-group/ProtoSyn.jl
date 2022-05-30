@@ -81,10 +81,10 @@ module TorchANI
         end
 
         if torch_is_available && torchani_is_available
-            @debug "TorchANI is using:"
-            @debug " torch version $(torch.__version__)"
-            @debug " cuda-toolkit version $(torch.version.cuda)"
-            @debug " torchani version $(torchani.__version__)"
+            @info "TorchANI is using:"
+            @info " torch version $(torch.__version__)"
+            @info " cuda-toolkit version $(torch.version.cuda)"
+            @info " torchani version $(torchani.__version__)"
         end
     end
 

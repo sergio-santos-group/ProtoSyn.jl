@@ -55,6 +55,7 @@ end
 # TODO: Documentation
 """
 function interpolate(a0::T, a1::T, w::T, method::Symbol = :linear) where {T<:AbstractFloat}
+    w = round(w, digits = 10)
     0 ≤ w ≤ 1 || throw(ArgumentError("Expected 0 ≤ w ≤ 1, got $w"))
     if method ∉ [:linear, :smoothstep, :smootherstep]
         throw(ArgumentError("Unrecognized interpolation method $method"))

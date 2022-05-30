@@ -359,6 +359,22 @@ Base.getindex(s::State, seg::Segment) = begin
     s.items[(seg[1][1].index + s.index_offset):(seg[end][end].index + s.index_offset)]
 end
 
+function Base.setindex!(s::State, ns::AtomState{T}, at::Atom) where {T <: AbstractFloat}
+    os         = s[at]
+    os.parent  = s
+    os.b       = ns.b
+    os.θ       = ns.θ
+    os.ϕ       = ns.ϕ
+    os.Δϕ      = ns.Δϕ
+    os.δ       = ns.δ
+    os.changed = ns.changed
+    os.index   = ns.index
+    os.t       = ns.t
+    os.r       = ns.r
+
+    return os
+end
+
 Base.firstindex(s::State) = 1-s.index_offset
 Base.lastindex(s::State) = s.size
 

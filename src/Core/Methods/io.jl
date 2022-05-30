@@ -120,7 +120,7 @@ function splice_trajectory(filename::String)
     # Create temporary folder
     dirname::String = "$(filename[1:(end-4)])_spliced"
     isdir(dirname) && begin
-        @debug @info "Found pre-existent $dirname folder. Overwritting."
+        @info @info "Found pre-existent $dirname folder. Overwritting."
         rm(dirname, recursive = true)
     end
     mkdir(dirname)
@@ -191,7 +191,7 @@ function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_b
     poses = Vector{Pose}()
     N = length(files)
     for (i, file) in enumerate(files)
-        @debug "Loading pose $i out of $N"
+        @info "Loading pose $i out of $N"
         pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
         push!(poses, pose)
     end
@@ -219,28 +219,7 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, 
     name, _ = splitext(basename(filename))
     pose.graph.name = name
 
-    if bonds_by_distance
-        dm        = collect(ProtoSyn.Calculators.full_distance_matrix(pose))
-        threshold = T(0.1) # Wiggle room for distance based connect inference
-
-        atoms   = collect(eachatom(pose.graph))
-        for (i, atom_i) in enumerate(atoms)
-            for (j, atom_j) in enumerate(atoms)
-                i == j && continue
-                atom_j = atoms[j]
-                atom_j in atom_i.bonds && continue
-                putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
-
-                if !(putative_bond in keys(ProtoSyn.Units.bond_lengths))
-                    continue
-                end
-
-                d = ProtoSyn.Units.bond_lengths[putative_bond]
-                d += d * threshold
-                dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
-            end
-        end
-    end
+    bonds_by_distance && infer_bonds!(pose, threshold = 0.1)
 
     # Set parenthood of atoms (infered)
     infer_parenthood && infer_parenthood!(pose.graph)
