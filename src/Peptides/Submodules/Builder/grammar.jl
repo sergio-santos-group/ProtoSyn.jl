@@ -148,7 +148,7 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
         # 3. Add entries to ProtoSyn.three_2_one & ProtoSyn.one_2_three
         ProtoSyn.three_2_one[var_yml["name"]] = var_yml["code"][1]
         if var_yml["code"][1] in keys(ProtoSyn.one_2_three)
-            ProtoSyn.verbose.mode && println("Variable $(var_yml["code"][1]) already in the Protosyn.three_2_one dictionary (Currently assigned to $(ProtoSyn.one_2_three[var_yml["code"][1]])).")
+            @info "Variable $(var_yml["code"][1]) already in the Protosyn.three_2_one dictionary (Currently assigned to $(ProtoSyn.one_2_three[var_yml["code"][1]]))."
         else
             ProtoSyn.one_2_three[var_yml["code"][1]] = var_yml["name"]
         end
@@ -158,7 +158,7 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
             for alt_name in var_yml["alt"]
                 ProtoSyn.three_2_one[alt_name] = var_yml["code"][1]
                 if alt_name in keys(Peptides.Dihedral.chi_dict)
-                    ProtoSyn.verbose.mode && println("Variable $(alt_name) already in the Peptides.Dihedral.chi_dict (Currently assigned to $(Peptides.Dihedral.chi_dict[alt_name]).")
+                    @info "Variable $(alt_name) already in the Peptides.Dihedral.chi_dict (Currently assigned to $(Peptides.Dihedral.chi_dict[alt_name])."
                 else
                     Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
                 end

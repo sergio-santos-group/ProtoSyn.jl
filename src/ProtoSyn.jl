@@ -5,11 +5,7 @@ __precompile__()
 const _force_recompilation = 1
 const _version             = 1.01
 
-mutable struct Verbose
-    mode::Bool
-end
-
-verbose = Verbose(false)
+include("Core/Methods/log.jl")
 
 if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
     ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true

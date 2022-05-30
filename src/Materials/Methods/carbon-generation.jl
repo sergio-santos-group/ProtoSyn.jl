@@ -145,36 +145,36 @@ function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractF
     previously_added_atoms = Vector{Atom}([])
     for i in y:-1:1
         for j in 1:x
-            ProtoSyn.verbose.mode && println("($i, $j) => N: $(N[i, j]) | X: $(X[i, j]) | Y: $(Y[i, j])")
+            @debug "($i, $j) => N: $(N[i, j]) | X: $(X[i, j]) | Y: $(Y[i, j])"
             start_atom  = A[i, j]
             a           = A[i, j]
             added_atoms = Vector{Atom}([])
-            ProtoSyn.verbose.mode && println(" Start atom: $start_atom")
+            @debug " Start atom: $start_atom"
             for n in 1:N[i, j]
                 if i === y
                     ϕ = (n in [1, 2]) ? 180° : 0°
                 else
                     ϕ = n !== 1 ? 0° : 180°
                 end
-                ProtoSyn.verbose.mode && @printf(" Adding atom %d (Name: %s | Rotation %6.2f)\n", n, "C", rad2deg(ϕ))
+                @debug @printf(" Adding atom %d (Name: %s | Rotation %6.2f)\n", n, "C", rad2deg(ϕ))
                 a = add_atom_from_internal_coordinates!(a, "C", r, ϕ)
                 push!(added_atoms, a)
             end
             
-            ProtoSyn.verbose.mode && println("  Adding next X-axis atom: $(X[i, j] !== 0)")
+            @debug "  Adding next X-axis atom: $(X[i, j] !== 0)"
             if X[i, j] !== 0
-                ProtoSyn.verbose.mode && println("  Next X atom: $(added_atoms[X[i, j]])")
+                @debug "  Next X atom: $(added_atoms[X[i, j]])"
                 A[i, j+1] = added_atoms[X[i, j]]
             end
 
-            ProtoSyn.verbose.mode && println("  Adding next Y-axis atom: $(Y[i, j] !== 0 && i-1 > 0)")
+            @debug "  Adding next Y-axis atom: $(Y[i, j] !== 0 && i-1 > 0)"
             if Y[i, j] !== 0 && i-1 > 0
-                ProtoSyn.verbose.mode && println("  Next Y atom: $(added_atoms[Y[i, j]])")
+                @debug "  Next Y atom: $(added_atoms[Y[i, j]])"
                 A[i-1, j] = added_atoms[Y[i, j]]
             end
 
             pattern = B[i, j]
-            ProtoSyn.verbose.mode && println("Pattern: $pattern")
+            @debug "Pattern: $pattern"
             add_bonds!(added_atoms, previously_added_atoms, start_atom, pattern)
             previously_added_atoms = copy(added_atoms)
         end

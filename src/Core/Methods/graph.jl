@@ -91,7 +91,7 @@ Set `parent` as the parent of `child`, while adding `child` to
 [`popparent!`](@ref)
 """
 function setparent!(child::T, parent::T) where {T <: AbstractContainer}
-    ProtoSyn.verbose.mode && @info "Setting $parent as the parent of $child ..."
+    @debug "Setting $parent as the parent of $child ..."
     hasparent(child) && begin
         error("unable to setparent! of non-orphan item")
     end
@@ -112,7 +112,7 @@ from `parent.children` (only if `child` is a child of `parent`).
 [`setparent!`](@ref)
 """
 function popparent!(child::AbstractContainer)
-    ProtoSyn.verbose.mode && @info "Popping the parent of $child ..."
+    @debug "Popping the parent of $child ..."
     if hasparent(child)
         parent = child.parent
         i = findfirst(x -> x === child, parent.children)
@@ -174,7 +174,7 @@ Segment{/UNK:1/UNK:1}
 ```
 """
 function reindex(topology::Topology; set_ascendents::Bool = true)
-    ProtoSyn.verbose.mode && @info "Re-indexing topology. Set ascendents = $(set_ascendents)."
+    @debug "Re-indexing topology. Set ascendents = $(set_ascendents)."
     aid = rid = sid = 0
     for segment in topology.items
         segment.id    = (sid += 1)
@@ -261,7 +261,7 @@ function rename!(atom::Atom, name::String; force_rename::Bool = false)
 
     if !(similar === nothing)
         if force_rename
-            ProtoSyn.verbose.mode && "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar])). Changing existing atom to temporary placeholder."
+            @debug "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar])). Changing existing atom to temporary placeholder."
             similar_atom = atom.container.items[similar]
             ProtoSyn.rename!(similar_atom, "$(similar_atom.name)_o") # Temporary
         else
@@ -611,7 +611,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
 
         atom_i = pop!(stack)
         i      = findfirst((a) -> a === atom_i, atoms)
-        ProtoSyn.verbose.mode && println("Focus on atom $atom_i - $i")
+        @debug "Focus on atom $atom_i - $i"
         visited[i] = true
 
         atom_i_bonds = Vector{Atom}()
@@ -638,10 +638,10 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
             push!(atom_i_arom_weight, aw)
         end
         atom_i_weight      = atom_i_bond_weight .+ atom_i_arom_weight
-        ProtoSyn.verbose.mode && println("Atom: $atom_i")
-        ProtoSyn.verbose.mode && println(" Non-visited Bonds: $([x.name for x in atom_i_bonds])")
-        ProtoSyn.verbose.mode && println("     Symbol weight: $atom_i_bond_weight")
-        ProtoSyn.verbose.mode && println("   Aromatic weight: $atom_i_arom_weight")
+        @debug "Atom: $atom_i"
+        @debug " Non-visited Bonds: $([x.name for x in atom_i_bonds])"
+        @debug "     Symbol weight: $atom_i_bond_weight"
+        @debug "   Aromatic weight: $atom_i_arom_weight"
 
         # Case exists same symbol & same aromaticity
         atom_i_weight_set = collect(Set(atom_i_weight))
@@ -657,7 +657,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                     contacts_visited = false
                     for range in 1:3
                         atoms_in_range = ProtoSyn.travel_bonds(eq_weight_atom, range, atom_i)
-                        ProtoSyn.verbose.mode && println("For range $range, atoms in range of $eq_weight_atom : $atoms_in_range")
+                        @debug "For range $range, atoms in range of $eq_weight_atom : $atoms_in_range"
                         for atom_in_range in atoms_in_range[2:end]
                             atom_in_range_index = findfirst((a)->a === atom_in_range, atoms)
                             if atom_in_range_index === nothing
@@ -679,20 +679,20 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 # Aromatic     : longer first
                 # Non-aromatic : shorter first
                 permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
-                ProtoSyn.verbose.mode && println("       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])")
+                @debug "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
                 atom_i_weight[eq_weight] .+= permvec
             end
         end
 
         permvec = sortperm(atom_i_weight, rev = false)
         atom_i_bonds = atom_i_bonds[permvec]
-        ProtoSyn.verbose.mode && println(repeat("-", 40))
-        ProtoSyn.verbose.mode && println("      Final weight: $atom_i_weight")
-        ProtoSyn.verbose.mode && println("       Final order: $([a.name for a in atom_i_bonds]) (Note: Atoms are consumed in reverse.)\n")
+        @debug repeat("-", 40)
+        @debug "      Final weight: $atom_i_weight"
+        @debug "       Final order: $([a.name for a in atom_i_bonds]) (Note: Atoms are consumed in reverse.)\n"
 
         for atom_j in atom_i_bonds
             j = findfirst(atom -> atom === atom_j, atoms)
-            ProtoSyn.verbose.mode && j !== nothing && println(" Bonded to atom $atom_j - $j (Visited? => $(visited[j]))")
+            j !== nothing && @debug " Bonded to atom $atom_j - $j (Visited? => $(visited[j]))"
             if j !== nothing && !(visited[j]) && !(changed[j])
 
                 push!(stack, atom_j)
@@ -704,12 +704,12 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                     ProtoSyn.setparent!(atom_j, atom_i)
                     changed[j] = true
                 else
-                    ProtoSyn.verbose.mode && println("  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent")
+                    @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
                 end
 
                 # Deal with aromatics
                 if atom_j.symbol !== "H" && aromatics[j]
-                    ProtoSyn.verbose.mode && println("  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ...")
+                    @debug "  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ..."
                     break
                 end
             end
@@ -725,7 +725,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
         reindex(container) # Sets ascedents
     end
 
-    ProtoSyn.verbose.mode && @warn "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_i2c & sync!)."
+    @info "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_i2c & sync!)."
 
     return container
 end

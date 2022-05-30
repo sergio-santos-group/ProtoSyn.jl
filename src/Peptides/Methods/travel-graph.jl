@@ -5,7 +5,7 @@ function (sa::IUPACSA)(atom::Atom, stack::Vector{Atom})
     if atom.name == "CA"
         c_index = findfirst((atom) -> atom.name == "C", bonds)
         if c_index === nothing
-            ProtoSyn.verbose.mode && @warn "Tried to sort $atom children following IUPAC convention, but no \"C\" atom was found."
+            @warn "Tried to sort $atom children following IUPAC convention, but no \"C\" atom was found."
         else
             push!(bonds, bonds[c_index])
             deleteat!(bonds, c_index)

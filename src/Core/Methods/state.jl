@@ -22,7 +22,7 @@ State{Float64}:
 ```
 """
 function request_c2i!(state::State; all::Bool = false)
-    ProtoSyn.verbose.mode && @info "Requesting cartesian to internal conversion."
+    @debug "Requesting cartesian to internal conversion."
     state.c2i = true
     if all
         for atomstate in state.items
@@ -54,7 +54,7 @@ State{Float64}:
 ```
 """
 function request_i2c!(s::State; all::Bool=false)
-    ProtoSyn.verbose.mode && @info "Requesting internal to cartesian conversion."
+    @debug "Requesting internal to cartesian conversion."
     s[0].changed = all
     s.i2c = true
     s
@@ -97,10 +97,10 @@ function sync!(state::State, topology::Topology)::State
     if state.c2i && state.i2c
         error("unable to request simultaneous i->c and c->i coordinate conversion")
     elseif state.c2i
-        ProtoSyn.verbose.mode && @info "Applying pending cartesian to internal changes ..." 
+        @debug "Applying pending cartesian to internal changes ..." 
         c2i!(state, topology)
     elseif state.i2c
-        ProtoSyn.verbose.mode && @info "Applying pending internal to cartesian changes ..." 
+        @debug "Applying pending internal to cartesian changes ..." 
         i2c!(state, topology)
     end
 

@@ -66,9 +66,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 end
 
 load(filename::AbstractString; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) = begin
-    ProtoSyn.verbose.mode && begin
-        @info "Consider using Peptides.load when dealing with peptide chains."
-    end
+    @info "Consider using Peptides.load when dealing with peptide chains."
     load(ProtoSyn.Units.defaultFloat, filename, bonds_by_distance = bonds_by_distance; alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
@@ -122,7 +120,7 @@ function splice_trajectory(filename::String)
     # Create temporary folder
     dirname::String = "$(filename[1:(end-4)])_spliced"
     isdir(dirname) && begin
-        ProtoSyn.verbose.mode && @info "Found pre-existent $dirname folder. Overwritting."
+        @debug @info "Found pre-existent $dirname folder. Overwritting."
         rm(dirname, recursive = true)
     end
     mkdir(dirname)
@@ -193,9 +191,7 @@ function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_b
     poses = Vector{Pose}()
     N = length(files)
     for (i, file) in enumerate(files)
-        if ProtoSyn.verbose.mode
-            println("Loading pose $i out of $N")
-        end
+        @debug "Loading pose $i out of $N"
         pose = load(T, file, K; bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
         push!(poses, pose)
     end

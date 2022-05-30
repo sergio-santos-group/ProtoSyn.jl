@@ -80,11 +80,11 @@ module TorchANI
             copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
         end
 
-        if torch_is_available && torchani_is_available && ProtoSyn.verbose.mode
-            @info "TorchANI is using:"
-            @info " torch version $(torch.__version__)"
-            @info " cuda-toolkit version $(torch.version.cuda)"
-            @info " torchani version $(torchani.__version__)"
+        if torch_is_available && torchani_is_available
+            @debug "TorchANI is using:"
+            @debug " torch version $(torch.__version__)"
+            @debug " cuda-toolkit version $(torch.version.cuda)"
+            @debug " torchani version $(torchani.__version__)"
         end
     end
 

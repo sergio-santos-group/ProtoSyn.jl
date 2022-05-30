@@ -42,7 +42,7 @@ Pose{Topology}(Topology{/2a3d:61708}, State{Float64}:
 """
 function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = false, alternative_location::String = "A", include_residues::Vector{String} = Vector{String}(), ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}(), sort_atoms_by_graph::Bool = false) where {T <: AbstractFloat}
 
-    if !bonds_by_distance && ProtoSyn.verbose.mode
+    if !bonds_by_distance
         @info "Flag `bonds_by_distance` is set to False. Make sure the loaded $filename file has connect records."
     end
 

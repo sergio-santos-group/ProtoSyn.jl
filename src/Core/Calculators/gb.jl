@@ -178,17 +178,15 @@ module GB
                 αj    = born_radii[j]
 
                 d_sqr = dm[i, j] * dm[i, j]
-                if ProtoSyn.verbose.mode
-                    println("$i <-> $j")
-                    println(" Distance: $(dm[i, j])\n qi: $qi | qj: $qj")
-                    println(" αi: $αi | αj: $αj")
-                end
+                @debug "$i <-> $j"
+                @debug " Distance: $(dm[i, j])\n qi: $qi | qj: $qj"
+                @debug " αi: $αi | αj: $αj"
                 f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))
                 int += (qi * qj) / f
             end
         end
 
-        ProtoSyn.verbose.mode && println("Env: $env\nInt: $int")
+        @debug "Env: $env\nInt: $int"
         e = T(env * int)
 
         return e, nothing

@@ -228,7 +228,7 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
             value = potential(phi)
             phi_values[ss_index] = value
         end
-        ProtoSyn.verbose.mode && println("Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])")
+        @debug "Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])"
         phi_ss = phi_keys[argmin(phi_values)]
         
         psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
@@ -238,7 +238,7 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
             value = potential(psi)
             psi_values[ss_index] = value
         end
-        ProtoSyn.verbose.mode && println("Psi:\n values = $psi_values\n keys = $psi_keys\n Min value: $(argmin(psi_values))\n Chosen key: $(psi_keys[argmin(psi_values)])")
+        @debug "Psi:\n values = $psi_values\n keys = $psi_keys\n Min value: $(argmin(psi_values))\n Chosen key: $(psi_keys[argmin(psi_values)])"
         psi_ss = psi_keys[argmin(psi_values)]
 
         if phi_ss === psi_ss

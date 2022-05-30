@@ -79,9 +79,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         residues = sele(segment, gather = true)
         
         if length(residues) === 0
-            if ProtoSyn.verbose.mode
-                @warn "Skipping $segment : No selected residues in this segment!"
-            end
+            @debug "Skipping $segment : No selected residues in this segment!"
             
             continue
         end
@@ -137,9 +135,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         end
         
         # In case the direct approach wasn't successful
-        if ProtoSyn.verbose.mode
-            @warn "Possible tautomers identified, assigning default names residue by residue ..."
-        end
+        @info "Possible tautomers identified, assigning default names residue by residue ..."
         pose_temp_res = zip(eachresidue(segment), eachresidue(template.graph))
         for (pose_residue, template_residue) in pose_temp_res
             # println("\n$pose_residue - $template_residue")

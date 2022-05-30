@@ -46,7 +46,7 @@ module Dihedral
 
     (phi::Phi)(residue::Residue)     = begin
         if residue.parent == ProtoSyn.root(residue)
-            ProtoSyn.verbose.mode && @warn "Residue $residue has no phi angle"
+            @warn "Residue $residue has no phi angle"
             return nothing
         end
         return residue["C"]
@@ -54,7 +54,7 @@ module Dihedral
 
     (psi::Psi)(residue::Residue)     = begin
         if length(residue.children) == 0 
-            ProtoSyn.verbose.mode && @warn "Residue $residue has no psi angle"
+            @warn "Residue $residue has no psi angle"
             return nothing
         end
         return residue.children[1]["N"]
@@ -62,7 +62,7 @@ module Dihedral
 
     (omega::Omega)(residue::Residue) = begin
         if residue.parent == ProtoSyn.root(residue)
-            ProtoSyn.verbose.mode && @warn "Residue $residue has no omega angle"
+            @warn "Residue $residue has no omega angle"
             return nothing
         end
         return residue["CA"]
@@ -80,7 +80,7 @@ module Dihedral
         @assert chi < length(available_chis) "Tried to retrieve chi $chi on a residue with only $(length(available_chis) - 1) chi angles defined."
         chi_atom = available_chis[chi + 1] # Note the "+ 1"
         if residue[chi_atom] === nothing
-            ProtoSyn.verbose.mode && @warn "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
+            @warn "Chi $chi of residue $residue requires atom $(chi_atom), which was not found"
             return nothing
         end
         

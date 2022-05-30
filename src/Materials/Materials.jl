@@ -8,5 +8,6 @@ module Materials
 
     include("Methods/lattices.jl")
     include("Methods/perlin.jl")
-    include("Methods/carbon.jl") # Requieres perlin.jl
+    include("Methods/carbon-generation.jl") # Requieres perlin.jl
+    include("Methods/carbon-functionalization.jl")
 end

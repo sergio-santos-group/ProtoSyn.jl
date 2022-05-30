@@ -1,0 +1,14 @@
+MODEL        1
+ATOM      1   C0 CRV ?   1      -0.512  -0.512   0.000        0.00           C
+ATOM      2    C CRV ?   1       0.888  -0.512   0.000        0.00           C
+ATOM      3    C CRV ?   1       1.588  -1.725   0.000        0.00           C
+ATOM      4    C CRV ?   1       0.888  -2.937   0.000        0.00           C
+ATOM      5    C CRV ?   1      -0.512  -2.937   0.000        0.00           C
+ATOM      6    C CRV ?   1      -1.212  -1.725   0.000        0.00           C
+CONECT    1    2    6
+CONECT    2    1    3
+CONECT    3    2    4
+CONECT    4    3    5
+CONECT    5    4    6
+CONECT    6    5    1
+ENDMDL

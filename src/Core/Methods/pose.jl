@@ -90,8 +90,8 @@ function sort_atoms_by_graph!(state::State, container::Residue; start::Opt{Atom}
     @assert length(atoms_indexes) === length(old_atoms_indexes) "Starting on $start, the inter-container graph traveled only accounts for $(length(atoms_indexes)) of the original $(length(old_atoms_indexes)) atoms. Make sure parenthoods are set and that the defined `start` atom is correct."
 
     _sortperm = find_atom_sortperm(state, old_atoms_indexes, atoms_indexes)
-    ProtoSyn.verbose.mode && println("Old atom indexes: $old_atoms_indexes")
-    ProtoSyn.verbose.mode && println("New atom indexes: $atoms_indexes")
+    @debug "Old atom indexes: $old_atoms_indexes"
+    @debug "New atom indexes: $atoms_indexes"
 
     # Apply sort perm (ignoring the first 3 entries)
     state.items[4:end] = state.items[4:end][_sortperm[4:end]] # Atom states

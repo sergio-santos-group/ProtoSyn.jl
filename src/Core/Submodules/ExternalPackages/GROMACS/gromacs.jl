@@ -160,7 +160,7 @@ module GMX
 
 
     """
-        add_bounding_box(input_filename::String, output_filename::String, size::T, shape::String = "cubic") where {T <: AbstractFloat}
+        add_bounding_box(input_filename::String, output_filename::String, size::T, [shape::String = "cubic"], [verbose::Bool = true]) where {T <: AbstractFloat}
 
     Employ `gmx editconf` to add a bouding box to a given input file
     (`input_filename`), outputs to `output_filename`. The box has the provided
@@ -186,7 +186,7 @@ module GMX
 
 
     """
-    julia> ProtoSyn.GMX.add_solvent("md_box.pdb", "md_sol.pdb")
+    add_solvent(input_filename::String, output_filename::String, [solvent_type::String = "spc216"], [topol_filename::String = "topol.top"], [verbose::Bool = true])
 
         Employ `gmx solvate` to add a solvent to a given input file
     (`input_filename`), outputs to `output_filename`. The file contents should
@@ -217,7 +217,7 @@ module GMX
 
 
     """
-        add_ions(input_filename::String, output_filename::String; mdp::String = joinpath(ProtoSyn.resource_dir, "ExternalPackages/GROMACS/mdps/ions.mdp"), topol_filename::String = "topol.top", tpr_filename::String = "ions.tpr", positive_ion::String = "NA", negative_ion::String = "CL", number_of_positive_ions::Int = 0, number_of_negative_ions::Int = 0, neutral::Bool = true, attempt_auto::Opt{Int} = nothing, verbose::Bool = true)
+        add_ions(input_filename::String, output_filename::String; [mdp::String = joinpath(ProtoSyn.resource_dir, "ExternalPackages/GROMACS/mdps/ions.mdp")], [topol_filename::String = "topol.top"], [tpr_filename::String = "ions.tpr"], [positive_ion::String = "NA"], [negative_ion::String = "CL"], [number_of_positive_ions::Int = 0], [number_of_negative_ions::Int = 0], [neutral::Bool = true], [attempt_auto::Opt{Int} = nothing], [verbose::Bool = true])
     
         Employ `gmx genion` to add ions to a given input file
     (`input_filename`), outputs to `output_filename`. The file contents should
