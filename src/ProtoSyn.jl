@@ -11,7 +11,7 @@ if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
     ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
 end
 
-printstyled("Loading required packages\n", color = :blue)
+print_loading("External packages")
 using CpuId
 using Printf
 
@@ -20,7 +20,7 @@ using SIMD
 printstyled(" | Loading CUDA\n", color = :cyan)
 using CUDA
 
-printstyled("Setting up variables\n", color = :blue)
+print_loading("Setting up global variables")
 abstract type AbstractAccelerationType end
 abstract type SISD_0 <: AbstractAccelerationType end
 abstract type SIMD_1 <: AbstractAccelerationType end
@@ -67,8 +67,7 @@ printstyled(" | Current acceleration set to $(acceleration.active)\n", color = :
 
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
-printstyled("Loading Core module\n", color = :blue)
-
+print_loading("Core module")
 include("Core/Units/Units.jl")
 include("Core/Methods/python-packages.jl")
 include("Core/Methods/other.jl") # Requires Units.jl
@@ -104,20 +103,19 @@ include("Core/Mutators/Mutators.jl")
 printstyled(" | Loading Drivers\n", color = :cyan)
 include("Core/Drivers/Drivers.jl")
 
-printstyled("Loading Peptides module\n", color = :blue)
+print_loading("Peptides module")
 include("Peptides/Peptides.jl")
 
-printstyled("Loading Materials module\n", color = :blue)
+print_loading("Materials module")
 include("Materials/Materials.jl")
 
-printstyled("Loading Sugars module\n", color = :blue)
+print_loading("Sugars module")
 include("Sugars/Sugars.jl")
 
-printstyled("Loading Common module\n", color = :blue)
+print_loading("Common module")
 include("Common/Common.jl")
 
-printstyled("Loading external models & packages\n", color = :blue)
-
+print_loading("External models")
 
 function version()
     header = """
@@ -134,10 +132,11 @@ function version()
     println(" License      : GNU-GPL-3")
     println(" Developed by : José Pereira (jose.manuel.pereira@ua.pt)")
     println("                Sérgio Santos")
+    println("\n")
 end
 
 function __init__()
-    printstyled("ProtoSyn loaded successfully!\n", color = :green)
+    print_loading("ProtoSyn loaded successfully!", color = :green)
     version()
     set_logger_to_error()
 end

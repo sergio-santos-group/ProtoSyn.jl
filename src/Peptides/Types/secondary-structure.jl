@@ -92,7 +92,7 @@ end
 
 
 """
-    sample(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
+    sample_ramachandran(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
 
 Sample a dihedral angle from a `DiscreteNonParametric` `dnp` distribution.
 ProtoSyn makes available several ramachandran distributions (for the different
@@ -104,11 +104,11 @@ mean value). Returns the dihedral angle value in radians.
 
 # Examples
 ```
-julia> ProtoSyn.Peptides.sample(ProtoSyn.Peptides.psi_coil_sampler)
+julia> ProtoSyn.Peptides.sample_ramachandran(ProtoSyn.Peptides.psi_coil_sampler)
 0.5934119456780721
 ```
 """
-function sample(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
+function sample_ramachandran(dnp::DiscreteNonParametric; min_prob::T = 0.0) where {T <: AbstractFloat}
     selected = probs(dnp) .> min_prob
     x = support(dnp)[selected]
     p = probs(dnp)[selected]

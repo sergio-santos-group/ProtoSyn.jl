@@ -32,4 +32,9 @@ function set_logger_to_error()
     println("Debug: ⨯ | Info: ⨯ | Warnings: ⨯ | Errors: ✓")
 end
 
+function print_loading(msg::String; color::Symbol = :blue)
+    printstyled("[ Loading: ", color = :blue, bold = true)
+    printstyled(msg*"\n", color = color)
+end
+
 set_logger_to_error()

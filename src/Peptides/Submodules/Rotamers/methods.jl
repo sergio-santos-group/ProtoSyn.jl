@@ -40,6 +40,7 @@ apply!(state::State, rotamer::Nothing, residue::Residue) = begin
     return nothing
 end
 
+
 """
     sample_rotamer(rs::BBI_RotamerLibrary{T}, [n::Int = -1]) where {T <: AbstractFloat}
 
