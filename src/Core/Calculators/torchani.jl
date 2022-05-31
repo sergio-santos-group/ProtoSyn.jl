@@ -12,7 +12,7 @@ module TorchANI
     const _model   = PyNULL()
 
     function __init__()
-        @info " | Loading TorchANI"
+        printstyled(" | Loading TorchANI\n", color = :cyan)
 
         torch_is_available = false
         try
@@ -81,10 +81,10 @@ module TorchANI
         end
 
         if torch_is_available && torchani_is_available
-            @info "TorchANI is using:"
-            @info " torch version $(torch.__version__)"
-            @info " cuda-toolkit version $(torch.version.cuda)"
-            @info " torchani version $(torchani.__version__)"
+            # @info "TorchANI is using:"
+            # @info " torch version $(torch.__version__)"
+            # @info " cuda-toolkit version $(torch.version.cuda)"
+            # @info " torchani version $(torchani.__version__)"
         end
     end
 

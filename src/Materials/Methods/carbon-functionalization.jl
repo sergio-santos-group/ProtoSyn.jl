@@ -2,13 +2,16 @@ using Random
 using StatsBase
 using ProtoSyn.Units
 
-const edge           = BondCountSelection(3, <)
-const edge_or_center = BondCountSelection(4, <)
+base           = as"C"
+edge           = base & BondCountSelection(3, <)
+edge_or_center = base & BondCountSelection(4, <)
+center         = base & BondCountSelection(3)
 
 known_functional_groups = Dict{String, AbstractSelection}(
     "ine" => edge,
     "nyl" => edge,
-    "eth" => edge
+    "eth" => edge,
+    "grn" => center & !BondedToSelection(as"N")
 )
 
 """
@@ -62,7 +65,6 @@ function functionalize(pose::Pose, functional_groups::Dict{Fragment, Int})
     shuffle!(functional_group_list)
 
     # Consume list and add functional groups to pose
-    available = ChargeSelection(0.0)
     while length(functional_group_list) > 0
         fcn_id = pop!(functional_group_list)
         fcn = functional_group_id[fcn_id]
@@ -71,32 +73,19 @@ function functionalize(pose::Pose, functional_groups::Dict{Fragment, Int})
             @warn "Tried to add unknown function group: $fcn"
         else
             fcn_sele    = known_functional_groups[fcn.graph.name]
-            random_atom = sample((fcn_sele & available)(pose, gather = true))
-            random_atom = pose.graph[1, 1, 7]
-            println("\nAdding $(fcn.graph.name) to $random_atom")
 
-            # Replace the parenthood on the randomly selected atom
-            random_parent = random_atom.bonds[1]
-            if !isparent(random_parent, random_atom)
-                ProtoSyn.popparent!(random_atom)
-                ProtoSyn.setparent!(random_atom, random_parent)
-                reindex(pose.graph, set_ascendents = true)
-                reindex(pose.state)
-                random_atom.ascendents = (random_atom.index, random_parent.index, random_parent.parent.index, random_parent.parent.parent.index)
-                sync!(pose)
-                println("Synching")
-                ProtoSyn.request_c2i!(pose.state, all = true)
-                sync!(pose)
+            mask = (fcn_sele)(pose)
+            count(mask.content) === 0 && begin
+                @warn "Tried to add $(fnc.graph.name) functional group to the given Pose, but no matching anchoring Atom was available."
+                continue
             end
 
-            ProtoSyn.replace_by_fragment!(pose, random_atom, fcn, 
-                remove_downstream_graph = false,
-                spread_excess_charge    = true)
-
-            return pose
+            random_atom = StatsBase.sample(ProtoSyn.gather(mask, pose.graph))
+            
+            @info "Adding $(fcn.graph.name) to $random_atom"
+            add_functionalization(pose, fcn, random_atom)
         end
     end
-
 end
 
 
@@ -105,28 +94,16 @@ Assumes z = 0
 """
 function add_functionalization(pose::Pose, fcn::Fragment, atom::Atom)
 
-    function clockwise(a1::Atom, a2::Atom, a3::Atom)
-        x1, y1, _ = pose.state[a1].t
-        x2, y2, _ = pose.state[a2].t
-        x3, y3, _ = pose.state[a3].t
-        e1 = (x2-x1)*(y2+y1)
-        e2 = (x3-x2)*(y3+y2)
-        e3 = (x1-x3)*(y1+y3)
-        return (e1 + e2 + e3) > 0.0
-    end
+    fcn = copy(fcn) # So that any changes don't apply to the template group
 
-    fcn = copy(fcn)
-
+    # Measure the dihedral between the selected atom parents and a random bond
+    # (In this case, the first bond found is picked). If this dihedral is π, the
+    # functional group's third atom (if existent) is set to rotate by 180°.
     t  = [atom.parent.parent, atom.parent, atom, [a for a in atom.bonds if a !== atom.parent][1]]
     d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
-    println("T: $t (d: $d)")
-    if d ≈ π
-        t = collect(reverse(t))
-        println("0.0 angle dihedral!")
-        # fcn.state[fcn.graph[1, 2]].ϕ += 180°
+    if d ≈ π && ProtoSyn.count_atoms(fcn.graph) > 2
         fcn.state[fcn.graph[1, 3]].ϕ += 180°
     end
-    # println("Direction clockwise: $(clockwise(t...))\n$(fcn.state.items)\n$(collect(eachatom(fcn.graph)))")
 
     ProtoSyn.replace_by_fragment!(pose, atom, fcn, 
         remove_downstream_graph = false,

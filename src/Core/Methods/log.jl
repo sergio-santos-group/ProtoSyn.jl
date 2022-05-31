@@ -32,4 +32,4 @@ function set_logger_to_error()
     println("Debug: ⨯ | Info: ⨯ | Warnings: ⨯ | Errors: ✓")
 end
 
-set_logger_to_info()
+set_logger_to_error()

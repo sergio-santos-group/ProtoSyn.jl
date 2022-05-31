@@ -42,7 +42,6 @@ selection_type(::DistanceSelection{M, T}) where {M, T} = T
 # --- Select -------------------------------------------------------------------
 function select(sele::DistanceSelection, container::AbstractContainer)
     # Case inner selection is Stateless
-    # Should this be done in compile time?
     if state_mode_type(sele.sele) == Stateless
         mask      = select(sele.sele, container)
         if selection_type(mask) != Atom

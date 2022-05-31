@@ -16,7 +16,8 @@ module GB
     models_onnx = nothing
 
     function __init__()
-        @info " | Loading ONNX models"
+        printstyled(" | Loading ONNX models\n", color = :cyan)
+        
         @eval(GB, models_onnx = GBModels(
             ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_C.onnx"), rand(Float64, 400, 1)),
             ONNX.load(joinpath(ProtoSyn.resource_dir, "Calculators/iGBR-NN/model_N.onnx"), rand(Float64, 400, 1)),

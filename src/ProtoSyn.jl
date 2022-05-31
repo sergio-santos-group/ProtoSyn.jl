@@ -11,21 +11,23 @@ if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
     ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
 end
 
-@info "Loading required packages"
+printstyled("Loading required packages\n", color = :blue)
 using CpuId
 using Printf
 
-@info " | Loading SIMD"
+printstyled(" | Loading SIMD\n", color = :cyan)
 using SIMD
-@info " | Loading CUDA"
+printstyled(" | Loading CUDA\n", color = :cyan)
 using CUDA
 
-@info "Setting up variables"
-
+printstyled("Setting up variables\n", color = :blue)
 abstract type AbstractAccelerationType end
 abstract type SISD_0 <: AbstractAccelerationType end
 abstract type SIMD_1 <: AbstractAccelerationType end
 abstract type CUDA_2 <: AbstractAccelerationType end
+
+export Opt
+const Opt = Union{Nothing, T} where T
 
 mutable struct Acceleration
     active::Type{<: AbstractAccelerationType}
@@ -61,14 +63,11 @@ catch LoadError
     @warn "CUDA package not loaded."
 end
 
-@info "Current acceleration set to $(acceleration.active)"
+printstyled(" | Current acceleration set to $(acceleration.active)\n", color = :cyan)
 
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
-@info "Loading Core"
-
-export Opt
-const Opt = Union{Nothing, T} where T
+printstyled("Loading Core module\n", color = :blue)
 
 include("Core/Units/Units.jl")
 include("Core/Methods/python-packages.jl")
@@ -95,29 +94,30 @@ include("Core/Methods/pose.jl") # Requires grammar.jl & graph.jl
 include("Core/Submodules/Builder/modifications.jl") # Requires pose.jl
 include("Core/Submodules/ExternalPackages/GROMACS/gromacs.jl") # Requires pose.jl
 
-@info "Loading Calculators"
+printstyled(" | Loading Calculators\n", color = :cyan)
 include("Core/Calculators/Calculators.jl")
 include("Core/Methods/histogram.jl") # Requires distance_matrix.jl
 
-@info "Loading Mutators"
+printstyled(" | Loading Mutators\n", color = :cyan)
 include("Core/Mutators/Mutators.jl")
 
-@info "Loading Drivers"
+printstyled(" | Loading Drivers\n", color = :cyan)
 include("Core/Drivers/Drivers.jl")
 
-@info "Loading Peptides"
+printstyled("Loading Peptides module\n", color = :blue)
 include("Peptides/Peptides.jl")
 
-@info "Loading Materials"
+printstyled("Loading Materials module\n", color = :blue)
 include("Materials/Materials.jl")
 
-@info "Loading Sugars"
+printstyled("Loading Sugars module\n", color = :blue)
 include("Sugars/Sugars.jl")
 
-@info "Loading Common"
+printstyled("Loading Common module\n", color = :blue)
 include("Common/Common.jl")
 
-@info "Loading external models & packages" 
+printstyled("Loading external models & packages\n", color = :blue)
+
 
 function version()
     header = """
@@ -137,8 +137,9 @@ function version()
 end
 
 function __init__()
-    @info "ProtoSyn loaded successfully!"
+    printstyled("ProtoSyn loaded successfully!\n", color = :green)
     version()
+    set_logger_to_error()
 end
 
 end # module
