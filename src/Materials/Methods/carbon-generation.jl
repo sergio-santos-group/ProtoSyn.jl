@@ -202,18 +202,12 @@ function generate_carbon(x::Int, y::Int, z::Int = 0; r::T = 1.4, d::T = 3.4) whe
         
         N = layer.state.size
         D = (i-1)*d
-        println("D: $D")
-        println("Before: $(layer.state[1].t[3])")
         layer.state.x[:, 1:N] = layer.state.x[:, 1:N] .+ (v1 .* [D, D, D])
         
         ProtoSyn.request_c2i!(layer.state)
         sync!(layer)
-        println("After: $(layer.state[1].t[3])")
-
-
 
         if i % 2 === 0 # set multiple layer offset
-            println("OFFSET")
             v2 = layer.state[layer.graph[1, 1, 1]].t .- ProtoSyn.center_of_mass(layer, aid"1:6")[:]
             layer.state.x[:, 1:N] = layer.state.x[:, 1:N] .+ (v2 .* [1, 1, 0])
         end
