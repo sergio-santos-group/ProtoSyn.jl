@@ -128,6 +128,12 @@ for residue in eachresidue(pose.graph[1])
 end
 ```
 
+For [Residue](@ref) instances in specific, a more direct way to list all instances in a given [`Pose`](@ref) or `AbstractContainer` is to use the [sequence](@ref) method.
+
+```@docs
+sequence
+```
+
 ## Bonds
 
 The following methods deal with the bonding/unbonding of atoms (and respective
@@ -137,16 +143,24 @@ The following methods deal with the bonding/unbonding of atoms (and respective
 bond
 unbond!
 join
+infer_bonds!
 ```
 
-## Traveling the Graph
+## Travelling the Graph
 
 As further explored in the [Graph](@ref graph-types) section, the directed nature of the [`Pose`](@ref)'s [Graph](@id graph-types) allows for easy travelling of the system. The following methods facilitate that process.
 
 ```@docs
 get_graph_size
-sort_children!
+sort_children
 travel_graph
 travel_bonds
 identify_atom_by_bonding_pattern
+```
+
+As explained above, certain methods in ProtoSyn travel the directed graph. There are, however, multiple ways to follow the same graph (as longs as its ramified), depending on the criteria used on bifurcations. In the Core module, ProtoSyn makes available for the BFS (breath-first search) and DFs (depth-first search) algorithms.
+
+```@docs
+BFS
+DFS
 ```

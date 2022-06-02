@@ -10,6 +10,7 @@ As previously stated, a [Pose](@ref) is the main object of ProtoSyn and brings t
 + [Appending, inserting and removing Atom and Residue instances](@ref)
 + [Copying and merging](@ref)
 + [Aligning poses](@ref)
++ [Diagnosing poses](@ref)
 
 ## Creating, appending and inserting Fragments
 
@@ -31,7 +32,11 @@ In this section the methods responsible to manipulating the molecular structure 
 ```@docs
 insert_atom_as_children!
 pop_atom!
+pop_atoms!
 pop_residue!
+sort_atoms_by_graph!
+add_hydrogens!
+replace_by_fragment!
 ```
 
 ## Copying and merging
@@ -41,6 +46,7 @@ The following methods allow a user to save or replicate an existing [Pose](@ref)
 
 ```@docs
 Base.copy(::Pose)
+recoverfrom!
 merge
 merge!
 symexp
@@ -59,4 +65,12 @@ The following methods allow a user to juxtapose two [`Pose`](@ref) instances and
 align!
 center_of_mass
 rmsd
+```
+
+## Diagnosing poses
+
+ProtoSyn may sometimes expect a certain level of standardization between [`Pose`](@ref) instances. This includes, but is not restricted to, [`Atom`](@ref) names, order, graph completeness, neutral charge, etc. ProtoSyn makes available tools to diagnose [`Pose`](@ref) instances, when things take a turn for the worst:
+
+```@docs
+diagnose
 ```

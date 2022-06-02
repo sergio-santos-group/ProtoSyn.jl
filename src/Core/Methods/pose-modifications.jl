@@ -184,18 +184,22 @@ end
 
 
 """
-# TODO: Documentation
-
-    replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment)
+    replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment; [remove_downstream_graph::Bool = true], [spread_excess_charge::Bool = true])
 
 Replace the selected [`Atom`](@ref) `atom` instance (and any downstream children
-atom, uses [`travel_graph`](@ref) stating on [`Atom`](@ref) `atom` to define the
-downstream region) with the given [`Fragment`](@ref) `fragment`, in the context
-of the provided [`Pose`](@ref) `pose` (updates the [`State`](@ref) and
-[Graph](@ref), etc). The first [`Atom`](@ref) in the [`Fragment`](@ref)
-`fragment` (also known as root or R [`Atom`](@ref)) is placed in the same
-position as the chosen [`Atom`](@ref) `atom` for replacement, and then removed.
-This serves only to orient the remaining [`Fragment`](@ref) `fragment`. Requests
+atom, if `remove_downstream_graph` is set to `true` (is, by default), uses
+[`travel_graph`](@ref), with the default `ProtoSyn.BFS` search algorithm,
+starting on [`Atom`](@ref) `atom` to define the downstream region) with the
+given [`Fragment`](@ref) `fragment`, in the context of the provided
+[`Pose`](@ref) `pose` (updates the [`State`](@ref) and [Graph](@ref)). The first
+[`Atom`](@ref) in the [`Fragment`](@ref) `fragment` (also known as root or R
+[`Atom`](@ref)) is placed in the same position as the chosen [`Atom`](@ref)
+`atom` for replacement, and is then removed. This serves only to orient the
+remaining [`Fragment`](@ref) `fragment`. If the `spread_excess_charge` flasg is
+set to `true` (is, by default), the total sum of partial charges in the added
+[`Fragment`](@ref) `fragment` is divided by the number of remaning bonds (if
+`remove_downstream_graph` is set to `true`, some bonds may be removed during the
+replacement process) and added to each bonded [`Atom`](@ref) instance. Requests
 internal to cartesian coordinates.
 
 # Examples
@@ -228,14 +232,12 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     parent_index        = parent === root ? atom.children[1].index - 1 : parent.index # In the state
     parent_index_in_res = parent === root ? findfirst(x -> x === atom.children[1], parent_container.items) - 1 : findfirst(x -> x === parent, parent_container.items)
     atomstate           = copy(pose.state[atom])
-    
-    # Calculate the fragment excess charge and save current bonds (for later
-    # spreading the excess charge)
+    old_bonds           = copy(atom.bonds)
+
     if spread_excess_charge
-        old_bonds           = copy(atom.bonds)
         excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
-        charge_per_bond     = excess_charge / length(old_bonds)
     end
+
 
     # Since, in the fragment, the third descendent of the root doesn't have a
     # dihedral value (not enough atoms as ascedents), add a fake root and
@@ -324,7 +326,9 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
 
     # Spread excess charge over the bonded atoms to first_atom
     if spread_excess_charge
-        for bond in old_bonds
+        charge_per_bond     = excess_charge / length(first_atom.bonds)
+
+        for bond in first_atom.bonds
             pose.state[bond].δ -= charge_per_bond
         end
     end

@@ -112,8 +112,7 @@ As stated in the [Masks](@ref) section, selections are applied to `AbstractConta
 ```@setup selections
 using ProtoSyn
 using ProtoSyn.Peptides
-res_lib = Peptides.grammar(Float64)
-pose = ProtoSyn.build(res_lib, seq"GAME")
+pose = ProtoSyn.build(Peptides.grammar, seq"GAME")
 ```
 
 ```@repl selections

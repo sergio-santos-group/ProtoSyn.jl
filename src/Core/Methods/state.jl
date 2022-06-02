@@ -386,6 +386,7 @@ State{Float64}:
     return state
 end
 
+
 """
     reindex(state::State)
 

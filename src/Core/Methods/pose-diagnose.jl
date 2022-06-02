@@ -2,8 +2,10 @@
     print_diagnose_results(title::String, issues::Vector{String}, init_level_code::LevelCode, level::Int)
 
 Prints a list of `issues` (under the scop of `title` grouping) in a stylized way
-(uses `init_level_code` and adds inner `LevelCode` instances at `level`). To be
-employed from [`diagnose`](@ref).
+(uses `init_level_code` and adds inner `LevelCode` instances at `level`). 
+
+!!! ukw "Note:"
+    This function is intended to be employed from [`diagnose`](@ref), and not as a standalone.
 
 # Examples
 ```
@@ -164,7 +166,7 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
         push!(charge_issues, "Pose doesn't seem to have charges assigned.\nSuggested fix: Consider using ProtoSyn.Calculators.Electrostatics.assign_default_charges!")
     end
     if !isapprox(sum(c), 0.0, atol = 1e-10)
-        push!(charge_issues, "Sum of charges in the pose is not 0.0.")
+        push!(charge_issues, @sprintf "Sum of charges in the pose is not 0.0 (Δδ = %.3f)." sum(c))
     end
 
     !return_issues && print_diagnose_results("Pose charges", charge_issues, init_level_code, 4)

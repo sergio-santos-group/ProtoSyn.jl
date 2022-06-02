@@ -24,6 +24,8 @@ using Documenter, ProtoSyn, ProtoSyn.Peptides
 #     cb = ProtoSyn.Common.default_energy_step_frame_callback(10, "teste.pdb")
 # end); recursive=true)
 
+ProtoSyn.set_logger_to_warn()
+
 makedocs(
     sitename="ProtoSyn.jl",
     authors="José Pereira & Sérgio Santos",
@@ -43,17 +45,17 @@ makedocs(
                 "Types" => "protosyn-api/core/types.md",
                 "Methods" => [
                     "protosyn-api/core/methods/graph.md",
-                    # "protosyn-api/core/methods/state.md",
-                    # "protosyn-api/core/methods/pose.md",
-                    # "protosyn-api/core/methods/io.md",
-                    # "protosyn-api/core/methods/other.md",
+                    "protosyn-api/core/methods/state.md",
+                    "protosyn-api/core/methods/pose.md",
+                    "protosyn-api/core/methods/io.md",
+                    "protosyn-api/core/methods/other.md",
                 ],
-    #             "Calculators" => [
-    #                 "Calculators Section" => "protosyn-api/core/calculators/calculators-section.md",
+                "Calculators" => [
+                    "Calculators Section" => "protosyn-api/core/calculators/calculators-section.md",
     #                 "TorchANI" => "protosyn-api/core/calculators/torchani.md",
     #                 "Bond distance Restraint" => "protosyn-api/core/calculators/bond-distance-restraint.md",
     #                 "Potential Restraints" => "protosyn-api/core/calculators/potential-restraints.md",
-    #             ],
+                ],
     #             "Mutators" => [
     #                 "Mutators Section" => "protosyn-api/core/mutators/mutators-section.md",
     #                 "Dihedral Mutator" => "protosyn-api/core/mutators/mutators-dihedral.md",

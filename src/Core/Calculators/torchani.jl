@@ -142,7 +142,7 @@ module TorchANI
     # --- SINGLE MODEL
     
     """
-        calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
+        calc_torchani_model([::A], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3) where {A}
         
     Calculate and return the [`Pose`](@ref) `pose` energy according to a single
     TorchANI model neural network. The model can be defined using `model_index`
