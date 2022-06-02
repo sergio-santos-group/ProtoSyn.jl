@@ -23,9 +23,10 @@ State{Float64}:
 """
 function request_c2i!(state::State; all::Bool = false)
     @info "Requesting cartesian to internal conversion."
+
     state.c2i = true
     if all
-        for atomstate in state.items
+        for atomstate in state.items[4:end]
             atomstate.changed = true
         end
     end
@@ -217,6 +218,7 @@ function i2c!(state::State{T}, top::Topology) where T
         (i, j, k) = atom.ascendents
         istate = state[i]
         
+        # println("$atom ($i) (Changed: $(istate.changed)) -> $(sort_children(atom))")
         for child in sort_children(atom)
             # Updates state[child].changed to "true" only if 'istate.changed' is
             # true. (which is, if root_changed is true)
@@ -224,7 +226,6 @@ function i2c!(state::State{T}, top::Topology) where T
             push!(queue, child)
         end
         !(istate.changed) && continue
-        istate.changed = false
         
         jstate = state[j]        
         kstate = state[k]        
@@ -235,7 +236,7 @@ function i2c!(state::State{T}, top::Topology) where T
         b = istate.b # distance
         sθ, cθ = sincos(istate.θ)  # angle
         sϕ, cϕ = sincos(istate.ϕ + jstate.Δϕ)  # dihedral
-
+        
         x_1 = -b*cθ
         x_2 =  b*cϕ*sθ
         x_3 =  b*sϕ*sθ
@@ -249,18 +250,19 @@ function i2c!(state::State{T}, top::Topology) where T
         
         # column 1 (x)
         @nexprs 3 u -> Ri[u, 1] = vji[u]/b
-            
+        
         # column 3 (z)
         @cross u n[u] vji[u] vjk[u]
         dn = sqrt(dot(n,n))
         @nexprs 3 u -> Ri[u, 3] = n[u]/dn
-    
+        
         # column 2 (y)
         @cross u Ri[u, 2] Ri[u, 3] Ri[u, 1]
         
         # move to new position
-        @. xi = vji + jstate.t
-        istate.t = xi
+        @. xi          = vji + jstate.t
+        istate.t       = xi
+        istate.changed = false
     end
 
     state.i2c = false

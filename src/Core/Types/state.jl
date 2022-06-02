@@ -434,7 +434,7 @@ end
 Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
     return ProtoSyn.AtomState(
         nothing, as.index, copy(as.t), copy(as.r),
-        as.b, as.θ, as.ϕ, as.Δϕ, as.δ, as.changed)
+        as.b, as.θ, as.ϕ, as.δ, as.Δϕ, as.changed)
 end
 
 Base.push!(s::State{T}, as::AtomState{T}) where T = begin

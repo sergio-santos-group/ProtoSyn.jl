@@ -222,9 +222,11 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     fragment            = copy(fragment)
 
     # Save the current information regarding the system (parent and atomstate)
+    root                = ProtoSyn.root(pose.graph)
     parent              = atom.parent
-    parent_index        = parent.index
-    parent_index_in_res = findfirst(x -> x === parent, parent.container.items)
+    parent_container    = parent === root ? atom.children[1].container : parent.container
+    parent_index        = parent === root ? atom.children[1].index - 1 : parent.index # In the state
+    parent_index_in_res = parent === root ? findfirst(x -> x === atom.children[1], parent_container.items) - 1 : findfirst(x -> x === parent, parent_container.items)
     atomstate           = copy(pose.state[atom])
     
     # Calculate the fragment excess charge and save current bonds (for later
@@ -238,11 +240,12 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     # Since, in the fragment, the third descendent of the root doesn't have a
     # dihedral value (not enough atoms as ascedents), add a fake root and
     # measure the generated dihedral to apply in the final pose.
-    dihedrals = Vector{eltype(pose.state)}()
-    _fragment = Pose(fragment)
-    for a in ProtoSyn.root(_fragment.graph).children[1].children[1].children
-        push!(dihedrals, ProtoSyn.getdihedral(_fragment.state, a))
-    end
+    # ! Currently not used
+    # dihedrals = Vector{eltype(pose.state)}()
+    # _fragment = Pose(fragment)
+    # for a in ProtoSyn.root(_fragment.graph).children[1].children[1].children
+    #     push!(dihedrals, ProtoSyn.getdihedral(_fragment.state, a))
+    # end
     
     # Remove selected atom & any children atoms
     # (if remove_downstream_graph === true)
@@ -267,30 +270,28 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     end
 
     # Add fragment to residue (start with the first atom in the fragment,
-    # children of the fake root)
+    # children of the fake fragment root)
     frag_origin = ProtoSyn.origin(fragment.graph)
     first_atom  = frag_origin.children[1]
-    insert!(parent.container, parent_index_in_res + 1, first_atom)
-
-    # Change the parenthood and bonds from the fake fragment root to the actual
-    # pose atom, now acting as the parent
-    ProtoSyn.popparent!(first_atom)
-    ProtoSyn.unbond!(fragment, first_atom, frag_origin, keep_downstream_position = false)
-    ProtoSyn.bond(first_atom, parent)
-    ProtoSyn.setparent!(first_atom, parent)
+    insert!(parent_container, parent_index_in_res + 1, first_atom)
 
     # Insert the atomstate. This atomstate belongs to the existing atom that we
     # replaced. The only change is the charge.
     atomstate.δ = fragment.state[first_atom].δ
-    insert!(pose.state, parent_index + 1, State([atomstate]))
+    insert!(pose.state, parent_index + 1, copy(State([atomstate])))
 
-    # Insert both the graph and atomstate for all downstream atoms in the
-    # introduced fragment
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
-        insert!(parent.container, parent_index_in_res + i + 1, frag_atom)
+        insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
         insert!(pose.state, parent_index + i + 1, copy(State([fragment.state[frag_atom]])))
         pose.state[parent_index + i + 1].parent = pose.state
     end
+
+    # Change the parenthood and bonds from the fake fragment root to the actual
+    # pose atom, now acting as the parent
+    ProtoSyn.popparent!(first_atom)
+    ProtoSyn.unbond!(fragment, first_atom, frag_origin, keep_downstream_position = false) # FALSE
+    parent !== root && ProtoSyn.bond(first_atom, parent)
+    ProtoSyn.setparent!(first_atom, parent)
 
     if !remove_downstream_graph
         # Because both the graph and atomstate instances were inserted in the
@@ -318,9 +319,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
         end
     end
 
-    # If didn't remove downstream residues, reindex the re-applied saved
-    # atomstates to match the new atom order, otherwise, reindex to update from
-    # inserting new atoms
     reindex(pose.graph, set_ascendents = true)
     reindex(pose.state)
 
@@ -330,18 +328,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
             pose.state[bond].δ -= charge_per_bond
         end
     end
-
-    # If any dihedral was identified for children of the first atom, apply them
-    if length(dihedrals) > 0
-        original_children = map(x -> !(x in old_children), first_atom.children)
-        for (i, a) in enumerate(first_atom.children[original_children])
-            ProtoSyn.setdihedral!(pose.state, a, dihedrals[i])
-        end
-    end
-
-    # All changes were performed in internal coordinates, request
-    # synchronization to cartesian coordintes
-    ProtoSyn.request_i2c!(pose.state)
 
     return pose
 end
@@ -395,6 +381,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
         # ProtoSyn.unbond already pops parenthood relationship between the two
         # atoms and sets parent of downstream atom to origin
         ProtoSyn.unbond!(pose, atom, other, keep_downstream_position = keep_downstream_position)
+        ProtoSyn.write(pose, "carbon$i.pdb")
     end
     sync!(pose) # ? Unsure why 100%, but we need to sync here.
 
@@ -405,7 +392,6 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     _root = root(pose.graph)
     hasparent(atom) && isparent(_root, atom) && begin
         popparent!(atom)
-        # hasparent(atom.container) && popparent!(atom.container)
     end
 
     # Remove from graph
@@ -418,7 +404,6 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
     # Reindex and set ascendents
     reindex(pose.graph) # Since we removed an atom, needs to be reindexed
     reindex(pose.state) # Since we removed an atom, needs to be reindexed
-    # ProtoSyn.request_i2c!(pose.state)
 
     # Update container 'itemsbyname'
     if atom.name in keys(atom.container.itemsbyname)

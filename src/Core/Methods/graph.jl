@@ -585,7 +585,7 @@ the `linear_aromatics` should be set to `false` to ensure all [`Atom`](@ref)
 instances are visited.
 
 # See also
-[`travel_bonds`](@ref)
+[`travel_bonds`](@ref) [`infer_bonds!`](@ref)
 
 # Examples
 ```jldoctest
@@ -741,19 +741,39 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
         reindex(container) # Sets ascedents
     end
 
-    @info "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_i2c & sync!)."
+    @info "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_c2i & sync!)."
 
     return container
 end
 
 
 """
-# TODO: Documentation
+    infer_bonds!(pose::Pose; [threshold::T = 0.1]) where {T <: AbstractFloat}
+
+Infers bonds for all [`Atom`](@ref) instances of the given [`Pose`](@ref). A new
+bond is assigned when a pair of [`Atom`](@ref) instances are within a given
+distance, as defined in `ProtoSyn.Units.bond_lengths`. The `threshold` value is
+multiplied by the standard bond distance and added to the comparison value to
+allow some leeway in the bond distance (0.1, by default).
+
+# See also
+[`travel_bonds`](@ref) [`infer_parenthood!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.infer_bonds!(pose)
+Pose{Topology}(Topology{/CRV:54976}, State{Float64}:
+ Size: 201
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function infer_bonds!(pose::Pose; threshold::T = 0.1) where {T <: AbstractFloat}
 
-    dm        = collect(ProtoSyn.Calculators.full_distance_matrix(pose))
+    @assert threshold > 0.0 "The given threshold value ($threshold) for `infer_bonds!` should be a value above 0.0!"
 
+    dm      = collect(ProtoSyn.Calculators.full_distance_matrix(pose))
     atoms   = collect(eachatom(pose.graph))
     for (i, atom_i) in enumerate(atoms)
         for (j, atom_j) in enumerate(atoms)
@@ -835,8 +855,10 @@ end
     sequence(container::ProtoSyn.AbstractContainer)::String
     sequence(pose::Pose)::String
 
-Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
-as a string.
+Return the sequence of residues (in 1 letter code) of the given container/
+[`Pose`](@ref)
+as a String. Checks the `ProtoSyn.three_2_one` dictionary for name to 1 letter
+code translation, uses '?' if no entry was found.
 
 # Examples
 ```

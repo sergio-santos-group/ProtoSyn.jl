@@ -9,7 +9,7 @@ center         = base & BondCountSelection(3)
 
 known_functional_groups = Dict{String, AbstractSelection}(
     "ine" => edge,
-    "nyl" => edge,
+    "nyl" => edge & !aid"2", # Bug fix: carbonyl bonded to root child -> Perhaps fix root position?
     "eth" => edge,
     "grn" => center & !BondedToSelection(as"N")
 )
@@ -66,6 +66,11 @@ function functionalize(pose::Pose, functional_groups::Dict{Fragment, Int})
 
     # Consume list and add functional groups to pose
     while length(functional_group_list) > 0
+
+        for atom in eachatom(pose.graph)
+            ϕ = round(rad2deg(pose.state[atom].ϕ), digits = 4)
+        end
+
         fcn_id = pop!(functional_group_list)
         fcn = functional_group_id[fcn_id]
         ProtoSyn.write(pose, "current.pdb")
@@ -94,18 +99,42 @@ Assumes z = 0
 """
 function add_functionalization(pose::Pose, fcn::Fragment, atom::Atom)
 
+    # ProtoSyn.infer_parenthood!(pose.graph, overwrite = true,
+    #     start = pose.graph[1, 1, 1], linear_aromatics = false)
+    # ProtoSyn.request_i2c!(pose.state, all = true)
+    # sync!(pose)
+    # ProtoSyn.sort_atoms_by_graph!(pose, start = pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
+
     fcn = copy(fcn) # So that any changes don't apply to the template group
+
+    println("Adding $(fcn.graph.name) functional group to $atom.")
 
     # Measure the dihedral between the selected atom parents and a random bond
     # (In this case, the first bond found is picked). If this dihedral is π, the
     # functional group's third atom (if existent) is set to rotate by 180°.
     t  = [atom.parent.parent, atom.parent, atom, [a for a in atom.bonds if a !== atom.parent][1]]
     d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
-    if d ≈ π && ProtoSyn.count_atoms(fcn.graph) > 2
+    if ((d ≈ π) | (d ≈ -π)) && ProtoSyn.count_atoms(fcn.graph) > 2
+        println(" Rotating functional group first dihedral by 180°")
         fcn.state[fcn.graph[1, 3]].ϕ += 180°
     end
 
     ProtoSyn.replace_by_fragment!(pose, atom, fcn, 
         remove_downstream_graph = false,
         spread_excess_charge    = true)
+
+    reindex(pose)
+    ProtoSyn.request_i2c!(pose.state, all = false) # all must be false
+    sync!(pose)
+end
+
+
+"""
+# TODO: Documentation
+"""
+function parenthood_as_forces!(pose::Pose)
+    for atom in eachatom(pose.graph)
+        s = collect(pose.state[atom].t)
+        pose.state.f[:, atom.index] .= collect(pose.state[atom.parent].t) .- s
+    end
 end

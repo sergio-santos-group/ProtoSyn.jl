@@ -173,6 +173,7 @@ function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractF
                 A[i-1, j] = added_atoms[Y[i, j]]
             end
 
+            # Add non-parenthood bonds
             pattern = B[i, j]
             @info "Pattern: $pattern"
             add_bonds!(added_atoms, previously_added_atoms, start_atom, pattern)
@@ -182,7 +183,7 @@ function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractF
 
     # 9. Reindex pose and sync! internal to cartesian coordinates
     reindex(pose)
-    ProtoSyn.request_i2c!(pose.state)
+    ProtoSyn.request_i2c!(pose.state, all = true)
     sync!(pose)
 
     return pose
@@ -193,30 +194,35 @@ end
 # TODO: Documentation
 """
 function generate_carbon(x::Int, y::Int, z::Int = 0; r::T = 1.4, d::T = 3.4) where {T <: AbstractFloat}
-    pose = generate_carbon_layer(x, y, r = r)
+    pose = copy(generate_carbon_layer(x, y, r = r))
+    ProtoSyn.request_c2i!(pose.state, all = false) # ! Not sure why this is necessary.
+    sync!(pose)
+
     _v1 = pose.state[pose.graph[1, 1, 1]].t - pose.state[pose.graph[1, 1, 2]].t
     _v2 = pose.state[pose.graph[1, 1, 6]].t - pose.state[pose.graph[1, 1, 1]].t
     v1 = normalize(cross(_v1, _v2))
+
     for i in 2:z
-        layer = generate_carbon_layer(x, y, r = r)
+        layer = copy(generate_carbon_layer(x, y, r = r))
         
         N = layer.state.size
         D = (i-1)*d
         layer.state.x[:, 1:N] = layer.state.x[:, 1:N] .+ (v1 .* [D, D, D])
         
-        ProtoSyn.request_c2i!(layer.state)
-        sync!(layer)
 
         if i % 2 === 0 # set multiple layer offset
-            v2 = layer.state[layer.graph[1, 1, 1]].t .- ProtoSyn.center_of_mass(layer, aid"1:6")[:]
+            v2 = layer.state[layer.graph[1, 1, 1]].t .- ProtoSyn.center_of_mass(layer, aix"1:6")[:]
             layer.state.x[:, 1:N] = layer.state.x[:, 1:N] .+ (v2 .* [1, 1, 0])
         end
 
-        ProtoSyn.request_c2i!(layer.state)
+        ProtoSyn.request_c2i!(layer.state, all = false)
         sync!(layer)
 
         ProtoSyn.merge!(pose, layer)
     end
+
+    ProtoSyn.request_i2c!(pose.state, all = true)
+    sync!(pose)
 
     return pose
 end
@@ -225,7 +231,7 @@ end
 """
 # TODO: Documentation
 """
-function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15; random::Bool = false) where {T <: AbstractFloat}
+function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15; random::Bool = false, neat_indexation::Bool = false) where {T <: AbstractFloat}
 
     for atom in eachatom(pose.graph)
         as = pose.state[atom]
@@ -243,6 +249,9 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
         end
     end
 
+    # Clean sweeps deletes "hanging" atoms (with only 1 or no bonds). This is
+    # performed N times, as from the previous attempt new hanging atoms might
+    # have been generated.
     for _ in 1:clean_sweeps
         for atom in eachatom(pose.graph)
             if length(atom.bonds) <= 1
@@ -251,12 +260,35 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
         end
     end
 
-    ProtoSyn.infer_parenthood!(pose.graph, overwrite = true,
-        start = pose.graph[1, 1, 1], linear_aromatics = false)
+    # During pop_atom!, multiple atoms were set to be child of root. A new
+    # infer_parenthood! round makes it so that all atoms are children of other
+    # atoms (only N root children remain, for the N segments in the pose, as
+    # long as all segments are contiguous. Non-contiguous sub-segments will
+    # still be children of root and may cause problems downstream).
+    for segment in eachsegment(pose.graph)
+        ProtoSyn.infer_parenthood!(pose.graph, overwrite = true, start = segment[1, 1], linear_aromatics = false) 
+    end
+
+    # Since the graph structure has changes, a new update of the internal
+    # coordinates needs to be performed
     ProtoSyn.request_c2i!(pose.state, all = true)
     sync!(pose)
-    ProtoSyn.sort_atoms_by_graph!(pose, start = pose.graph[1, 1, 1], search_algorithm = ProtoSyn.BFS)
-    reindex(pose)
+
+    # Given the parenhood remixes performed, the current indexation might have
+    # been lost. If `neat_indexation` is set to true, the `sort_atoms_by_graph!`
+    # attempts to recover a more "linear" indexation.
+    if neat_indexation
+        for segment in eachsegment(pose.graph)
+            ign_sele = !SerialSelection{Segment}(segment.id, :id)
+            ProtoSyn.sort_atoms_by_graph!(pose, start = segment[1, 1], search_algorithm = ProtoSyn.BFS, ignore_selection = ign_sele)
+        end
+
+        reindex(pose.graph, set_ascendents = true)
+        reindex(pose.state)
+
+        ProtoSyn.request_c2i!(pose.state, all = true)
+        sync!(pose)
+    end
 
     return pose
 end
