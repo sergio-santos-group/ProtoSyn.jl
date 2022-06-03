@@ -23,7 +23,6 @@
                 dij = sqrt(@reduce 3 (+) u -> rij_u * rij_u)
 
                 if !update_forces
-                    println("$i - $j")
                     energies[j, i] = potential(dij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 else
                     @nexprs 3 u -> rij_u = rij_u / dij # normalization

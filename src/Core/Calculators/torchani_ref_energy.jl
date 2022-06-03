@@ -1,5 +1,5 @@
 """
-    calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::AbstractSelection, update_forces::Bool = false; static_ref_energy::T = 0.0, use_ensemble::Bool = false, model::Int = 3) where {T <: AbstractFloat}
+    calc_torchani_internal_energy(M::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::AbstractSelection, [update_forces::Bool = false]; [static_ref_energy::T = 0.0], [use_ensemble::Bool = false], [model::Int = 3]) where {T <: AbstractFloat}
     
 Calculate and return the [`Pose`](@ref) `pose` internal energy according to a
 single TorchANI model neural network. The internal energy is the TorchANI energy
@@ -111,7 +111,7 @@ end
 
 
 """
-    fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, selection::Opt{AbstractSelection})
+    fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, [selection::Opt{AbstractSelection} = nothing])
 
 If the given [`EnergyFunctionComponent`](@ref) `efc` is a TorchANI Reference
 Energy [`EnergyFunctionComponent`](@ref), calculate a new `static_ref_energy` on
@@ -129,7 +129,7 @@ julia> ProtoSyn.Calculators.TorchANI.fixate_static_ref_energy!(efc, pose, rid"1:
 -0.3799925707280636
 ```
 """
-function fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, selection::Opt{AbstractSelection})
+function fixate_static_ref_energy!(efc::EnergyFunctionComponent, pose::Pose, selection::Opt{AbstractSelection} = nothing)
     if :static_ref_energy in keys(efc.settings)
         efc.settings[:static_ref_energy] = calc_torchani_internal_energy(pose, selection, use_ensemble = efc.settings[:use_ensemble], model = efc.settings[:model])[1]
     end

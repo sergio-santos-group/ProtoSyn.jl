@@ -106,7 +106,7 @@ end
 """
     (ProtoSyn.BFS)(atom::Atom, stack::Vector{Atom})
 
-Breath first search algorithm for [`travel_graph!`](@ref). Correctly sorts the
+Breath first search algorithm for [`travel_graph`](@ref). Correctly sorts the
 given [`Atom`](@ref) `atom` children instances and concatenates with the current
 `stack`.
 
@@ -132,7 +132,7 @@ end
 """
     (ProtoSyn.DFS)(atom::Atom, stack::Vector{Atom})
 
-Depth first search algorithm for [`travel_graph!`](@ref). Correctly sorts the
+Depth first search algorithm for [`travel_graph`](@ref). Correctly sorts the
 given [`Atom`](@ref) `atom` children instances and concatenates with the current
 `stack`.
 

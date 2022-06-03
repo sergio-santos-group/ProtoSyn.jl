@@ -55,7 +55,7 @@ module Calculators
     [show_available_energy_function_components](@ref)
 
     # Examples
-    ```jldoctest
+    ```
     julia> ProtoSyn.Calculators.get_available_energy_function_components(ProtoSyn.Calculators)
     14-element Vector{Function}:
      get_default_custom_ref_energy (generic function with 1 method)

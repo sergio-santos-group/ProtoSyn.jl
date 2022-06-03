@@ -106,6 +106,25 @@ end
 get_available_masks() = get_available_masks(ProtoSyn.Calculators)
 
 
+"""
+    show_available_masks([io::IO], [m::Module])
+
+Prints all available masks for potential restraints Module m (defaults to
+[ProtoSyn.Calculators](@ref)) to the given `IO` `io` (defaults to `stdout`).
+Recursivelly searches any inner Module.
+
+# Examples
+```
+julia> ProtoSyn.Calculators.show_available_masks()
++-------------------------------------------------------+
+| Index | Mask function                                 |
++-------------------------------------------------------+
+| 1     | get_bonded_mask                               |
+| 2     | get_diagonal_mask                             |
++-------------------------------------------------------+
+  └── Consider using the `?` menu to learn more about each mask function.
+```
+"""
 function show_available_masks(io::IO, m::Module)
     mask_functions = get_available_masks(m)
 

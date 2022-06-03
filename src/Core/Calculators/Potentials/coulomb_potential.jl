@@ -1,5 +1,5 @@
 """
-    coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
+    get_coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
 
 Return a simple coulomb potential with charges included, as described in
 https://www.softschools.com/formulas/physics/potential_energy_electrostatic_point_particles_formula/37/.
@@ -12,23 +12,28 @@ forces.
 [`get_bump_potential`](@ref)
 
 # Examples
-```jldoctest
-julia> ProtoSyn.Calculators.coulomb_potential(2.0, qi = 1.0, qj = -1.0)
+```
+julia> coulomb = ProtoSyn.Calculators.get_coulomb_potential()
+
+julia> coulomb(2.0, qi = 1.0, qj = -1.0)
 -0.5
 ```
 """
-function coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
-    qi = kwargs[:qi]
-    qj = kwargs[:qj]
+function get_coulomb_potential()
+    
+    return function coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
+        qi = kwargs[:qi]
+        qj = kwargs[:qj]
 
-    e = (qi*qj)/d
+        e = (qi*qj)/d
 
-    v !== nothing && begin
-        _f = (qi*qj)/(d * d)
-        f1 = - _f .* v
-        f2 =   _f .* v
+        v !== nothing && begin
+            _f = (qi*qj)/(d * d)
+            f1 = - _f .* v
+            f2 =   _f .* v
+        end
+
+        v !== nothing && return e, f1, f2
+        return e
     end
-
-    v !== nothing && return e, f1, f2
-    return e
 end

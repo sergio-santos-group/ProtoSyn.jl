@@ -146,7 +146,21 @@ Calculators.full_distance_matrix
 
 ## Available EnergyFunctionComponents
 
-Besides all the machinery to create custom energy components, ProtoSyn's `Core` module makes available some simple [`EnergyFunctionComponent`](@ref) instances. Since this is not a specialized module, available components should be indiferent to the type of molecular structure being evaluated. As of ProtoSyn 1.1, the following [`EnergyFunctionComponent`](@ref) instances are made available from the `Core` module, and can be further explored in the respectivelly dedicated pages of this manual:
+Besides all the machinery to create custom energy components, ProtoSyn's `Core` module makes available some simple [`EnergyFunctionComponent`](@ref) instances. Since this is not a specialized module, available components should be indiferent to the type of molecular structure being evaluated. For a compelte list of all available [`EnergyFunctionComponent`](@ref) instances, consider using the [`ProtoSyn.Calculators.show_available_energy_function_components`](@ref) method.
+
+```@docs
+ProtoSyn.Calculators.show_available_energy_function_components
+```
+
+As of ProtoSyn 1.1, the following [`EnergyFunctionComponent`](@ref) instances are made available from the `Core` module, and can be further explored in the respectivelly dedicated pages of this manual:
 
 * [Bond Distance Restraint](@ref)
-* [TorchANI](@ref)
+* [Potential restraints](@ref calculators-potential-restraints)
+* [TorchANI](@ref) (And [TorchANI reference energy EnergyFunctionComponent](@ref))
+* [Electrostatics](@ref)
+* [Generalized Born Solvation](@ref)
+* [SASA](@ref)
+* [Hydrogen bonds](@ref)
+* [Radius of gyration](@ref)
+* [Custom reference energy](@ref)
+* [REF-15](@ref)

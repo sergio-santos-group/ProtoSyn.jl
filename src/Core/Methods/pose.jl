@@ -16,18 +16,18 @@ wrong. It's reccommended to [`reindex`](@ref ProtoSyn.reindex) the encompassing
 
     sort_atoms_by_graph!(state::State, container::Union{Topology, Segment}; [start::Opt{Atom} = nothing], [search_algorithm::F = ProtoSyn.BFS]) where {F <: SearchAlgorithm}
 
-Applies [`sort_atom_by_graph!`](@ref) to all [`Residue`](@ref) instances in the
+Applies [`sort_atoms_by_graph!`](@ref) to all [`Residue`](@ref) instances in the
 given `container`. Automatically calls [`reindex`](@ref ProtoSyn.reindex) after
 sorting the [`Atom`](@ref) instances.
 
     sort_atoms_by_graph!(pose::Pose; start::Opt{Atom} = nothing, search_algorithm::F = ProtoSyn.DFS) where {F <: SearchAlgorithm}
 
-Applies [`sort_atom_by_graph!`](@ref) to all [`Residue`](@ref) instances in the
+Applies [`sort_atoms_by_graph!`](@ref) to all [`Residue`](@ref) instances in the
 given [`Pose`](@ref) `pose`. Automatically calls
 [`reindex`](@ref ProtoSyn.reindex) after sorting the [`Atom`](@ref) instances.
 
 !!! ukw "Note:"
-    When applying [`sort_atom_by_graph!`](@ref) to a [`Pose`](@ref),
+    When applying [`sort_atoms_by_graph!`](@ref) to a [`Pose`](@ref),
     [`Topology`](@ref) or [`Segment`](@ref), the sorting is still performed at
     the [`Residue`](@ref) level (one [`Residue`](@ref) at a time), therefore the
     chain sorting based on graph size only takes into account intra-residue
@@ -69,7 +69,7 @@ function sort_atoms_by_graph!(state::State, container::Residue; start::Opt{Atom}
         return _sortperm
     end
 
-    @assert !isa(container, Atom) "Can't sort_atom_by_graph! on a single Atom instance." 
+    @assert !isa(container, Atom) "Can't sort_atoms_by_graph! on a single Atom instance." 
     old_atoms_indexes = [a.index for a in collect(eachatom(container))]
     
     if start === nothing

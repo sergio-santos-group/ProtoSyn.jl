@@ -94,7 +94,7 @@ end
 
 
 """
-    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose, update_forces::Bool = false; model::Int = 3) where {A}
+    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [model::Int = 3]) where {A}
     
 Calculate the pose energy according to a single TorchANI model neural
 network, using the XML-RPC protocol. If no TorchANI XML-RPC server is found, a

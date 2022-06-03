@@ -3,7 +3,7 @@
 
 Given a `target` [`Residue`](@ref), search the provided [`Tautomer`](@ref)
 `tautomer` list for the corresponding template [`Residue`](@ref), based on the
-[Graph](@ref) (employs the [`travel_graph!`](@ref ProtoSyn.travel_graph!)
+[Graph](@ref) (employs the [`travel_graph`](@ref ProtoSyn.travel_graph)
 method).
 
 # Examples

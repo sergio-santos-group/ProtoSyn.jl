@@ -121,7 +121,9 @@ module GB
     will be re-calculated, using the provided `models`
     (uses `ProtoSyn.Calculators.GB.models_onnx`, by default). Custom Born Radii
     predictors can be defined, using the following signature:
+
     ```my_born_radii_predictor(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx)```
+    
     Note the presence of pre-calculated full-distance matrix `dm` in the
     `Function` arguments. Even if no `GBModels` are used in the Born Radii
     prediction, `calc_gb` still provides them and as such the custom `Function`

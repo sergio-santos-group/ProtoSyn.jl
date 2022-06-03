@@ -151,7 +151,7 @@ module Electrostatics
     acceleration type used to calculate this energetic contribution (See
     [ProtoSyn acceleration types](@ref)). Uses `ProtoSyn.acceleration.active` by
     default. This function makes use of the
-    [`apply_potential`](@ref ProtoSyn.Calculators.apply_potential) framework. As
+    [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) framework. As
     such, an optional `mask` and `VerletList` `vlist` can be provided to limit
     the calculation. Make sure the [`Pose`](@ref) `pose` has charges assigned
     (see [`assign_acc2_eem_charges_from_file!`](@ref) and
@@ -205,7 +205,7 @@ module Electrostatics
 
     # Settings
     * `mask::Function` - Defines which atom-pairs to mask out of the result;
-    * `vlist::VerletList` - If defined, the [`apply_potential`](@ref ProtoSyn.Calculators.apply_potential) method will only calculate the given atom-pairs in the `VerletList`;
+    * `vlist::VerletList` - If defined, the [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) method will only calculate the given atom-pairs in the `VerletList`;
     * `potential::Function` - Which potential to apply to each atom-pair;
 
     # Examples

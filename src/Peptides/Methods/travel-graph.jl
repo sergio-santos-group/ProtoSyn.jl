@@ -17,7 +17,7 @@ end
 """
     (ProtoSyn.IUPAC)(atom::Atom, stack::Vector{Atom})
 
-IUPAC-like search algorithm for [`travel_graph!`](@ref). Correctly sorts the
+IUPAC-like search algorithm for [`travel_graph`](@ref). Correctly sorts the
 given [`Atom`](@ref) `atom` children instances and concatenates with the current
 `stack`. This method attempts to identify each [`Residue`](@ref) sidechain (from
 alpha-carbon CA children names) and sorts sidechain before the remaining

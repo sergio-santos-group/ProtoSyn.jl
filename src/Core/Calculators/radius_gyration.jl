@@ -3,7 +3,7 @@ module RG
     using ProtoSyn
 
     """
-    calc_radius_gyration(pose::Pose, selection::Opt{AbstractSelection})
+    calc_radius_gyration(pose::Pose, [selection::Opt{AbstractSelection} = nothing])
 
     Calculate each dimension (X, Y and Z) radius of gyration (the root mean
     square deviation to all of the structure's [`Atom`](@ref) instances from the
@@ -22,7 +22,7 @@ module RG
     10.74091335737219
     ```
     """
-    function calc_radius_gyration(pose::Pose, selection::Opt{AbstractSelection})
+    function calc_radius_gyration(pose::Pose, selection::Opt{AbstractSelection} = nothing)
         if selection === nothing
             sele = TrueSelection{Atom}()
         else
@@ -42,7 +42,7 @@ module RG
 
 
     """
-        calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection})
+        calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool)
 
     Calculate the sum of all dimensions (X, Y and Z) radius of gyration. This
     Calculator does not calculate forces. As such, `update_forces` has no effect
