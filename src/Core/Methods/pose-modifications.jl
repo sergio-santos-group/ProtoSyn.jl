@@ -237,17 +237,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     if spread_excess_charge
         excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
     end
-
-
-    # Since, in the fragment, the third descendent of the root doesn't have a
-    # dihedral value (not enough atoms as ascedents), add a fake root and
-    # measure the generated dihedral to apply in the final pose.
-    # ! Currently not used
-    # dihedrals = Vector{eltype(pose.state)}()
-    # _fragment = Pose(fragment)
-    # for a in ProtoSyn.root(_fragment.graph).children[1].children[1].children
-    #     push!(dihedrals, ProtoSyn.getdihedral(_fragment.state, a))
-    # end
     
     # Remove selected atom & any children atoms
     # (if remove_downstream_graph === true)
