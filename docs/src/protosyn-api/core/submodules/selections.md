@@ -4,32 +4,44 @@
  
 ProtoSyn comes equipped with a powerful syntax for selecting parts of molecular systems based on several different parameters. The parent type of all [Selections](@ref core-selections) is an `AbstractSelection`, which is parametrized by 2 different static types:
 
-* First, a `StateMode` indicates whether an `AbstractSelection` is `Stateful` or `Stateless`.
-    * `Stateful` selections require a [`State`](@ref) in order to correctly calculate the Selection. An example would be a Selection that selects all residues within 10Å of a given residue.
+* First, a **State mode** (of abstract type `AbstractStateMode`) indicates whether an `AbstractSelection` is `Stateful` or `Stateless`.
+    * `Stateful` selections require a [`State`](@ref) in order to correctly calculate the Selection. An example would be a Selection that selects all [`Atom`](@ref) instances within 10Å of a given [`Atom`](@ref).
     * `Stateless` selections do not require a [`State`](@ref). An example would be a Selection that selects all residues named "ALA".
 
-* Secondly, a selection type is an instance of `AbstractContainer` (such as an [`Atom`](@ref), [`Residue`](@ref) or [`Segment`](@ref)), and indicates the type of molecular structure that in being queried. For example, depending on the selection type, we can select all [`Residue`](@ref) instances named "ALA" or all [`Atom`](@ref) instances named "ALA".
+* Secondly, a **Selection type** is an instance of `AbstractContainer` (such as an [`Atom`](@ref), [`Residue`](@ref) or [`Segment`](@ref)), and indicates the type of molecular structure that in being queried. For example, depending on the selection type, we can select all [`Residue`](@ref) instances named "ALA" or all [`Atom`](@ref) instances named "ALA".
 
 !!! ukw "Note:"
     Some `AbstractSelection` types can use regular expressions (Regex) to search for the desired parameter. Such cases are discussed individually.
 
-[Selections](@ref core-selections), when applied to an `AbstractContainer`, return a binary [`Mask`](@ref) \(see [Masks](@ref) section). These can be combined with others [Masks](@ref) \(see [Combining selections](@ref)), used directly in [Methods] or gathered to a list of the actual instances of `AbstractContainer` (see [Applying selections](@ref) section).
+[Selections](@ref core-selections), when applied to an `AbstractContainer`, return a binary [`Mask`](@ref) (see [Masks](@ref) section). These can be combined with others [Masks](@ref) (see [Combining selections](@ref)), used directly in [Methods](@ref pose-methods) or gathered to a list of the actual instances of `AbstractContainer` (see [Applying selections](@ref) section).
 
+The [Selections](@ref core-selections) section will be sub-divided in the following topics, for organization:
 
-# Available selection functions
++ [Available selections](@ref)
++ [Masks](@ref)
++ [Promotion](@ref)
++ [Combining selections](@ref)
++ [Applying selections](@ref)
+
+# Available selections
 
 In this section the list all available `AbstractSelection` types will be explored.
 
 + [`SerialSelection`](@ref)
 + [`RangeSelection`](@ref)
 + [`FieldSelection`](@ref)
-+ [`TerminalSelection`](@ref)
++ [`UpstreamTerminalSelection`](@ref)
++ [`DownstreamTerminalSelection`](@ref)
 + [`DistanceSelection`](@ref)
 + [`RandomSelection`](@ref)
 + [`RandomSelectionFromList`](@ref)
 + [`RandomRangeSelection`](@ref)
 + [`TrueSelection`](@ref)
 + [`UnarySelection`](@ref)
++ [`AromaticSelection`](@ref)
++ [`BondCountSelection`](@ref)
++ [`BondedToSelection`](@ref)
++ [`ChargeSelection`](@ref)
 
 ```@docs
 SerialSelection
@@ -42,7 +54,8 @@ FieldSelection
 **Figure 1 |** An example of a Serial, Range and Field selections being employed.
 
 ```@docs
-TerminalSelection
+UpstreamTerminalSelection
+DownstreamTerminalSelection
 DistanceSelection
 ```
 
@@ -54,6 +67,24 @@ DistanceSelection
 RandomSelection
 RandomSelectionFromList
 RandomRangeSelection
+AromaticSelection
+```
+
+![ProtoSyn selections3](../../../assets/ProtoSyn-select-3.png)
+
+**Figure 3 |** An example of the Aromatic selection being employed.
+
+```@docs
+BondCountSelection
+BondedToSelection
+```
+
+![ProtoSyn selections4](../../../assets/ProtoSyn-select-4.png)
+
+**Figure 4 |** An example of the Bond Count and Bonded To selection being employed.
+
+```@docs
+ChargeSelection
 TrueSelection
 UnarySelection
 ```
@@ -101,9 +132,9 @@ Two selections can be combined using logical operators (such as `or` and `and`),
 BinarySelection
 ```
 
-![ProtoSyn selections3](../../../assets/ProtoSyn-select-3.png)
+![ProtoSyn selections5](../../../assets/ProtoSyn-select-5.png)
 
-**Figure 3 |** An example of a possible combination of `AbstractSelection` types, in ProtoSyn. In this example, two [`FieldSelection`](@ref) instances (`an"CA"` and `rn"ALA"`) are combined using a [`BinarySelection`](@ref), with operation `op` being the `&` ("and"), effectly selecting all [`Atom`](@ref) instances in a given [`Pose`](@ref) who are `CA` atoms belonging to an `ALA` residue. This `AbstractSelection` is further used as input for a [`DistanceSelection`](@ref), selecting all [`Atom`](@ref) instances within 10.0 Å of a `CA` atom in an `ALA` residue. Since [`FieldSelection`](@ref) instances act directly on a given [`Pose`](@ref) instance (and not on other `AbstractSelection` instances), these are said to be "leaf selections", in contrast with "branch selections". Branch selections act on other `AbstractSelection` instances. For example, the [`BinarySelection`](@ref) combines two `AbstractSelection` instances with a given operator `op`. 
+**Figure 5 |** An example of a possible combination of `AbstractSelection` types, in ProtoSyn. In this example, two [`FieldSelection`](@ref) instances (`an"CA"` and `rn"ALA"`) are combined using a [`BinarySelection`](@ref), with operation `op` being the `&` ("and"), effectly selecting all [`Atom`](@ref) instances in a given [`Pose`](@ref) who are `CA` atoms belonging to an `ALA` residue. This `AbstractSelection` is further used as input for a [`DistanceSelection`](@ref), selecting all [`Atom`](@ref) instances within 10.0 Å of a `CA` atom in an `ALA` residue. Since [`FieldSelection`](@ref) instances act directly on a given [`Pose`](@ref) instance (and not on other `AbstractSelection` instances), these are said to be "leaf selections", in contrast with "branch selections". Branch selections act on other `AbstractSelection` instances. For example, the [`BinarySelection`](@ref) combines two `AbstractSelection` instances with a given operator `op`. 
 
 # Applying selections
 

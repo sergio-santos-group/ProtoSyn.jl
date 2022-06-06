@@ -38,8 +38,6 @@ module RG
         return sqrt.(sum(rr, dims = 2) ./ sum(mi))
     end # function
 
-    calc_radius_gyration(pose::Pose) = calc_radius_gyration(pose, nothing)
-
 
     """
         calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool)

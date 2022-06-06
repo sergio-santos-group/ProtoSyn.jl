@@ -63,21 +63,21 @@ makedocs(
                     "Custom reference energy" => "protosyn-api/core/calculators/custom-ref-energy.md",
                     "REF-15" => "protosyn-api/core/calculators/ref15.md",
                 ],
-    #             "Mutators" => [
-    #                 "Mutators Section" => "protosyn-api/core/mutators/mutators-section.md",
-    #                 "Dihedral Mutator" => "protosyn-api/core/mutators/mutators-dihedral.md",
-    #                 "Crankshaft Mutator" => "protosyn-api/core/mutators/mutators-crankshaft.md",
-    #                 "Rigid Body Mutators" => "protosyn-api/core/mutators/mutators-rigid-body.md",
-    #                 "Backrub Mutators" => "protosyn-api/core/mutators/mutators-backrub.md",
-    #                 "Compound Mutators" => "protosyn-api/core/mutators/mutators-compound.md",
-    #             ],
-    #             "Drivers" => [
-    #                 "Drivers Section" => "protosyn-api/core/drivers/drivers-section.md",
-    #                 "Monte Carlo" => "protosyn-api/core/drivers/drivers-monte-carlo.md",
-    #                 "Steepest Descent" => "protosyn-api/core/drivers/drivers-steepest-descent.md",
-    #                 "ILS" => "protosyn-api/core/drivers/drivers-ils.md",
-    #                 "Compound Driver" => "protosyn-api/core/drivers/drivers-compound.md",
-    #             ],
+                "Mutators" => [
+                    "Mutators Section" => "protosyn-api/core/mutators/mutators-section.md",
+                    "Dihedral Mutator" => "protosyn-api/core/mutators/mutators-dihedral.md",
+                    "Crankshaft Mutator" => "protosyn-api/core/mutators/mutators-crankshaft.md",
+                    "Rigid Body Mutators" => "protosyn-api/core/mutators/mutators-rigid-body.md",
+                    "Backrub Mutators" => "protosyn-api/core/mutators/mutators-backrub.md",
+                    "Compound Mutators" => "protosyn-api/core/mutators/mutators-compound.md",
+                ],
+                "Drivers" => [
+                    "Drivers Section" => "protosyn-api/core/drivers/drivers-section.md",
+                    "Monte Carlo" => "protosyn-api/core/drivers/drivers-monte-carlo.md",
+                    "Steepest Descent" => "protosyn-api/core/drivers/drivers-steepest-descent.md",
+                    "ILS" => "protosyn-api/core/drivers/drivers-ils.md",
+                    "Compound Driver" => "protosyn-api/core/drivers/drivers-compound.md",
+                ],
     #             "Submodules" => [
     #                 "Selections" => "protosyn-api/core/submodules/selections.md",
     #                 "Builder" => "protosyn-api/core/submodules/builder.md"
