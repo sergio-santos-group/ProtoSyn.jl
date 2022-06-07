@@ -1,17 +1,16 @@
 using ProtoSyn: State, setdihedral!, Residue
-using ProtoSyn.Peptides.Dihedral: DihedralType
 using Random
 using Printf
 
 abstract type RotamerLibrary end
 
 """
-    Rotamer{T <: AbstractFloat}(name::String, chis::Dict{DihedralType, Tuple{T, T}})
+    Rotamer{T <: AbstractFloat}(name::String, chis::Dict{AbstractSelection, Tuple{T, T}})
 
 A [`Rotamer`](@ref) holds information regarding a single conformation for all
 chi dihedral angles of a sidechain belonging to an aminoacid identified by the 
 given `name`. The `chis` list is, therefore, a dictionary, where the key is the
-`DihedralType` (chi1, chi2, chi3 or chi4) and the value is a `Tuple{T, T}`,
+`AbstractSelection` (chi1, chi2, chi3 or chi4) and the value is a `Tuple{T, T}`,
 where the first entry is the average dihedral angle and the second entry is the
 standard deviation expected for that dihedral angle.
     
@@ -38,7 +37,7 @@ function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
     for index in 1:4
         if index <= length(r.chis)
             name = "chi$index"
-            value, sd = r.chis[getfield(ProtoSyn.Peptides.Dihedral, Symbol(name))]
+            value, sd = r.chis[ChiSelection(index)]
             if value === nothing
                 chis *= @sprintf " | %s: %11s ± %4.1f" titlecase(name) "Not defined" rad2deg(sd)
             else

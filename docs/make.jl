@@ -85,7 +85,7 @@ makedocs(
             ],
             "Peptides" => [
                 "Introduction" => "protosyn-api/peptides/introduction.md",
-    #             "Types" => "protosyn-api/peptides/types.md",
+                "Types" => "protosyn-api/peptides/types.md",
     #             "Methods" => [
     #                 "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
     #                 "Graph" => "protosyn-api/peptides/methods/graph.md",

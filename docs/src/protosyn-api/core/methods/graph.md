@@ -65,8 +65,7 @@ An important initial detail when describing the [Graph](@ref core-graph-methods)
 ```@setup methods
 using ProtoSyn
 using ProtoSyn.Peptides
-res_lib = Peptides.grammar(Float64)
-pose = ProtoSyn.build(res_lib, seq"GME")
+pose = ProtoSyn.build(Peptides.grammar, seq"GME")
 ```
 
 ```@repl methods

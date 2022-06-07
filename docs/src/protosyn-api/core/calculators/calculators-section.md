@@ -4,7 +4,7 @@ CurrentModule = ProtoSyn.Calculators
 
 # Calculators section
 
-Each module in ProtoSyn may contain a [Calculators section](@ref) which includes types and methods that allow ProtoSyn to measure the fitness of a given [`State`](@ref), according to a specific [`EnergyFunction`](@ref) instance. The resulting energy value is stored in the [`State`](@ref)`.e` field, as a Dictionary of [`EnergyFunctionComponent`](@ref) instances. The `:total` energy of the system is the sum of each component contribution. Each module in ProtoSyn (such as the [Peptides](@ref) module) adds new components and methods specific to that module's purpose. As a starting point, the `Core` module sets up all necessary types and methods transversal to all modules, as well as a few basic energetic components. In the next section, a further exploration on how to develop and set-up custom [`EnergyFunction`](@ref) instances is provided, organized in the following sections:
+Each module in ProtoSyn may contain a [Calculators section](@ref) which includes types and methods that allow ProtoSyn to measure the fitness of a given [`State`](@ref ProtoSyn.State), according to a specific [`EnergyFunction`](@ref) instance. The resulting energy value is stored in the [`State`](@ref ProtoSyn.State)`.e` field, as a Dictionary of [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) instances. The `:total` energy of the system is the sum of each component contribution. Each module in ProtoSyn (such as the [Peptides](@ref) module) adds new components and methods specific to that module's purpose. As a starting point, the `Core` module sets up all necessary types and methods transversal to all modules, as well as a few basic energetic components. In the next section, a further exploration on how to develop and set-up custom [`EnergyFunction`](@ref) instances is provided, organized in the following sections:
 
 + [Energy functions & energy function components](@ref)
 + [Creating a custom EnergyFunctionComponent](@ref)
@@ -146,10 +146,10 @@ Calculators.full_distance_matrix
 
 ## Available EnergyFunctionComponents
 
-Besides all the machinery to create custom energy components, ProtoSyn's `Core` module makes available some simple [`EnergyFunctionComponent`](@ref) instances. Since this is not a specialized module, available components should be indiferent to the type of molecular structure being evaluated. For a compelte list of all available [`EnergyFunctionComponent`](@ref) instances, consider using the [`ProtoSyn.Calculators.show_available_energy_function_components`](@ref) method.
+Besides all the machinery to create custom energy components, ProtoSyn's `Core` module makes available some simple [`EnergyFunctionComponent`](@ref) instances. Since this is not a specialized module, available components should be indiferent to the type of molecular structure being evaluated. For a compelte list of all available [`EnergyFunctionComponent`](@ref) instances, consider using the [`show_available_energy_function_components`](@ref ProtoSyn.Calculators.show_available_energy_function_components) method.
 
 ```@docs
-ProtoSyn.Calculators.show_available_energy_function_components
+show_available_energy_function_components
 ```
 
 As of ProtoSyn 1.1, the following [`EnergyFunctionComponent`](@ref) instances are made available from the `Core` module, and can be further explored in the respectivelly dedicated pages of this manual:

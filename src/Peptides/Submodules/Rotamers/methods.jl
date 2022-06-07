@@ -191,10 +191,10 @@ Rotamer{Float64}: GLU | Chi1:   180.0° ±  0.0 | Chi2:  -180.0° ±  0.0 | Chi3
 """
 function get_rotamer(pose::Pose, residue::Residue)
     T = eltype(pose.state)
-    chis = Dict{DihedralType, Tuple{Union{T, Nothing}, T}}()
+    chis = Dict{AbstractSelection, Tuple{Union{T, Nothing}, T}}()
     for chi_index in 1:(length(chi_dict[residue.name.content]) - 1)
-        chi = getfield(ProtoSyn.Peptides.Dihedral, Symbol("chi$chi_index"))
-        c = chi(residue)
+        chi = ChiSelection(chi_index)
+        c = chi(residue, gather = true)[1]
         if c === nothing
             chis[chi] = (c, T(0))
         else

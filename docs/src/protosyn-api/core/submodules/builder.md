@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = ProtoSyn
+```
+
 # [Builder](@id core-builder)
 
 > The [Builder](@ref peptides-builder) is a submodule of `ProtoSyn.Core` module. As such, the following core introduces both new types and methods that work together, in a generally independent way from the rest of the module, and require an unique exploratory section on their own.
@@ -32,7 +36,7 @@ load_grammar_from_file
 
 ![ProtoSyn L-grammar](../../../assets/ProtoSyn-yml-format.png)
 
-**Figure 2 |** An exploration of the .YML file format describing a new [`LGrammar`](@ref) instance (and loaded by the [`load_grammar_from_file`](@ref) method). Templates for the `variables` entry can be in any of the supported formats by ProtoSyn (such as .YML and .PDB). Usually .YML formats are employed, since extra information such as the [Parenthood relationships](@ref) between intra-residue atoms can be easily included. ProtoSyn is able to parse certain unit symbols, such as the degree symbol (`°`). Otherwise, the default units are in radians.
+**Figure 2 |** An exploration of the .YML file format describing a new [`LGrammar`](@ref) instance (and loaded by the [`load_grammar_from_file`](@ref ProtoSyn.load_grammar_extras_from_file!) method). Templates for the `variables` entry can be in any of the supported formats by ProtoSyn (such as .YML and .PDB). Usually .YML formats are employed, since extra information such as the [Parenthood relationships](@ref) between intra-residue atoms can be easily included. ProtoSyn is able to parse certain unit symbols, such as the degree symbol (`°`). Otherwise, the default units are in radians.
 
 ```@docs
 lgfactory

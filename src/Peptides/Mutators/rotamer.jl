@@ -1,4 +1,3 @@
-using ProtoSyn.Peptides: Dihedral
 using ProtoSyn: TrueSelection, getdihedral
 using Printf
 
@@ -16,7 +15,7 @@ The [`RotamerMutator`](@ref) `AbstractMutator` loops through all [`Atom`](@ref)
 instances in the given [`Pose`](@ref) and applies a [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
 conformation change if a random number (`rand()`) is bellow a given probability
 of mutation `p_mut` (will skip any [`Residue`](@ref) with unnaccessible phi or
-psi [`Dihedral`](@ref) angles, such as the first and last [`Residue`](@ref) of a
+psi dihedral angles, such as the first and last [`Residue`](@ref) of a
 chain, unless `randomize_inexistent_phi_psi` flag is set to `true`, `false` by
 default. Is this case, will randomize the missing phi or psi dihedral angles in
 order to sample a semi-random [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) from
@@ -29,7 +28,7 @@ names should be selected, `an"CA"`, for example). If an `AbstractSelection`
 selection are considered for [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
 conformational change. The applied [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
 is sampled from the [`RotamerMutator`](@ref)`.rotamer_library`, based on the
-name of the [`Residue`](@ref) and current phi and psi [`Dihedral`](@ref) angle
+name of the [`Residue`](@ref) and current phi and psi dihedral angle
 values. The `n_first` most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
 instances are taken into account during this sampling step. Note that the
 [`RotamerMutator`](@ref) syncs any pending cartesian to internal coordinate
