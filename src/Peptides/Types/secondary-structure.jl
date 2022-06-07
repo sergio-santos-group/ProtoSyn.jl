@@ -117,6 +117,7 @@ function sample_ramachandran(dnp::DiscreteNonParametric; min_prob::T = 0.0) wher
     return rand(DiscreteNonParametric(x, p./(sum(p))))
 end
 
+
 """
     DihedralTemplate{T}(angle::T, [sampler::Opt{DiscreteNonParametric} = nothing]) where {T <: AbstractFloat}
 
@@ -155,6 +156,7 @@ Base.show(io::IO, dt::DihedralTemplate, level_code::Opt{LevelCode} = nothing) = 
     s = @sprintf "(Dihedral Template) %10s: %8.3f rad | %8.2f deg | Sampler: %s" n dt.angle rad2deg(dt.angle) sampler_set
     println(io, init_lead*s)
 end
+
 
 """
     SecondaryStructureTemplate{T}(ϕ::T, ψ::T, ω::T) where {T <: AbstractFloat}

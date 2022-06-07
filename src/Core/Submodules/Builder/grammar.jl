@@ -499,7 +499,8 @@ Create an [`LGrammar`](@ref) instance from the contents of a grammar file (in
 .YML format) under the `key` entry. The file contents are parsed by the
 [`lgfactory`](@ref) method. Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). Return the parsed
-[`LGrammar`](@ref) instance.
+[`LGrammar`](@ref) instance. automatically calls
+[`load_grammar_extras_from_file!`](@ref).
 
 # See also
 [`LGrammar`](@ref) [`lgfactory`](@ref)
@@ -524,6 +525,29 @@ load_grammar_from_file(filename::AbstractString, key::String) = begin
     return load_grammar_from_file(Units.defaultFloat, filename, key)
 end
 
+
+"""
+    load_grammar_extras_from_file!([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
+
+Loads the `key` entry in the given [`LGrammar`](@ref) .YML file (`filename`)
+extras into the correct global variables in ProtoSyn. Any numerical entry is
+parsed to the provided type `T` (or `Units.defaultFloat` if no type is
+provided).
+
+The extra info loaded by this method is:
++ Any `alt` entry is added to `ProtoSyn.alt_residue_names`
+
+!!! ukw "Note:"
+    Other modules (such as [Peptides](@ref)) may retrieve extra information from the [`LGrammar`](@ref) file. As such, these modules often include an expanded method for [`load_grammar_extras_from_file!`](@ref).
+
+!!! ukw "Note:"
+    This method is automatically called from [`load_grammar_from_file`](@ref). This is the recommended way to load an [`LGrammar`](@ref) (this method shouldn't be called as a standalone for most applications).
+
+# Examples
+```
+julia> ProtoSyn.load_grammar_extras_from_file!(ProtoSyn.resource_dir*"/Peptides/grammars.yml", "default")
+```
+"""
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     
     function load_alt_names!(var_yml::Dict{Any, Any})

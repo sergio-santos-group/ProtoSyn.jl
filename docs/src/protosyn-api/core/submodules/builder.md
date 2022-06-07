@@ -20,9 +20,9 @@ Therefore, as an example of employment of [Peptides](@ref) L-Grammar, the string
 
 ![ProtoSyn L-grammar](../../../assets/ProtoSyn-L-grammar.png)
 
-**Figure 1 |** A diagram representation of the [Peptides](@ref) default L-grammar. Any L-grammar in ProtoSyn is composed of 3 elements: **[1]** a variables library containing the templates of all the building blocks available. Each variable is a complete description of all internal associations between [`Atom`](@ref) instances ([Bonds](@ref) and [Parenthood relationships](@ref)) as well as all internal coordinates). This information, once loaded, forms an independent [`Fragment`](@ref) object and is indexed by a `:name` or a `:code`. In the case of the [Peptides](@ref) L-Grammar, there are 20 variables, one for each of the 20 natural aminoacids; **[2]** one or more operators, describing bridging connections between 2 of the L-Grammar variables. These, once loaded, return a function that bonds (and applies the correct [Parenthood relationships](@ref)) the requested [`Atom`](@ref) instances, while also applying specific internal coordinates to the involved [`Atom`](@ref) instances. In the case of the [Peptides](@ref) L-Grammar, the only available operator describes a peptidic bond; **[3]** optionally, a set of stochastic rules for choosing an operator. ProtoSyn employs stochastic rules for choosing what operator to apply to any 2 given templates, meaning that different operators can be randomly applied based on a set of weights, generating complex structures in a random way, if desired. In the case of the [Peptides](@ref) L-grammar, such rules are not applied, since there is only 1 operator to be applied.
+**Figure 1 |** A diagram representation of the [Peptides](@ref) default L-grammar. Any L-grammar in ProtoSyn is composed of 3 elements: **[1]** a variables library containing the templates of all the building blocks available. Each variable is a complete description of all internal associations between [`Atom`](@ref) instances ([Bonds](@ref) and [Parenthood relationships](@ref)) as well as all internal coordinates and charges). This information, once loaded, forms an independent [`Fragment`](@ref) object and is indexed by a `:name` or a `:code`. In the case of the [Peptides](@ref) L-Grammar, there are 20 variables, one for each of the 20 natural aminoacids; **[2]** one or more operators, describing bridging connections between 2 of the L-Grammar variables. These, once loaded, return a function that bonds (and applies the correct [Parenthood relationships](@ref)) the requested [`Atom`](@ref) instances, while also applying specific internal coordinates to the involved [`Atom`](@ref) instances. In the case of the [Peptides](@ref) L-Grammar, the only available operator describes a peptidic bond (_in reality, 2 extra operators are available for generating internal coordinates for the linear peptides & the special case of prolines_); **[3]** optionally, a set of stochastic rules for choosing an operator. ProtoSyn employs stochastic rules for choosing what operator to apply to any 2 given templates, meaning that different operators can be randomly applied based on a set of weights, generating complex structures in a random way, if desired. In the case of the [Peptides](@ref) L-grammar, such rules are not applied, since there is only 1 operator to be applied linearly.
 
-As previously explored, ProtoSyn supports Stochastic L-Grammar structures for defining semi-random and ramified molecular structures. The following types and methods explore how this is achieved in more detail.
+As previously explored, ProtoSyn supports Stochastic L-Grammar structures for defining semi-random and ramified molecular structures. The following types and methods explore how this is achieved in more detail. In addition, loading an [`LGrammar`](@ref) also adds any additional information (such as available residue types for mutation) to all relevant global variables in ProtoSyn.
 
 ```@docs
 LGrammar
@@ -37,11 +37,12 @@ load_grammar_from_file
 ```@docs
 lgfactory
 ProtoSyn.opfactory
+load_grammar_extras_from_file!
 ```
 
 # [Building a molecular structure](@id core-builder-2)
 
-The main goal of an L-Grammar in ProtoSyn is to facilitate building a molecular structure from a sequence by joining together template variables as building blocks. A vector of _codes_ describes the desired structure. In the case of [Peptides](@ref), for example, this is simply a linear sequence of aminoacids, while more complex structures, such as ramified carbohydrates or glycoproteins might have an equally more complex vector of _codes_. The following methods explore further on how to use ProtoSyn's L-Grammar system to build new molecular structures from a template libraries.
+One of the main goals of an L-Grammar in ProtoSyn is to facilitate building a molecular structure from a sequence by joining together template variables as building blocks. A vector of _codes_ describes the desired structure. In the case of [Peptides](@ref), for example, this is simply a linear sequence of aminoacids, while more complex structures, such as ramified carbohydrates or glycoproteins might have an equally more complex vector of _codes_. The following methods explore further on how to use ProtoSyn's L-Grammar system to build new molecular structures from a template libraries.
 
 ```@docs
 @seq_str
@@ -51,7 +52,7 @@ build
 
 # [Manipulating a molecular structure by adding new residues from templates](@id core-builder-3)
 
-Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the following section. The [Builder](@ref core-builder) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.
+Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the [Methods](@ref pose-methods) section (see [Appending, inserting and removing Atom and Residue instances](@ref)). The [Builder](@ref core-builder) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.
 
 ```@docs
 append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Any; ::Any)

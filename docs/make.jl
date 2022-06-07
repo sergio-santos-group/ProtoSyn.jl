@@ -78,13 +78,13 @@ makedocs(
                     "ILS" => "protosyn-api/core/drivers/drivers-ils.md",
                     "Compound Driver" => "protosyn-api/core/drivers/drivers-compound.md",
                 ],
-    #             "Submodules" => [
-    #                 "Selections" => "protosyn-api/core/submodules/selections.md",
-    #                 "Builder" => "protosyn-api/core/submodules/builder.md"
-    #             ],
+                "Submodules" => [
+                    "Selections" => "protosyn-api/core/submodules/selections.md",
+                    "Builder" => "protosyn-api/core/submodules/builder.md"
+                ],
             ],
-    #         "Peptides" => [
-    #             "Introduction" => "protosyn-api/peptides/introduction.md",
+            "Peptides" => [
+                "Introduction" => "protosyn-api/peptides/introduction.md",
     #             "Types" => "protosyn-api/peptides/types.md",
     #             "Methods" => [
     #                 "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
@@ -110,7 +110,7 @@ makedocs(
     #                 "Builder" => "protosyn-api/peptides/submodules/builder.md",
     #                 "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md"
     #             ]
-    #         ],
+            ],
     #         "Materials" => [
     #             "Introduction" => "protosyn-api/materials/introduction.md",
     #             "Methods" => [

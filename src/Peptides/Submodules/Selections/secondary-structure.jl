@@ -19,7 +19,7 @@ ProtoSyn.eval(:(begin
     [`SecondaryStructure`](@ref ProtoSyn.Peptides.SecondaryStructure) type.
 
     # State mode
-    The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateful
+    The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateful.
 
     # Selection type
 

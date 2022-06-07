@@ -101,7 +101,7 @@ Mask
 # Promotion
 
 Promoting a selection or [`Mask`](@ref) refers to the act of changing the output
-selection type. As an example, one could promote the selection `rn"ALA"` (which would output a [`Mask`](@ref) of [`Residue`](@ref) instances selected) to output a [`Mask`](@ref) of [`Atom`](@ref) instances. Following the notion that core types in ProtoSyn have an established hierarchical relationship ([`Topology`](@ref) > [`Segment`](@ref) > [`Residue`](@ref) > [`Atom`](@ref)), this type of promotion would be a _downwards_ promotion. The opposite case would be an _upwards_ promotion, such as promoting `an"CB"` to output a [`Mask`](@ref) of [`Residue`](@ref) instances instead. In such case, an extra parameter is required:
+selection type. As an example, one could promote the selection `rn"ALA"` (which would output a [`Mask`](@ref) of [`Residue`](@ref) instances selected) to output a [`Mask`](@ref) of [`Atom`](@ref) instances selected instead. Following the notion that core types in ProtoSyn have an established hierarchical relationship ([`Topology`](@ref) > [`Segment`](@ref) > [`Residue`](@ref) > [`Atom`](@ref)), this example type of promotion would be a _downwards_ promotion. The opposite case would be an _upwards_ promotion, such as promoting `an"CB"` to output a [`Mask`](@ref) of [`Residue`](@ref) instances instead. In such case, an extra parameter is required:
 an agregating function. Usually, this is either `any` (i.e.: select residues that contain at least one _CB_ atom - this is the default) or `all` (i.e: select residues where all atoms are _CB_).
 
 We have two options for promotion operations:
@@ -173,7 +173,7 @@ Specific methods are available to apply selections to [Pose](@ref) instances, in
 rn"ALA"(pose)
 ```
 
-Finally, selections (and [`Mask`](@ref)) can be _gathered_. This, in essence, means looping over the _resolved_ [`Mask`](@ref) and appending the actual selected [`Atom`](@ref), [`Residue`](@ref) or [`Segment`](@ref) instances. This process can be done in one of two ways:
+Finally, selections (and [`Mask`](@ref) instances) can be _gathered_. This, in essence, means looping over the _resolved_ [`Mask`](@ref) and appending the actually selected [`Atom`](@ref), [`Residue`](@ref) or [`Segment`](@ref) instances to an output `Vector`. This process can be done in one of two ways:
 
 **1 |** By using the optional flag `gather` when applying a selection to an `AbstractContainer` (recommended);
 

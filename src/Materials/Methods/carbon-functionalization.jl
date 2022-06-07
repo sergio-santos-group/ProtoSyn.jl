@@ -147,46 +147,48 @@ function add_functionalization(pose::Pose, fcn::Fragment, atom::Atom)
 
     to_return = false
 
-    if center
-        println(" | Center position")
-        # In a "center" position, the functional group can be appended either
-        # "upwards" or "downwards". In multi-layer carbons, the first layer
-        # (bottom one) can only receive "downwards" oriented functional groups,
-        # and the last layer (top one) can only receive "upwards" oriented
-        # functional groups. Any "middle" layer cannot receive center function
-        # groups. If only 1 layer is present, both "upwards" and "downwards"
-        # functional groups are accepted. The orientation is picked randomly.
-        # The top and bottom layers are inferred from the segment ID (this is
-        # expected to be consistent with the output of `generate_carbon`)
-        N_layers = ProtoSyn.count_segments(pose.graph)
-        layer_ID = atom.container.container.id
-        if N_layers === 1
-            println(" | Single layer")
-            if rand([1, 2]) === 1
+    if ProtoSyn.count_atoms(fcn.graph) > 2
+        if center
+            println(" | Center position")
+            # In a "center" position, the functional group can be appended either
+            # "upwards" or "downwards". In multi-layer carbons, the first layer
+            # (bottom one) can only receive "downwards" oriented functional groups,
+            # and the last layer (top one) can only receive "upwards" oriented
+            # functional groups. Any "middle" layer cannot receive center function
+            # groups. If only 1 layer is present, both "upwards" and "downwards"
+            # functional groups are accepted. The orientation is picked randomly.
+            # The top and bottom layers are inferred from the segment ID (this is
+            # expected to be consistent with the output of `generate_carbon`)
+            N_layers = ProtoSyn.count_segments(pose.graph)
+            layer_ID = atom.container.container.id
+            if N_layers === 1
+                println(" | Single layer")
+                if rand([1, 2]) === 1
+                    define_functionalization_up_down(true)
+                else
+                    define_functionalization_up_down(false)
+                end
+            elseif layer_ID === 1 # Top layer | "downwards" orientation
+                println(" | Top layer")
                 define_functionalization_up_down(true)
-            else
+            elseif layer_ID === N_layers # Bottom layer | "upwards" orientation
+                println(" | Bottom layer")
                 define_functionalization_up_down(false)
+            else
+                @error "No suitable placement for functional group was found."
             end
-        elseif layer_ID === 1 # Top layer | "downwards" orientation
-            println(" | Top layer")
-            define_functionalization_up_down(true)
-        elseif layer_ID === N_layers # Bottom layer | "upwards" orientation
-            println(" | Bottom layer")
-            define_functionalization_up_down(false)
         else
-            @error "No suitable placement for functional group was found."
-        end
-    else
-        println(" | Edge position")
-        # Case on an "edge":
-        # Measure the dihedral between the selected atom parents and a random bond
-        # (In this case, the first bond found is picked). If this dihedral is π, the
-        # functional group's third atom (if existent) is set to rotate by 180°.
-        t  = [atom.parent.parent, atom.parent, atom, [a for a in atom.bonds if a !== atom.parent][1]]
-        d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
-        if ((d ≈ π) | (d ≈ -π)) && ProtoSyn.count_atoms(fcn.graph) > 2
-            println(" | 180° parenthood")
-            fcn.state[fcn.graph[1, 3]].ϕ += 180°
+            println(" | Edge position")
+            # Case on an "edge":
+            # Measure the dihedral between the selected atom parents and a random bond
+            # (In this case, the first bond found is picked). If this dihedral is π, the
+            # functional group's third atom (if existent) is set to rotate by 180°.
+            t  = [atom.parent.parent, atom.parent, atom, [a for a in atom.bonds if a !== atom.parent][1]]
+            d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
+            if ((d ≈ π) | (d ≈ -π))
+                println(" | 180° parenthood")
+                fcn.state[fcn.graph[1, 3]].ϕ += 180°
+            end
         end
     end
 
