@@ -277,7 +277,7 @@ module SeqDes
             push!(residue_label, residue_type)
 
             # Chis
-            n_chis = length(ProtoSyn.Peptides.Dihedral.chi_dict[residue.name])
+            n_chis = length(ProtoSyn.Peptides.chi_dict[residue.name])
             chi_vals = Vector{T}()
             chi_exs  = Vector{T}()
             for (i, chi) in enumerate([:chi1, :chi2, :chi3, :chi4])

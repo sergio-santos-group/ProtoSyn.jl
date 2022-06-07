@@ -14,7 +14,7 @@ energy_function = ProtoSyn.Calculators.EnergyFunction([
 res_lib    = ProtoSyn.Peptides.load_grammar_from_file("grammars.yml", "ncaa")
 pose       = Peptides.build(res_lib, [string(ncaa_residue_code)])
 step       = deg2rad(360)/N
-n_chis     = length(Peptides.Dihedral.chi_dict[pose.graph[1, 1].name]) - 1
+n_chis     = length(Peptides.chi_dict[pose.graph[1, 1].name]) - 1
 angles     = collect(Iterators.product(Tuple(repeat([0.0:step:2π], n_chis))...))
 dimensions = length(size(angles)) === 1 ? (size(angles)[1], 1) : size(angles)
 energies   = Matrix{Float64}(undef, dimensions)

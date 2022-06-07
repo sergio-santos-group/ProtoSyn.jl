@@ -121,7 +121,7 @@ details from the loaded [`LGrammar`](@ref) .yml `filename` (under the `key`
 entry, typed as `T <: AbstractFloat`, if not provided will use
 `ProtoSyn.Units.defaultFloat`):
 
-* `ProtoSyn.Peptides.Dihedral.chi_dict`
+* `ProtoSyn.Peptides.chi_dict`
 * `ProtoSyn.Peptides.available_aminoacids`
 * `ProtoSyn.three_2_one`
 * `ProtoSyn.one_2_three`
@@ -137,9 +137,9 @@ julia> ProtoSyn.Peptides.load_grammar_extras_from_file!("grammars.yml", "default
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
 
     function load_extras!(var_yml::Dict{Any, Any})
-        # 1. Add chi entries to Peptides.Dihedral.chi_dict
+        # 1. Add chi entries to Peptides.chi_dict
         if "chis" in keys(var_yml)
-            Peptides.Dihedral.chi_dict[var_yml["name"]] = var_yml["chis"]
+            Peptides.chi_dict[var_yml["name"]] = var_yml["chis"]
         end
 
         # 2. Add entries to the Peptides.available_aminoacids
@@ -157,10 +157,10 @@ function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key
         if "alt" in keys(var_yml)
             for alt_name in var_yml["alt"]
                 ProtoSyn.three_2_one[alt_name] = var_yml["code"][1]
-                if alt_name in keys(Peptides.Dihedral.chi_dict)
-                    @info "Variable $(alt_name) already in the Peptides.Dihedral.chi_dict (Currently assigned to $(Peptides.Dihedral.chi_dict[alt_name])."
+                if alt_name in keys(Peptides.chi_dict)
+                    @info "Variable $(alt_name) already in the Peptides.chi_dict (Currently assigned to $(Peptides.chi_dict[alt_name])."
                 else
-                    Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
+                    Peptides.chi_dict[alt_name] = var_yml["chis"]
                 end
             end
         end

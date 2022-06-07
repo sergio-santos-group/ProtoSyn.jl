@@ -12,7 +12,7 @@ ProtoSyn.eval(:(begin
 
     A [`ChiSelection`](@ref) outputs a [`Mask`](@ref) of [`Atom`](@ref)
     instances where the chi-controlling [`Atom`](@ref) instances of sidechain
-    are marked as true (all atoms defined in `Peptides.Dihedral.chi_dict`, by
+    are marked as true (all atoms defined in `Peptides.chi_dict`, by
     name - make sure the IUPAC naming conventions are respected, consider using
     [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!))
     for renaming peptide structures into the default atom names).
@@ -77,12 +77,12 @@ ProtoSyn.eval(:(begin
         mask    = Mask{Atom}(n_atoms)
 
         for atom in eachatom(container)
-            if !(atom.container.name in keys(Peptides.Dihedral.chi_dict))
+            if !(atom.container.name in keys(Peptides.chi_dict))
                 mask[atom.index] = false
                 continue
             end
 
-            chi_list = Peptides.Dihedral.chi_dict[atom.container.name]
+            chi_list = Peptides.chi_dict[atom.container.name]
             length(chi_list) <= 1 && begin
                 mask[atom.index] = false
                 continue
