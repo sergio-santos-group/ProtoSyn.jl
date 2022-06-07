@@ -19,6 +19,8 @@ include("Types/types.jl")
 # Selections
 include("Submodules/Selections/polar.jl")
 include("Submodules/Selections/sidechains.jl")
+include("Submodules/Selections/chi.jl")
+include("Submodules/Selections/phi-psi-omega.jl")
 include("Submodules/Selections/protein.jl")
 include("Submodules/Selections/secondary-structure.jl") # Requires types.jl
 

@@ -267,7 +267,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
-    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    _ϕ = ProtoSyn.getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for child in residue["CA"].children
         if child in pose_sidechain
@@ -317,16 +317,16 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # 1) Insert new residue in position R, shifting all downstream residues + 1
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
-    phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    phi   = ProtoSyn.getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
     
-    psi_atom = Peptides.Dihedral.psi(residue)
+    psi_atom = PsiSelection()(residue, gather = true)[1]
     if psi_atom !== nothing
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
     else
         psi = 0.0
     end
     
-    omega_atom = Peptides.Dihedral.omega(residue)
+    omega_atom = OmegaSelection()(residue, gather = true)[1]
     if omega_atom !== nothing
         omega = ProtoSyn.getdihedral(pose.state, omega_atom)
     else

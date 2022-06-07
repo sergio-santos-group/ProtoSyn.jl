@@ -26,7 +26,7 @@ Rotamer{Float64}: LYS | Chi1:   -67.5° ±  6.9 | Chi2:  -179.6° ±  9.7 | Chi3
 """
 mutable struct Rotamer{T <: AbstractFloat}
     name::String
-    chis::Dict{DihedralType, Tuple{Opt{T}, T}}
+    chis::Dict{AbstractSelection, Tuple{Opt{T}, T}}
 end
 
 function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}

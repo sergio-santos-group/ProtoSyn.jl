@@ -174,10 +174,10 @@ function load_BBI_rotamer_library(::Type{T}, filename::String) where {T <: Abstr
             values = map((x) -> deg2rad(parse(T, string(x))), elems[6:end])
             push!(weights, values[1])
             chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
-            if exists[1]; chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6]); end
-            if exists[2]; chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7]); end
-            if exists[3]; chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8]); end
-            if exists[4]; chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9]); end
+            if exists[1]; chis[chi"1"] = (values[2], values[6]); end
+            if exists[2]; chis[chi"2"] = (values[3], values[7]); end
+            if exists[3]; chis[chi"3"] = (values[4], values[8]); end
+            if exists[4]; chis[chi"4"] = (values[5], values[9]); end
             push!(rotamers, Rotamer{T}(string(elems[1]), chis))
         end
 

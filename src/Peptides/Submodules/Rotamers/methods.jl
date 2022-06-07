@@ -16,18 +16,18 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
     @assert rotamer.name == residue.name "Tried to apply a $(rotamer.name) rotamer to residue $(residue.name)."
     T = eltype(state)
 
-    chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
+    chis = Dict{AbstractSelection, Tuple{Opt{T}, T}}()
     for (chi, (value, sd)) in rotamer.chis
         value === nothing && begin
             chis[chi] = (value, T(0))
             continue
         end
         _value = (randn() * sd) + value
-        if chi(residue) === nothing
+        if chi(residue)[1] === nothing
             @warn "Tried to apply $chi on residue $residue, but the requested atom was not found. Not performing any action."
             chis[chi] = (NaN, T(0))
         else
-            setdihedral!(state, chi(residue), _value)
+            setdihedral!(state, chi(residue)[1], _value)
             chis[chi] = (_value, T(0))
         end
     end
@@ -142,7 +142,7 @@ Rotamer{Float64}: GLU | Chi1:   -65.5° ±  9.5 | Chi2:    81.7° ±  9.6 | Chi3
 """
 function sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
 
-    phi_atom = Peptides.Dihedral.phi(residue)
+    phi_atom = PhiSelection()(residue, gather = true)[1]
     if phi_atom === nothing
         if !random_inexistent_phi_psi
             @warn "Tried to sample a rotamer for residue $residue but the required atom for phi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."
@@ -154,7 +154,7 @@ function sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residu
         phi = getdihedral(pose.state, phi_atom)
     end
 
-    psi_atom = Peptides.Dihedral.psi(residue)
+    psi_atom = PsiSelection()(residue, gather = true)[1]
     if psi_atom === nothing
         if !random_inexistent_phi_psi
             @warn "Tried to sample a rotamer for residue $residue but the required atom for psi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."

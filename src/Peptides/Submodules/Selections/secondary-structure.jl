@@ -66,8 +66,8 @@ ProtoSyn.eval(:(begin
             for residue in eachresidue(container)
 
                 # Case residue does not have phi or psi (first of last residue)
-                phi_atom = ProtoSyn.Peptides.Dihedral.phi(residue)
-                psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
+                phi_atom = PhiSelection()(residue, gather = true)[1]
+                psi_atom = PsiSelection()(residue, gather = true)[1]
                 phi_atom == nothing || psi_atom == nothing && continue
                 
                 # Measure current phi and psi dihedral values

@@ -62,11 +62,13 @@ function select(sele::SerialSelection{Stateless, T}, container::AbstractContaine
     n_items = counter(T)(container)
     mask = Mask{T}(n_items)
 
-    for item in iterator(T)(container)
+    iter = typeof(container) > T ? iterator(T)(container) : [container]
+    for item in iter
         if sele.serial == getproperty(item, sele.field)
             mask[item.index] = true
         end
     end
+
     return mask
 end
 

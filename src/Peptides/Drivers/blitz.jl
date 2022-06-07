@@ -46,13 +46,13 @@ a maximum of `n_steps`), all [`Residue`](@ref) instances in the provided
 [`Pose`](@ref) `pose` (in random order) may suffer a rotamer conformation
 change. As such, for each [`Residue`](@ref) instance, all `n_first` most likely
 [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances in the `rotamer_library`
-(according to the current backbone phi and psi
-[`Dihedral`](@ref ProtoSyn.Peptides.Dihedral) angles) are applied (using the
-[`apply!`](@ref ProtoSyn.Peptides.apply!) method) and evaluated by the provided
-`eval!` [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom
-function. Once all `n_first` most likely
-[`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances are looped over, the most
-favourable (least energetic) one is re-applied. Each step, a call to an optional
+(according to the current backbone phi and psi dihedral angles) are applied
+(using the [`apply!`](@ref ProtoSyn.Peptides.apply!) method) and evaluated by
+the provided `eval!`
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom function.
+Once all `n_first` most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
+instances are looped over, the most favourable (least energetic) one is
+re-applied. Each step, a call to an optional
 [`Callback`](@ref ProtoSyn.Drivers.Callback) `callback` is performed. A
 companion [`RotamerBlitzState`](@ref) `DriverState` instance is also updated
 each step and provided to the [`Callback`](@ref ProtoSyn.Drivers.Callback)
@@ -138,8 +138,8 @@ function (driver::RotamerBlitz)(pose::Pose)
                 rotamer => energy)
 
             # Get the correct rotamer stack
-            phi = getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-            psi = getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+            phi = getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
+            psi = getdihedral(pose.state, PsiSelection()(residue, gather = true)[1])
             rotamer_stack = driver.rotamer_library[residue.name][phi, psi]
 
             # Iterate the 'n_first' rotamers, saving the evaluated energy

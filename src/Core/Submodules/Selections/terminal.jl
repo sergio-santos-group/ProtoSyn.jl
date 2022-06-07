@@ -49,7 +49,8 @@ function select(sele::UpstreamTerminalSelection{Stateless, T}, container::Abstra
     n_instances = counter(T)(container)
     mask        = Mask{T}(n_instances)
 
-    for (index, int) in enumerate(iterator(T)(container))
+    iter = typeof(container) > T ? iterator(T)(container) : [container]
+    for (index, int) in enumerate(iter)
         if int.parent == _root
             mask[index] = true
         end

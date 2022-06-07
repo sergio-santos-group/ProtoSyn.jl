@@ -80,7 +80,7 @@ end
 
 # --- Select -------------------------------------------------------------------
 function select(sele::PromoteSelection{Stateless}, container::AbstractContainer)
-    mask = select(sele.sele, container)
+    mask = (sele.sele)(container)
     return promote(mask, sele.T, container, sele.op)
 end
 
@@ -148,9 +148,10 @@ function promote(mask::Mask{T1}, ::Type{T2}, container::AbstractContainer, f::Fu
 
     if T1 > T2
         count = counter(T2)
-        iter = iterator(T1)
+        @assert T1 <= typeof(container) "Can't apply a promotion of $T1 to a single $(type(container)) instance."
+        iter = T1 !== typeof(container) ? iterator(T1)(container) : [container]
         i = 1
-        for (entry, item) in zip(mask, iter(container))
+        for (entry, item) in zip(mask, iter)
             n = count(item)
             new_mask[i:(i+n-1)] = entry
             i += n
