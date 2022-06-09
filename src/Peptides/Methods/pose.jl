@@ -558,6 +558,24 @@ function is_C_terminal(res::Residue)
 end
 
 
+"""
+    identify_c_terminal(seg::Segment; supress_warn::Bool = false)
+
+Attempts to identify the C terminal of a given [`Segment`](@ref) `seg`, using
+the following criteria:
+ + Bonding patter: the C terminal follows the bonding pattern C-C-N-C, there the C-terminal is the first C atom of the pattern.
+ + Bond number: the C terminal must not exceed 3 bonds.
+ + By atom name: the C terminal must be bonded to an atom named CA
+As such, this method does not use parenthood relationships to identify the C
+terminal. If the `supress_warn` is set to `true` (`false`, by default), any
+generated warnings are ignored.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.identify_c_terminal(pose.graph[1])
+Atom{/2a3d:40139/A:1/ASN:73/C:1138}
+```
+"""
 function identify_c_terminal(seg::Segment; supress_warn::Bool = false)
 
     # Criterium 1. Identify atom by the bonding pattern

@@ -10,7 +10,7 @@ As previously stated, a [Pose](@ref) is the main object of ProtoSyn and brings t
 + [Appending, inserting and removing Atom and Residue instances](@ref)
 + [Copying and merging](@ref)
 + [Aligning poses](@ref)
-+ [Diagnosing poses](@ref)
++ [Diagnosing poses](@ref pose-diagnose-core)
 
 ## Creating, appending and inserting Fragments
 
@@ -67,7 +67,7 @@ center_of_mass
 rmsd
 ```
 
-## Diagnosing poses
+## [Diagnosing poses](@id pose-diagnose-core)
 
 ProtoSyn may sometimes expect a certain level of standardization between [`Pose`](@ref) instances. This includes, but is not restricted to, [`Atom`](@ref) names, order, graph completeness, neutral charge, etc. ProtoSyn makes available tools to diagnose [`Pose`](@ref) instances, when things take a turn for the worst:
 

@@ -10,6 +10,7 @@ Included in the [Peptides](@ref) are a set of methods who primarily act on a [`P
 + [Mutating an aminoacid](@ref)
 + [Removing and adding sidechains](@ref)
 + [Removing and adding N- and C- terminal caps](@ref)
++ [Diagnosing poses](@ref pose-diagnose-peptides)
 
 # Appending and inserting fragments
 
@@ -66,6 +67,7 @@ When extending a peptide (by appending new [`Residue`](@ref) instances, for exam
 ```@docs
 is_N_terminal
 is_C_terminal
+identify_c_terminal
 uncap!
 cap!
 ```
@@ -73,3 +75,19 @@ cap!
 ![ProtoSyn Remove Caps](../../../assets/ProtoSyn-remove-caps.png)
 
 **Figure 5 |** Example of application of the [`uncap!`](@ref) and [`cap!`] methods. Uncapping a terminal end of a peptide is usefull when appending new [`Residue`](@ref) instances, extending or adding an appendage.
+
+## [Diagnosing poses](@id pose-diagnose-peptides)
+
+The following methods extend the usage of [Diagnosing poses](@id pose-diagnose-core) methods (from the Core module) to include Peptides specific standards.
+
+```@docs
+diagnose
+```
+
+## Other
+
+The following as miscellaneous methods that may help workflows in the Peptides module.
+
+```@docs
+measure_similarity
+```

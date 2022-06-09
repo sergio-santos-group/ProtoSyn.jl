@@ -1,6 +1,20 @@
 using Printf
 
-function measure_similarity(sequence1::String, sequence2::String; show_results::Bool = true)
+"""
+    measure_similarity(sequence1::String, sequence2::String)
+
+Showcase the total similarity and average similarity of two peptidic sequences
+according to the `ProtoSyn.Peptides.aminoacid_similarity` map (this is a
+mutation tolerance measure map by Stephenson et al. (2013) (see
+[https://link.springer.com/article/10.1007/s00239-013-9565-0](https://link.springer.com/article/10.1007/s00239-013-9565-0))).
+
+# Examples
+```
+julia> ProtoSyn.Peptides.measure_similarity(ProtoSyn.sequence(pose1), ProtoSyn.sequence(pose2))
+ (...)
+```
+"""
+function measure_similarity(sequence1::String, sequence2::String)
     if length(sequence1) !== length(sequence2)
         @warn "The provided sequences have different lengths ($(length(sequence1)) ≠ $(length(sequence2))). ProtoSyn will only consider the range of the smallest sequence."
     end

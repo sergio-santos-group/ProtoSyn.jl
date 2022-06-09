@@ -86,12 +86,12 @@ makedocs(
             "Peptides" => [
                 "Introduction" => "protosyn-api/peptides/introduction.md",
                 "Types" => "protosyn-api/peptides/types.md",
-    #             "Methods" => [
-    #                 "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
-    #                 "Graph" => "protosyn-api/peptides/methods/graph.md",
-    #                 "State" => "protosyn-api/peptides/methods/state.md",
-    #                 "Pose" => "protosyn-api/peptides/methods/pose.md"
-    #             ],
+                "Methods" => [
+                    "Input and Output (IO)" => "protosyn-api/peptides/methods/io.md",
+                    "Graph" => "protosyn-api/peptides/methods/graph.md",
+                    "State" => "protosyn-api/peptides/methods/state.md",
+                    "Pose" => "protosyn-api/peptides/methods/pose.md"
+                ],
     #             "Calculators" => [
     #                 "Sidechain Clash Restraint" => "protosyn-api/peptides/calculators/sidechain-clash-restraint.md",
     #                 "Contact Restraint" => "protosyn-api/peptides/calculators/contact-restraint.md",
