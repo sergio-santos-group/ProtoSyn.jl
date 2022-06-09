@@ -34,15 +34,18 @@ module Electrostatics
             sele = ProtoSyn.promote(selection, Atom)
         end
 
-        # Ignores first line (title)
-        data    = split(open(f->read(f, String), filename), "\n")[2]
-        T       = eltype(pose.state)
-        charges = map((value) -> parse(T, value), split(data))
+        # ASSUMES UNIQUE NAMES
+        data       = ProtoSyn.load(filename)
+        data_atoms = collect(eachatom(data.graph))
 
         atoms = sele(pose, gather = true)
-        @assert length(atoms) === length(charges) "Attempted to apply $(length(charges)) to $(length(atoms)) selected atoms."
-        for (i, atom) in enumerate(atoms)
-            pose.state[atom].δ = charges[i]
+        @assert length(atoms) === length(data_atoms) "Attempted to apply $(length(data_atoms)) to $(length(atoms)) selected atoms."
+        charges = Vector{eltype(pose.state)}()
+        for atom in atoms
+            i = findfirst((x) -> x.name === atom.name, data_atoms)
+            δ = data.state[i].δ
+            pose.state[atom].δ = δ
+            push!(charges, δ)
         end
 
         return charges
