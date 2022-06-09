@@ -154,7 +154,7 @@ function sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residu
         phi = getdihedral(pose.state, phi_atom)
     end
 
-    psi_atom = PsiSelection()(residue, gather = true)[1]
+    psi_atom = Peptides.psi(residue)
     if psi_atom === nothing
         if !random_inexistent_phi_psi
             @warn "Tried to sample a rotamer for residue $residue but the required atom for psi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."

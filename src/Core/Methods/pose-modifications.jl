@@ -97,8 +97,12 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
     for residue in residues
 
         # Create the residue template from residue name (with full hydrogens)
-        code = string(ProtoSyn.three_2_one[residue.name])
-        template = ProtoSyn.getvar(res_lib, code)
+        if residue.name in keys(res_lib.variables)
+            template = ProtoSyn.getvar(res_lib, residue.name)
+        else
+            code = string(ProtoSyn.three_2_one[residue.name])
+            template = ProtoSyn.getvar(res_lib, code)
+        end
 
         for atom in residue.items
             

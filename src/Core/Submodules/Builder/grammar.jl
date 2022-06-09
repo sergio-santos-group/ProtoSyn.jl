@@ -127,6 +127,8 @@ LGrammar{T, K, V}() where {T <: AbstractFloat, K, V} = LGrammar{T, K, V}(
     nothing
 )
 
+LGrammar() = LGrammar{Float64, String, Vector{String}}()
+
 Base.show(io::IO, lgrammar::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V} = begin
     print(io, "LGrammar{$T, $K, $V}:\n Rules:")
     if length(lgrammar.rules) == 0

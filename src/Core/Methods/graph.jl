@@ -738,7 +738,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
     end
 
     if typeof(container) > Residue
-        reindex(container) # Sets ascedents
+        reindex(container) # Doesn't set ascedents
     end
 
     @info "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_c2i & sync!)."
