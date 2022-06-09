@@ -82,13 +82,19 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
         atoms = TrueSelection{Atom}()(pose, gather = true)
     end
 
+    if selection !== nothing
+        residues = ProtoSyn.promote(selection, Residue)(pose, gather = true)
+    else
+        residues = TrueSelection{Residue}()(pose, gather = true)
+    end
+
     # Gather all atom names involved in inter-residue bonds (from the LGrammar
     # operators list)
     r1s = [res_lib.operators[op].r1 for op in keys(res_lib.operators)]
     r2s = [res_lib.operators[op].r2 for op in keys(res_lib.operators)]
 
-    i = 1 # For hydrogen naming. It's recommender to re-name atoms after
-    for residue in eachresidue(pose.graph)
+    i = 1 # For hydrogen naming. It's recommended to re-name atoms after
+    for residue in residues
 
         # Create the residue template from residue name (with full hydrogens)
         code = string(ProtoSyn.three_2_one[residue.name])
@@ -104,6 +110,7 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
             
             # Get the corresponding template atom (by name) 
             temp                = template.graph[1][atom.name]
+            @assert temp !== nothing "Can't find atom named $(atom.name) in template $(template.graph[1].name)"
 
             # Predict the current coordination (number of bonds) for this atom.
             # 1. Check inter-residue operators in the provided LGrammar to see
@@ -135,7 +142,7 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
             # internal coordinates). However, the internal coordinates in the
             # template are only in accordance to the template dihedral angles.
             # Any different dihedral angles (phi, psi, omega and chis) wil break
-            # the structure and induce super-positions. The final internal
+            # the structure and introduce super-positions. The final internal
             # coordinates to the introduced hydrogens need to reflect the
             # current dihedral angles the parent atom is involved.
             # 1. Measure current dihedral angle on the parent atom. This depends

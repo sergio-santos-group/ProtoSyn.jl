@@ -117,6 +117,9 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                 popparent!(starting_atom) # Was root before.
                 # println("Bonds of $(starting_atom): $(starting_atom.bonds)")
                 C_bond_index = findfirst(x -> x.symbol == "C", starting_atom.bonds)
+                # ! Note: It may happen that there is only the CA connected to
+                # ! an N. In such case, the residue parent will be itself. These
+                # ! cases are adressed further down.
                 @assert C_bond_index !== nothing "No atom \"C\" found in atom $(starting_atom) bonds list ($(starting_atom.bonds))."
                 parent_residue = starting_atom.bonds[C_bond_index].container
                 setparent!(residue, parent_residue)
@@ -126,6 +129,15 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
 
         end
         
+        # Adress cases where the parent's residue is itself (happens when
+        # there's missing residues in the chain)
+        for residue in eachresidue(pose.graph)
+            if residue.parent === residue
+                popparent!(residue)
+                setparent!(residue, ProtoSyn.root(pose.graph).container)
+            end
+        end
+
         reindex(pose.graph)
         ProtoSyn.request_c2i!(pose.state; all = true)
         sync!(pose)

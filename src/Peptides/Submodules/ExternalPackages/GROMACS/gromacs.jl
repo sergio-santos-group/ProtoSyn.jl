@@ -365,7 +365,7 @@ module GMX
             end
         end
 
-        ct_sele     = ProtoSyn.promote((sele & CTerminalSelection()), Residue)
+        ct_sele     = ProtoSyn.promote((sele & DownstreamTerminalSelection{Residue}()), Residue)
         c_terminals = ct_sele(pose, gather = true)
         for c_terminal in c_terminals
             if c_terminal["O"] === nothing

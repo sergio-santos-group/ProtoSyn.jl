@@ -47,25 +47,25 @@ function setss!(state::State, ss::SecondaryStructureTemplate{T}, residues::Vecto
             # This conformation is most abundant (~95%) in globular proteins.
             # https://pubs.acs.org/doi/10.1021/jacs.0c02263
             # PHI: -75° | PSI: 145° | OMEGA: 180°
-            ProtoSyn.setdihedral!(state, PhiSelection()(r, gather = true)[1], T(-75°))
+            ProtoSyn.setdihedral!(state, Peptides.phi(r), T(-75°))
             # Last residues of chain might not have a psi angle.
-            PsiSelection()(r, gather = true)[1] !== nothing && ProtoSyn.setdihedral!(state, PsiSelection()(r, gather = true)[1],  T(145°))
-            ProtoSyn.setdihedral!(state, OmegaSelection()(r, gather = true)[1], T(180°))
+            Peptides.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Peptides.psi(r),  T(145°))
+            ProtoSyn.setdihedral!(state, Peptides.omega(r), T(180°))
             continue
         end
         if !include_variation
-            ProtoSyn.setdihedral!(state, PhiSelection()(r, gather = true)[1], ss.ϕ.angle)
+            ProtoSyn.setdihedral!(state, Peptides.phi(r), ss.ϕ.angle)
             # Last residues of chain might not have a psi angle.
-            PsiSelection()(r, gather = true)[1] !== nothing && ProtoSyn.setdihedral!(state, PsiSelection()(r, gather = true)[1],  ss.ψ.angle)
-            ProtoSyn.setdihedral!(state, OmegaSelection()(r, gather = true)[1], ss.ω.angle)
+            Peptides.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Peptides.psi(r),  ss.ψ.angle)
+            ProtoSyn.setdihedral!(state, Peptides.omega(r), ss.ω.angle)
         else
             _ϕ = ss.ϕ.sampler === nothing ? ss.ϕ.angle : Peptides.sample_ramachandran(ss.ϕ.sampler, min_prob = min_prob)
-            ProtoSyn.setdihedral!(state, PhiSelection()(r, gather = true)[1], _ϕ)
+            ProtoSyn.setdihedral!(state, Peptides.phi(r), _ϕ)
             # Last residues of chain might not have a psi angle.
             _ψ = ss.ψ.sampler === nothing ? ss.ψ.angle : Peptides.sample_ramachandran(ss.ψ.sampler, min_prob = min_prob)
-            PsiSelection()(r, gather = true)[1] !== nothing && ProtoSyn.setdihedral!(state, PsiSelection()(r, gather = true)[1], _ψ)
+            Peptides.psi(r) !== nothing && ProtoSyn.setdihedral!(state, Peptides.psi(r), _ψ)
             _ω = ss.ω.sampler === nothing ? ss.ω.angle : Peptides.sample_ramachandran(ss.ω.sampler, min_prob = min_prob)
-            ProtoSyn.setdihedral!(state, OmegaSelection()(r, gather = true)[1], _ω)
+            ProtoSyn.setdihedral!(state, Peptides.omega(r), _ω)
         end
     end
 
@@ -220,7 +220,7 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
     psi_values = [0.0, 0.0, 0.0, 0.0]
 
     for (residue_index, residue) in enumerate(residues)
-        phi_atom = PhiSelection()(residue, gather = true)[1]
+        phi_atom = Peptides.phi(residue)
         phi_atom === nothing && continue
         phi = ProtoSyn.getdihedral(pose.state, phi_atom)
         
@@ -231,7 +231,7 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
         @info "Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])"
         phi_ss = phi_keys[argmin(phi_values)]
         
-        psi_atom = PsiSelection()(residue)[1]
+        psi_atom = Peptides.psi(residue)
         psi_atom === nothing && continue
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
         for (ss_index, potential) in enumerate(psi_potentials)

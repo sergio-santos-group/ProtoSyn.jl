@@ -76,15 +76,15 @@ ProtoSyn.eval(:(begin
         n_atoms = count_atoms(container)
         mask    = Mask{Atom}(n_atoms)
 
-        for atom in eachatom(container)
+        for (index, atom) in enumerate(eachatom(container))
             if !(atom.container.name in keys(Peptides.chi_dict))
-                mask[atom.index] = false
+                mask[index] = false
                 continue
             end
 
             chi_list = Peptides.chi_dict[atom.container.name]
             length(chi_list) <= 1 && begin
-                mask[atom.index] = false
+                mask[index] = false
                 continue
             end
 
@@ -92,7 +92,7 @@ ProtoSyn.eval(:(begin
             chi_query = [i + 1 for i in sele.n if i < N]
 
             if atom.name in chi_list[chi_query]
-                mask[atom.index] = true
+                mask[index] = true
             end
         end
 

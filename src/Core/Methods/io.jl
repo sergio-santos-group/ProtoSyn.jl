@@ -295,20 +295,15 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
     seg  = Segment("", -1)     # orphan segment
     res  = Residue("", -1)     # orphan residue
     
-    seekstart(io)
-    natoms = mapreduce(l->startswith(l, "ATOM")|| startswith(l, "HETATM"), +, eachline(io); init=0)
-    x = zeros(T, 3, natoms)
-    
     id2atom = Dict{Int, Atom}()
     
-    state = State{T}(natoms)
+    state = State{T}() # empty state
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
     er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w+[+-]*)\s*)|(\s*))"
     
     aid = 0
-    seekstart(io)
     ignored_atoms = Vector{Int}()
     for line in eachline(io)
         
@@ -364,12 +359,11 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
 
             id2atom[parse(Int, atom["aid"])] = new_atom
             
-            s = state[atmindex]
+            s = AtomState()
             s.t[1] = parse(T, atom["x"])
             s.t[2] = parse(T, atom["y"])
             s.t[3] = parse(T, atom["z"])
-            x[:, atmindex] = [s.t[1], s.t[2], s.t[3]]
-            atmindex += 1
+            push!(state, s)
 
         elseif startswith(line, "CONECT")
             idxs = map(s -> parse(Int, s), split(line)[2:end])
@@ -395,10 +389,13 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
             end
         end
     end
-    state.x = StateMatrix(state, x)
+
     top.id = state.id = genid()
-    
-    Pose(top, state)
+   
+    pose = Pose(top, state)
+    reindex(pose.graph, set_ascendents = false)
+    reindex(pose.state)
+    return pose
 end
 
 # --- WRITE --------------------------------------------------------------------

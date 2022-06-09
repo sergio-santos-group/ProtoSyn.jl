@@ -23,11 +23,11 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
             continue
         end
         _value = (randn() * sd) + value
-        if chi(residue)[1] === nothing
+        if chi(residue, gather = true)[1] === nothing
             @warn "Tried to apply $chi on residue $residue, but the requested atom was not found. Not performing any action."
             chis[chi] = (NaN, T(0))
         else
-            setdihedral!(state, chi(residue)[1], _value)
+            setdihedral!(state, chi(residue, gather = true)[1], _value)
             chis[chi] = (_value, T(0))
         end
     end
@@ -142,7 +142,7 @@ Rotamer{Float64}: GLU | Chi1:   -65.5° ±  9.5 | Chi2:    81.7° ±  9.6 | Chi3
 """
 function sample_rotamer(pose::Pose, rl::Dict{String, BBD_RotamerLibrary}, residue::Residue, n::Int = -1, random_inexistent_phi_psi::Bool = false)
 
-    phi_atom = PhiSelection()(residue, gather = true)[1]
+    phi_atom = Peptides.phi(residue)
     if phi_atom === nothing
         if !random_inexistent_phi_psi
             @warn "Tried to sample a rotamer for residue $residue but the required atom for phi determination was not found. Consider setting the `random_inexistent_phi_psi` flag to true."

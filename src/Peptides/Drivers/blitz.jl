@@ -138,8 +138,8 @@ function (driver::RotamerBlitz)(pose::Pose)
                 rotamer => energy)
 
             # Get the correct rotamer stack
-            phi = getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
-            psi = getdihedral(pose.state, PsiSelection()(residue, gather = true)[1])
+            phi = getdihedral(pose.state, Peptides.phi(residue))
+            psi = getdihedral(pose.state, Peptides.psi(residue))
             rotamer_stack = driver.rotamer_library[residue.name][phi, psi]
 
             # Iterate the 'n_first' rotamers, saving the evaluated energy

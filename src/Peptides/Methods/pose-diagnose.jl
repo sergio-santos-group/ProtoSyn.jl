@@ -50,8 +50,8 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
     ukws_res  = Vector{Int}()
     ukw_atoms = Vector{Int}()
     # Get terminal atoms for cap checking
-    N = NTerminalSelection()(pose, gather = true)[1]["N"]
-    C = CTerminalSelection()(pose, gather = true)[1]["C"]
+    N = UpstreamTerminalSelection{Residue}()(pose, gather = true)[1]["N"]
+    C = DownstreamTerminalSelection{Residue}()(pose, gather = true)[1]["C"]
     for res in eachresidue(pose.graph)
         ukw_res = !(res.name in keys(ProtoSyn.three_2_one))
         if ukw_res

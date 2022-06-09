@@ -267,7 +267,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
-    _ϕ = ProtoSyn.getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
+    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.phi(residue))
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for child in residue["CA"].children
         if child in pose_sidechain
@@ -317,16 +317,16 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # 1) Insert new residue in position R, shifting all downstream residues + 1
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
-    phi   = ProtoSyn.getdihedral(pose.state, PhiSelection()(residue, gather = true)[1])
+    phi   = ProtoSyn.getdihedral(pose.state, phi(residue))
     
-    psi_atom = PsiSelection()(residue, gather = true)[1]
+    psi_atom = psi(residue)
     if psi_atom !== nothing
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
     else
         psi = 0.0
     end
     
-    omega_atom = OmegaSelection()(residue, gather = true)[1]
+    omega_atom = omega(residue)
     if omega_atom !== nothing
         omega = ProtoSyn.getdihedral(pose.state, omega_atom)
     else
@@ -637,7 +637,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * (N-terminal residue has an atom named "N" and C-terminal has an atom
     # * named "C", both with a bond to a "CA" atom).
 
-    _selection = ProtoSyn.TerminalSelection()
+    _selection = DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}()
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -651,6 +651,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     for residue in residues
         if is_C_terminal(residue)
             terminal = residue["C"]
+            @assert terminal !== nothing "Can't find atom \"C\" in terminal residue $residue"
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
@@ -716,7 +717,7 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     sync!(pose)
 
     # * Search for terminals to cap
-    _selection = ProtoSyn.TerminalSelection()
+    _selection = DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}()
     if selection !== nothing
         _selection = _selection & selection
     end

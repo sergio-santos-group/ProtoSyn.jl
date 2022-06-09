@@ -113,12 +113,13 @@ selection_type(::DownstreamTerminalSelection{M, T})  where {M, T} = T
 # --- Select -------------------------------------------------------------------
 
 function select(sele::DownstreamTerminalSelection{Stateless, T}, container::AbstractContainer) where {T <: AbstractContainer}
-    @assert typeof(container) >= Residue "Can't apply CTerminalSelection{Residue} to container of type $(typeof(container))"
+    @assert typeof(container) >= Residue "Can't apply DownstreamTerminalSelection{Residue}() to container of type $(typeof(container))"
     
     n_instances = counter(T)(container)
     mask        = Mask{T}(n_instances)
 
-    for (index, int) in enumerate(iterator(T)(container))
+    iter = typeof(container) > T ? iterator(T)(container) : [container]
+    for (index, int) in enumerate(iter)
         if hasparent(int) && length(int.children) == 0
             mask[index] = true
         end

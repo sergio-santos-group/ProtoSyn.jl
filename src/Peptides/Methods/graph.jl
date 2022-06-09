@@ -89,8 +89,8 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
 
         # Check caps
         # N-terminal
-        N_terminal_pose     = NTerminalSelection()(segment, gather = true)[1]
-        N_terminal_template = NTerminalSelection()(template, gather = true)[1]
+        N_terminal_pose     = UpstreamTerminalSelection{Residue}()(segment, gather = true)[1]
+        N_terminal_template = UpstreamTerminalSelection{Residue}()(template, gather = true)[1]
         N = ProtoSyn.identify_atom_by_bonding_pattern(N_terminal_pose, ["N", "C", "C", "O"])
         if isa(N, Vector{Atom})
             if length(N) === 0
@@ -107,8 +107,8 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         end
 
         # C-terminal
-        C_terminal_pose     = CTerminalSelection()(segment, gather = true)[1]
-        C_terminal_template = CTerminalSelection()(template, gather = true)[1]
+        C_terminal_pose     = DownstreamTerminalSelection{Residue}()(segment, gather = true)[1]
+        C_terminal_template = DownstreamTerminalSelection{Residue}()(template, gather = true)[1]
         C = identify_c_terminal(segment, supress_warn = true) # Uses multiple criteria to identify
         if isa(C, Vector{Atom})
             if length(C) === 0
