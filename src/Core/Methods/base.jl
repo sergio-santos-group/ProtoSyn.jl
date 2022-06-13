@@ -330,6 +330,21 @@ end
 Base.copy(s::State{T}) where T = begin
     ns = State(T, s.size)
     # Updating item.t also updates the parent.x matrix
+    
+    # Also copies the current root coordinates, if they are present
+    if any((as) -> as.index < 0, s.items)
+        for (index, root_atomstate) in enumerate(s.items[1:3])
+            ns[index - 3].t = copy(root_atomstate.t)
+            ns[index - 3].r = copy(root_atomstate.r)
+            ns[index - 3].b = root_atomstate.b
+            ns[index - 3].θ = root_atomstate.θ
+            ns[index - 3].ϕ = root_atomstate.ϕ
+            ns[index - 3].Δϕ = root_atomstate.Δϕ
+            ns[index - 3].changed = root_atomstate.changed
+            ns[index - 3].δ = root_atomstate.δ
+        end
+    end
+
     for (index, atomstate) in enumerate(s)
         ns[index].t = copy(atomstate.t)
         ns[index].r = copy(atomstate.r)

@@ -218,7 +218,6 @@ function i2c!(state::State{T}, top::Topology) where T
         (i, j, k) = atom.ascendents
         istate = state[i]
         
-        # println("$atom ($i) (Changed: $(istate.changed)) -> $(sort_children(atom))")
         for child in sort_children(atom)
             # Updates state[child].changed to "true" only if 'istate.changed' is
             # true. (which is, if root_changed is true)

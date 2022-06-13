@@ -99,7 +99,9 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
     elseif key == :t
         setfield!(ns, :changed, true)
         setfield!(ns, key, MVector{3, T}(val))
-        update_state_matrix(ns.parent.x, val, :, ns.index, update_items = false)
+        if ns.parent !== nothing
+            update_state_matrix(ns.parent.x, val, :, ns.index, update_items = false)
+        end
     else
         setfield!(ns, :changed, true)
         setfield!(ns, key, val)
