@@ -739,34 +739,3 @@ end
 ProtoSyn.download(pdb_code::String; bonds_by_distance::Bool = false) = begin
     ProtoSyn.download(ProtoSyn.Units.defaultFloat, pdb_code; bonds_by_distance = bonds_by_distance)
 end
-
-
-"""
-    write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
-
-Write the [`Pose`](@ref) `pose` forces to `filename` in a specific format to be
-read by the companion Python script "cgo_arrow.py". `α` sets a multiplying
-factor to make the resulting force vectors longer/shorter (for visualization
-purposes only).
-
-# Examples
-```
-julia> ProtoSyn.write_forces(pose, "forces.dat")
-```
-"""
-function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
-    open(filename, "w") do file_out
-        for (i, atom) in enumerate(eachatom(pose.graph))
-            !any(k -> k != 0, pose.state.f[:, i]) && continue
-            x  = pose.state[atom].t[1]
-            y  = pose.state[atom].t[2]
-            z  = pose.state[atom].t[3]
-            fx = x + (pose.state.f[1, i] * α)
-            fy = y + (pose.state.f[2, i] * α)
-            fz = z + (pose.state.f[3, i] * α)
-            
-            s  = @sprintf("%5d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n", atom.id, x, y, z, fx, fy, fz)
-            Base.write(file_out, s)
-        end
-    end
-end

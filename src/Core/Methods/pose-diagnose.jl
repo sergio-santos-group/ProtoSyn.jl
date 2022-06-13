@@ -184,3 +184,75 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
         return nothing
     end
 end
+
+
+"""
+    set_parenthood_as_forces!(pose::Pose, [selection::Opt{AbstractSelection} = nothing])
+
+Set a vector between any given [`Atom`](@ref) instance in the provided
+[`Pose`](@ref) `pose` and its `.parent` as that [`Atom`](@ref) instance's force
+(in the `pose.state`). If an `AbstractSelection` `selection` is given, only loop
+over the selected atoms. Useful for debuging purposes.
+
+# See also
+[`write_forces`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.set_parenthood_as_forces!(pose)
+
+julia> pose.state.f
+3×7 Matrix{Float64}:
+  0.512436     -1.4          -0.7          -1.43         0.7           1.4           0.7
+  0.512436      0.0           1.21244      -1.46422e-7   1.21244      -4.88498e-15  -1.21244
+ -6.27553e-17   1.21234e-16  -1.31353e-16   8.09416e-7  -2.52586e-16  -1.21234e-16   1.31353e-16
+```
+"""
+function set_parenthood_as_forces!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+    if selection === nothing
+        sele = TrueSelection{Atom}()
+    else
+        sele = ProtoSyn.promote(selection, Atom)
+    end
+
+    for atom in sele(pose, gather = true)
+        s = collect(pose.state[atom].t)
+        pose.state.f[:, atom.index] .= collect(pose.state[atom.parent].t) .- s
+    end
+end
+
+
+"""
+    write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
+
+Write the [`Pose`](@ref) `pose` forces to `filename` in a specific format to be
+read by the companion Python script "cgo_arrow.py" (see
+[https://pymolwiki.org/index.php/Cgo_arrow](https://pymolwiki.org/index.php/Cgo_arrow)).
+`α` sets a multiplying factor to make the resulting force vectors longer/shorter
+(for visualization purposes only).
+
+# See also
+[`set_parenthood_as_force!`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.write_forces(pose, "forces.dat")
+```
+"""
+function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
+    open(filename, "w") do file_out
+        for (i, atom) in enumerate(eachatom(pose.graph))
+            !any(k -> k != 0, pose.state.f[:, i]) && continue
+            x  = pose.state[atom].t[1]
+            y  = pose.state[atom].t[2]
+            z  = pose.state[atom].t[3]
+            fx = x + (pose.state.f[1, i] * α)
+            fy = y + (pose.state.f[2, i] * α)
+            fz = z + (pose.state.f[3, i] * α)
+            
+            s  = @sprintf("%5d %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f\n", atom.id, x, y, z, fx, fy, fz)
+            Base.write(file_out, s)
+        end
+    end
+end
