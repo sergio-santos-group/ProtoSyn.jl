@@ -96,17 +96,27 @@ function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractF
 
     # 2. Define the correct position for the pose root, so that the plane of the
     # new layer remains in the x-y plane
-    x1 = sin(60°)*r
-    y1 = cos(60°)*r
-    pose.state[root].t.data               = (  -x1,    y1, T(0.0))
-    pose.state[root.parent].t.data        = (-2*x1, T(0.0), T(0.0))
-    pose.state[root.parent.parent].t.data = (-3*x1,    y1, T(0.0))
+    y1 = sin(60°)*r
+    x1 = cos(60°)*r
+    pose.state[root].t.data               = (    -x1,    -y1, T(0.0))
+    pose.state[root.parent].t.data        = (  -x1-r,    -y1, T(0.0))
+    pose.state[root.parent.parent].t.data = (-2*x1-r, T(0.0), T(0.0))
+    root.ascendents = (0, -1, -2, -3)
+    root.parent.ascendents = (-1, -2, -3, -4)
+    root.parent.parent.ascendents = (-2, -3, -4, -5)
     ProtoSyn.request_c2i!(pose.state, all = true)
     sync!(pose)
-
+    
     # 3. Define the starting atom (conneted to root)
-    a0 = add_atom_from_internal_coordinates!(root, "C0", r, 180°,
+    a0 = add_atom_from_internal_coordinates!(root, "C0", r, 0°,
         residue = topol[1, 1], add_bond = false)
+
+    reindex(pose.graph, set_ascendents = true)
+    reindex(pose.state)
+    ProtoSyn.request_i2c!(pose.state, all = true)
+    sync!(pose)
+    ProtoSyn.request_c2i!(pose.state, all = true)
+    sync!(pose)
 
     # 4. Generate N matrix (Number of addition) & generate the B matrix (bonding
     # patterns on each ring)
@@ -198,9 +208,10 @@ function generate_carbon(x::Int, y::Int, z::Int = 0; r::T = 1.4, d::T = 3.4) whe
     ProtoSyn.request_c2i!(pose.state, all = false) # ! Not sure why this is necessary.
     sync!(pose)
 
-    _v1 = pose.state[pose.graph[1, 1, 1]].t - pose.state[pose.graph[1, 1, 2]].t
-    _v2 = pose.state[pose.graph[1, 1, 6]].t - pose.state[pose.graph[1, 1, 1]].t
-    v1 = normalize(cross(_v1, _v2))
+    # _v1 = pose.state[pose.graph[1, 1, 1]].t - pose.state[pose.graph[1, 1, 2]].t
+    # _v2 = pose.state[pose.graph[1, 1, 6]].t - pose.state[pose.graph[1, 1, 1]].t
+    # v1 = normalize(cross(_v1, _v2))
+    v1 = [0.0, 0.0, 1.0]
 
     for i in 2:z
         layer = copy(generate_carbon_layer(x, y, r = r))
@@ -211,7 +222,7 @@ function generate_carbon(x::Int, y::Int, z::Int = 0; r::T = 1.4, d::T = 3.4) whe
         
 
         if i % 2 === 0 # set multiple layer offset
-            v2 = layer.state[layer.graph[1, 1, 1]].t .- ProtoSyn.center_of_mass(layer, aix"1:6")[:]
+            v2 = [r/2, cos(30°)*r, 0.0]
             layer.state.x[:, 1:N] = layer.state.x[:, 1:N] .+ (v2 .* [1, 1, 0])
         end
 
@@ -260,12 +271,17 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
         end
     end
 
+    if ProtoSyn.count_atoms(pose.graph) === 0
+        @error "Porosity too high! ProtoSyn removed all atoms during porosity generation!"
+    end
+
     # During pop_atom!, multiple atoms were set to be child of root. A new
     # infer_parenthood! round makes it so that all atoms are children of other
     # atoms (only N root children remain, for the N segments in the pose, as
     # long as all segments are contiguous. Non-contiguous sub-segments will
     # still be children of root and may cause problems downstream).
     for segment in eachsegment(pose.graph)
+        ProtoSyn.count_atoms(segment) === 0 && continue
         ProtoSyn.infer_parenthood!(pose.graph, overwrite = true, start = segment[1, 1], linear_aromatics = false) 
     end
 
@@ -279,6 +295,7 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
     # attempts to recover a more "linear" indexation.
     if neat_indexation
         for segment in eachsegment(pose.graph)
+            ProtoSyn.count_atoms(segment) === 0 && continue
             ign_sele = !SerialSelection{Segment}(segment.id, :id)
             ProtoSyn.sort_atoms_by_graph!(pose, start = segment[1, 1], search_algorithm = ProtoSyn.BFS, ignore_selection = ign_sele)
         end
@@ -288,6 +305,44 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
 
         ProtoSyn.request_c2i!(pose.state, all = true)
         sync!(pose)
+    else
+        reindex(pose.graph, set_ascendents = true)
+        reindex(pose.state)
+    end
+
+    return pose
+end
+
+
+"""
+
+"""
+function generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
+
+    # 1. Read file
+    data = ProtoSyn.read_yml(filename)
+
+    # 2. Generate carbon
+    shape = data["Shape"]
+    pose  = generate_carbon(shape["x"], shape["y"], shape["z"])
+
+    # 3. Generate porosity
+    if "porosity" in keys(shape) && shape["porosity"] > 0.0
+        generate_porosity(pose, 1.0 - shape["porosity"], 15, random = true, neat_indexation = true)
+    end
+
+    # 4. Add functional groups
+    if "Functional-groups" in keys(data)
+        f = Dict{Fragment, eltype(pose.state)}()
+        for (fcn, value) in data["Functional-groups"]
+            f[ProtoSyn.getvar(ProtoSyn.modification_grammar, fcn)] = value
+        end
+        functionalize!(pose, f)
+    end
+
+    # 5. Write output to file
+    if output !== nothing
+        ProtoSyn.write(pose, output)
     end
 
     return pose

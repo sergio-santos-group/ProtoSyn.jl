@@ -245,12 +245,16 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     atomstate           = copy(pose.state[atom])
     old_bonds           = copy(atom.bonds)
 
+    @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Parent index in residue = $parent_index_in_res (out of $(length(parent_container.items)))"
+
     if spread_excess_charge
         excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
     end
+
+    last_position_in_res  = (parent_index_in_res + 1) === length(parent_container.items)
+    last_position_in_pose = last_position_in_res && parent_container === collect(eachresidue(pose.graph))[end]
     
     # Remove selected atom & any children atoms
-    # (if remove_downstream_graph === true)
     if remove_downstream_graph
         to_remove = ProtoSyn.travel_graph(atom)
         
@@ -275,17 +279,42 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     # children of the fake fragment root)
     frag_origin = ProtoSyn.origin(fragment.graph)
     first_atom  = frag_origin.children[1]
-    insert!(parent_container, parent_index_in_res + 1, first_atom)
+
+    if last_position_in_res
+        push!(parent_container, first_atom)
+    else
+        @info "Inserting first atom graph in position $(parent_index_in_res + 1) in the parent container."
+        @info "Between $(parent_container[parent_index_in_res]) and $(parent_container[parent_index_in_res + 1])"
+        insert!(parent_container, parent_index_in_res + 1, first_atom)
+    end
 
     # Insert the atomstate. This atomstate belongs to the existing atom that we
     # replaced. The only change is the charge.
     atomstate.δ = fragment.state[first_atom].δ
-    insert!(pose.state, parent_index + 1, copy(State([atomstate])))
+    if last_position_in_pose
+        append!(pose.state, copy(State([atomstate])))
+    else
+        @info "Inserting atomstate of $first_atom at position $(parent_index + 1) of the pose's state (first atom)."
+        insert!(pose.state, parent_index + 1, copy(State([atomstate])))
+    end
 
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
-        insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
-        insert!(pose.state, parent_index + i + 1, copy(State([fragment.state[frag_atom]])))
-        pose.state[parent_index + i + 1].parent = pose.state
+        if last_position_in_res
+            insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
+        else
+            @info "Inserting atom $(frag_atom.name) graph in position $(parent_index_in_res + i + 1) in the parent container."
+            @info "Between $(parent_container[parent_index_in_res + i]) and $(parent_container[parent_index_in_res + i + 1])"
+            insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
+        end
+
+        if last_position_in_pose
+            append!(pose.state, copy(State([fragment.state[frag_atom]])))
+        else
+            @info "Inserting atomstate of $frag_atom at position $(parent_index + i + 1) of the pose's state."
+            insert!(pose.state, parent_index + i + 1, copy(State([fragment.state[frag_atom]])))
+        end
+
+        pose.state[parent_index + i].parent = pose.state
     end
 
     # Change the parenthood and bonds from the fake fragment root to the actual
