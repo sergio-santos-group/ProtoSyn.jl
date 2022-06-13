@@ -69,8 +69,10 @@ rmsd
 
 ## [Diagnosing poses](@id pose-diagnose-core)
 
-ProtoSyn may sometimes expect a certain level of standardization between [`Pose`](@ref) instances. This includes, but is not restricted to, [`Atom`](@ref) names, order, graph completeness, neutral charge, etc. ProtoSyn makes available tools to diagnose [`Pose`](@ref) instances, when things take a turn for the worst:
+ProtoSyn may sometimes expect a certain level of standardization between [`Pose`](@ref) instances. This includes, but is not restricted to, [`Atom`](@ref) names, order, graph completeness, neutral charge, etc. ProtoSyn makes available tools to diagnose [`Pose`](@ref) instances, when things take a turn for the worst, and other auxiliary methods for debugging faulty [`Pose`](@ref) instances.
 
 ```@docs
 diagnose
+set_parenthood_as_force!
+write_forces
 ```
