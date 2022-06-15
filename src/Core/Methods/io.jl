@@ -305,6 +305,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
     
     aid = 0
     ignored_atoms = Vector{Int}()
+    conect_records_present = false
     for line in eachline(io)
         
         # if startswith(line, "TITLE")
@@ -366,6 +367,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
             push!(state, s)
 
         elseif startswith(line, "CONECT")
+            conect_records_present = true
             idxs = map(s -> parse(Int, s), split(line)[2:end])
 
             # Consider ignored atoms in previous steps
@@ -388,6 +390,10 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
                 bond(pivot, other_atom)
             end
         end
+    end
+
+    if !conect_records_present
+        @warn "It seems the loaded pose does not have CONECT records present. Consider setting the `bonds_by_distance` flag to `true`."
     end
 
     top.id = state.id = genid()

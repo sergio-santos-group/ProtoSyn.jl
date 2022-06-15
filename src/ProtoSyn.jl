@@ -138,7 +138,7 @@ end
 function __init__()
     print_loading("ProtoSyn loaded successfully!", color = :green)
     version()
-    set_logger_to_error()
+    set_logger_to_warn()
 end
 
 end # module
