@@ -261,6 +261,24 @@ module GMX
         return vcat(bonds, stack)
     end
 
+    """
+        (ProtoSyn.Peptides.GMX.GMXS)(atom::Atom, stack::Vector{Atom})
+
+    Gromacs-like algorithm for [`travel_graph`](@ref). Correctly sorts the
+    given [`Atom`](@ref) `atom` children instances and concatenates with the current
+    `stack` as expected by the Gromacs external package.
+
+    # Examples
+    ```
+    julia> ProtoSyn.Peptides.GMX.GMXS(pose.graph[1, 1, 1], Vector{Atom}())
+    4-element Vector{Atom}:
+     Atom{/2a3d:34300/A:1/MET:1/H1:2}
+     Atom{/2a3d:34300/A:1/MET:1/H2:3}
+     Atom{/2a3d:34300/A:1/MET:1/H3:4}
+     Atom{/2a3d:34300/A:1/MET:1/CA:5}
+    ```
+    """
+    GMXS = GMXSA()
 
     """
         sort_atoms_and_graph_gmx!(pose::Pose)

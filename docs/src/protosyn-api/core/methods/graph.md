@@ -157,7 +157,7 @@ travel_bonds
 identify_atom_by_bonding_pattern
 ```
 
-As explained above, certain methods in ProtoSyn travel the directed graph. There are, however, multiple ways to follow the same graph (as longs as its ramified), depending on the criteria used on bifurcations. In the Core module, ProtoSyn makes available for the BFS (breath-first search) and DFs (depth-first search) algorithms.
+As explained above, certain methods in ProtoSyn travel the directed graph. There are, however, multiple ways to follow the same graph (as longs as its ramified), depending on the criteria used on bifurcations. In the Core module, ProtoSyn makes available for the BFS (breath-first search) and DFs (depth-first search) algorithms, a type of `SearchAlgorithm`.
 
 ```@docs
 BFS

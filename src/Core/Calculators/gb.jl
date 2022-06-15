@@ -177,7 +177,11 @@ module GB
                 @debug "$i <-> $j"
                 @debug " Distance: $(dm[i, j])\n qi: $qi | qj: $qj"
                 @debug " αi: $αi | αj: $αj"
-                f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))
+                if αi == Inf || αj == Inf
+                    f = 0.0
+                else
+                    f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))
+                end
                 int += (qi * qj) / f
             end
         end

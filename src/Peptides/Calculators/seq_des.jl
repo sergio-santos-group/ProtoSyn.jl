@@ -313,6 +313,8 @@ module SeqDes
 
     Calculates the [`Pose`](@ref) `pose` energy in accordance to the SeqDes
     machine learning model (see https://www.nature.com/articles/s41467-022-28313-9).
+    In sum, this model evaluates the current sequence and chi dihedrals in
+    accordance to a trained model on many natural proteins (but generalizable).
     If an `AbstractSelection` `selection` is given, only the selected
     [`Atom`](@ref) instances are considered for the energy calculation. This
     method does not calculate forces. As such, the `update_forces` flag has no

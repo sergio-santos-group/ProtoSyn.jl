@@ -2,7 +2,7 @@
 CurrentModule = ProtoSyn.Calculators
 ```
 
-# Electrostatics
+# [Electrostatics](@id calculators-electrostatics)
 
 The following section goes into detail on how ProtoSyn aims to evaluate electrostatic interactions, divided in the following topics:
 

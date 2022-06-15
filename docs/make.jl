@@ -80,7 +80,8 @@ makedocs(
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",
-                    "Builder" => "protosyn-api/core/submodules/builder.md"
+                    "Builder" => "protosyn-api/core/submodules/builder.md",
+                    "External packages" => "protosyn-api/core/submodules/external-packages.md",
                 ],
             ],
             "Peptides" => [
@@ -92,24 +93,28 @@ makedocs(
                     "State" => "protosyn-api/peptides/methods/state.md",
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ],
-    #             "Calculators" => [
-    #                 "Sidechain Clash Restraint" => "protosyn-api/peptides/calculators/sidechain-clash-restraint.md",
-    #                 "Contact Restraint" => "protosyn-api/peptides/calculators/contact-restraint.md",
-    #                 "Cα-Cα Clash Restraint" => "protosyn-api/peptides/calculators/ca-ca-clash-restraint.md",
-    #                 "Caterpillar Solvation" => "protosyn-api/peptides/calculators/caterpillar-solvation.md",
-    #             ],
-    #             "Mutators" => [
-    #                 "Rotamer Mutator" => "protosyn-api/peptides/mutators/rotamer.md",
-    #                 "Design Mutator" => "protosyn-api/peptides/mutators/design.md"
-    #             ],
-    #             "Drivers" => [
-    #                 "Rotamer Blitz" => "protosyn-api/peptides/drivers/rotamer-blitz-driver.md"
-    #             ],
-    #             "Submodules" => [
-    #                 "Selections" => "protosyn-api/peptides/submodules/selections.md",
-    #                 "Builder" => "protosyn-api/peptides/submodules/builder.md",
-    #                 "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md"
-    #             ]
+                "Calculators" => [
+                    "Potential Restraints" => "protosyn-api/peptides/calculators/potential-restraints.md",
+                    "Electrostatics" => "protosyn-api/peptides/calculators/electrostatics.md",
+                    "SASA" => "protosyn-api/peptides/calculators/sasa.md",
+                    "Natural frequency" => "protosyn-api/peptides/calculators/natural-frequency.md",
+                    "Secondary structure propensity" => "protosyn-api/peptides/calculators/ss-propensity.md",
+                    "Caterpilar solvation model" => "protosyn-api/peptides/calculators/caterpillar-solvation.md",
+                    "SeqDes model" => "protosyn-api/peptides/calculators/seqdes.md",
+                ],
+                "Mutators" => [
+                    "Rotamer Mutator" => "protosyn-api/peptides/mutators/rotamer.md",
+                    "Design Mutator" => "protosyn-api/peptides/mutators/design.md"
+                ],
+                "Drivers" => [
+                    "Rotamer Blitz" => "protosyn-api/peptides/drivers/rotamer-blitz-driver.md"
+                ],
+                "Submodules" => [
+                    "Selections" => "protosyn-api/peptides/submodules/selections.md",
+                    "Builder" => "protosyn-api/peptides/submodules/builder.md",
+                    "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md",
+                    "External packages" => "protosyn-api/peptides/submodules/external-packages.md",
+                ]
             ],
     #         "Materials" => [
     #             "Introduction" => "protosyn-api/materials/introduction.md",

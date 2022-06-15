@@ -50,7 +50,7 @@ module GMX
     """
         generate_gmx_itp(pose::Pose, selection::Opt{AbstractSelection}; atomtypes_itp_filename::String = "atomtypes.itp", molecule_itp_filename::String = "molecule.itp", overwrite::Bool = true, keep_temp_files::Bool = false)
 
-    Generate an `.itp` file for the [`Fragment`](@ref) given vy applying the
+    Generate an `.itp` file for the [`Fragment`](@ref) given by applying the
     `AbstractSelection` `selection` on the given [`Pose`](@ref) `pose`. If no
     `selection` is provided, the whole [`Pose`](@ref) `pose` will be considered
     as a single entity for `.itp` generation. This function assumes the selected
@@ -69,6 +69,9 @@ module GMX
     reccomended that this function is not used to specific organic polymers,
     such as proteins. Specific ProtoSyn modules (such as `Peptides`, in this
     example) should provide more accurate `.itp` generation methods.
+
+    !!! ukw "Note:"
+        Other modules, such as Peptides, may provide [`generate_gmx_itp`](@ref) methods for specific molecule types (proteins and peptides, in this example).
 
     # Examples
     ```
@@ -186,9 +189,9 @@ module GMX
 
 
     """
-    add_solvent(input_filename::String, output_filename::String, [solvent_type::String = "spc216"], [topol_filename::String = "topol.top"], [verbose::Bool = true])
+        add_solvent(input_filename::String, output_filename::String, [solvent_type::String = "spc216"], [topol_filename::String = "topol.top"], [verbose::Bool = true])
 
-        Employ `gmx solvate` to add a solvent to a given input file
+    Employ `gmx solvate` to add a solvent to a given input file
     (`input_filename`), outputs to `output_filename`. The file contents should
     be incorporated in a bounding box (see [`add_bounding_box`](@ref)). The
     solvent used in given by `solvent_type` (GROMCAS searchs the current working

@@ -15,8 +15,8 @@ added, 4 parameters need to be defined:
 * The bonds to add (B).
 Such parameters are first compiled in 4 matrixes (1 for each) which are then
 consumed to generate the actual atom positions and bonds. This algorithm is,
-therefore, sensitive to the order of addition of layers (wither to add Y axis or
-X axis first, changes the N, X, Y and B matrixes, as well as rotation of
+therefore, sensitive to the order of addition of layers (whether to add Y axis
+or X axis first, changes the N, X, Y and B matrixes, as well as rotation of
 dihedral angles). For this particular implementation, the X axis is added first,
 and all expansion is then added from this layer in the Y axis. As atoms are
 added, the next anchor atoms (as selected by the X and Y matrixes) are added to
@@ -33,6 +33,19 @@ rotated by 180°. 6 possible bonding patterns are available:
 Besides this "extra" bonds, all added atoms are bonded to the respective parent
 atom. Note that it's guaranteed that the main plane of the generated layer lies
 in the x-y plane (z cartesian coordinate = 0.0).
+
+# See also
+[`generate_carbon`](@ref)
+
+# Examples
+```
+julia> pose = ProtoSyn.Materials.generate_carbon_layer(5, 5)
+Pose{Topology}(Topology{/CRV:65069}, State{Float64}:
+ Size: 70
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function generate_carbon_layer(x::Int, y::Int; r::T = 1.4) where {T <: AbstractFloat}
 
@@ -201,16 +214,33 @@ end
 
 
 """
-# TODO: Documentation
+    generate_carbon(x::Int, y::Int, [z::Int = 0]; [r::T = 1.4], [d::T = 3.4]) where {T <: AbstractFloat}
+
+Generate a carbon microcrystallite with multiple carbon sheet layers (built
+using [`generate_carbon_layer`](@ref) with `x` and `y` dimensions for the number
+of carbon rings in the x- and y-axis, respectivelly, and `r` distance between
+atoms, in Å). The generated layers are copied `z` times (in the x-axis) with a
+distance of `d` Å. Every odd layer is displaced to match π-π stacking chemistry
+in carbon sheets.
+
+# See also
+[`generate_porosity`](@ref)
+
+# Examples
+```
+julia> pose = ProtoSyn.Materials.generate_carbon(5, 5, 5)
+Pose{Topology}(Topology{/CRV:23442}, State{Float64}:
+ Size: 350
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function generate_carbon(x::Int, y::Int, z::Int = 0; r::T = 1.4, d::T = 3.4) where {T <: AbstractFloat}
     pose = copy(generate_carbon_layer(x, y, r = r))
     ProtoSyn.request_c2i!(pose.state, all = false) # ! Not sure why this is necessary.
     sync!(pose)
 
-    # _v1 = pose.state[pose.graph[1, 1, 1]].t - pose.state[pose.graph[1, 1, 2]].t
-    # _v2 = pose.state[pose.graph[1, 1, 6]].t - pose.state[pose.graph[1, 1, 1]].t
-    # v1 = normalize(cross(_v1, _v2))
     v1 = [0.0, 0.0, 1.0]
 
     for i in 2:z
@@ -240,9 +270,39 @@ end
 
 
 """
-# TODO: Documentation
+    generate_porosity(pose::Pose, pore_fraction::T; [clean_sweeps::Int = 15], [random::Bool = false], [neat_indexation::Bool = false]) where {T <: AbstractFloat}
+
+Generate porosity on the given [`Pose`](@ref) `pose` by removing [`Atom`](@ref)
+instances according to a generated Perlin noise (see the [`perlin`](@ref)
+method). The `pore_fraction` field ajusts the amount of [`Atom`](@ref) instances
+removed, as a value between 0.0 and 1.0.
+
+!!! ukw "Note:"
+    The `pose_fraction` field cannot be roughly translated as a direct percentage value of [`Atom`](@ref) instances to remove. Instead, this value refers to the [`perlin`](@ref) noise level to consider for atom removal, and as such scales exponentially. As a baseline, a `pore_fraction` of 0.4 removes approximately 50% of the [`Atom`](@ref) instances in the given [`Pose`](@ref). 
+
+For high `pore_fraction` values, the [`Atom`](@ref) removal may leave
+unconnected chains of [`Atom`](@ref) instances in each [`Segment`](@ref). Such
+cases should be manually verified. Since this function is intended to be applied
+to carbon microcrystallites, these hanging atoms may constitute carbon atoms
+with wrong valency numbers. This method automatically performs `clean_sweeps`
+and removes any atom with 1 or 0 bonds. If `random` is set to `true` (`false`,
+by default), the generated noise is randomized. If `neat_indexation` is set to
+`true` (`false`, by default), the
+[`sort_atoms_by_graph!`](@ref ProtoSyn.sort_atoms_by_graph!) method is applied
+to reindex [`Atom`](@ref) instances and sort them according to the new graph
+(after removing [`Atom`](@ref) instances).
+
+# Examples
+```
+julia> ProtoSyn.Materials.generate_porosity(pose, 0.405)
+Pose{Topology}(Topology{/CRV:36031}, State{Float64}:
+ Size: 190
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
-function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15; random::Bool = false, neat_indexation::Bool = false) where {T <: AbstractFloat}
+function generate_porosity(pose::Pose, pore_fraction::T; clean_sweeps::Int = 15, random::Bool = false, neat_indexation::Bool = false) where {T <: AbstractFloat}
 
     for atom in eachatom(pose.graph)
         as = pose.state[atom]
@@ -254,7 +314,7 @@ function generate_porosity(pose::Pose, pore_fraction::T, clean_sweeps::Int = 15;
             noise = perlin(T(as.t[1]), T(as.t[2]), T(as.t[3]))
         end
         
-        if noise > pore_fraction
+        if noise > (T(1.0) - pore_fraction)
             @info " Pore generation in carbon sheet: Popping atom $atom"
             ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = true)
         end
@@ -315,7 +375,9 @@ end
 
 
 """
+    generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
 
+Generate a functionalized carbon model 
 """
 function generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
 

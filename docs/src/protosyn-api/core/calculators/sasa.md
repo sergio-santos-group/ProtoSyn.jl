@@ -2,7 +2,7 @@
 CurrentModule = ProtoSyn.Calculators
 ```
 
-# SASA
+# [SASA](@id calculators-sasa)
 
 SASA stands for Solvent Accessible Surface Area and is a measure of the total surface area of a given solute. Multiple approaches have been proposed for the accurate estimation of this property. ProtoSyn, by default, employs the Overlapping Spheres (OLS) algorithm, a variant of the Shrake and Rupley algorithm (for more details, see [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2712621/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2712621/) and the [`calc_sasa`](@ref Calculators.SASA.calc_sasa) docstring). This section includes the following topics:
 

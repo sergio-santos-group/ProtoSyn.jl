@@ -60,7 +60,7 @@ module Restraints
 
 
     """
-        get_default_contact_restraint(filename::String; α::T = 1.0) where {T <: AbstractFloat}
+        get_default_contact_restraint(filename::String; [α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default contact map restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent)

@@ -9,9 +9,11 @@ aa_ss_propensity_filename = joinpath(
     load_default_aa_ss_propensity([::Type{T}]) where {T <: AbstractFloat}
 
 Load the default aminoacid secondary structure propensity map from
-`aa_ss_propensity_filename`. Set the values to be of type `T`
+`ProtoSyn.Peptides.aa_ss_propensity_filename`. Set the values to be of type `T`
 (`ProtoSyn.Units.defaultFloat`, by default). ProtoSyn automatically loads this
-map to `ProtoSyn.Peptides.Calculators.default_aa_ss_propensity`.
+map to `ProtoSyn.Peptides.Calculators.default_aa_ss_propensity` during loading.
+The values are extracted from Contantini et al. work (See
+https://www.sciencedirect.com/science/article/pii/S0006291X06002543.
 
 # Examples
 ```

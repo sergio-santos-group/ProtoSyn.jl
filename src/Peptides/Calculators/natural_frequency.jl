@@ -67,43 +67,35 @@ end
 """
     get_default_aa_frequency(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-Return the default SASA energy [`EnergyFunctionComponent`](@ref). `α` sets
-the component weight (on an
+Return the default natural frequency energy [`EnergyFunctionComponent`](@ref).
+`α` sets the component weight (on an
 [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
-by default). This function employs [`calc_sasa`](@ref) as the `:calc`
+by default). This function employs [`calc_aa_frequency`](@ref) as the `:calc`
 function.
 
 # Settings
-* `n_points::Int` - The number of points to generate in each [`Atom`](@ref) sphere (higher number of points leads to higher accuracy, at the expense of performance);
-* `probe_radius::T` - The distance of each point in a generated sphere to the central [`Atom`](@ref) instance. Any point within `probe_radius` of any other atom is considered buried [`Residue`](@ref) name (where T <: AbstractFloat);
-* `hydrophobicity_map::Dict{String, T}` - A dictionary of hydrophobicity values for each [`Residue`](@ref) name, positive values indicate hydrophobicity and vice-versa (where T <: AbstractFloat);
-* `max_sasas::Dict{String, T}` - A dictionary of max_sasa values (SASA values for fully-solvated [`Residue`](@ref) instances) for each [`Residue`](@ref) name (where T <: AbstractFloat);
-* `Ω::T` - The average exposure value (between 0.0 and 1.0), any SASA value bellow this percentage of max_sasa is considered buried (where T <: AbstractFloat).
+* `aa_frequency_map::Dict{Char, T}` - A mapping between [`Residue`](@ref) types (in 1-letter code format) and the natural frequency of aminoacids of that type;
 
 # See also
-[`calc_sasa_energy`](@ref)
+[`calc_aa_ss_propensity`](@ref)
 
 # Examples
 ```jldoctest
-julia> ProtoSyn.Calculators.SASA.get_default_sasa_energy()
+julia> ProtoSyn.Peptides.Calculators.get_default_aa_frequency()
 🞧  Energy Function Component:
 +---------------------------------------------------+
-| Name           | SASA_Solvation                   |
+| Name           | Natural_AA_Freq                  |
 | Alpha (α)      | 1.0                              |
 | Update forces  | false                            |
-| Calculator     | calc_sasa_energy                 |
+| Calculator     | calc_aa_frequency                |
 +---------------------------------------------------+
-|    +----------------------------------------------------------------------------------+
-├──  ● Settings                      | Value                                            |
-|    +----------------------------------------------------------------------------------+
-|    | max_sasas                     | Dict{String, Float64}(0 components)              |
-|    | hydrophobicity_map            | Dict{String, Float64}(22 components)             |
-|    | Ω                             | 0.0                                              |
-|    | probe_radius                  | 1.4                                              |
-|    | n_points                      | 100                                              |
-|    +----------------------------------------------------------------------------------+
-|    
-└──  ○  Selection: nothing
+ |    +----------------------------------------------------------------------------------+
+ ├──  ● Settings                      | Value                                            |
+ |    +----------------------------------------------------------------------------------+
+ |    | aa_frequency_map              | Dict{Char, Float64}(20 components)               |
+ |    +----------------------------------------------------------------------------------+
+ |    
+ └──  ○  Selection: nothing
 ```
 """
 function get_default_aa_frequency(;α::T = 1.0) where {T <: AbstractFloat}
@@ -113,5 +105,5 @@ function get_default_aa_frequency(;α::T = 1.0) where {T <: AbstractFloat}
         nothing,
         Dict{Symbol, Any}(:aa_frequency_map => default_aa_frequencies),
         α,
-        true)
+        false)
 end

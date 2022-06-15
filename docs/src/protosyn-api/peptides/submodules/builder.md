@@ -14,8 +14,14 @@ As an expansion of the Core module [Builder](@ref core-builder), this submodule 
 
 # [Loading the default Peptides Stochastic L-Grammar](@id peptides-builder-1)
 
+The default Peptides grammar is loaded when ProtoSyn is loaded, and can be accessed at `Peptides.grammar`.
+
 ```@docs
-grammar(::Type{T}; ::Bool) where {T <: AbstractFloat}
+load_default_grammar
+load_grammar_from_file
+load_grammar_from_file!
+join_grammars!
+load_grammar_extras_from_file!
 ```
 
 # [Building a molecular structure](@id peptides-builder-2)
