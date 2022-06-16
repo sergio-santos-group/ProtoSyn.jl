@@ -38,7 +38,8 @@ module GB
 
     """
         predict_igbr_nn_born_radii(pose::Pose, selection::Opt{AbstractSelection} = nothing; dm::Opt{Matrix{T}} = nothing, models::GBModels = models_onnx) where {T <: AbstractFloat}
-    Returns the Born Radii for each [`Atom`](@ref) instance in the given
+    
+        Returns the Born Radii for each [`Atom`](@ref) instance in the given
     [`Pose`](@ref) `pose` (selected by the `AbstractSelection` `selection` -
     [`TrueSelection`](@ref), by default), according to the IGBR neural network
     model (See Fogolari et al. work - https://pubmed.ncbi.nlm.nih.gov/31693089/).
@@ -177,7 +178,7 @@ module GB
                 @debug "$i <-> $j"
                 @debug " Distance: $(dm[i, j])\n qi: $qi | qj: $qj"
                 @debug " αi: $αi | αj: $αj"
-                if αi == Inf || αj == Inf
+                if αi == 0 || αj == 0
                     f = 0.0
                 else
                     f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))

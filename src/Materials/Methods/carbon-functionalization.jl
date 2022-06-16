@@ -10,7 +10,46 @@ edge_or_center = base & BondCountSelection(4, <)
 center         = base & BondCountSelection(3)
 
 """
-# TODO: Documentation
+    functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normalize_frequencies::Bool = false) where {T <: AbstractFloat}
+
+Add N functional groups to the given [`Pose`](@ref) `pose`. The number of added
+functional groups is given by the `functional groups` dictionary, mapping
+[`Fragment`](@ref) instances (for example, from the default
+`ProtoSyn.modification_grammar`) to a percentage of achoring points available.
+By default, anchoring points are non-charged carbon [`Atom`](@ref) instances.
+If the `normalize_frequencies` flag is set to `true` (`false`, by default),
+ProtoSyn normalizes the input `functional_groups` dictionary so that all
+possible non-charged carbon [`Atom`](@ref) instances are functionalized (in
+proportional percentages to the input dictionary). Note that this method expects
+correctly ordered [`Segment`](@ref) instances (1 is bottom, :end is top).
+
+!!! ukw "Note:"
+    The reason only non-charged carbon [`Atom`](@ref) instances are considered for functionalization is because ProtoSyn automatically assigns a charge when adding a functional group. Therefore, only non-charged [`Atom`](@ref) instances are left "open" for functionalization.
+
+
+---
+
+
+    functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
+
+In an alternative syntax, the `functional_groups` fictionary directly maps
+[`Fragment`](@ref) instances to the actual number of desired functional groups
+to add.
+
+# See also
+[`add_functionalization!`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.Materials.functionalize!(pose, Dict(ProtoSyn.modification_grammar.variables["XYL"] => 10))
+
+julia> pose
+Pose{Topology}(Topology{/CRV:42474}, State{Float64}:
+ Size: 380
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normalize_frequencies::Bool = false) where {T <: AbstractFloat}
 
@@ -38,11 +77,6 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normal
 end
 
 
-"""
-# TODO: Documentation
-Warning: Based on charge
-Warning: Expects correctly ordered segments (1 is bottom, end is top)
-"""
 function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
 
     L_layer = SerialSelection{Segment}(ProtoSyn.count_segments(pose.graph), :id)
@@ -74,12 +108,7 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
     shuffle!(functional_group_list)
 
     # Consume list and add functional groups to pose
-    _count = 0
     while length(functional_group_list) > 0
-
-        for atom in eachatom(pose.graph)
-            ϕ = round(rad2deg(pose.state[atom].ϕ), digits = 4)
-        end
 
         fcn_id = pop!(functional_group_list)
         fcn = functional_group_id[fcn_id]
@@ -91,7 +120,7 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
 
             mask = (fcn_sele)(pose)
             count(mask.content) === 0 && begin
-                @warn "Tried to add $(fnc.graph.name) functional group to the given Pose, but no matching anchoring Atom was available."
+                @warn "Tried to add $(fcn.graph.name) functional group to the given Pose, but no matching anchoring Atom was available."
                 continue
             end
 
@@ -105,7 +134,25 @@ end
 
 
 """
-Assumes z = 0
+    add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
+
+Add a single functional group `fcn` (a [`Fragment`](@ref) instance) to the given
+[`Atom`](@ref) instance `atom` in the [`Pose`](@ref) `pose`.
+
+# See also
+[`functionalize!`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.Materials.add_functionalization!(pose, ProtoSyn.modification_grammar.variables["XYL"], pose.graph[1, 1, 16])
+
+julia> pose
+Pose{Topology}(Topology{/CRV:14425}, State{Float64}:
+ Size: 353
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
 """
 function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
 
@@ -226,10 +273,6 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
         end
     end
 
-    ProtoSyn.set_parenthood_as_forces!(pose)
-    ProtoSyn.write_forces(pose, "parenthood.txt")
-    ProtoSyn.write(pose, "carbon.pdb")
-
     ProtoSyn.replace_by_fragment!(pose, atom, fcn, 
         remove_downstream_graph = false,
         spread_excess_charge    = true)
@@ -237,11 +280,9 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
     # Block "close-by" points # TODO
     # println(collect(eachatom(pose.graph))[atom.id].children)
 
+    # Recover original root # TODO
+
     reindex(pose)
     ProtoSyn.request_i2c!(pose.state, all = false)
     sync!(pose)
-
-    ProtoSyn.set_parenthood_as_forces!(pose)
-    ProtoSyn.write_forces(pose, "parenthood.txt")
-    ProtoSyn.write(pose, "carbon.pdb")
 end

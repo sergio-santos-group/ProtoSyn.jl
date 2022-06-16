@@ -224,7 +224,7 @@ distance of `d` Å. Every odd layer is displaced to match π-π stacking chemis
 in carbon sheets.
 
 # See also
-[`generate_porosity`](@ref)
+[`generate_porosity`](@ref) [`generate_carbon_from_file`](@ref)
 
 # Examples
 ```
@@ -291,6 +291,9 @@ by default), the generated noise is randomized. If `neat_indexation` is set to
 [`sort_atoms_by_graph!`](@ref ProtoSyn.sort_atoms_by_graph!) method is applied
 to reindex [`Atom`](@ref) instances and sort them according to the new graph
 (after removing [`Atom`](@ref) instances).
+
+# See also
+[`generate_carbon`](@ref)
 
 # Examples
 ```
@@ -377,7 +380,24 @@ end
 """
     generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
 
-Generate a functionalized carbon model 
+Generate a functionalized carbon model from a .yml input file (named
+`filename`). If `output` is set to a `String` (`nothing`, by default), outputs
+the generated carbon model to a file. For an input file example, check the
+`resources/Materials/carbon.yml` file.
+
+# See also
+[`functionalize!`](@ref)
+
+# Examples
+```
+julia> pose = ProtoSyn.Materials.generate_carbon_from_file("carbon.yml")
+Pose{Topology}(Topology{/CRV:40141}, State{Float64}:
+ Size: 960
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+
+```
 """
 function generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
 
@@ -390,7 +410,7 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
 
     # 3. Generate porosity
     if "porosity" in keys(shape) && shape["porosity"] > 0.0
-        generate_porosity(pose, 1.0 - shape["porosity"], 15, random = true, neat_indexation = true)
+        generate_porosity(pose, shape["porosity"], random = true, neat_indexation = true)
     end
 
     # 4. Add functional groups

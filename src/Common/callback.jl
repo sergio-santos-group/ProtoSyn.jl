@@ -1,6 +1,6 @@
 export default_energy_step_callback
 
-@doc """
+"""
     default_energy_step_callback(n::Int)::Callback
 
 Returns a simple [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
@@ -29,7 +29,7 @@ end
 
 export default_energy_step_frame_callback
 
-@doc """
+"""
     default_energy_step_frame_callback(n::Int, filename::String)::Callback
 
 Returns a simple [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
@@ -59,7 +59,7 @@ function default_energy_step_frame_callback(n::Int, filename::String)::Callback
 end
 
 
-@doc """
+"""
     default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
 
 Returns a detailed [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
@@ -164,8 +164,8 @@ function detailed_message(msg::String; color::Symbol = :none, file_out::Opt{Stri
 end
 
 
-@doc """
-default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
+"""
+    default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
 
 Returns a detailed [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
 current step and all energy components of the [`Pose`](@ref) every `n` steps,

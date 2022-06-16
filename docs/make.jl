@@ -116,21 +116,23 @@ makedocs(
                     "External packages" => "protosyn-api/peptides/submodules/external-packages.md",
                 ]
             ],
-    #         "Materials" => [
-    #             "Introduction" => "protosyn-api/materials/introduction.md",
-    #             "Methods" => [
-    #                 "Lattices" => "protosyn-api/materials/methods/lattices.md"
-    #             ]
-    #         ],
-    #         "Sugars" => [
-    #             "Introduction" => "protosyn-api/sugars/introduction.md",
-    #             "Submodules" => [
-    #                 "Builder" => "protosyn-api/sugars/submodules/builder.md",
-    #             ]
-    #         ],
-    #         "Common" => [
-    #             "Introduction" => "protosyn-api/common/introduction.md"
-    #         ]
+            "Materials" => [
+                "Introduction" => "protosyn-api/materials/introduction.md",
+                "Methods" => [
+                    "Lattices" => "protosyn-api/materials/methods/lattices.md",
+                    "Carbons" => "protosyn-api/materials/methods/carbons.md",
+                ]
+            ],
+            "Sugars" => [
+                "Introduction" => "protosyn-api/sugars/introduction.md",
+                "Submodules" => [
+                    "Builder" => "protosyn-api/sugars/submodules/builder.md",
+                ]
+            ],
+            "Common" => [
+                "Introduction" => "protosyn-api/common/introduction.md"
+            ],
+            hide("Internals" => "protosyn-api/internals.md"),
         ]
     ],
     # doctest = true,
