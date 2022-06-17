@@ -662,6 +662,7 @@ uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 [[deps.ONNX]]
 deps = ["Ghost", "LinearAlgebra", "NNlib", "Pkg", "ProtoBuf", "Revise", "StaticArrays", "Statistics", "Test"]
 git-tree-sha1 = "3b572cbedc3a917105d44a96b08e659428c50c69"
+pinned = true
 repo-rev = "master"
 repo-url = "https://github.com/FluxML/ONNX.jl"
 uuid = "d0dd6a25-fac6-55c0-abf7-829e0c774d20"
