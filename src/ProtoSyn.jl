@@ -7,10 +7,6 @@ const _version             = 1.01
 
 include("Core/Methods/log.jl")
 
-if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
-    ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
-end
-
 print_loading("External packages")
 using CpuId
 using Printf

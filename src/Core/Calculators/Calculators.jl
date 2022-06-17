@@ -4,6 +4,12 @@ module Calculators
     using Base.Cartesian
     using Printf
 
+    function __init__()
+        if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+            ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+        end
+    end
+
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     include("verlet_list.jl")
