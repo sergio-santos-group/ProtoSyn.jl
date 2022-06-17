@@ -19,6 +19,9 @@ module TorchANI
             copy!(torch, pyimport("torch"))
             torch_is_available = true
         catch LoadError
+            if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+                ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+            end
             if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
                 println()
                 @warn """
@@ -46,6 +49,9 @@ module TorchANI
             copy!(torchani, pyimport("torchani"))
             torchani_is_available = true
         catch LoadError
+            if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+                ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+            end
             if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
                 println()
                 @warn """

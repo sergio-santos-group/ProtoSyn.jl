@@ -13,6 +13,9 @@ module REF15
         try
             copy!(pyrosetta, pyimport("pyrosetta"))
         catch LoadError
+            if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+                ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+            end
             if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
                 println()
                 @warn """

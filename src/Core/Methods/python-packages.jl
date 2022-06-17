@@ -28,6 +28,9 @@ function is_python_package_installed(package_name::String, installation_instruct
     try
         pyimport(package_name)
     catch LoadError
+        if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+            ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+        end
         if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
             print_installation_error(
                 package_name,
