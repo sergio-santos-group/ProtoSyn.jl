@@ -33,15 +33,17 @@ The main goal of ProtoSyn is to be a basis on top of which new tools and protoco
 
 ## :clipboard: Installation
 
-After setting up you Julia installation, open a new REPL and add ProtoSyn.jl using the package manager.
+After setting up you Julia installation, open a new REPL and add ProtoSyn.jl using the package manager. Currently, ProtoSyn.jl uses an unregistered dependency to load ONNX files. Make sure to install this dependency **before** adding ProtoSyn.jl:
 
 ```@julia
+julia> ] add https://github.com/FluxML/ONNX.jl
+
 julia> ] add https://github.com/sergio-santos-group/ProtoSyn.jl.git
 ```
 
-All Julia-based dependencies should automatically installed/updated. In order to use TorchANI's energy function, you'll also need to install [Python](https://www.python.org/downloads/) with both [Torch](https://pytorch.org/get-started/locally/) and [TorchANI](https://aiqm.github.io/torchani/start.html) libraries.
+All registered Julia-based dependencies should automatically be installed/updated. Some functionalities of ProtoSyn.jl interact with external packages or tools (such as Python packages. For example, in order to use TorchANI's energy function, you'll also need to install [Python](https://www.python.org/downloads/) with both [Torch](https://pytorch.org/get-started/locally/) and [TorchANI](https://aiqm.github.io/torchani/start.html) libraries). In either case, upon `using ProtoSyn.jl` for the first time, users should be prompted to install any additional tool, if they so choose. These warning can be supressed at any time by adding `export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false` in the user's `.bashrc`.
 
-For trying out new features, consider using the development branch of ProtoSyn. Be aware that some bugs and missing documentation are to be expected when using the latest versions.
+For trying out new features, consider using the development branch of ProtoSyn.jl instead. Be aware that some bugs and missing documentation are to be expected when using the latest versions.
 
 ```@julia
 julia> ] add https://github.com/sergio-santos-group/ProtoSyn.jl.git#dev
