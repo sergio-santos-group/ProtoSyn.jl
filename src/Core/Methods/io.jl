@@ -301,8 +301,8 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w+[+-]*)\s*)|(\s*))"
-    
+    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(\s*))"
+
     aid = 0
     ignored_atoms = Vector{Int}()
     conect_records_present = false
@@ -314,6 +314,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
         if startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
+            println(atom)
 
             if in(atom["rn"], ignore_residues) || in(atom["sn"], ignore_chains)
                 push!(ignored_atoms, parse(Int, atom["aid"]))
