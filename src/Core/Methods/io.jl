@@ -314,7 +314,6 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
         if startswith(line, "ATOM") || startswith(line, "HETATM")
             
             atom = match(er, line)
-            println(atom)
 
             if in(atom["rn"], ignore_residues) || in(atom["sn"], ignore_chains)
                 push!(ignored_atoms, parse(Int, atom["aid"]))
