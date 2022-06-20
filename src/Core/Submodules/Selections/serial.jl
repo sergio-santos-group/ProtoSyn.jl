@@ -5,12 +5,12 @@ export SerialSelection
     SerialSelection{T}(serial::Int, field::Symbol) where {T <: AbstractContainer}
     
 
-A [`SerialSelection`](@ref) selects instances based on `:id` and `:index`. It takes an
-input `serial` (as an `Int`) and a `field` (as a `Symbol`) and outputs a [`Mask`](@ref)
-(of type `T <: AbstractContainer`) containing all instances of said type in the
-given `container` whose `field` matches the `serial` number given. This
-selection works similarly to [`FieldSelection`](@ref), but is especialized in dealing
-with number variables.
+A [`SerialSelection`](@ref) selects instances based on `:id` and `:index`. It
+takes an input `serial` (as an `Int`) and a `field` (as a `Symbol`) and outputs
+a [`Mask`](@ref) (of type `T <: AbstractContainer`) containing all instances of
+said type in the given `container` whose `field` matches the `serial` number
+given marked as `true`. This selection works similarly to
+[`FieldSelection`](@ref), but is especialized in dealing with number variables.
 
 # State mode
 
@@ -79,6 +79,16 @@ function Base.show(io::IO, ss::SerialSelection{M, T}, level_code::Opt{LevelCode}
         level_code = LevelCode()
     end
     println(io, lead*"SerialSelection › $(T).$(ss.field) = $(ss.serial)")
+end
+
+# --- Help ---------------------------------------------------------------------
+SerialSelection(serial::Int, field::Symbol) = begin
+    @error """
+    SerialSelection requires specification of selection type: Atom, Residue or Segment. Some examples:
+     • SerialSelection{Atom}($serial, :$field)
+     • SerialSelection{Residue}($serial, :$field)
+     • SerialSelection{Segment}($serial, :$field)
+    """
 end
 
 # ------------------------------------------------------------------------------

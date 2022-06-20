@@ -1,46 +1,33 @@
 export BondCountSelection
-# Note: FieldSelection is a LEAF selection.
+# Note: BondCountSelection is a LEAF selection.
 
 """
-    FieldSelection{T}(pattern::String, field::Symbol, [is_regex::Bool = false]) where {T <: AbstractContainer}
+    BondCountSelection{T}(n::Int, op::Function = ===)
 
-A [`FieldSelection`](@ref) takes an input `pattern` (as a `String`) and a `field` (as a
-`Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`) containing all
-instances of said type in the given `container` whose `field` matches the `pattern`.
-
-!!! ukw "Note:"
-    The given `pattern` can be considered as a Regular Expression (`Regex`), if
-    `is_regex` flag is set to `true`. Optinally, when using a short syntax,
-    appending an "r" flag at the end of the expression also sets `is_regex` to
-    `true`. Check the examples bellow.
+A [`BondCountSelection`](@ref) takes an input `n` value and an `op` (as a
+`Function`, is `===`, by default) and outputs a `Mask` (of type
+[`Atom`](@ref)) containing all [`Atom`](@ref) instances whose number of bonded
+[`Atom`](@ref) instances (in `atom.bonds`) matches the given `n` (when compared
+with `op`). As an example, `op` can be `>`, `<=`, `==`, etc.
 
 # State mode
 
-The state mode of [`FieldSelection`](@ref) `M` is forced to be `Stateless`.
+The state mode of [`BondCountSelection`](@ref) `M` is forced to be `Stateless`.
 
 # Selection type
 
-The selection type of [`FieldSelection`](@ref) can be any `T <: AbstractContainer`.
+The selection type of [`BondCountSelection`](@ref) is forced to be [`Atom`](@ref).
 
-# Short syntax
-* an"..." = Atom name
-* as"..." = Atom symbol
-* rn"..." = Residue name
-* sn"..." = Segment name
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
 
 # Examples
 ```jldoctest
-julia> sele = FieldSelection{Atom}("C", :symbol)
-FieldSelection › Atom.symbol = C
+julia> BondCountSelection(1)
+BondCountSelection (Atoms with N bonds === 1) › (Atom)
 
-julia> sele = FieldSelection{Residue}("AL*", :name, is_regex = true)
-FieldSelection › Residue.name = r"AL*"
-
-julia> sele = as"C"
-FieldSelection › Atom.symbol = C
-
-julia> sele = rn"AL*"r
-FieldSelection › Residue.name = r"AL*"
+julia> BondCountSelection(3, >)
+BondCountSelection (Atoms with N bonds > 3) › (Atom)
 ```
 """
 mutable struct BondCountSelection{M, T} <: AbstractSelection

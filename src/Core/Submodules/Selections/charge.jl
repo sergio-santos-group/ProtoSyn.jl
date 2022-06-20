@@ -1,46 +1,33 @@
 export ChargeSelection
-# Note: FieldSelection is a LEAF selection.
+# Note: ChargeSelection is a LEAF selection.
 
 """
-    FieldSelection{T}(pattern::String, field::Symbol, [is_regex::Bool = false]) where {T <: AbstractContainer}
+    ChargeSelection(charge::F, op::Function = ===) where {F <: AbstractFloat}
 
-A [`FieldSelection`](@ref) takes an input `pattern` (as a `String`) and a `field` (as a
-`Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`) containing all
-instances of said type in the given `container` whose `field` matches the `pattern`.
-
-!!! ukw "Note:"
-    The given `pattern` can be considered as a Regular Expression (`Regex`), if
-    `is_regex` flag is set to `true`. Optinally, when using a short syntax,
-    appending an "r" flag at the end of the expression also sets `is_regex` to
-    `true`. Check the examples bellow.
+A [`ChargeSelection`](@ref) takes an input `charge` value and an `op` (as a
+`Function`, is `===`, by default) and outputs a `Mask` (of type
+[`Atom`](@ref)) containing all [`Atom`](@ref) instances whose `AtomState` charge
+matches the given `charge` (when compared with `op`). As an example, `op` can be
+`>`, `<=`, `==`, etc.
 
 # State mode
 
-The state mode of [`FieldSelection`](@ref) `M` is forced to be `Stateless`.
+The state mode of [`ChargeSelection`](@ref) `M` is forced to be `Stateful`.
 
 # Selection type
 
-The selection type of [`FieldSelection`](@ref) can be any `T <: AbstractContainer`.
+The selection type of [`ChargeSelection`](@ref) is forced to be [`Atom`](@ref).
 
-# Short syntax
-* an"..." = Atom name
-* as"..." = Atom symbol
-* rn"..." = Residue name
-* sn"..." = Segment name
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
 
 # Examples
 ```jldoctest
-julia> sele = FieldSelection{Atom}("C", :symbol)
-FieldSelection › Atom.symbol = C
+julia> ChargeSelection(1.0)
+ChargeSelection (Atoms with charge === 1.0) › (Atom)
 
-julia> sele = FieldSelection{Residue}("AL*", :name, is_regex = true)
-FieldSelection › Residue.name = r"AL*"
-
-julia> sele = as"C"
-FieldSelection › Atom.symbol = C
-
-julia> sele = rn"AL*"r
-FieldSelection › Residue.name = r"AL*"
+julia> ChargeSelection(-1.0, >)
+ChargeSelection (Atoms with charge > -1.0) › (Atom)
 ```
 """
 mutable struct ChargeSelection{M, T} <: AbstractSelection

@@ -1,29 +1,30 @@
 export BondedToSelection
-# Note: DistanceSelection is a BRANCH selection.
+# Note: BondedToSelection is a BRANCH selection.
 
 """
-    DistanceSelection(distance::Number, sele::S) where {S <: AbstractSelection}
+    BondedToSelection(sele::S)
 
-A [`DistanceSelection`](@ref) takes an input selection `sele` and outputs a
-[`Mask`](@ref) of [`Atom`](@ref) instances within the given `distance` (in
-Ansgtrom Å) of the selected atoms from `sele`.
+A [`BondedToSelection`](@ref) takes an input selection `sele` and outputs a
+[`Mask`](@ref) of [`Atom`](@ref) instances which are bonded to any selected
+[`Atom`](@ref) from the inner `sele`. Note that the inner `sele` is
+automatically promoted to be of [`Atom`](@ref) selection type (using the
+[`promote!`](@ref ProtoSyn.promote!) method).
 
 # State mode
-The state mode of [`DistanceSelection`](@ref) `M` is forced to be Stateful
+The state mode of [`BondedToSelection`](@ref) `M` is forced to be `Stateless`.
 
 # Selection type
 
-The selection type of [`DistanceSelection`](@ref) `T` is forced to be [`Atom`](@ref).
+The selection type of [`BondedToSelection`](@ref) `T` is forced to be [`Atom`](@ref).
+
+!!! ukw "Note:"
+    This selection does not have a short syntax version.
 
 # Examples
 ```jldoctest
-julia> sele = DistanceSelection(2.0, rn"ALA")
-DistanceSelection ❯ Within 2.0 Å (Atom)
- └── FieldSelection › Residue.name = ALA
-
-julia> 2.0:rn"ALA"
-DistanceSelection ❯ Within 2.0 Å (Atom)
- └── FieldSelection › Residue.name = ALA
+julia> BondedToSelection(an"C")
+BondedToSelection ❯ (Atom)
+ └── FieldSelection › Atom.name = C
 ```
 """
 mutable struct BondedToSelection{M, T} <: AbstractSelection

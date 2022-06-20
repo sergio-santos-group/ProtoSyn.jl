@@ -414,7 +414,6 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
         # ProtoSyn.unbond already pops parenthood relationship between the two
         # atoms and sets parent of downstream atom to origin
         ProtoSyn.unbond!(pose, atom, other, keep_downstream_position = keep_downstream_position)
-        ProtoSyn.write(pose, "carbon$i.pdb")
     end
     sync!(pose) # ? Unsure why 100%, but we need to sync here.
 
