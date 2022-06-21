@@ -15,14 +15,14 @@ However, as it happens with so many scientific-purposed software packages, Roset
 
 ![organization](../assets/ProtoSyn-organization.png)
 
-[ProtoSyn.jl](https://github.com/sergio-santos-group/ProtoSyn.jl)'s main `struct` is the [Pose](@ref), which holds all the required information regarding a molecular system. This information is divided into a **directional graph** and a **state**.
+[ProtoSyn.jl](https://github.com/sergio-santos-group/ProtoSyn.jl)'s main `struct` is the [`Pose`](@ref), which holds all the required information regarding a molecular system. This information is divided into a **directional graph** and a **state**.
 
 A directional graph is simply an hierarchical structuration of the molecular system:
 At the top level, a [`Topology`](@ref) can hold multiple [`Segment`](@ref) instances (which are contiguous chains of a molecule), which in turn can hold multiple [`Residue`](@ref) instances (such as amino acids, in the case of proteins and peptides), which, finally, hold one or multiple [`Atom`](@ref) instances.
 
 Each of these levels are called AbstractContainers and can have defining parameters. In the case of atoms, for example, an [`Atom`](@ref) instance is described by an `:id`, `:symbol`, `:name`, etc.
 
-This graph is called **directional** because each of these components has a _parent_ and can have one or more _children_ containers. In the case of [`Residue`](@ref) instances, for example, consider the sequence _ALA-GLC-PRO_. In such a molecule, _ALA_ would be the _parent_ of _GLC_ which, in turn, would be the _parent_ of _PRO_. The same logic applies to relationships between atoms. This structural organization allows ProtoSyn to easily travel the [Graph](@ref) of a structure during certain molecular manipulation processes. Perhaps more interestingly, when conjugated with the internal coordinates system, this data organization system allows for easy and fast manipulation of dihedral angles, bonds distances, etc.
+This graph is called **directional** because each of these components has a _parent_ and can have one or more _children_ containers. In the case of [`Residue`](@ref) instances, for example, consider the sequence _ALA-GLC-PRO_. In such a molecule, _ALA_ would be the _parent_ of _GLC_ which, in turn, would be the _parent_ of _PRO_. The same logic applies to relationships between atoms. This structural organization allows ProtoSyn to easily travel the [Graph](@ref graph-types) of a structure during certain molecular manipulation processes. Perhaps more interestingly, when conjugated with the internal coordinates system, this data organization system allows for easy and fast manipulation of dihedral angles, bonds distances, etc.
 
 The information regarding these internal coordinates (and cartesian coordinates) is organized in the pose's **State**. This is subdivided into a list of [`AtomState`](@ref) instances and a [`StateMatrix`](@ref). Both of these structures are interchangable, meaning that altering a value in [`StateMatrix`](@ref) updates the corresponding value in the correct [`AtomState`](@ref) and vice-versa. The rational behind having both structures lies in having the ease/speed of changing a large volume of coordinates in the [`StateMatrix`](@ref) at once, while still being able to control internal coordinates in single atoms using the [`AtomState`](@ref). In sum: some manipulation processes benefict from using cartesian coordinates, while others are either faster or simpler using the internal coordiantes.
 
@@ -43,7 +43,7 @@ An [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) evaluates the fi
 
 ## Modular system
 
-[ProtoSyn.jl](https://github.com/sergio-santos-group/ProtoSyn.jl) package is organized in a modular fashion, with each new module adding specific methods and features relative to a given scientific area of expertise. All these modules build on top of the base **Core** module. For example, in the Core module, [`ProtoSyn.load`](@ref) is able to read a PDB file into a [Pose](@ref) struct, but calling [`ProtoSyn.Peptides.load`](@ref) (from the [Peptides](@ref) module) will **also** infer peptidic connections between amino acids, setting the correct parenthood relationships between residues in the pose's graph and rename [Atom](@ref) instances to the expected IUPAC convention used in peptides, returning a much more information complete [Pose](@ref).
+[ProtoSyn.jl](https://github.com/sergio-santos-group/ProtoSyn.jl) package is organized in a modular fashion, with each new module adding specific methods and features relative to a given scientific area of expertise. All these modules build on top of the base **Core** module. For example, in the Core module, [`ProtoSyn.load`](@ref) is able to read a PDB file into a [`Pose`](@ref) struct, but calling [`ProtoSyn.Peptides.load`](@ref) (from the [Peptides](@ref) module) will **also** infer peptidic connections between amino acids, setting the correct parenthood relationships between residues in the pose's graph and rename [`Atom`](@ref) instances to the expected IUPAC convention used in peptides, returning a much more information complete [`Pose`](@ref).
 
 # Next steps
 

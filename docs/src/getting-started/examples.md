@@ -37,7 +37,7 @@ One of the main applications of ProtoSyn is the easy manipulation of molecular s
 ## 4 - Energy calculation
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/4-energy-calculation.ipynb).
-A crucial feature of the ProtoSyn framework is the ability to evaluate a given Pose based on a multitude of factors and potentials. In this example, a closer look on how to build an energy function is provided. Some of the available energy function components include Coulomb potentials, SASA/GB models, distance-based potentials, hydrogen network evaluators, etc. For more details and an exhaustive list of available potentials, check the [Calculators](@ref) section.
+A crucial feature of the ProtoSyn framework is the ability to evaluate a given Pose based on a multitude of factors and potentials. In this example, a closer look on how to build an energy function is provided. Some of the available energy function components include Coulomb potentials, SASA/GB models, distance-based potentials, hydrogen network evaluators, etc. For more details and an exhaustive list of available potentials, check the [Calculators section](@ref).
 
 ## 5 - Monte Carlo
 

@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ProtoSyn.Calculators
+CurrentModule = ProtoSyn.Calculators.GB
 ```
 
 # Generalized Born Solvation
@@ -22,7 +22,7 @@ The following section has been subdivided in several sub-section for organizatio
 As previously stated, Born radii estimation is a performance-intensive task. Several approaches have been devised over the years to improve both the accuracy and calculation speed in Born radii estimation. ProtoSyn employs the work of Fogolari et al. (2020) (https://pubmed.ncbi.nlm.nih.gov/31693089/), estimating the Born radii using a machine learning model.
 
 ```@docs
-Calculators.GB.predict_igbr_nn_born_radii
+predict_igbr_nn_born_radii
 ```
 
 ## Generalized Born solvation EnergyFunctionComponent
@@ -30,8 +30,8 @@ Calculators.GB.predict_igbr_nn_born_radii
 With the estimated Born radii, ProtoSyn employs the above-defined equations to evaluate a system's implicit solvation status using the following methods:
 
 ```@docs
-Calculators.GB.calc_gb
-Calculators.GB.get_default_gb
+calc_gb
+get_default_gb
 ```
 
 !!! ukw "Note:"

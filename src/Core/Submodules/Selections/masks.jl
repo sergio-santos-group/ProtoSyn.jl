@@ -173,7 +173,7 @@ expects a 1D [`Mask`](@ref) as input, otherwise will just return the received
 [`Mask`](@ref).
 
 # See also
-[``tile!`](@ref)
+[`tile!`](@ref)
 
 # Examples
 ```

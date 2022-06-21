@@ -6,9 +6,11 @@ export default_energy_function
     default_energy_function(::Type{T}) where {T <: AbstractFloat}
     default_energy_function()
 
-Returns a default [`EnergyFunction`](@ref) for ProtoSyn. If no `Type{T}` is
-provided, will use `ProtoSyn.Units.defaultFloat`. This [`EnergyFunction`](@ref)
-is optimized for evaluating protein systems.
+Returns a default [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction)
+for ProtoSyn. If no `Type{T}` is provided, will use
+`ProtoSyn.Units.defaultFloat`. This
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) is optimized for
+evaluating protein systems.
 
 # Examples
 ```jldoctest

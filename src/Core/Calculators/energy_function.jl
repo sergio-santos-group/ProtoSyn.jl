@@ -13,7 +13,7 @@ the [`Atom`](@ref) selection this [`EnergyFunction`](@ref) is applied to. If
 inner [`EnergyFunctionComponent`](@ref) instances also have `AbstractSelection`
 selections defined, the resulting selection will be the intersection between 
 both. The `update_forces` sets whether to calculate and update the
-[`Pose`](@ref) [State](@ref) forces. The Julia cache is automatically cleaned by
+[`Pose`](@ref) [State](@ref state-types) forces. The Julia cache is automatically cleaned by
 garbage collection. However, in certain cases (such as using the
 [TorchANI](@ref) [`EnergyFunctionComponent`](@ref)), a manual call to garbage
 collection is necessary (see
@@ -154,6 +154,7 @@ function Base.copy(ef::EnergyFunction)
     return nef
 end
 
+
 """
     fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
 
@@ -162,7 +163,7 @@ instances in the given [`EnergyFunction`](@ref) `ef` from dynamic to static, by
 applying them to the given [`Pose`](@ref) `pose`.
 
 # See also
-[`fixate_mask!`](@ref)
+[`fixate_mask!`](@ref ProtoSyn.Calculators.fixate_mask!)
 
 # Examples
 ```jldoctest
@@ -176,7 +177,7 @@ ProtoSyn.Mask
  └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
 ```
 """
-function fixate_masks!(ef::EnergyFunction, pose::Pose) where {T <: AbstractFloat}
+function fixate_masks!(ef::EnergyFunction, pose::Pose)
     for efc in ef.components
         if (:mask in keys(efc.settings)) && isa(efc.settings[:mask], Function)
             efc.settings[:mask] = efc.settings[:mask](pose)

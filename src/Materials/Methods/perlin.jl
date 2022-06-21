@@ -23,17 +23,11 @@ const PERMS1 = [151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7
 const PERMS = [PERMS1; PERMS1]
 
 
-"""
-# TODO: Documentation
-"""
 function fade(x::T) where {T<:AbstractFloat}
     return 6x^5 - 15x^4 + 10x^3
 end
 
 
-"""
-# TODO: Documentation
-"""
 function smoothstep(a0::T, a1::T, x::T) where {T<:AbstractFloat}
     a0 != a1 || throw(ArgumentError("Arguments a0 and a1 cannot be equal"))
     x = clamp((x - a0) / (a1 - a0), 0.0, 1.0)
@@ -41,9 +35,6 @@ function smoothstep(a0::T, a1::T, x::T) where {T<:AbstractFloat}
 end
 
 
-"""
-# TODO: Documentation
-"""
 function smootherstep(a0::T, a1::T, x::T) where {T<:AbstractFloat}
     a0 != a1 || throw(ArgumentError("Arguments a0 and a1 cannot be equal"))
     x = clamp((x - a0) / (a1 - a0), 0.0, 1.0)
@@ -51,9 +42,6 @@ function smootherstep(a0::T, a1::T, x::T) where {T<:AbstractFloat}
 end
 
 
-"""
-# TODO: Documentation
-"""
 function interpolate(a0::T, a1::T, w::T, method::Symbol = :linear) where {T<:AbstractFloat}
     w = round(w, digits = 10)
     0 ≤ w ≤ 1 || throw(ArgumentError("Expected 0 ≤ w ≤ 1, got $w"))
@@ -65,9 +53,6 @@ function interpolate(a0::T, a1::T, w::T, method::Symbol = :linear) where {T<:Abs
 end
 
 
-"""
-# TODO: Documentation
-"""
 function gradient(hash::Int, x::T, y::T, z::T) where {T<:AbstractFloat}
     h = hash & 15
     u = h < 8 ? x : y
@@ -77,7 +62,18 @@ end
 
 
 """
-# TODO: Documentation
+    perlin(x::T, y::T, z::T)
+
+Compute the perlin noise value at coordinates `x`, `y` and `z`. Taken from
+[https://github.com/ararslan/ProceduralNoise.jl](https://github.com/ararslan/ProceduralNoise.jl).
+All credit goes to ararslan. Based on [https://gist.github.com/Flafla2/f0260a861be0ebdeef76](https://gist.github.com/Flafla2/f0260a861be0ebdeef76).
+Hash lookup table as defined by Ken Perlin.
+
+# Examples
+```
+julia> ProtoSyn.Materials.perlin(0.5, 0.5, 0.5)
+0.375
+```
 """
 function perlin(x::T, y::T, z::T) where {T<:AbstractFloat}
     xi = trunc(Int, x) & 255 + 1
@@ -114,7 +110,19 @@ end
 
 
 """
-# TODO: Documentation
+    perlinoctaves(x::T, y::T, z::T, octaves::Int = 1, persistence::T = 1.0)
+
+Compute the perlin noise value at coordinates `x`, `y` and `z` with the given
+octaves. In sum, generates a perlin noise with some randomization. Taken from
+[https://github.com/ararslan/ProceduralNoise.jl](https://github.com/ararslan/ProceduralNoise.jl).
+All credit goes to ararslan. Based on [https://gist.github.com/Flafla2/f0260a861be0ebdeef76](https://gist.github.com/Flafla2/f0260a861be0ebdeef76).
+Hash lookup table as defined by Ken Perlin.
+
+# Examples
+```
+julia> ProtoSyn.Materials.perlinoctaves(0.5, 0.5, 0.5, 8)
+0.484375
+```
 """
 function perlinoctaves(x::T, y::T, z::T, octaves::Int = 1, persistence::T = 1.0) where {T <: AbstractFloat}
     total     = 0.0

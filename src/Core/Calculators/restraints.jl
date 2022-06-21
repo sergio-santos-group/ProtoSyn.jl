@@ -170,7 +170,7 @@ module Restraints
     (default: 0.0), `d2::T` (default = 0.0), `d3::T` (default = Inf) and `d4::T`
     (default = Inf) settings as the flat bottom potential distances. This
     potential then applied to the [`Pose`](@ref) `pose` (via the
-    [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) method),
+    [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential!) method),
     optionally on a subset of [`Atom`](@ref) instances given by the
     `AbstractSelection` `selection` and optionally multiplied by a `mask`. This
     `mask` can be a [`Mask`](@ref), a `Matrix{T}` or a `Function`, in which case

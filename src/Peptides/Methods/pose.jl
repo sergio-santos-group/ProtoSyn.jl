@@ -379,9 +379,9 @@ Removes the sidechain atoms of the given [`Pose`](@ref) `pose`. If an
 to the [`Residue`](@ref) instances of that selection are considered for possible
 removal. Essentially, the selected [`Residue`](@ref) instances are mutated to
 Glycine, based on the provided residue library `res_lib`, without changing the
-peptide [`sequence`](@ref). Therefore, the original [`sequence`](@ref) can be
+peptide [`sequence`](@ref ProtoSyn.sequence). Therefore, the original [`sequence`](@ref ProtoSyn.sequence) can be
 recovered using the [`add_sidechains!`](@ref) method and energy components such
-as [`calc_solvation_energy`](@ref ProtoSyn.Peptides.Calculators.Caterpillar.calc_solvation_energy)
+as [`neighbour_vector`](@ref ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector)
 can perform correctly.
 
 !!! ukw "Note:"
@@ -487,7 +487,7 @@ based on the templates of the provided `grammar`. If an `AbstractSelection`
 `selection` is given, only the residues of that selection (promoted to `Residue`
 instances, using the default aggregator function) are considered for sidechain
 addition. The addition is performed using the [`mutate!`](@ref) function, and
-follows the current [`Pose`](@ref) [`sequence`](@ref).
+follows the current [`Pose`](@ref) [`sequence`](@ref ProtoSyn.sequence).
 
 # Examples
 ```jldoctest

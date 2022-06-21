@@ -284,7 +284,7 @@ module GMX
         sort_atoms_and_graph_gmx!(pose::Pose)
 
     Sorts [`Atom`](@ref) instances in the encompassing `AbstractContainer`
-    structures and the resulting [Graph](@ref) for Gromacs simulations (Gromacs
+    structures and the resulting [Graph](@ref graph-types) for Gromacs simulations (Gromacs
     expects a given atom order to match with the `gmx pdb2gmx` and `acpype`
     generated .itp and .top files - this does not necessarilly match the IUPAC
     conventions).
@@ -346,7 +346,7 @@ module GMX
     [`ProtoSyn.promote`](@ref)).
 
     # See also
-    [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) [`rename`](@ref ProtoSyn.rename) [`sort_atoms_and_graph_gmx!`](@ref) [`generate_gmx_files`](@ref)
+    [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) [`rename!`](@ref ProtoSyn.rename!) [`sort_atoms_and_graph_gmx!`](@ref) [`generate_gmx_files`](@ref)
     
     # Examples
     ```

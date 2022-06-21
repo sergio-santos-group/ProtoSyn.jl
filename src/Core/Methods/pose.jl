@@ -8,7 +8,7 @@ to match its graph. By default, employs
 [`Residue`](@ref) `container`, set `start` argument to define a new starting
 point). Also updates the [`Atom`](@ref) order in the corresponding and provided
 [`State`](@ref) `state`. Expects both the [`State`](@ref) and respective
-[Graph](@ref) to be correctly re-indexed (see
+[Graph](@ref graph-types) to be correctly re-indexed (see
 [`reindex`](@ref ProtoSyn.reindex)). By default, uses `search_algorithm` BFS
 (breath first search). Note that, after sorting, [`Atom`](@ref) indexes may be
 wrong. It's reccommended to [`reindex`](@ref ProtoSyn.reindex) the encompassing

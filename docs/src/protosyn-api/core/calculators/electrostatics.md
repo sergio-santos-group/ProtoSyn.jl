@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ProtoSyn.Calculators
+CurrentModule = ProtoSyn
 ```
 
 # [Electrostatics](@id calculators-electrostatics)
@@ -20,7 +20,7 @@ Calculators.Electrostatics.assign_acc2_eem_charges_from_file!
 
 ## Coulomb EnergyFunctionComponent
 
-As long as a [`Pose`](@ref) has charges attributed, the default [Electrostatics](@ref) coulomb [`EnergyFunctionComponent`](@ref) can be applied.
+As long as a [`Pose`](@ref) has charges attributed, the default [Electrostatics](@ref calculators-electrostatics) coulomb [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) can be applied.
 
 ```@docs
 Calculators.Electrostatics.calc_coulomb

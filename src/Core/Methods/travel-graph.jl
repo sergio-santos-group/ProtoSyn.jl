@@ -1,7 +1,7 @@
 """
     get_graph_size(atom::Atom; depth::Int = 1, max_depth::Int = 10)
 
-Recursivelly search the the [Graph](@ref) starting from [`Atom`](@ref) `atom`
+Recursivelly search the the [Graph](@ref graph-types) starting from [`Atom`](@ref) `atom`
 (inclusive) until no children are identified or the `depth` > `max_depth` (10,
 by default).
 
@@ -30,7 +30,7 @@ end
     sort_children(atom::Atom; rev::Bool = false)
 
 Sort the given [`Atom`](@ref) `atom` children, by the following criteria:
- 1. By [Graph](@ref) size (follow [Graph](@ref) by employing the [`get_graph_size`](@ref), small chains first)
+ 1. By [Graph](@ref graph-types) size (follow [Graph](@ref graph-types) by employing the [`get_graph_size`](@ref), small chains first)
  2. By [`Atom`](@ref) name (in case all children chains have the same size; alphabetical order)
 By setting `rev` to `true` (`false`, by default), reverses the provided order.
 
@@ -156,7 +156,7 @@ and `stop` (inclusive), while following the structure's
 [Graph](@ref state-types). If no `stop` [`Atom`](@ref) instance is provided or
 if it isn't found as a downstream parent of the `start` [`Atom`](@ref), all
 instances until no children [`Atom`](@ref) instances are found are returned (for
-example, until the end of the current [Pose](@ref) of [`Segment`](@ref)). By
+example, until the end of the current [Pose](@ref pose-types) of [`Segment`](@ref)). By
 default, uses Breath First Search (BFS) algorithm (all [`Atom`](@ref) instances
 at the same "graph-distance" to the `start` [`Atom`](@ref) are consumed before
 the next level is considered, order is given by [`sort_children`](@ref)).
@@ -224,7 +224,7 @@ and `stop` (inclusive), while following the structure's
 [Graph](@ref state-types). If no `stop` [`Atom`](@ref) instance is provided or
 if it isn't found as a downstream parent of the `start` [`Atom`](@ref), all
 instances until no children [`Atom`](@ref) instances are found are returned (for
-example, until the end of the current [Pose](@ref) of [`Segment`](@ref)). By
+example, until the end of the current [Pose](@ref pose-types) of [`Segment`](@ref)). By
 default, uses Breath First Search (BFS) algorithm (all [`Atom`](@ref) instances
 at the same "graph-distance" to the `start` [`Atom`](@ref) are consumed before
 the next level is considered, order is given by [`sort_children`](@ref)).

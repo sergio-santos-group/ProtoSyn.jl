@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ProtoSyn.Calculators
+CurrentModule = ProtoSyn
 ```
 
 # Hydrogen bonds
@@ -27,7 +27,7 @@ Calculators.HydrogenBonds.generate_hydrogen_bond_network
 
 ## Hydrogen bonds EnergyFunctionComponent
 
-By default, ProtoSyn generates a new [`HydrogenBondNetwork`](@ref Calculators.HydrogenBonds.HydrogenBondNetwork) each call to the default [Hydrogen bonds EnergyFunctionComponent](@ref). This may cause performance losses. If no mutation/design process is being performed, consider employing [`fixate_hydrogen_bond_network!`](@ref Calculators.HydrogenBonds.fixate_hydrogen_bond_network!) to set a static [`HydrogenBondNetwork`](@ref).
+By default, ProtoSyn generates a new [`HydrogenBondNetwork`](@ref Calculators.HydrogenBonds.HydrogenBondNetwork) each call to the default [Hydrogen bonds EnergyFunctionComponent](@ref). This may cause performance losses. If no mutation/design process is being performed, consider employing [`fixate_hydrogen_bond_network!`](@ref Calculators.HydrogenBonds.fixate_hydrogen_bond_network!) to set a static [`HydrogenBondNetwork`](@ref ProtoSyn.Calculators.HydrogenBonds.HydrogenBondNetwork).
 
 ```@docs
 Calculators.HydrogenBonds.calc_hydrogen_bond_network

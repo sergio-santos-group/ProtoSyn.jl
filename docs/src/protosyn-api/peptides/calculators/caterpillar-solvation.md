@@ -9,7 +9,7 @@ The [Caterpillar Solvation](@ref) energy is a coarse-grained approximation to a 
 The Caterpillar solvation energy calculation is based on the work of Coluzza
 et al (see [this paper](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020853)).
 
-The ProtoSyn's modifications introduce a significant degree of complexity, futher explained bellow. In sum, the calculation takes 2 steps: the [Burial degree calculation](@ref) and the [Hydrophobicity weight calculation](@ref).
+The ProtoSyn's modifications introduce a significant degree of complexity, futher explained bellow. In sum, the calculation takes 2 steps: the [1. Burial degree calculation](@ref) and the [2. Hydrophobicity weight calculation](@ref).
 
 
 ## 1. Burial degree calculation
@@ -69,8 +69,7 @@ cut off lines.
 The final Caterpilar's solvation energy multiplies the calculated burial degree by an hydrophobicity weight: hydrophobic [`Residue`](@ref) instances receive a penalty when exposed and vice-versa. The buried/unburied distinction is defined by the user using the `Ω` field: buried degress bellow `Ω` are considered buried. The difference between burial degree and `Ω` is then multiplied by the hydrophobicity index. By default, ProtoSyn employs the [Doolittle Hydrophobicity Index](https://resources.qiagenbioinformatics.com/manuals/clcgenomicsworkbench/650/Hydrophobicity_scales.html), when working with proteins and peptides.
 
 ```@docs
-calc_solvation_energy
-get_default_solvation_energy
+get_default_caterpillar_solvation_energy
 ```
 
 ![ProtoSyn Caterpillar Solvation](../../../assets/ProtoSyn-caterpillar-solvation.png)

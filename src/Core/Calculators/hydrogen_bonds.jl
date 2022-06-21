@@ -218,14 +218,14 @@ module HydrogenBonds
     """
         get_default_hydrogen_bond_network(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default hydrogen bond [`EnergyFunctionComponent`](@ref). `α` sets
+    Return the default hydrogen bond [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α` sets
     the component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
     component employs the [`calc_hydrogen_bond_network`](@ref) method, therefore
     defining a [`Pose`](@ref) energy based on a given potential function
     multiplied by a geometric angle component for each pair defined in an
     [`HydrogenBondNetwork`](@ref). By default, this
-    [`EnergyFunctionComponent`](@ref) uses the
+    [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) uses the
     [`generate_hydrogen_bond_network`](@ref) function to predict a new
     [`HydrogenBondNetwork`](@ref) each call. Consider setting
     `efc.settings[:hydrogen_bond_network]` as an [`HydrogenBondNetwork`](@ref)
@@ -275,8 +275,8 @@ module HydrogenBonds
     """
         fixate_hydrogen_bond_network!(efc::EnergyFunctionComponent, pose::Pose)
 
-    If the given [`EnergyFunctionComponent`](@ref) `efc` is an Hydrogen Bonds
-    [`EnergyFunctionComponent`](@ref) (and the `:hydrogen_bond_network` setting
+    If the given [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) `efc` is an Hydrogen Bonds
+    [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) (and the `:hydrogen_bond_network` setting
     is a `Function`), calculate a new [`HydrogenBondNetwork`](@ref) and apply it
     as a static list of interaction [`Atom`](@ref) instances (improved
     performance).

@@ -73,7 +73,7 @@ module SASA
     much higher average SASA value.
 
     !!! ukw "Note:"
-        In the default Peptides SASA [`EnergyFunctionComponent`](@ref) (see [`get_default_sasa_energy`](@ref)), a `Ω` value sets the average SASA value for a [`Residue`](@ref) instance in the evaluated [`Pose`](@ref). [`calculate_average_sasa`](@ref) can help setting this value.
+        In the default Peptides SASA [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) (see [`get_default_sasa_energy`](@ref)), a `Ω` value sets the average SASA value for a [`Residue`](@ref) instance in the evaluated [`Pose`](@ref). [`calculate_average_sasa`](@ref) can help setting this value.
 
     # Examples
     ```
@@ -108,7 +108,7 @@ module SASA
     """
         get_default_sasa_energy(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default SASA energy [`EnergyFunctionComponent`](@ref). `α` sets
+    Return the default SASA energy [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α` sets
     the component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
     by default). This function employs
@@ -116,7 +116,7 @@ module SASA
     function.
 
     !!! ukw "Note:"
-        This [`EnergyFunctionComponent`](@ref) is similar to the [`ProtoSyn.Calculators.SASA.get_default_sasa_energy`](@ref) version, but adds the correct `selection` and `max_sasas` dictionary (specifically for peptides).
+        This [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) is similar to the [`ProtoSyn.Calculators.SASA.get_default_sasa_energy`](@ref) version, but adds the correct `selection` and `max_sasas` dictionary (specifically for peptides).
 
     # Settings
     * `n_points::Int` - The number of points to generate in each [`Atom`](@ref) sphere (higher number of points leads to higher accuracy, at the expense of performance);

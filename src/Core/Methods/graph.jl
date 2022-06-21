@@ -283,7 +283,7 @@ export unbond!
 """
     unbond!(pose::Pose, at1::Atom, at2::Atom; [keep_downstream_position::Bool = true])::Pose
     
-Return a [Pose](@ref) instance with both given [`Atom`](@ref) instances unbonded
+Return a [Pose](@ref pose-types) instance with both given [`Atom`](@ref) instances unbonded
 (removed from eachother `bonds` list, pops parenthood and sets the downstream
 [`Residue`](@ref)`.parent` field to be the Root of the upstream
 [`Topology`](@ref)). If `keep_downstream_position` is set to `true` (is, by
@@ -570,18 +570,18 @@ end
 Infers parenthood of [`Atom`](@ref) instances on the given `AbstractContainer`
 `container`, from bond information, using a custom algorithm similar to breath
 first algorithm (atoms are sorted based on the size of the downstream graph and
-aromaticity). By default, the [Graph](@ref) origin is set to the first
+aromaticity). By default, the [Graph](@ref graph-types) origin is set to the first
 [`Atom`](@ref) instance in the `container`. This behaviour can be controlled by
 setting a `start` [`Atom`](@ref) as the origin of the new infered parenthood
-[Graph](@ref). If `overwrite` is set to `true` (`false`, by default), will
+[Graph](@ref graph-types). If `overwrite` is set to `true` (`false`, by default), will
 overwrite existing pranthood information. After infering parenthood, if changes
-to the [Graph](@ref) occurred, the existing internal coordinates match different
+to the [Graph](@ref graph-types) occurred, the existing internal coordinates match different
 cartesian coordinates. It's suggested to update internal coordinates
-([`request_i2c!`]((@ref ProtoSyn.request_i2c!)) &
+([`request_i2c!`](@ref ProtoSyn.request_i2c!) &
 [`sync!`](@ref ProtoSyn.sync!)). For more details, see the
 [Travelling the Graph](@ref) section. If the `linear_aromatics` flag is set to
 `true` (is, by default), aromatic rings are treated as isolated structures is an
-otherwise linear [Graph](@ref) (for example, in some protein aminoacids). More
+otherwise linear [Graph](@ref graph-types) (for example, in some protein aminoacids). More
 complex structures (such as carbon sheets) have interlaced aromatic rings, and
 the `linear_aromatics` should be set to `false` to ensure all [`Atom`](@ref)
 instances are visited.

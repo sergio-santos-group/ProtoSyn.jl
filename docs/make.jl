@@ -137,6 +137,7 @@ makedocs(
     ],
     # doctest = true,
     doctest = false,
+    checkdocs=:exports
 )
 
 deploydocs(

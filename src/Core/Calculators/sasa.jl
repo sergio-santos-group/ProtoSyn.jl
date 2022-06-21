@@ -106,7 +106,7 @@ module SASA
     """
         get_default_sasa(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default SASA [`EnergyFunctionComponent`](@ref). `α` sets the
+    Return the default SASA [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α` sets the
     component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
     by default). This function employs [`calc_sasa`](@ref) as the `:calc`
@@ -246,7 +246,7 @@ module SASA
     """
         get_default_sasa_energy(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default SASA energy [`EnergyFunctionComponent`](@ref). `α` sets
+    Return the default SASA energy [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α` sets
     the component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance, `1.0`
     by default). This function employs [`calc_sasa`](@ref) as the `:calc`

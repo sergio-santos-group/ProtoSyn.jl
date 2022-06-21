@@ -202,7 +202,7 @@ atom, if `remove_downstream_graph` is set to `true` (is, by default), uses
 [`travel_graph`](@ref), with the default `ProtoSyn.BFS` search algorithm,
 starting on [`Atom`](@ref) `atom` to define the downstream region) with the
 given [`Fragment`](@ref) `fragment`, in the context of the provided
-[`Pose`](@ref) `pose` (updates the [`State`](@ref) and [Graph](@ref)). The first
+[`Pose`](@ref) `pose` (updates the [`State`](@ref) and [Graph](@ref graph-types)). The first
 [`Atom`](@ref) in the [`Fragment`](@ref) `fragment` (also known as root or R
 [`Atom`](@ref)) is placed in the same position as the chosen [`Atom`](@ref)
 `atom` for replacement, and is then removed. This serves only to orient the

@@ -8,7 +8,7 @@ A [`BondedToSelection`](@ref) takes an input selection `sele` and outputs a
 [`Mask`](@ref) of [`Atom`](@ref) instances which are bonded to any selected
 [`Atom`](@ref) from the inner `sele`. Note that the inner `sele` is
 automatically promoted to be of [`Atom`](@ref) selection type (using the
-[`promote!`](@ref ProtoSyn.promote!) method).
+[`promote`](@ref ProtoSyn.promote) method).
 
 # State mode
 The state mode of [`BondedToSelection`](@ref) `M` is forced to be `Stateless`.

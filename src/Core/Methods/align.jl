@@ -20,7 +20,7 @@ calculate the necessary rotation + translation movement. Sets `mobile.state.c2i`
 to `true` and returns the altered `mobile` [`Pose`](@ref) instance.
 
 !!! ukw "Note:"
-    This function can also align [Fragment](@ref) instances.
+    This function can also align [`Fragment`](@ref) instances.
 
 # See also
 [`rmsd`](@ref)

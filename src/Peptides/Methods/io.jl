@@ -20,7 +20,7 @@ non-canonical aminoacid), ProtoSyn will skip setting inter-residue parenthoods.
 This can be overwritten by adding the [`Residue`](@ref) name in
 `include_residues`, in which case ProtoSyn will attempt to find and established
 all possible inter-residue parenthood relationships. In more complex cases this
-should be manually checked. Despite the overall [`Pose`](@ref)'s [Graph](@ref),
+should be manually checked. Despite the overall [`Pose`](@ref)'s [Graph](@ref graph-types),
 [`Atom`](@ref) order in the encompassing `AbstractContainer` is, by default,
 maintained the same as the input `filename`. This can se re-ordered to match the
 infered parenthood by setting the `sort_atoms_by_graph` flag to `true` (`false`,

@@ -50,9 +50,9 @@ hydrophobicity_weight(Ωi::Union{Int, T}; hydrophobicity_map_value::T = 0.0, Ω
 ```
 
 In order to use pre-defined `hydrophobicity_weight` `Function` instances defined
-in ProtoSyn, check [`scalling_exposed_only`](@ref),
-[`non_scalling_exposed_only`](@ref), [`scalling_all_contributions`](@ref)
-(recommended) and [`non_scalling_all_contributions`](@ref).
+in ProtoSyn, check [`nv_scalling_exposed_only`](@ref),
+[`nv_non_scalling_exposed_only`](@ref), [`nv_scalling_all_contributions`](@ref)
+(recommended) and [`nv_non_scalling_all_contributions`](@ref).
 
 The optional `A` parameter defines the acceleration
 mode used (SISD_0, SIMD_1 or CUDA_2). If left undefined the default

@@ -154,7 +154,7 @@ module Electrostatics
     acceleration type used to calculate this energetic contribution (See
     [ProtoSyn acceleration types](@ref)). Uses `ProtoSyn.acceleration.active` by
     default. This function makes use of the
-    [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) framework. As
+    [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential!) framework. As
     such, an optional `mask` and `VerletList` `vlist` can be provided to limit
     the calculation. Make sure the [`Pose`](@ref) `pose` has charges assigned
     (see [`assign_acc2_eem_charges_from_file!`](@ref) and
@@ -196,19 +196,19 @@ module Electrostatics
     """
         get_default_coulomb(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default Coulomb [`EnergyFunctionComponent`](@ref). `α` sets the
+    Return the default Coulomb [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α` sets the
     component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
     component employs the [`calc_coulomb`](@ref) method, therefore defining a
     [`Pose`](@ref) energy based on a given potential. By default, this 
-    [`EnergyFunctionComponent`](@ref) uses the
+    [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent) uses the
     [`get_bump_potential_charges`](@ref ProtoSyn.Calculators.get_bump_potential_charges)
     potential, with an intra-residue mask (see
     [`get_intra_residue_mask`](@ref ProtoSyn.Calculators.get_intra_residue_mask)).
 
     # Settings
     * `mask::Function` - Defines which atom-pairs to mask out of the result;
-    * `vlist::VerletList` - If defined, the [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) method will only calculate the given atom-pairs in the `VerletList`;
+    * `vlist::VerletList` - If defined, the [`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential!) method will only calculate the given atom-pairs in the `VerletList`;
     * `potential::Function` - Which potential to apply to each atom-pair;
 
     # Examples

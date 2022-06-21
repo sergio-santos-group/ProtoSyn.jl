@@ -47,8 +47,10 @@ module GB
     models, but can be set to use other models with the `models` argument.
     Optionally, a pre-calculated full distance matrix `dm` can be provided,
     otherwise will calculate one using the `ProtoSyn.acceleration.active` mode.
+
     # See also
     [`calc_gb`](@ref)
+
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.GB.predict_igbr_nn_born_radii(pose)
@@ -203,9 +205,9 @@ module GB
     Return the default Generalized Born [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
-    component employs the [`calc_gb`](@ref) method, therefore defining a
-    [`Pose`](@ref) energy based on the Generalized Born function. By default,
-    this [`EnergyFunctionComponent`](@ref) uses the
+    component employs the [`calc_gb`](@ref) method,
+    therefore defining a [`Pose`](@ref) energy based on the Generalized Born
+    function. By default, this [`EnergyFunctionComponent`](@ref) uses the
     [`predict_igbr_nn_born_radii`](@ref ProtoSyn.Calculators.GB.predict_igbr_nn_born_radii)
     function to predict Born Radii every call. Define
     `efc.settings[:born_radii]` as a `Vector{Float64}` to use static born radii.

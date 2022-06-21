@@ -166,7 +166,7 @@ As stated before, `Stateful` selections require a [State](@ref state-types) to c
 
 In such cases, the second syntax (`sele(pose.graph, pose.state)`) is recomended.
 
-Specific methods are available to apply selections to [Pose](@ref) instances, in particular. In this cases, the methods automatically calls `sele(pose.graph, pose.state)`
+Specific methods are available to apply selections to [Pose](@ref pose-types) instances, in particular. In this cases, the methods automatically calls `sele(pose.graph, pose.state)`
 
 ```@repl selections
 (10:rn"ALA")(pose)

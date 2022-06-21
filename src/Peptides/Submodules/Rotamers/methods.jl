@@ -124,7 +124,7 @@ end
 Sample a [`Rotamer`](@ref) instance from the corresponding
 [`BBD_RotamerLibrary`](@ref) for the given [`Residue`](@ref) `residue` name.
 Since the [`BBD_RotamerLibrary`](@ref) is backbone-dependent, the current
-[State](@ref) of the provided [`Pose`](@ref) `pose` is read to sample a
+[State](@ref state-types) of the provided [`Pose`](@ref) `pose` is read to sample a
 [`Rotamer`](@ref). This method takes the natural probability of occurrence into
 consideraction. If a `n` value is given, sample only from the `n` most likely
 [`Rotamer`](@ref) instances. If `n` is 0 or lower (-1, by default), sample from

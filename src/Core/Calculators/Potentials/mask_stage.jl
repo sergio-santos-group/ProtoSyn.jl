@@ -110,7 +110,7 @@ get_available_masks() = get_available_masks(ProtoSyn.Calculators)
     show_available_masks([io::IO], [m::Module])
 
 Prints all available masks for potential restraints Module m (defaults to
-[ProtoSyn.Calculators](@ref)) to the given `IO` `io` (defaults to `stdout`).
+`ProtoSyn.Calculators`) to the given `IO` `io` (defaults to `stdout`).
 Recursivelly searches any inner Module.
 
 # Examples

@@ -36,7 +36,7 @@ The following section is subdivided in the following topics, for organizational 
 The following methods are ubiquous to all [Potential restraints](@ref calculators-potential-restraints):
 
 ```@docs
-Calculators.apply_potential!
+ProtoSyn.Calculators.apply_potential!
 ```
 
 ## Available potentials
@@ -44,7 +44,7 @@ Calculators.apply_potential!
 A list of available potentials in ProtoSyn is described bellow. See [Creating custom potential functions](@ref) for the required signature of new potential functions.
 
 * [`get_flat_bottom_potential`](@ref ProtoSyn.Calculators.get_flat_bottom_potential)
-* [`get_coulomb_potential`](@ref ProtoSyn.Calculators.coulomb_potential)
+* [`get_coulomb_potential`](@ref ProtoSyn.Calculators.get_coulomb_potential)
 * [`get_bump_potential`](@ref ProtoSyn.Calculators.get_bump_potential)
 * [`get_harmonic_potential`](@ref ProtoSyn.Calculators.get_harmonic_potential)
 
@@ -119,9 +119,17 @@ Altough potentially sacrificing the performance of the code, this allows for new
 
 When a dynamic mask or map is used, performance penalties are to be expected. If a user whises to __fixate__ a dynamic mask into a static mask (on the context of an [`EnergyFunctionComponent`](@ref) or [`EnergyFunction`](@ref)), the following companion methods are made available:
 
+```@meta
+CurrentModule = ProtoSyn
+```
+
 ```
 ProtoSyn.Calculators.fixate_mask!
 ProtoSyn.Calculators.fixate_masks!
+```
+
+```@meta
+CurrentModule = ProtoSyn.Calculators
 ```
 
 ### Available Potential Restraint EnergyFunctionComponents

@@ -40,7 +40,7 @@ an `AbstractSelection` `selection` is provided, only rename the selected
 [`Residue`](@ref) level using [`ProtoSyn.promote`](@ref)). The [`Atom`](@ref)
 default names are retrieved from the given [`LGrammar`](@ref) `grammar`
 (`Peptides.grammar`, by default). Both the given [`Pose`](@ref) and the built
-template from the `grammar`'s [Graph](@ref) are travelled to generate a 1-to-1
+template from the `grammar`'s [Graph](@ref graph-types) are travelled to generate a 1-to-1
 correspondence between [`Atom`](@ref) instances (the [`Pose`](@ref)
 [`Atom`](@ref) names are then renamed to match the template, uses the
 [`ProtoSyn.travel_graph`](@ref) method with the `ProtoSyn.Peptides.IUPAC` search

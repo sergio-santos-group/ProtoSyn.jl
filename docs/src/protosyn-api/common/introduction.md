@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ProtoSyn.Common
+CurrentModule = ProtoSyn
 ```
 
 # Common
@@ -9,15 +9,15 @@ The [Common](@ref) module is a special type of module, in ProtoSyn. Its objectiv
 ## Default Energy Function
 
 ```@docs
-default_energy_function
+Common.default_energy_function
 ```
 
 ## Default Callbacks
 
 ```@docs
-default_energy_step_callback
-default_energy_step_frame_callback
-default_energy_step_detailed
-default_energy_step_frame_detailed
-detailed_message
+Common.default_energy_step_callback
+Common.default_energy_step_frame_callback
+Common.default_energy_step_detailed
+Common.default_energy_step_frame_detailed
+Common.detailed_message
 ```

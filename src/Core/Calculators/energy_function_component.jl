@@ -112,7 +112,7 @@ ProtoSyn.Mask
  └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
 ```
 """
-function fixate_mask!(efc::EnergyFunctionComponent{T}, pose::Pose) where {T <: AbstractFloat}
+function fixate_mask!(efc::EnergyFunctionComponent, pose::Pose)
     if (:mask in keys(efc.settings)) & isa(efc.settings[:mask], Function)
         efc.settings[:mask] = efc.settings[:mask](pose)
     end

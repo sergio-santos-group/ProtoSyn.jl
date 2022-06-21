@@ -73,10 +73,10 @@ module REF15
     cartesian coordinates are updated (improved performance, note that any
     design effort prevents the usage of the same `rosetta_pose`). The
     `AbstractSelection` in this Calculator doesn't have any effect, and exists
-    only for standardization with other [Calculators](@ref). The parameter `A`
+    only for standardization with other `Calculators`. The parameter `A`
     (`Type{<: AbstractAccelerationType}`) doesn't have any effect in this
     Calculator doesn't have any effect, and exists only for standardization with
-    other [Calculators](@ref).
+    other `Calculators`.
 
     # See also
     [`get_default_ref15`](@ref)
@@ -145,7 +145,7 @@ module REF15
     """
         get_default_ref15(;[α::T = 1.0]) where {T <: AbstractFloat}
 
-    Return the default PyRosetta's REF15 [`EnergyFunctionComponent`](@ref). `α`
+    Return the default PyRosetta's REF15 [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent). `α`
     sets the component weight (on an
     [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) instance). This
     component employs the [`calc_ref15`](@ref) method, therefore defining a

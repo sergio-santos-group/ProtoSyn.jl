@@ -62,7 +62,7 @@ occurrence, where each position in the `rotamers` list has a corresponding
 position in the `weights` list.
 
 # See also
-[`sample`](@ref)
+[`sample_rotamer`](@ref)
 
 # Examples
 ```
@@ -101,10 +101,10 @@ end
 # ---
 
 """
-    BBD_RotamerLibrary{T <: AbstractFloat}(name::String, phis::Vector{T}, psis::Vector{T}, rotamer_stacks::Matrix{RotamerStack}) where {T <: AbstractFloat}
+    BBD_RotamerLibrary{T <: AbstractFloat}(name::String, phis::Vector{T}, psis::Vector{T}, rotamer_stacks::Matrix{BBI_RotamerLibrary}) where {T <: AbstractFloat}
 
 A [`BBD_RotamerLibrary`](@ref) is a 2D backbone dependent matrix of
-[`RotamerStack`](@ref) instances (`rotamer_stacks`), indexed by both the list of
+[`BBI_RotamerLibrary`](@ref) instances (`rotamer_stacks`), indexed by both the list of
 backbone phi dihedrals (`phis`) and the list of backbone psi dihedrals (`psis`).
 Each [`BBD_RotamerLibrary`](@ref) only hold information regarding one type of
 aminoacid, identified by the `name`. Each entry in the `rotamer_stacks` matrix

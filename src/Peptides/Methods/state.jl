@@ -107,7 +107,7 @@ julia> ProtoSyn.Peptides.read_ss_map("ss_map.txt", "H")
 """
 function read_ss_map(pose::Pose, filename::String, ss_type::String)
 
-    sequence = ProtoSyn.Peptides.sequence(pose)
+    sequence = ProtoSyn.sequence(pose)
     N = length(sequence)
     i = 0
     selection = !TrueSelection{Residue}()

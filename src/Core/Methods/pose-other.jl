@@ -1,7 +1,7 @@
 """
     recoverfrom!(pose::Pose, backup::Pose)
 
-Recovers the [`Pose`](@ref) `pose` [State](@ref) and [Graph](@ref) from a
+Recovers the [`Pose`](@ref) `pose` [State](@ref state-types) and [Graph](@ref graph-types) from a
 `backup` [`Pose`](@ref) while maintaining any reference to the given
 [`Pose`](@ref) `pose`. In essence, when using a `Driver`, simply using `copy!`
 will create a new instance, and sometimes this can cause bugs. It's recommended
@@ -120,7 +120,7 @@ end
 """
     symexp(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where {T <: AbstractFloat}
 
-Return a symmetry expanded [Pose](@ref). Create N copies of the given `pose` in
+Return a symmetry expanded [Pose](@ref pose-types). Create N copies of the given `pose` in
 all 3 symmetry axis of a cubic lattice, where `reps` is the number of copies in
 each of the dimensions X, Y and Z (N is, therefore, reps[1]*reps[2]*reps[3]).
 Length of `reps` must be 3. `unit_cell_dims` sets the distance in each of
@@ -153,7 +153,7 @@ end
 """
     symexp!(pose::Pose, reps::Vector{Int}, unit_cell_dims::Vector{T}) where {T <: AbstractFloat}
 
-Return a symmetry expanded [Pose](@ref). Create N copies of the given `pose` in
+Return a symmetry expanded [Pose](@ref pose-types). Create N copies of the given `pose` in
 all 3 symmetry axis of a cubic lattice, where `reps` is the number of copies in
 each of the dimensions X, Y and Z (N is, therefore, reps[1]*reps[2]*reps[3]).
 Length of `reps` must be 3. `unit_cell_dims` sets the distance in each of

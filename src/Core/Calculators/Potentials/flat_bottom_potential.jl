@@ -36,7 +36,7 @@ the flat-bottom potential, please read:
 [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4692055/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4692055/). 
 
 # See also
-[`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential) [`calc_flat_bottom_restraint`](@ref ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint)
+[`apply_potential!`](@ref ProtoSyn.Calculators.apply_potential!) [`calc_flat_bottom_restraint`](@ref ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint)
 
 # Examples
 ```jldoctest

@@ -2,21 +2,21 @@ export fragment
 """
     fragment(pose::Pose{Topology})
     
-Return a [Fragment](@ref) from a given [Pose](@ref) `pose`. The pose must have a
+Return a [`Fragment`](@ref) from a given [Pose](@ref pose-types) `pose`. The pose must have a
 single [`Segment`](@ref).
 
     fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
 
-Return a [Fragment](@ref) from a list of residues retrieved from the given
-`selection` when applied to the provided [Pose](@ref) `pose`. If not yet of
+Return a [`Fragment`](@ref) from a list of residues retrieved from the given
+`selection` when applied to the provided [Pose](@ref pose-types) `pose`. If not yet of
 selection type [`Residue`](@ref), the `selection` will be promoted to
 [`Residue`](@ref) selection type (with the default `any` aggregating function).
 The resulting list of residues must be contiguous (a connected graph of
 [`Residue`](@ref) instances parenthoods). These will constitute the unique
-[`Segment`](@ref) of the resulting [Fragment](@ref).
+[`Segment`](@ref) of the resulting [`Fragment`](@ref).
 
 !!! ukw "Note:"
-    A [Fragment](@ref) is a `Pose{Segment}`, without a root/origin. These are
+    A [`Fragment`](@ref) is a `Pose{Segment}`, without a root/origin. These are
     usually used as temporary carriers of information, without the ability to be
     directly incorporated in simulations.
 
@@ -130,24 +130,7 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     return Pose(segment, state)
 end
 
-
-"""
-    fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
-
-Return a [Fragment](@ref) from a list of `coords`. Each coordinate creates a new
-[Residue](@ref) instance with a single [Atom](@ref) instance. Doesn't set
-parenthoods.
-
-# Examples
-```
-julia> frag = fragment(coords)
-Fragment(Segment{/UNK:-1}, State{Float64}:
- Size: 343
- i2c: false | c2i: false
- Energy: Dict(:Total => Inf)
-)
-```
-"""
+# ! Don't add a docstring here: it breaks Documenter.jl for some reason.
 function fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
     N = length(coords)
     state = State(N)
@@ -165,13 +148,13 @@ end
 """
     fragment!(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection; [keep_downstream_position::Bool = true])
 
-Return a [Fragment](@ref) from a list of residues retrieved from the given
-`AbstractSelection` `selection` when applied to the provided [Pose](@ref)
+Return a [`Fragment`](@ref) from a list of residues retrieved from the given
+`AbstractSelection` `selection` when applied to the provided [Pose](@ref pose-types)
 `pose`. If not yet of selection type [`Residue`](@ref), the `selection` will be
 promoted to [`Residue`](@ref) selection type (with the default `any` aggregating
 function). The resulting list of residues must be contiguous (a connected graph
 of [`Residue`](@ref) instances parenthoods). These will constitute the unique
-[`Segment`](@ref) of the resulting [Fragment](@ref). **In opposition to the
+[`Segment`](@ref) of the resulting [`Fragment`](@ref). **In opposition to the
 [`fragment`](@ref) method, this function will remove the fragmented
 [`Residue`](@ref) instances from the original [`Pose`](@ref) (using the
 [`pop_residue!`](@ref) method).** If `keep_downstream_position` is set to `true`
@@ -179,7 +162,7 @@ of [`Residue`](@ref) instances parenthoods). These will constitute the unique
 calling [`request_c2i!`](@ref) and [`sync!`](@ref) methods).
 
 !!! ukw "Note:"
-    A [Fragment](@ref) is a `Pose{Segment}`, without a root/origin. These are
+    A [`Fragment`](@ref) is a `Pose{Segment}`, without a root/origin. These are
     usually used as temporary carriers of information, without the ability to be
     directly incorporated in simulations.
 
@@ -234,8 +217,8 @@ end
 """
     append_fragment_as_new_segment!(pose::Pose{Topology}, frag::Fragment)
 
-Append a [Fragment](@ref) `frag` as a new [`Segment`](@ref) to the given
-[Pose](@ref) `pose`. This function overwrites `pose`.
+Append a [`Fragment`](@ref) `frag` as a new [`Segment`](@ref) to the given
+[`Pose`](@ref) `pose`. This function overwrites `pose`.
 
 # See also
 [`isfragment`](@ref) [`fragment`](@ref)

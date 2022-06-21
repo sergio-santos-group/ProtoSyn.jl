@@ -22,7 +22,7 @@ append_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Opt
 
 ![ProtoSyn Peptides Append](../../../assets/ProtoSyn-Peptides-append.png)
 
-**Figure 1 |** Two example applications of the [`append_fragment!`](@ref) method. **1 -** Appending a new [`Fragment`](@ref ProtoSyn.Fragment) (which can be one or more aminoacids) to the end of a peptidic structure (the [`Fragment`](@ref ProtoSyn.Fragment) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)). **2 -** A [`Fragment`](@ref ProtoSyn.Fragment) can also be appended to a severed cut (using the [`unbond!`](@ref ProtoSyn.unbond!) method or the [`fragment!`](@ref ProtoSyn.fragment!) method, for example). In this case, naturally, the downstream [`Residue`](@ref) instances are connected to the [`Pose`](@ref) [`root`](@ref ProtoSyn.root). Note that the appended aminoacids are ordered in such a way as to continue numerate (on index) from the [`Residue`](@ref) instance appended to.
+**Figure 1 |** Two example applications of the [`append_fragment!`](@ref) method. **1 -** Appending a new [`Fragment`](@ref) (which can be one or more aminoacids) to the end of a peptidic structure (the [`Fragment`](@ref) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)). **2 -** A [`Fragment`](@ref) can also be appended to a severed cut (using the [`unbond!`](@ref ProtoSyn.unbond!) method or the [`fragment!`](@ref ProtoSyn.fragment!) method, for example). In this case, naturally, the downstream [`Residue`](@ref) instances are connected to the [`Pose`](@ref) [`root`](@ref ProtoSyn.root). Note that the appended aminoacids are ordered in such a way as to continue numerate (on index) from the [`Residue`](@ref) instance appended to.
 
 ```@docs
 insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Opt{SecondaryStructureTemplate}, ::Any)
@@ -30,7 +30,7 @@ insert_fragment!(::Pose{Topology}, ::Residue, ::LGrammar, ::Pose{Segment}; ::Opt
 
 ![ProtoSyn Peptides Insert](../../../assets/ProtoSyn-Peptides-insert.png)
 
-**Figure 2 |** Two example applications of the [`insert_fragment!`](@ref) method. **1 -** Inserting a new [`Fragment`](@ref ProtoSyn.Fragment) (which can be one or more aminoacids) to the middle of a peptidic structure (the [`Fragment`](@ref ProtoSyn.Fragment) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)), while being connected in both upstream and downstream ends. **2 -** A [`Fragment`](@ref ProtoSyn.Fragment) can also be inserted at position 1 of the peptidic chain (in the beginning).
+**Figure 2 |** Two example applications of the [`insert_fragment!`](@ref) method. **1 -** Inserting a new [`Fragment`](@ref) (which can be one or more aminoacids) to the middle of a peptidic structure (the [`Fragment`](@ref) is displayed in dark grey). The [`Residue`](@ref) instances are re-indexed (using the [`reindex!`](@ref ProtoSyn.reindex) method) and inserted in the [`Pose`](@ref) graph (sharing the [`root`](@ref ProtoSyn.root)), while being connected in both upstream and downstream ends. **2 -** A [`Fragment`](@ref) can also be inserted at position 1 of the peptidic chain (in the beginning).
 
 # Mutating an aminoacid
 
@@ -78,7 +78,7 @@ cap!
 
 ## [Diagnosing poses](@id pose-diagnose-peptides)
 
-The following methods extend the usage of [Diagnosing poses](@id pose-diagnose-core) methods (from the Core module) to include Peptides specific standards.
+The following methods extend the usage of [Diagnosing poses](@ref pose-diagnose-core) methods (from the Core module) to include Peptides specific standards.
 
 ```@docs
 diagnose

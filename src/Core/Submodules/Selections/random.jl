@@ -10,7 +10,7 @@ A [`RandomSelection`](@ref) outputs a [`Mask`](@ref) (of type
 random selection is performed from the previously selected instances (from the
 inner `sele`). Note that, despite the inner `sele` selection type, the output
 will always be promoted to be of `T` type (using the
-[`promote!`](@ref ProtoSyn.promote!) method.)
+[`promote`](@ref ProtoSyn.promote) method.)
 
 # State mode    
 

@@ -72,9 +72,9 @@ accordingly. Return the altered [`State`](@ref) instance.
 
     sync!(pose::Pose)
 
-Check whether the given [Pose](@ref) instance has either `i2c` or
+Check whether the given [Pose](@ref pose-types) instance has either `i2c` or
 `c2i` flag set to `true` in its `pose.state` field and if so update the
-cartesian/internal coordinates accordingly. Return the altered [Pose](@ref) instance. 
+cartesian/internal coordinates accordingly. Return the altered [Pose](@ref pose-types) instance. 
 
 !!! ukw "Note:"
     Requesting both `i2c` and `c2i` conversions simultaneously is not possible

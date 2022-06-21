@@ -66,7 +66,7 @@ Measure several agreement criteria on the given [`Pose`](@ref) `pose`:
  5. Checks if any internal to cartesian coordinate conversion (or vice-versa) is pending
  6. Check if the [`Pose`](@ref) `pose` indexation matches the order of atoms (both in the :id and :index fields)
 
-Any [Graph](@ref) travel is done using the [`ProtoSyn.travel_graph`](@ref)
+Any [Graph](@ref graph-types) travel is done using the [`ProtoSyn.travel_graph`](@ref)
 method, employing the given `atom_order_search_algorithm` (`ProtoSyn.BFS`, by
 default). If `return_issues` is set to `true` (`false`, by default) doesn't
 print results to `stdout`, returns them as a `Vector{String}` instead.
@@ -233,7 +233,7 @@ read by the companion Python script "cgo_arrow.py" (see
 (for visualization purposes only).
 
 # See also
-[`set_parenthood_as_force!`](@ref)
+[`set_parenthood_as_forces!`](@ref)
 
 # Examples
 ```

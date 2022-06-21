@@ -367,7 +367,7 @@ end
 """
     copy(pose::Pose)
 
-Return a copied [Pose](@ref) of the provided `pose`. The resulting [Pose](@ref)
+Return a copied [Pose](@ref pose-types) of the provided `pose`. The resulting [Pose](@ref pose-types)
 will have different `:id` fields for the [Graph](@ref state-types) [`Topology`](@ref) and
 [State](@ref state-types).
 
@@ -468,7 +468,7 @@ Detach and return the given [`Segment`](@ref) from it's container
 *This function is a Base module overload.*
 
 !!! ukw "Note:"
-    This function does not alter the [State](@ref state-types) of the [Pose](@ref)
+    This function does not alter the [State](@ref state-types) of the [Pose](@ref pose-types)
     containing the provided [`Segment`](@ref). 
 
 # Examples

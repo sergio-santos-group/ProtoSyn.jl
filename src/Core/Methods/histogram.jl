@@ -10,7 +10,7 @@ If an `AbstractSelection` `selection` is provided, only the selected subset of
 to [`Atom`](@ref) level using the [`promote`](@ref ProtoSyn.promote) method).
 The distance histogram is generated for all [`Atom`](@ref) instances within
 `cutoff` Å of the focused [`Atom`](@ref), sub-divided in bins of `bin` Å. If a
-[`full_distance_matrix`](@ref) `dm` is provided, use it for distance
+[`full_distance_matrix`](@ref ProtoSyn.Calculators.full_distance_matrix) `dm` is provided, use it for distance
 calculation, otherwise a new distance matrix is generated. Each [`Atom`](@ref)
 histogram is divided by elements: one histogram is generated for each atomic
 element in `elems` containing all neighbouring [`Atom`](@ref) instances of that

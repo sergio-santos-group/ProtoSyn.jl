@@ -9,4 +9,6 @@ This section lists functions that work on the system [Graph](@ref state-types), 
 ```@docs
 assign_default_atom_names!
 unbond!
+travel_graph
+IUPAC
 ```

@@ -1,10 +1,9 @@
 """
     find_tautomer(tautomer::Tautomer, target::Residue)
 
-Given a `target` [`Residue`](@ref), search the provided [`Tautomer`](@ref)
-`tautomer` list for the corresponding template [`Residue`](@ref), based on the
-[Graph](@ref) (employs the [`travel_graph`](@ref ProtoSyn.travel_graph)
-method).
+Given a `target` [`Residue`](@ref), search the provided Tautomer `tautomer` list
+for the corresponding template [`Residue`](@ref), based on the [Graph](@ref graph-types)
+(employs the [`travel_graph`](@ref ProtoSyn.travel_graph) method).
 
 # Examples
 ```

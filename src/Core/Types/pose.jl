@@ -10,8 +10,8 @@ the system coordinates represented. A [`Pose`](@ref) is typed by an
 
     Pose(::T, frag::Fragment) where {T <: AbstractContainer}
 
-Return a [Pose](@ref) instance from a [Fragment](@ref), where the [State](@ref state-types) is empty/blank. The
-graph contents are copied to the new [Pose](@ref). If no type
+Return a [Pose](@ref pose-types) instance from a [`Fragment`](@ref), where the [State](@ref state-types) is empty/blank. The
+graph contents are copied to the new [Pose](@ref pose-types). If no type
 `T <: AbstractFloat` is provided, the `Units.defaultFloat` will be used.
 
 # See also

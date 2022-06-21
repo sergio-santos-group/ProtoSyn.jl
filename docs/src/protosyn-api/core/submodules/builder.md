@@ -54,6 +54,12 @@ fragment(::LGrammar{T, K, V}, ::Any) where {T <: AbstractFloat, K, V}
 build
 ```
 
+Sometimes, an [`LGrammar`](@ref) may provide multiple tautomers for a single [`Residue`](@ref) type. By default, when building a peptide from a sequence, ProtoSyn will use the first found tautomer, so the list order is important.
+
+```@docs
+find_tautomer
+```
+
 # [Manipulating a molecular structure by adding new residues from templates](@id core-builder-3)
 
 Once built (or loaded), a molecular structure can be manipulated and changed in various ways. Several methods available to add, modify and remove [`Residue`](@ref) instances from a molecular structure are discussed in the [Methods](@ref pose-methods) section (see [Appending, inserting and removing Atom and Residue instances](@ref)). The [Builder](@ref core-builder) submodule also includes methods allowing the insertion of template residues from a sequence of vector of _codes_.

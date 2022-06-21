@@ -14,7 +14,10 @@ In the next section, a brief description of the available methods to generate ca
 generate_carbon_layer
 generate_carbon
 generate_porosity
+perlin
+perlinoctaves
 functionalize!
 add_functionalization!
+add_hydrogens!
 generate_carbon_from_file
 ```

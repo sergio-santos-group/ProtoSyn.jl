@@ -88,7 +88,7 @@ atom = pose.graph[1, 1, 1]
 pose.state[atom]
 ```
 
-Indexation methods make sure the [Pose](@ref) [State](@ref state-types) structure remains coherent with the [Graph](@ref state-types) structure, in terms of order.
+Indexation methods make sure the [`Pose`](@ref) [State](@ref state-types) structure remains coherent with the [Graph](@ref state-types) structure, in terms of order.
 
 ```@docs
 reindex(::State)
