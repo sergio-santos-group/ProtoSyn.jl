@@ -1,0 +1,14 @@
+name: hid
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name:   C, id:   2, symbol:  C, b:   1.400000, theta:   2.094395, phi:   0.000000, c:  0.160}
+  - {name:   H, id:   3, symbol:  H, b:   0.799290, theta:   2.094395, phi:   3.141592, c: -0.160}
+bonds:
+  R: [C]
+  C: [H]
+  H: [C]
+graph:
+  root: R
+  adjacency:
+    R: [C]
+    C: [H]

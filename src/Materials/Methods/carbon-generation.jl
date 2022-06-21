@@ -422,10 +422,20 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
         functionalize!(pose, f)
     end
 
+    # 5. Add hydrogens
+    if "Hydrogens" in keys(data) && "saturate" in keys(data["Hydrogens"])
+        if data["Hydrogens"]["saturate"]
+            add_hydrogens!(pose, ProtoSyn.modification_grammar, nothing)
+        end
+    end
+
     # 5. Write output to file
     if output !== nothing
+        println("Outputing results to $output")
         ProtoSyn.write(pose, output)
     end
+
+    println("All tasks done!")
 
     return pose
 end

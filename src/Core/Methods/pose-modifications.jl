@@ -241,112 +241,62 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     parent              = atom.parent
     parent_container    = parent === root ? atom.children[1].container : parent.container
     parent_index        = parent === root ? atom.children[1].index - 1 : parent.index # In the state
-    parent_index_in_res = parent === root ? findfirst(x -> x === atom.children[1], parent_container.items) - 1 : findfirst(x -> x === parent, parent_container.items)
-    atomstate           = copy(pose.state[atom])
-    old_bonds           = copy(atom.bonds)
+    index_in_res        = findfirst(x -> x === atom, parent_container.items)
 
-    @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Parent index in residue = $parent_index_in_res (out of $(length(parent_container.items)))"
+    @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Index in residue = $index_in_res (out of $(length(parent_container.items)))"
 
     if spread_excess_charge
         excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
+        @info "Excess charge = $excess_charge"
     end
 
-    last_position_in_res  = (parent_index_in_res + 1) === length(parent_container.items)
+    last_position_in_res  = index_in_res === length(parent_container.items)
     last_position_in_pose = last_position_in_res && parent_container === collect(eachresidue(pose.graph))[end]
     
     # Remove selected atom & any children atoms
     if remove_downstream_graph
-        to_remove = ProtoSyn.travel_graph(atom)
+        to_remove = ProtoSyn.travel_graph(atom)[2:end] # Keep selected atom
         
         for a in reverse(to_remove) # Note the reverse loop
             ProtoSyn.pop_atom!(pose, a)
         end
-        old_children   = Vector{Atom}()
-        old_atomstates = Vector{AtomState}()
-    else
-        # If not removing downstream, save any existing children (and their
-        # atomstates). Because of pop_atom!, the downstream atoms's states will
-        # be re-defined to be children of Root, and the internal coordinates
-        # updated. Later, it is necessary to re-apply the current atomstate when
-        # re-setting the parent to the new fragment introduced.
-
-        old_children   = copy(atom.children)
-        old_atomstates = [copy(pose.state[a]) for a in old_children]
-        ProtoSyn.pop_atom!(pose, atom, keep_downstream_position = false) # Remove just the selected atom.
     end
 
     # Add fragment to residue (start with the first atom in the fragment,
-    # children of the fake fragment root)
+    # children of the fake fragment root) - change name, symbol and charge only
     frag_origin = ProtoSyn.origin(fragment.graph)
     first_atom  = frag_origin.children[1]
 
-    if last_position_in_res
-        push!(parent_container, first_atom)
-    else
-        @info "Inserting first atom graph in position $(parent_index_in_res + 1) in the parent container."
-        @info "Between $(parent_container[parent_index_in_res]) and $(parent_container[parent_index_in_res + 1])"
-        insert!(parent_container, parent_index_in_res + 1, first_atom)
-    end
-
-    # Insert the atomstate. This atomstate belongs to the existing atom that we
-    # replaced. The only change is the charge.
-    atomstate.δ = fragment.state[first_atom].δ
-    if last_position_in_pose
-        append!(pose.state, copy(State([atomstate])))
-    else
-        @info "Inserting atomstate of $first_atom at position $(parent_index + 1) of the pose's state (first atom)."
-        insert!(pose.state, parent_index + 1, copy(State([atomstate])))
-    end
+    atom.name   = first_atom.name
+    atom.symbol = first_atom.symbol
+    pose.state[atom].δ = fragment.state[first_atom].δ
 
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
-        if last_position_in_res
-            insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
-        else
-            @info "Inserting atom $(frag_atom.name) graph in position $(parent_index_in_res + i + 1) in the parent container."
-            @info "Between $(parent_container[parent_index_in_res + i]) and $(parent_container[parent_index_in_res + i + 1])"
-            insert!(parent_container, parent_index_in_res + i + 1, frag_atom)
-        end
 
+        # Insert the fragment atom in the Pose's graph
+        @info "Inserting atom $(frag_atom.name) graph in position $(parent_index_in_res + i + 1) in the parent container."
+        @info "Between $(parent_container[parent_index_in_res + i]) and $(parent_container[parent_index_in_res + i + 1])"
+        insert!(parent_container, index_in_res + i, frag_atom)
+
+        # Insert (or append) a copy of the fragment atom's Atomstate to the
+        # Pose's State
         if last_position_in_pose
             append!(pose.state, copy(State([fragment.state[frag_atom]])))
         else
             @info "Inserting atomstate of $frag_atom at position $(parent_index + i + 1) of the pose's state."
-            insert!(pose.state, parent_index + i + 1, copy(State([fragment.state[frag_atom]])))
+            insert!(pose.state, atom.index + i, copy(State([fragment.state[frag_atom]])))
         end
 
-        pose.state[parent_index + i].parent = pose.state
-    end
+        # Set the newly copied AtomState parent to be the Pose's state
+        pose.state[atom.index + i].parent = pose.state
 
-    # Change the parenthood and bonds from the fake fragment root to the actual
-    # pose atom, now acting as the parent
-    ProtoSyn.popparent!(first_atom)
-    ProtoSyn.unbond!(fragment, first_atom, frag_origin, keep_downstream_position = false) # FALSE
-    parent !== root && ProtoSyn.bond(first_atom, parent)
-    ProtoSyn.setparent!(first_atom, parent)
-
-    if !remove_downstream_graph
-        # Because both the graph and atomstate instances were inserted in the
-        # respective data structures, the indexation was changed. Since we need to
-        # select the atomstate of a given atom to re-apply the saved atomstates
-        # before pop_atom!, correct indexation between graph and state needs to be
-        # ensured
-        reindex(pose.graph, set_ascendents = true)
-        reindex(pose.state)
-
-        # Re-attach old children to the new atom and re-apply the saved
-        # atomstates
-        for (i, child) in enumerate(old_children)
-            ProtoSyn.popparent!(child) # Already unbonded from pop_atom!
-            ProtoSyn.bond(child, first_atom)
-            ProtoSyn.setparent!(child, first_atom)
-            pose.state[child] = old_atomstates[i]
-        end
-
-        # Re-bond old bonds
-        for bond in old_bonds
-            if !(bond in first_atom.bonds)
-                ProtoSyn.bond(bond, first_atom)
-            end
+        # Adjust parenthood and bonds if changing from being connected to the
+        # fragment root to the pose's selected atom
+        if frag_atom.parent === first_atom
+            ProtoSyn.popparent!(frag_atom)
+            ProtoSyn.setparent!(frag_atom, atom)
+            ProtoSyn.unbond!(fragment, frag_atom, first_atom, keep_downstream_position = false)
+            ProtoSyn.bond(frag_atom, atom)
         end
     end
 
@@ -355,12 +305,14 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
 
     # Spread excess charge over the bonded atoms to first_atom
     if spread_excess_charge
-        charge_per_bond     = excess_charge / length(first_atom.bonds)
+        charge_per_bond     = excess_charge / length(atom.bonds)
 
-        for bond in first_atom.bonds
+        for bond in atom.bonds
             pose.state[bond].δ -= charge_per_bond
         end
     end
+
+    ProtoSyn.request_i2c!(pose.state)
 
     return pose
 end

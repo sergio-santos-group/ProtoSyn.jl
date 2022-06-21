@@ -269,7 +269,9 @@ function rename!(atom::Atom, name::String; force_rename::Bool = false)
         end
     end
 
-    pop!(atom.container.itemsbyname, atom.name)
+    if !force_rename
+        pop!(atom.container.itemsbyname, atom.name)
+    end
     atom.name = name
     atom.container.itemsbyname[name] = atom
 

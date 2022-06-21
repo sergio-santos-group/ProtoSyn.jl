@@ -4,7 +4,7 @@ Shape:
   x: 10          # Number of carbon-rings in the x-axis
   y: 10          # Number of carbon-rings in the y-axis
   z: 3           # Number of carbon layers in z-axis
-  porosity: 0.30 # Porosity % (should be between 0.0 and 1.0)
+  porosity: 0.33 # Porosity % (should be between 0.0 and 1.0)
 
 Functional-groups:
   GRN: 0.05 # Graphitic-N --
@@ -15,3 +15,6 @@ Functional-groups:
   INE: 0.05 # Pyridine      |
   AMN: 0.05 # Amino-N       |
   ETH: 0.05 # Ether       --
+
+Hydrogens:
+  saturate: true

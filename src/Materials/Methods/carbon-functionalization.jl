@@ -1,10 +1,11 @@
 using Random
+using Printf
 using StatsBase
+using ProgressMeter
 using LinearAlgebra
 using ProtoSyn.Units
-using Printf
 
-base           = as"C" & ChargeSelection(0.0) & !DownstreamTerminalSelection{Atom}() & !UpstreamTerminalSelection{Atom}()
+base           = as"C" & ChargeSelection(0.0)
 edge           = base & BondCountSelection(3, <)
 edge_or_center = base & BondCountSelection(4, <)
 center         = base & BondCountSelection(3)
@@ -76,7 +77,6 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normal
     return functionalize!(pose, functional_groups_n)
 end
 
-
 function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
 
     L_layer = SerialSelection{Segment}(ProtoSyn.count_segments(pose.graph), :id)
@@ -108,11 +108,13 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
     shuffle!(functional_group_list)
 
     # Consume list and add functional groups to pose
+    p = Progress(length(functional_group_list), dt = 0.2, desc = "Functionalizing carbon ...", color = :gray)
     while length(functional_group_list) > 0
+
+        next!(p)
 
         fcn_id = pop!(functional_group_list)
         fcn = functional_group_id[fcn_id]
-        ProtoSyn.write(pose, "current.pdb")
         if !(fcn.graph.name in keys(known_functional_groups))
             @warn "Tried to add unknown function group: $fcn"
         else
@@ -137,7 +139,9 @@ end
     add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
 
 Add a single functional group `fcn` (a [`Fragment`](@ref) instance) to the given
-[`Atom`](@ref) instance `atom` in the [`Pose`](@ref) `pose`.
+[`Atom`](@ref) instance `atom` in the [`Pose`](@ref) `pose`. The [`Atom`](@ref)
+instance `atom` is replaced (using the
+[`replace_by_fragment!`](@ref ProtoSyn.replace_by_fragment!) method).
 
 # See also
 [`functionalize!`](@ref)
@@ -154,7 +158,7 @@ Pose{Topology}(Topology{/CRV:14425}, State{Float64}:
 )
 ```
 """
-function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
+function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom; attempt_minimization::Bool = true)
 
     function clockwise(atom::Atom)
         a = collect(pose.state[atom].t[1:2] .- pose.state[atom.parent].t[1:2])
@@ -190,23 +194,24 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
     function move_root_to_layer(layer_ID::Int; r::T = 1.4, d::T = 3.4) where {T <: AbstractFloat}
 
         root = ProtoSyn.root(pose.graph)
-        pose.state[root].t[3:3]               .+= (layer_ID-1) * d
-        pose.state[root.parent].t[3:3]        .+= (layer_ID-1) * d
-        pose.state[root.parent.parent].t[3:3] .+= (layer_ID-1) * d
+        pose.state[root].t[3:3]               .= (layer_ID-1) * d
+        pose.state[root.parent].t[3:3]        .= (layer_ID-1) * d
+        pose.state[root.parent.parent].t[3:3] .= (layer_ID-1) * d
 
         if layer_ID % 2 === 0 # set multiple layer offset
             v2 = [r/2, cos(60°)*r, 0.0]
-            pose.state[root].t[1:3]               .+= v2
-            pose.state[root.parent].t[1:3]        .+= v2
-            pose.state[root.parent.parent].t[1:3] .+= v2
+            pose.state[root].t[1:3]               .-= v2
+            pose.state[root.parent].t[1:3]        .-= v2
+            pose.state[root.parent.parent].t[1:3] .-= v2
         end
 
+        # pose.state.i2c && sync!(pose)
         ProtoSyn.request_c2i!(pose.state, all = true)
         sync!(pose)
     end
 
     fcn = copy(fcn) # So that any changes don't apply to the template group
-    atom_ID = atom.id
+    child_of_root = atom in ProtoSyn.root(pose.graph).children
 
     @info "\n---\nAdding functional group \"$(fcn.graph.name)\" to $atom\nPlacement:"
 
@@ -245,7 +250,7 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
                 @info " | Bottom layer"
                 define_functionalization_up_down(false)
             else
-                @error "No suitable placement for functional group was found."
+                @info "No suitable placement for functional group was found."
             end
         else
             @info " Edge position"
@@ -265,6 +270,15 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
                 move_root_to_layer(atom.container.container.index)
             end
 
+            if child_of_root
+                @info "Child of root!"
+                # The next values can't be 0.0 because of trignometry errors
+                fcn.state[fcn.graph[1, 3]].θ = 0.001°
+                for child in fcn.graph[1, 3].children
+                    fcn.state[child].ϕ += 180.001°
+                end
+            end
+
             d = ProtoSyn.dihedral(map(a -> pose.state[a], t)...)
             if ((d ≈ π) | (d ≈ -π))
                 @info " | 180° parenthood"
@@ -273,16 +287,69 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom)
         end
     end
 
+    _id = atom.id
     ProtoSyn.replace_by_fragment!(pose, atom, fcn, 
         remove_downstream_graph = false,
         spread_excess_charge    = true)
 
-    # Block "close-by" points # TODO
-    # println(collect(eachatom(pose.graph))[atom.id].children)
-
-    # Recover original root # TODO
-
+    # Neat indexation
     reindex(pose)
     ProtoSyn.request_i2c!(pose.state, all = false)
     sync!(pose)
+
+    # Block "close-by" points (marked with +0.001 charge)
+    if !center && ProtoSyn.count_atoms(fcn.graph) > 2
+        @info "Blocking atoms ..."
+        child_atom = [c for c in atom.children if c.name !== "C"][1]
+        c_sele     = SerialSelection{Atom}(child_atom.id, :id)
+        n_sele     = (1.6:c_sele) & !BondedToSelection(c_sele) & !c_sele
+        for atom in n_sele(pose, gather = true)
+            @info " Blocked atom $atom"
+            pose.state[atom].δ += 0.001
+        end
+    end
+
+    # (Optional) Minimize structure
+    if attempt_minimization && ProtoSyn.count_atoms(fcn.graph) > 3
+
+        # 2. Minimization
+        energy_fcn = ProtoSyn.Calculators.EnergyFunction([
+            ProtoSyn.Calculators.Restraints.get_default_all_atom_clash_restraint()
+        ])
+        energy_fcn.selection = 4.0:SerialSelection{Atom}(_id, :id)
+        fcn_names  = [a.name for a in eachatom(fcn.graph)]
+        child_atom = [c for c in atom.children if (c.name in fcn_names) && (length(c.children) > 0)][1]
+        @info "Atom: $atom\n Atom children: $(atom.children)\n Child atom: $child_atom\n Child atom children: $(child_atom.children)"
+        dh_sele    = SerialSelection{Atom}(child_atom.children[1].id, :id)
+        sampler    = ProtoSyn.Mutators.DihedralMutator(randn, 1.0, 0.5, dh_sele)
+        thermostat = ProtoSyn.Drivers.get_constant_temperature(0.0)
+        minimizer  = ProtoSyn.Drivers.MonteCarlo(energy_fcn, sampler, nothing, 10, thermostat)
+        minimizer(pose)
+    end
+
+    sync!(pose)
+
+    # Recover original root
+    move_root_to_layer(1)
+
+    return pose
 end
+
+
+"""
+"""
+function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing)
+
+    hydro = res_lib.variables["HID"]
+
+    atoms = (selection & an"C|C0"r & BondCountSelection(3, <))(pose, gather = true)
+
+    for atom in atoms
+        add_functionalization!(pose, hydro, atom; attempt_minimization = false)
+        sync!(pose)
+    end
+
+    return pose
+end
+
+add_hydrogens!(pose::Pose) = add_hydrogens!(pose, ProtoSyn.modification_grammar, nothing)
