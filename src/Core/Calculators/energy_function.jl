@@ -172,9 +172,9 @@ julia> ProtoSyn.Calculators.fixate_masks!(energy_function, pose)
 julia> energy_function[4].settings[:mask]
 ProtoSyn.Mask
  ├── Type: Atom
- ├── Size: (21, 21)
- ├── Count: 420
- └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
+ ├── Size: (343, 343)
+ ├── Count: 111594 / 117649
+ └── Content: [0 0 … 1 1; 0 0 … 1 1; … ; 1 1 … 0 0; 1 1 … 0 0]
 ```
 """
 function fixate_masks!(ef::EnergyFunction, pose::Pose)

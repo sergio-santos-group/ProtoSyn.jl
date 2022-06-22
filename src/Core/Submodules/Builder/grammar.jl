@@ -110,7 +110,7 @@ LGrammar{Float64, String, Vector{String}}:
  Variables: None.
  Operators: None.
 
-julia> grammar = ProtoSyn.Peptides.grammar()
+julia> grammar = ProtoSyn.Peptides.grammar
 ```
 """
 mutable struct LGrammar{T <: AbstractFloat, K, V}

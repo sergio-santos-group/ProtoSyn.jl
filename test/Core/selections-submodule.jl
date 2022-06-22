@@ -28,7 +28,9 @@ println("-----------\n Selections submodule:")
     @testset verbose = true "TerminalSelection   " begin
         pose = copy(backup)
         
-        @test TerminalSelection()(pose).content == [true, false, true]
+        @test UpstreamTerminalSelection{Residue}()(pose).content == [true, false, false]
+        @test DownstreamTerminalSelection{Residue}()(pose).content == [false, false, true]
+        @test (DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}())(pose).content == [true, false, true]
     end
 
     @testset verbose = true "DistanceSelection   " begin

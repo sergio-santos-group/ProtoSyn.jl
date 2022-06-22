@@ -4,6 +4,10 @@
 
 The following docstrings are a dump for non-exported private & internal functions. These provide basic internal functionality that should rarely be employed by an end-user. In either case, docstrings exist to explain the inner-workings of methods for potential developers.
 
+```@meta
+CurrentModule = ProtoSyn
+```
+
 ```@docs
 ProtoSyn.Calculators.TorchANI.r_xml_travel!
 ProtoSyn.Clustering.dunn_index
@@ -45,5 +49,4 @@ ProtoSyn.XMLRPC.ClientProxy
 ProtoSyn.read_yml
 ProtoSyn.gpu_allocation
 ProtoSyn.promote
-fragment(::Vector{Vector{T}}) where {T <: AbstractFloat}
 ```

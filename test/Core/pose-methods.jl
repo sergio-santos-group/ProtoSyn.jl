@@ -25,7 +25,7 @@
         @test !(pose.graph[1][2]["H"] in pose.graph[1][2]["N"].children)
         @test !(pose.graph[1][2]["H"] in pose.graph[1][2]["N"].bonds)
         @test pose.graph[1][2].parent == pose.graph[1][1]
-        @test pose.state.i2c == true
+        @test pose.state.i2c == false
     end
 
     @testset verbose = true "Pop atom (N)" begin
@@ -54,7 +54,7 @@
         @test pose.graph[1][2]["CA"].parent == ProtoSyn.root(pose.graph)
         @test pose.graph[1][2].parent == ProtoSyn.root(pose.graph).container
         @test pose.graph[1][2]["H"].parent == ProtoSyn.root(pose.graph)
-        @test pose.state.i2c == true
+        @test pose.state.i2c == false
         @test pose.graph[1][2]["CA"].id == 9
         @test pose.graph[1][2]["CA"].index == 9
         @test pose.graph[1][2]["CA"].ascendents == (9, 0, -1, -2)
@@ -84,7 +84,7 @@
         @test pose.graph[1][1]["CA"].parent == ProtoSyn.root(pose.graph)
         @test pose.graph[1][1].parent == ProtoSyn.root(pose.graph).container
         @test pose.graph[1][1]["H"].parent == ProtoSyn.root(pose.graph)
-        @test pose.state.i2c == true
+        @test pose.state.i2c == false
         @test pose.graph[1][1]["CA"].id == 2
         @test pose.graph[1][1]["CA"].index == 2
         @test pose.graph[1][1]["CA"].ascendents == (2, 0, -1, -2)

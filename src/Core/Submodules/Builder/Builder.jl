@@ -15,7 +15,7 @@ provided [`LGrammar`](@ref) `grammar` instructions. Return the generated
 
 # Examples
 ```
-julia> res_lib = ProtoSyn.Peptides.grammar(Float64);
+julia> res_lib = ProtoSyn.Peptides.grammar;
 
 julia> pose = ProtoSyn.build(res_lib, seq"GME")
 Pose{Topology}(Topology{/UNK:1}, State{Float64}:

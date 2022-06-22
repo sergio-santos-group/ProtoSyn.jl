@@ -4,7 +4,7 @@
         pose = copy(backup)
 
         @test ProtoSyn.root(pose.graph) === pose.graph[1][1][1].parent
-        @test ProtoSyn.origin(pose.graph) === nothing
+        @test ProtoSyn.origin(pose.graph) === pose.graph[1][1][1]
     end
 
     @testset verbose = true "Parenthood relationships" begin
@@ -111,7 +111,7 @@
         sync!(pose)
         @test pose.state.i2c == false
         @test length(pose.graph[1][2]["CB"].children) == 2
-        @test collect(pose.state[pose.graph[1][2]["CG"]].t) == [4.800701090587441, -4.607782270435299, -2.3619776332006834]
+        @test all(collect(pose.state[pose.graph[1][2]["CG"]].t) .≈ [4.800701090587441, -4.607782270435299, -2.3619776332006834])
     end
 
 end

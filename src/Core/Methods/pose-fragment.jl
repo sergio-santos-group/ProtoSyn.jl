@@ -130,19 +130,18 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     return Pose(segment, state)
 end
 
-# ! Don't add a docstring here: it breaks Documenter.jl for some reason.
-function fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
-    N = length(coords)
-    state = State(N)
-    segment = Segment("UNK", -1)
-    for i in 1:N
-        res = Residue!(segment, "UNK", i)
-        state[i].t = coords[i]
-        Atom!(res, "X$i", i, i, "X")
-    end
+# function fragment(coords::Vector{Vector{T}}) where {T <: AbstractFloat}
+#     N = length(coords)
+#     state = State(N)
+#     segment = Segment("UNK", -1)
+#     for i in 1:N
+#         res = Residue!(segment, "UNK", i)
+#         state[i].t = coords[i]
+#         Atom!(res, "X$i", i, i, "X")
+#     end
 
-    return Pose(segment, state)
-end
+#     return Pose(segment, state)
+# end
 
 
 """
