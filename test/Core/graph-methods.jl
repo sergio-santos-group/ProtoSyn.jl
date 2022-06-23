@@ -1,4 +1,4 @@
-@testset verbose = true "Graph methods" begin
+@testset verbose = true "Graph methods $(repeat("-", 43))" begin
 
     @testset verbose = true "Root & Origin" begin
         pose = copy(backup)
@@ -40,6 +40,8 @@
 
         @test length(travel_graph(pose.graph[1][3][1])) === 15
         @test length(unique([a.container.id for a in travel_graph(pose.graph[1][3][1])])) === 1
+        @test ProtoSyn.travel_graph(pose.graph[1, 3, "CA"], search_algorithm = ProtoSyn.BFS)[1:4] == [pose.graph[1, 3, "CA"], pose.graph[1, 3, "HA"], pose.graph[1, 3, "C"], pose.graph[1, 3, "CB"]]
+        @test ProtoSyn.travel_graph(pose.graph[1, 3, "CA"], search_algorithm = ProtoSyn.DFS)[1:4] == [pose.graph[1, 3, "CA"], pose.graph[1, 3, "CB"], pose.graph[1, 3, "CG"], pose.graph[1, 3, "CD"]]
         @test ProtoSyn.is_contiguous(pose, rid"2:3")
         @test ProtoSyn.is_contiguous(pose, an"K") === nothing
         @test !ProtoSyn.is_contiguous(pose, rid"1" | rid"3")

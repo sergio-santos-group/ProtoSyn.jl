@@ -1,4 +1,4 @@
-@testset verbose = true "State methods" begin
+@testset verbose = true "State methods $(repeat("-", 43))" begin
 
     @testset verbose = true "Cartesian & Internal Coordinates" begin
         pose = copy(backup)

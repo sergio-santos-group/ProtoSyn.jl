@@ -1,6 +1,6 @@
 using Printf
 
-@testset verbose = true "Peptides | Mutators $(repeat("-", 34))" begin
+@testset verbose = true "Peptides | Mutators $(repeat("-", 37))" begin
 
     @testset verbose = true "$(@sprintf "%-52s" "Rotamer")" begin
         pose = copy(backup)

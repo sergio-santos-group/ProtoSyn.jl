@@ -1,6 +1,6 @@
 using ProtoSyn.Units
 
-@testset verbose = true "Units" begin
+@testset verbose = true "Units $(repeat("-", 51))" begin
 
     @testset verbose = true "Angles" begin
         @test 0° == 0 

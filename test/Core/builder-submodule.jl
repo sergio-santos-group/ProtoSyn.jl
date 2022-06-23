@@ -1,6 +1,6 @@
 using ProtoSyn.Peptides
 
-@testset verbose = true "Core.Builder" begin
+@testset verbose = true "Core | Builder submodule $(repeat("-", 32))" begin
 
     @testset verbose = true "Building a pose from derivation" begin
         res_lib = Peptides.grammar

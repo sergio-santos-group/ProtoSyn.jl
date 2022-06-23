@@ -1,6 +1,6 @@
 using StaticArrays
 
-@testset verbose = true "Drivers $(repeat("-", 45))" begin
+@testset verbose = true "Drivers $(repeat("-", 49))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Thermostats")" begin
         pose = copy(backup)

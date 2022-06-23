@@ -1,6 +1,17 @@
 using Printf
 
 @testset verbose = true "Peptides | Pose methods $(repeat("-", 33))" begin
+
+    @testset verbose = true "$(@sprintf "%-54s" "Identify terminals")" begin
+        pose = copy(backup)
+
+        @test ProtoSyn.Peptides.is_C_terminal(pose.graph[1, 1]) === false
+        @test ProtoSyn.Peptides.is_C_terminal(pose.graph[1, 3]) === true
+        @test ProtoSyn.Peptides.is_N_terminal(pose.graph[1, 1]) === true
+        @test ProtoSyn.Peptides.is_N_terminal(pose.graph[1, 3]) === false
+        @test ProtoSyn.Peptides.identify_c_terminal(pose.graph[1]) === pose.graph[1, 3, "C"]
+    end
+
     @testset verbose = true "$(@sprintf "%-54s" "Append fragment (from fragment, to end)")" begin
         pose = copy(backup)
         frag = ProtoSyn.fragment(res_lib, seq"AAA")

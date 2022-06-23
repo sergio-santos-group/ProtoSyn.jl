@@ -1,6 +1,6 @@
 using StaticArrays
 
-@testset verbose = true "Mutators $(repeat("-", 45))" begin
+@testset verbose = true "Mutators $(repeat("-", 48))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Dihedral")" begin
         pose = copy(backup)
