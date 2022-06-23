@@ -59,7 +59,7 @@ each step and provided to the [`Callback`](@ref ProtoSyn.Drivers.Callback)
 `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom function, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}` - The rotamer library used to sample new [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances from;
 * `n_first::Int` - Maximum number of [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances to try, ordered from most to less likely;
 * `max_steps::Int` - The total number of simulation steps to be performed;

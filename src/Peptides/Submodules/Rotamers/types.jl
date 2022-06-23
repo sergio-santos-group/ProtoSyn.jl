@@ -32,12 +32,22 @@ function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}
     print(io, "Rotamer{$T}: $(as_string(r))\n")
 end
 
+function Base.getindex(r::Rotamer{T}, i::AbstractSelection) where {T <: AbstractFloat}
+    k = collect(keys(r.chis))
+    return r.chis[k[findfirst((c) -> c.n === i.n, k)]]
+end
+
+function Base.setindex!(r::Rotamer{T}, v::Tuple{T, T}, i::AbstractSelection) where {T <: AbstractFloat}
+    k = collect(keys(r.chis))
+    r.chis[k[findfirst((c) -> c.n === i.n, k)]] = v
+end
+
 function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
     chis = ""
     for index in 1:4
         if index <= length(r.chis)
             name = "chi$index"
-            value, sd = r.chis[ChiSelection(index)]
+            value, sd = r[ChiSelection(index)]
             if value === nothing
                 chis *= @sprintf " | %s: %11s ± %4.1f" titlecase(name) "Not defined" rad2deg(sd)
             else

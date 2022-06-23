@@ -61,7 +61,7 @@ a call to an optional [`Callback`](@ref) `callback` is performed. A companion
 and provided to the [`Callback`](@ref) `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `callback::Opt{Callback}` - An optional [`Callback`](@ref) instance, receives two input arguments: the current [`Pose`](@ref) `pose` and the current `DriverState` `driver_state`;
 * `max_steps::Int` - The total number of simulation steps to be performed;
 * `force_tolerance::Float64` - The minimum force tolerated by the simulation, any [`State`](@ref) with a max force below this threshold will converge the simulation;
@@ -143,7 +143,6 @@ function (driver::SteepestDescent)(pose::Pose)
     
     # Initial callbacks
     driver.callback !== nothing && driver.callback(pose, driver_state)
-    
 
     # Initialize γ and backup copy
     γ    = T(1.0)

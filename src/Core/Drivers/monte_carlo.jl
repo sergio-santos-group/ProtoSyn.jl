@@ -70,7 +70,7 @@ is performed. A companion [`MonteCarloState`](@ref) `DriverState` instance is
 also updated each step and provided to the [`Callback`](@ref) `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `sample!::Union{Function, AbstractMutator, Driver}` - The sampler method, receives a [`Pose`](@ref) `pose` as the single input argument;
 * `callback::Opt{Callback}` - An optional [`Callback`](@ref) instance, receives two input arguments: the current [`Pose`](@ref) `pose` and the current `DriverState` `driver_state`;
 * `max_steps::Int` - The total number of simulation steps to be performed;

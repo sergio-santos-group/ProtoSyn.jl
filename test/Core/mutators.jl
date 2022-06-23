@@ -1,7 +1,5 @@
 using StaticArrays
 
-println("-----------\n Mutators:")
-
 @testset verbose = true "Mutators $(repeat("-", 45))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Dihedral")" begin

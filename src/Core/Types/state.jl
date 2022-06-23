@@ -452,9 +452,9 @@ end
 
 
 function atmax(state::State{T}, comp::Symbol) where T
-    m = T(0)
+    m   = T(0)
     idx = 0
-    x = getproperty(state, comp)
+    x   = getproperty(state, comp)
     for i = 1:state.size
         f = x[1, i]^2 + x[2, i]^2 + x[3, i]^2
         if f > m
@@ -462,6 +462,7 @@ function atmax(state::State{T}, comp::Symbol) where T
             idx = i
         end
     end
+    
     return sqrt(m), idx
 end
 

@@ -61,7 +61,7 @@ simulation loop runs for `max_steps` iteration. Each step, a call to an optional
 [`Callback`](@ref) `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function for the outer loop, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `jump!::Union{Function, AbstractMutator, Driver}` - The jump method, receives a [`Pose`](@ref) `pose` as the single input argument, should introduce a relative high change in the conformation;
 * `inner_driver!::Driver` - The inner loop `Driver`;
 * `callback::Opt{Callback}` - An optional [`Callback`](@ref) instance for the outer loop, receives two input arguments: the current [`Pose`](@ref) `pose` and the current `DriverState` `driver_state`;
@@ -160,14 +160,14 @@ function (driver::ILS)(pose::Pose)
     driver_state.temperature = driver.temperature(0)
     
     previous_state  = copy(pose)
-    previous_energy = driver.eval!(pose, false)
+    previous_energy = driver.eval!(pose)
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
             
         driver.inner_driver!(pose)
         sync!(pose)
-        energy = driver.eval!(pose, false)
+        energy = driver.eval!(pose)
         
         n = rand()
         driver_state.temperature = driver.temperature(driver_state.step)

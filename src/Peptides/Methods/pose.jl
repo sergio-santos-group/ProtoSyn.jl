@@ -317,16 +317,16 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # 1) Insert new residue in position R, shifting all downstream residues + 1
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
-    phi   = ProtoSyn.getdihedral(pose.state, phi(residue))
+    phi   = ProtoSyn.getdihedral(pose.state, Peptides.phi(residue))
     
-    psi_atom = psi(residue)
+    psi_atom = Peptides.psi(residue)
     if psi_atom !== nothing
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
     else
         psi = 0.0
     end
     
-    omega_atom = omega(residue)
+    omega_atom = Peptides.omega(residue)
     if omega_atom !== nothing
         omega = ProtoSyn.getdihedral(pose.state, omega_atom)
     else
@@ -352,7 +352,7 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
     # the root).
     downstream_r_pos = old_r_pos
-    if downstream_r_pos < length(ProtoSyn.sequence(pose))
+    if downstream_r_pos <= length(ProtoSyn.sequence(pose))
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
         

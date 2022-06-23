@@ -1,5 +1,3 @@
-println("-----------\n Calculators:")
-
 @testset verbose = true "Calculators $(repeat("-", 45))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Verlet List")" begin
@@ -232,23 +230,23 @@ println("-----------\n Calculators:")
 
         @testset verbose = true "$(@sprintf "%-52s" "No Selection / Mask")" begin
             e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.CUDA_2, pose, p, true, nothing, map)
-            @test e ≈ 5.086967385156593 atol = 1e-10
-            @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-            @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-            @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+            @test e ≈ 3.0460407426056126 atol = 1e-10
+            @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+            @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+            @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
 
             e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.SISD_0, pose, p, true, nothing, map)
-            @test e ≈ 5.086967385156593 atol = 1e-10
-            @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-            @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-            @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+            @test e ≈ 3.0460407426056126 atol = 1e-10
+            @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+            @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+            @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
 
             p = ProtoSyn.Calculators.get_flat_bottom_potential(ProtoSyn.SIMD_1, d3=10.0, d4 = 20.0)
             e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.SIMD_1, pose, p, true, nothing, map)
-            @test e ≈ 5.086967385156593 atol = 1e-10
-            @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-            @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-            @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+            @test e ≈ 3.0460407426056126 atol = 1e-10
+            @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+            @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+            @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
 
             function get_map(pose::Pose)
                 Random.seed!(1)
@@ -258,23 +256,23 @@ println("-----------\n Calculators:")
             @testset verbose = true "$(@sprintf "%-50s" "Mask == Function")" begin
                 p = ProtoSyn.Calculators.get_flat_bottom_potential(ProtoSyn.CUDA_2, d3=10.0, d4 = 20.0)
                 e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.CUDA_2, pose, p, true, nothing, get_map)
-                @test e ≈ 5.086967385156593 atol = 1e-10
-                @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-                @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-                @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+                @test e ≈ 3.0460407426056126 atol = 1e-10
+                @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+                @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+                @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
 
                 e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.SISD_0, pose, p, true, nothing, get_map)
-                @test e ≈ 5.086967385156593 atol = 1e-10
-                @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-                @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-                @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+                @test e ≈ 3.0460407426056126 atol = 1e-10
+                @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+                @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+                @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
 
                 p = ProtoSyn.Calculators.get_flat_bottom_potential(ProtoSyn.SIMD_1, d3=10.0, d4 = 20.0)
                 e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.SIMD_1, pose, p, true, nothing, get_map)
-                @test e ≈ 5.086967385156593 atol = 1e-10
-                @test f[1, 1] ≈ -1.8414104049560087 atol = 1e-10
-                @test f[2, 1] ≈ 0.5557481135666688 atol = 1e-10
-                @test f[3, 1] ≈ -0.5090176478479795 atol = 1e-10
+                @test e ≈ 3.0460407426056126 atol = 1e-10
+                @test f[1, 1] ≈ -2.449565592296749 atol = 1e-10
+                @test f[2, 1] ≈ 0.8142439756895682 atol = 1e-10
+                @test f[3, 1] ≈ -0.5632683636262222 atol = 1e-10
             end
         end
 
@@ -317,7 +315,7 @@ println("-----------\n Calculators:")
             @test f[3, 3] ≈ -1.973899021248059e-8 atol = 1e-10
         end
 
-        mask = ProtoSyn.Calculators.diagonal_mask(pose, an"CA")
+        mask = ProtoSyn.Calculators.get_diagonal_mask(pose, an"CA")
 
         @testset verbose = true "$(@sprintf "%-52s" "Selection / Mask")" begin
             p = ProtoSyn.Calculators.get_flat_bottom_potential(ProtoSyn.CUDA_2, d1=2.0, d2 = 4.0)
@@ -343,7 +341,7 @@ println("-----------\n Calculators:")
         
             @testset verbose = true "$(@sprintf "%-50s" "Mask == Function")" begin
 
-                mask = ProtoSyn.Calculators.get_diagonal_mask(an"CA")
+                mask = ProtoSyn.Calculators.get_diagonal_mask(pose, an"CA")
 
                 p = ProtoSyn.Calculators.get_flat_bottom_potential(ProtoSyn.CUDA_2, d1=2.0, d2 = 4.0)
                 e, f = ProtoSyn.Calculators.apply_potential(ProtoSyn.CUDA_2, pose, p, true, nothing, an"CA", mask)
@@ -479,7 +477,7 @@ println("-----------\n Calculators:")
         @test e2 ≈ -11.807236531283706 atol = 1e-5
 
         # Static energy contribution
-        pose_complete = ProtoSyn.Peptides.load("../teste_2.pdb")
+        pose_complete = ProtoSyn.Peptides.load("teste_2.pdb")
         ProtoSyn.Calculators.TorchANI.fixate_static_ref_energy!(
             ef["TorchANI_Ref_Energy"], pose_complete, !rid"46")
         ef["TorchANI_Ref_Energy"].selection = rid"46"
