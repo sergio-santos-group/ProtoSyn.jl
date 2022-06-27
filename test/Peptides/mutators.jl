@@ -6,7 +6,7 @@ using Printf
         pose = copy(backup)
 
         # Set standard deviation of the target rotamer to be 0.0
-        r = copy(rot_lib)
+        r = ProtoSyn.Peptides.load_dunbrack(Float64)
         chi1 = r["MET"][3.14, 3.14][1][chi"1"]
         r["MET"][3.14, 3.14][1][chi"1"] = (chi1[1], 0.0)
         chi2 = r["MET"][3.14, 3.14][1][chi"2"]

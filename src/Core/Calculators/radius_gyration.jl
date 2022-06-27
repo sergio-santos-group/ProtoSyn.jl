@@ -55,7 +55,7 @@ module RG
     (21.21918300607746, nothing)
     ```
     """
-    function calc_radius_gyration_energy(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool)
+    function calc_radius_gyration_energy(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool) where {A <: ProtoSyn.AbstractAccelerationType}
         rg = calc_radius_gyration(pose, selection)
         return sum(rg), nothing
     end # function

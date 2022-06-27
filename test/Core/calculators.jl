@@ -485,4 +485,6 @@
         ProtoSyn.Peptides.mutate!(pose_complete, pose_complete.graph[1, 46], ProtoSyn.Peptides.grammar, seq"A")
         @test ef(pose_complete) ≈ e2 atol = 1e-5
     end 
+
+    include("calculators-other.jl")
 end
