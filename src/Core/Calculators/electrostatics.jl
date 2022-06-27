@@ -61,8 +61,10 @@ module Electrostatics
     selected [`Atom`](@ref) instances. For non-canonical aminoacids and ligands
     (any [`Residue`](@ref) without an entry on `ProtoSyn.three_2_one`
     dictionary) and any [`Residue`](@ref) whose template have different
-    [`Atom`](@ref) names, a warning is shown. Set `supress_warn` to `true` to
-    ignore these warnings (`false`, by default).
+    [`Atom`](@ref) names, a warning is shown. Set `supress_warn` to an
+    AbstractSelection (or a boolean `true`) to ignore these warnings for the
+    selected [`Atom`](@ref) instances (or all atoms, if `true`, is set to
+    `false`, by default).
 
     !!! ukw "Note:"
         Consider setting default atom names (from the same [`LGrammar`](@ref)), for example, using the [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) method.
@@ -80,12 +82,16 @@ module Electrostatics
      (...)
     ```
     """
-    function assign_default_charges!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Bool = false)
+    function assign_default_charges!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSelection} = nothing; supress_warn::Union{AbstractSelection, Bool} = false)
 
         if selection === nothing
             sele = TrueSelection{Residue}()
         else
             sele = ProtoSyn.promote(selection, Residue)
+        end
+
+        if typeof(supress_warn) <: AbstractSelection
+            supress_warn_sele = ProtoSyn.promote(supress_warn, Atom)(pose, gather = true)
         end
 
         residues = sele(pose, gather = true)
@@ -115,7 +121,12 @@ module Electrostatics
             # Apply the template atom's charge to each of the residue's atoms
             for atom in residue.items
                 if template.graph[1][atom.name] === nothing
-                    !supress_warn && @warn "Template doesn't have atom $atom"
+                    if typeof(supress_warn) === Bool && !supress_warn
+                        @warn "Template doesn't have atom $atom"
+                    elseif typeof(supress_warn) <: AbstractSelection && !(atom in supress_warn_sele)
+                        @warn "Template doesn't have atom $atom"
+                    end
+                    
                     continue
                 end # if
                 δ = template.state[template.graph[1][atom.name]].δ

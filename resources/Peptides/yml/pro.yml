@@ -14,7 +14,7 @@ atoms:
   - {name: HD1, id:  11, symbol:  H, b:   1.077986, theta:   1.919641, phi:   2.267890, c:  0.2080}
   - {name: HD2, id:  12, symbol:  H, b:   1.079778, theta:   1.928349, phi:  -1.878740, c:  0.2004}
   - {name:   C, id:  13, symbol:  C, b:   1.532079, theta:   1.915555, phi:  -1.401749, c:  0.7882}
-  - {name:   O, id:  14, symbol:  O, b:   1.219916, theta:   2.122644, phi:   2.393053, c: -0.7951}
+  - {name:   O, id:  14, symbol:  O, b:   1.219916, theta:   2.122644, phi:   0.000000, c: -0.7951}
 bonds:
   N: [CD, CA]
   CD: [N, HD1, HD2, CG]

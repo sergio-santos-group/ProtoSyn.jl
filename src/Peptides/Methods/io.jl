@@ -183,7 +183,7 @@ function ProtoSyn.Peptides.download(::Type{T}, pdb_code::String; bonds_by_distan
     if endswith(pdb_code, ".pdb"); pdb_code = pdb_code[1:(end - 4)]; end
     filename = pdb_code * ".pdb"
     url = "https://files.rcsb.org/download/" * filename
-    download(url, filename)
+    Base.download(url, filename)
     return ProtoSyn.Peptides.load(T, filename, bonds_by_distance = bonds_by_distance, include_residues = include_residues, ignore_residues = ignore_residues, ignore_chains = ignore_chains, sort_atoms_by_graph = sort_atoms_by_graph)
 end
 

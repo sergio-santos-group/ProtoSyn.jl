@@ -14,9 +14,9 @@ atoms:
   - {name: HD1, id:  10, symbol:  H, b:   1.010161, theta:   2.181227, phi:  -0.001449, c:  0.3959}
   - {name: CE1, id:  11, symbol:  C, b:   1.320049, theta:   1.885492, phi:  -3.141177, c:  0.2381}
   - {name: HE1, id:  12, symbol:  H, b:   1.089771, theta:   2.095009, phi:  -3.141351, c:  0.2368}
-  - {name: NE2, id:  13, symbol:  N, b:   1.359805, theta:   1.856107, phi:  -3.141512, c: -0.5908}
-  - {name: CD2, id:  14, symbol:  C, b:   1.360079, theta:   2.293040, phi:   0.000579, c:  0.0169}
-  - {name: HD2, id:  15, symbol:  H, b:   1.089409, theta:   2.332226, phi:  -0.001449, c:  0.2858}
+  - {name: NE2, id:  13, symbol:  N, b:   1.359805, theta:   1.856107, phi:   0.000000, c: -0.5908}
+  - {name: CD2, id:  14, symbol:  C, b:   1.360079, theta:   1.856107, phi:   0.000579, c:  0.0169}
+  - {name: HD2, id:  15, symbol:  H, b:   1.089409, theta:   2.332226, phi:  -3.141158, c:  0.2858}
   - {name:   C, id:  16, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.7243}
   - {name:   O, id:  17, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7914}
 bonds:

@@ -58,6 +58,7 @@ function default_energy_step_frame_callback(n::Int, filename::String)::Callback
     return Callback(energy_step_frame, n)
 end
 
+export default_energy_step_detailed
 
 """
     default_energy_step_detailed(n::Int, msg::String = "Callback", color::Symbol = :none, file_out::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
@@ -163,6 +164,7 @@ function detailed_message(msg::String; color::Symbol = :none, file_out::Opt{Stri
     end
 end
 
+export default_energy_step_frame_detailed
 
 """
     default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback

@@ -2,7 +2,7 @@ using ProtoSyn: TrueSelection, getdihedral
 using Printf
 
 """
-    RotamerMutator(rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}, p_mut::AbstractFloat, n_first::Int, selection::Opt{AbstractSelection}, randomize_inexistent_phi_psi::Bool)
+    RotamerMutator(rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}, p_mut::AbstractFloat, n_first::Int, selection::Opt{AbstractSelection}, random_inexistent_phi_psi::Bool)
 
 Return a [`RotamerMutator`](@ref) instance. This `AbstractMutator` is a
 _functor_, called with the following signature:
@@ -51,7 +51,7 @@ using the following signature, in which case only the provided list of
 * `p_mut::AbtractFloat` - Compared against a `rand()` call, applies this Mutator to [`Atom`](@ref) instances where `rand() < p_mut`;
 * `n_first::Int` - Take only the N most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances from the rotamer library;
 * `selection::Opt{AbstractSelection}` - If given, this Mutator will only loop over the selected [`Atom`](@ref) instances;
-* `randomize_inexistent_phi_psi::Bool` - If set to true, any Residue instance whose phi or psi dihedral angle is unable to be determined will be randomized (example: last aminoacid in a chain);
+* `random_inexistent_phi_psi::Bool` - If set to true, any Residue instance whose phi or psi dihedral angle is unable to be determined will be randomized (example: last aminoacid in a chain);
 
 # See also
 [`DesignMutator`](@ref)

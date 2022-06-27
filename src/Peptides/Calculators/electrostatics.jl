@@ -63,6 +63,6 @@ module Electrostatics
         end
 
         return ProtoSyn.Calculators.Electrostatics.assign_default_charges!(
-            pose, res_lib, selection, supress_warn = supress_warn)
+            pose, res_lib, selection, supress_warn = an"H1|H2|H3|OXT"r)
     end
 end

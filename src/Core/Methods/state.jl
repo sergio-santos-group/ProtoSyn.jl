@@ -313,6 +313,12 @@ exactly `value` (in radians). Automatically requests internal to cartesian
 coordinate conversion (by setting `state.i2c` as `true`). Return the altered
 [`State`](@ref) `state`.
 
+    setdihedral!(pose::Pose, sele::AbstractSelection, value::T) where {T <: AbstractFloat}
+
+Alternativelly, set the dihedral in the (first) selected [`Atom`](@ref) instance
+given by the `AbstractSelection` `sele` in the given [`Pose`](@ref) `pose` to
+the provided `value`. Return the altered [`Pose`](@ref) `pose`.
+
 # See also
 [`ascendents`](@ref) [`request_i2c!`](@ref) [`getdihedral`](@ref)
 [`rotate_dihedral!`](@ref)
@@ -331,6 +337,14 @@ State{Float64}:
     state[atom2].Δϕ += value - getdihedral(state, atom)
     ProtoSyn.request_i2c!(state, all = true)
     return state
+end
+
+@inline setdihedral!(pose::Pose, sele::AbstractSelection, value::T) where {T <: AbstractFloat} = begin
+    atom  = ProtoSyn.promote(sele, Atom)(pose, gather = true)[1]
+    atom2 = atom.ascendents[2]
+    pose.state[atom2].Δϕ += value - getdihedral(pose.state, atom)
+    ProtoSyn.request_i2c!(pose.state, all = true)
+    return pose
 end
 
 
