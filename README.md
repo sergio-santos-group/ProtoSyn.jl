@@ -36,7 +36,7 @@ The main goal of ProtoSyn.jl is to be a basis on top of which new tools and prot
 
 ## :clipboard: Installation
 
-After setting up you Julia installation, open a new REPL and add ProtoSyn.jl using the package manager.
+After setting up your Julia installation, open a new REPL and add ProtoSyn.jl using the package manager:
 
 ```@julia
 julia> ] add https://github.com/sergio-santos-group/ProtoSyn.jl.git
@@ -58,6 +58,8 @@ julia> ] add https://github.com/sergio-santos-group/ProtoSyn.jl.git#dev
 ## :email: Contacts
 
 For any question or curiosity, please contact jose.manuel.pereira@ua.pt.
+
+Check for the most recent developments in [ProtoSyn's blog.](https://sites.google.com/view/protosyn-jl/about)
 
 
 ## :trophy: Acknowledgments
