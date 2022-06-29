@@ -1,3 +1,5 @@
+using PyCall
+
 @testset verbose = true "$(@sprintf "%-54s" "Custom Reference Energy")" begin
     pose = copy(backup)
     ref = ProtoSyn.Calculators.get_default_custom_ref_energy()
@@ -51,6 +53,7 @@ end
 
 @testset verbose = true "$(@sprintf "%-54s" "REF-15")" begin
     REF_15_available = false
+    pyrosetta = PyNULL()
     try
         copy!(pyrosetta, pyimport("pyrosetta"))
         REF_15_available = true

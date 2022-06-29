@@ -25,7 +25,7 @@ using ProtoSyn.Peptides
         @test size(pose.graph) === size(backup.graph)
     end
 
-    backup = copy(pose)
+    global backup = copy(pose)
 
     @testset verbose = true "Appending from derivation" begin
         pose = copy(backup)

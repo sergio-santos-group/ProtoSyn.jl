@@ -39,7 +39,8 @@ using SIMD
     indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
-        n_atoms  = length(coords) ÷ 3
+        coords   = vcat(pose.state.x.coords[:], [0.0, 0.0, 0.0])
+        n_atoms  = length(indexes)
         forces   = zeros(T, n_atoms, n_atoms, 3)
         energies = zeros(T, n_atoms, n_atoms)
         _mask = Vec{4, T}((1, 1, 1, 0))
@@ -50,11 +51,12 @@ using SIMD
         end
 
         @inbounds @simd for i in 1:n_atoms - 1
-            i1 = i<<2 - (2 + i) # Conversion from atom number to array position
+            _i = indexes[i]
+            i1 = _i<<2 - (2 + _i) # Conversion from atom number to array position
             vi = vload(Vec{4, T}, coords, i1)
-            
             @inbounds @simd for j = i+1:n_atoms
-                j1 = j<<2 - (2 + j) # Conversion from atom number to array position
+                _j = indexes[j]
+                j1 = _j<<2 - (2 + _j) # Conversion from atom number to array position
                 rij = (vload(Vec{4, T}, coords, j1) - vi) * _mask
                 dij = sqrt(sum(rij * rij))
 

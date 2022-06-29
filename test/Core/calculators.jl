@@ -1,6 +1,7 @@
 @testset verbose = true "Calculators $(repeat("-", 45))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Verlet List")" begin
+        pose = copy(backup)
         vl1 = ProtoSyn.Calculators.VerletList(pose.state.size)
         vl2 = ProtoSyn.Calculators.VerletList(pose.state.size)
         vl3 = ProtoSyn.Calculators.VerletList(pose.state.size)
@@ -186,7 +187,8 @@
     end
 
     @testset verbose = true "$(@sprintf "%-54s" "Potential")" begin
-        
+        pose = copy(backup)
+
         # * DYNAMIC
         p = ProtoSyn.Calculators.get_flat_bottom_potential()
         @test p(100.0) === 0.0

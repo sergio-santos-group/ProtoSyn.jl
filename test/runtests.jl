@@ -11,9 +11,9 @@ ProtoSyn.set_logger_to_error()
 
     # * The following code was previously tested on builder-submodule.jl and
     # * will be used in the remaining test sets
-    res_lib = ProtoSyn.Peptides.grammar
-    pose    = ProtoSyn.build(res_lib, seq"GME"); sync!(pose)
-    backup  = copy(pose)
+    global res_lib = ProtoSyn.Peptides.grammar
+    global pose    = ProtoSyn.build(res_lib, seq"GME"); sync!(pose)
+    global backup  = copy(pose)
 
     include("Core/pose-methods.jl")
     include("Core/state-methods.jl")
@@ -30,7 +30,7 @@ ProtoSyn.set_logger_to_error()
 
     # * The following code was previously tested on Peptides/rotamers.jl and
     # * will be used in the remaining test sets
-    rot_lib = ProtoSyn.Peptides.load_dunbrack(Float64)
+    global rot_lib = ProtoSyn.Peptides.load_dunbrack(Float64)
 
     include("Peptides/mutators.jl")
 end
