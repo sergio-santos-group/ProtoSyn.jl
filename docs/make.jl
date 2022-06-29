@@ -31,7 +31,7 @@ makedocs(
     format = Documenter.HTML(
         assets = ["assets/favicon.ico"],
         ),
-    doctest = true,
+    doctest = false,
     checkdocs=:exports,
     modules=[ProtoSyn],
     pages = [

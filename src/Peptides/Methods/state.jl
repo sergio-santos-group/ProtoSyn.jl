@@ -12,7 +12,7 @@ coordinates and does not update cartesian coordinates (using the
 [`sync!`](@ref ProtoSyn.sync!) method), although a request for conversion is
 made (by calling the [`request_i2c!`](@ref ProtoSyn.request_i2c!)). If
 `include_variation` is set to `true` (`false, by default`), the phi `ϕ`, psi `ψ`
-and omega `ω` backbone angles are sampled from each dsitribution, instead of
+and omega `ω` backbone angles are sampled from each distribution, instead of
 using the ideal angle. `min_prob` defines the minimum probability of the sampled
 angle (from 0.0 to 1.0). Using higher `min_prob` values results in variations
 conformationally closer to the ideal dihedral angle values.
