@@ -50,13 +50,23 @@ end
 
 
 @testset verbose = true "$(@sprintf "%-54s" "REF-15")" begin
-    pose = copy(backup)
-    ref15 = ProtoSyn.Calculators.REF15.get_default_ref15()
-    ef = ProtoSyn.Calculators.EnergyFunction([ref15])
-    e1 = ef(pose)
+    REF_15_available = false
+    try
+        copy!(pyrosetta, pyimport("pyrosetta"))
+        REF_15_available = true
+    catch LoadError
+        nothing
+    end
 
-    @test e1 ≈ 13.57779308416654 atol = 1e-5
-end 
+    if REF_15_available
+        pose = copy(backup)
+        ref15 = ProtoSyn.Calculators.REF15.get_default_ref15()
+        ef = ProtoSyn.Calculators.EnergyFunction([ref15])
+        e1 = ef(pose)
+
+        @test e1 ≈ 13.57779308416654 atol = 1e-5
+    end
+end
 
 
 @testset verbose = true "$(@sprintf "%-54s" "SASA")" begin
