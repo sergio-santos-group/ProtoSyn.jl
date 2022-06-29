@@ -3,7 +3,7 @@ module ProtoSyn
 __precompile__()
 
 const _force_recompilation = 1
-const _version             = 1.01
+const _version             = 1.1
 
 include("Core/Methods/log.jl")
 
