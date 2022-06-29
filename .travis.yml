@@ -6,8 +6,10 @@ branches:
 language: julia
 os:
   - linux
+dist:
+  - bionic
 julia:
-  - 1.7.1
+  - 1.7.2
 env:
   - PYTHON=~/.julia/conda/3/bin/python
 before_install:
@@ -19,7 +21,7 @@ git:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.7.1
+      julia: 1.7.2
       os: linux
       script:
         # - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
