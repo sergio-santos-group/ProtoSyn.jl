@@ -21,7 +21,7 @@ before_install:
   - conda activate protosyn
   - which python
   - python -c "import torchani; torchani.models.ANI2x()"
-  - julia -e 'using Pkg; Pkg.add.(["PyCall"]);Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)")`)'
+  - julia -e 'using Pkg; Pkg.add.(["PyCall"]);Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)")'
 notifications:
   email: false
 git:
