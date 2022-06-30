@@ -20,12 +20,7 @@ before_install:
   - source $(conda info --root)/etc/profile.d/conda.sh
   - conda activate protosyn
   - python -c "import torchani; torchani.models.ANI2x()"
-  - julia -e 'using Pkg; Pkg.add.(["PyCall"]);Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)")'
-install:
-  - conda env create -f protosyn.yml
-  - source $(conda info --root)/etc/profile.d/conda.sh
-  - conda activate protosyn
-  - julia -e 'using Pkg; Pkg.add.(["PyCall"]);Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -c "import torchani; torchani.models.ANI2x()"`)'
+  - julia -e 'using Pkg; Pkg.add.(["PyCall"]);Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -m pip install torch`);run(`$(PyCall.python) -m pip install torchani`)'
 notifications:
   email: false
 git:
