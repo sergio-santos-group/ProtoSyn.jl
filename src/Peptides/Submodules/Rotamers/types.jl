@@ -1,18 +1,16 @@
 using ProtoSyn: State, setdihedral!, Residue
-using ProtoSyn.Peptides.Dihedral: DihedralType
 using Random
-using StatsBase: Weights
 using Printf
 
 abstract type RotamerLibrary end
 
 """
-    Rotamer{T <: AbstractFloat}(name::String, chis::Dict{DihedralType, Tuple{T, T}})
+    Rotamer{T <: AbstractFloat}(name::String, chis::Dict{AbstractSelection, Tuple{T, T}})
 
 A [`Rotamer`](@ref) holds information regarding a single conformation for all
 chi dihedral angles of a sidechain belonging to an aminoacid identified by the 
 given `name`. The `chis` list is, therefore, a dictionary, where the key is the
-`DihedralType` (chi1, chi2, chi3 or chi4) and the value is a `Tuple{T, T}`,
+`AbstractSelection` (chi1, chi2, chi3 or chi4) and the value is a `Tuple{T, T}`,
 where the first entry is the average dihedral angle and the second entry is the
 standard deviation expected for that dihedral angle.
     
@@ -27,11 +25,21 @@ Rotamer{Float64}: LYS | Chi1:   -67.5° ±  6.9 | Chi2:  -179.6° ±  9.7 | Chi3
 """
 mutable struct Rotamer{T <: AbstractFloat}
     name::String
-    chis::Dict{DihedralType, Tuple{Opt{T}, T}}
+    chis::Dict{AbstractSelection, Tuple{Opt{T}, T}}
 end
 
 function Base.show(io::IO, r::Rotamer{T}) where {T <: AbstractFloat}
     print(io, "Rotamer{$T}: $(as_string(r))\n")
+end
+
+function Base.getindex(r::Rotamer{T}, i::AbstractSelection) where {T <: AbstractFloat}
+    k = collect(keys(r.chis))
+    return r.chis[k[findfirst((c) -> c.n === i.n, k)]]
+end
+
+function Base.setindex!(r::Rotamer{T}, v::Tuple{T, T}, i::AbstractSelection) where {T <: AbstractFloat}
+    k = collect(keys(r.chis))
+    r.chis[k[findfirst((c) -> c.n === i.n, k)]] = v
 end
 
 function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
@@ -39,7 +47,7 @@ function as_string(r::Rotamer{T}) where {T <: AbstractFloat}
     for index in 1:4
         if index <= length(r.chis)
             name = "chi$index"
-            value, sd = r.chis[getfield(ProtoSyn.Peptides.Dihedral, Symbol(name))]
+            value, sd = r[ChiSelection(index)]
             if value === nothing
                 chis *= @sprintf " | %s: %11s ± %4.1f" titlecase(name) "Not defined" rad2deg(sd)
             else
@@ -56,15 +64,15 @@ end
 # ---
 
 """
-# TODO name change
-    RotamerStack{T <: AbstractFloat}(rotamers::Vector{Rotamer{T}}, weights::Weights{T, T, Array{T, 1}})
+    BBI_RotamerLibrary{T <: AbstractFloat}(rotamers::Vector{Rotamer{T}}, weights::Weights{T, T, Array{T, 1}})
 
-A [`RotamerStack`](@ref) is a smart list of [`Rotamer`](@ref) instances, ordered
-based on the natural probability of occurrence, where each position in the
-`rotamers` list has a corresponding position in the `weights` list.
+A [`BBI_RotamerLibrary`](@ref) is a backbone-independent list of
+[`Rotamer`](@ref) instances, ordered based on the natural probability of
+occurrence, where each position in the `rotamers` list has a corresponding
+position in the `weights` list.
 
 # See also
-[`sample`](@ref)
+[`sample_rotamer`](@ref)
 
 # Examples
 ```
@@ -103,10 +111,10 @@ end
 # ---
 
 """
-    BBD_RotamerLibrary{T <: AbstractFloat}(name::String, phis::Vector{T}, psis::Vector{T}, rotamer_stacks::Matrix{RotamerStack}) where {T <: AbstractFloat}
+    BBD_RotamerLibrary{T <: AbstractFloat}(name::String, phis::Vector{T}, psis::Vector{T}, rotamer_stacks::Matrix{BBI_RotamerLibrary}) where {T <: AbstractFloat}
 
 A [`BBD_RotamerLibrary`](@ref) is a 2D backbone dependent matrix of
-[`RotamerStack`](@ref) instances (`rotamer_stacks`), indexed by both the list of
+[`BBI_RotamerLibrary`](@ref) instances (`rotamer_stacks`), indexed by both the list of
 backbone phi dihedrals (`phis`) and the list of backbone psi dihedrals (`psis`).
 Each [`BBD_RotamerLibrary`](@ref) only hold information regarding one type of
 aminoacid, identified by the `name`. Each entry in the `rotamer_stacks` matrix

@@ -1,4 +1,4 @@
-# Caaterpillar solvation energy
+# Caterpillar solvation energy
 
 The Caterpillar solvation energy calculation is based on the work of Coluzza
 et al (see https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020853).

@@ -1,21 +1,21 @@
 using Printf
 
-@testset verbose = true "Peptides | Mutators $(repeat("-", 34))" begin
+@testset verbose = true "Peptides | Mutators $(repeat("-", 37))" begin
 
     @testset verbose = true "$(@sprintf "%-52s" "Rotamer")" begin
         pose = copy(backup)
 
         # Set standard deviation of the target rotamer to be 0.0
-        r = copy(rot_lib)
-        chi1 = r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi1()]
-        r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi1()] = (chi1[1], 0.0)
-        chi2 = r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi2()]
-        r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi2()] = (chi2[1], 0.0)
-        chi3 = r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi3()]
-        r["MET"][3.14, 3.14][1].chis[ProtoSyn.Peptides.Dihedral.Chi3()] = (chi3[1], 0.0)
+        r = ProtoSyn.Peptides.load_dunbrack(Float64)
+        chi1 = r["MET"][3.14, 3.14][1][chi"1"]
+        r["MET"][3.14, 3.14][1][chi"1"] = (chi1[1], 0.0)
+        chi2 = r["MET"][3.14, 3.14][1][chi"2"]
+        r["MET"][3.14, 3.14][1][chi"2"] = (chi2[1], 0.0)
+        chi3 = r["MET"][3.14, 3.14][1][chi"3"]
+        r["MET"][3.14, 3.14][1][chi"3"] = (chi3[1], 0.0)
         
         m = ProtoSyn.Peptides.Mutators.RotamerMutator(
-            r, 1.0, 1, an"CA" & rid"2")
+            r, 1.0, 1, an"CA" & rid"2", false)
 
         @test ProtoSyn.getdihedral(pose.state, pose.graph[1][2]["CG"]) ≈ 3.141387 atol = 1e-5
         @test ProtoSyn.getdihedral(pose.state, pose.graph[1][2]["SD"]) ≈ -3.141542 atol = 1e-5

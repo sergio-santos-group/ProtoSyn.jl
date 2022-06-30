@@ -4,7 +4,7 @@
         @test length(keys(rot_lib)) == 19
         @test rot_lib.count == 19
         @test isa(rot_lib["VAL"], ProtoSyn.Peptides.BBD_RotamerLibrary)
-        @test isa(rot_lib["VAL"][0.1, 0.1], ProtoSyn.Peptides.RotamerStack)
+        @test isa(rot_lib["VAL"][0.1, 0.1], ProtoSyn.Peptides.BBI_RotamerLibrary)
         @test length(rot_lib["VAL"][0.1, 0.1].rotamers) == 3
         @test length(rot_lib["VAL"][0.1, 0.1].weights) == 3
         rot = rot_lib["VAL"][0.1, 0.1][1]
@@ -16,10 +16,10 @@
     @testset verbose = true "$(@sprintf "%-54s" "Applying Rotamer")" begin
         pose = copy(backup)
         rot = ProtoSyn.Peptides.Rotamer("MET",
-            Dict{ProtoSyn.Peptides.Dihedral.DihedralType, Tuple{Float64, Float64}}(
-                ProtoSyn.Peptides.Dihedral.chi1 => (deg2rad(63.9), deg2rad(0.0)),
-                ProtoSyn.Peptides.Dihedral.chi2 => (deg2rad(-172.6), deg2rad(0.0)),
-                ProtoSyn.Peptides.Dihedral.chi3 => (deg2rad(72.0), deg2rad(0.0))
+            Dict{AbstractSelection, Tuple{Union{Nothing, Float64}, Float64}}(
+                chi"1" => (deg2rad(63.9), deg2rad(0.0)),
+                chi"2" => (deg2rad(-172.6), deg2rad(0.0)),
+                chi"3" => (deg2rad(72.0), deg2rad(0.0))
             )
         )
 
@@ -38,11 +38,11 @@
     @testset verbose = true "$(@sprintf "%-54s" "Get Rotamer")" begin
         pose = copy(backup)
         rot = ProtoSyn.Peptides.get_rotamer(pose, pose.graph[1][2])
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi1][1] ≈ 3.141387 atol = 1e-5
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi2][1] ≈ -3.14154 atol = 1e-5
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi3][1] ≈ -3.14153 atol = 1e-5
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi1][2] == 0.0
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi2][2] == 0.0
-        @test rot.chis[ProtoSyn.Peptides.Dihedral.chi3][2] == 0.0
+        @test rot[chi"1"][1] ≈ 3.141387 atol = 1e-5
+        @test rot[chi"2"][1] ≈ -3.14154 atol = 1e-5
+        @test rot[chi"3"][1] ≈ -3.14153 atol = 1e-5
+        @test rot[chi"1"][2] == 0.0
+        @test rot[chi"2"][2] == 0.0
+        @test rot[chi"3"][2] == 0.0
     end
 end

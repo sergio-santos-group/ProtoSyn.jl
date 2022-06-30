@@ -1,4 +1,5 @@
 using Statistics
+using YAML
 
 """
     rand_vector_in_sphere([::Type{T}]) where {T <: AbstractFloat}
@@ -29,7 +30,22 @@ rand_vector_in_sphere() = rand_vector_in_sphere(ProtoSyn.Units.defaultFloat)
 
 
 """
-# TODO
+    fibonacci_sphere([::Type{T}], n_points::Int = 1000) where {T <: AbstractFloat}
+
+Generate a set `n_points` cartesian coordinates following the fibonnacci lattice
+(see http://extremelearning.com.au/how-to-evenly-distribute-points-on-a-sphere-more-effectively-than-the-canonical-fibonacci-lattice/).
+If provided, use the `AbstractFloat` type `T` (otherwise, will use
+`ProtoSyn.Units.defaultFloat`).
+
+# Examples
+```jldoctest
+julia> ProtoSyn.fibonacci_sphere(10)
+10-element Vector{Vector{Float64}}:
+ [0.0, 1.0, 0.0]
+ [-0.4634653634889746, 0.7777777777777778, 0.42457223795379545]
+ [0.07269269081806179, 0.5555555555555556, -0.8282957185649263]
+ (...)
+```
 """
 function fibonacci_sphere(::Type{T}, n_points::Int = 1000) where {T <: AbstractFloat}
     points = Vector{Vector{T}}()
@@ -96,6 +112,26 @@ end
 
 
 """
+    half_unit_circle(value::T) where {T <: AbstractFloat}
+
+Maps an angle value (in radians) from ]-∞, +∞[ to [-π, π[ range. Returns value
+in radians.
+
+# Examples
+```jldoctest
+julia> ProtoSyn.half_unit_circle(-2pi)
+0.0
+
+julia> ProtoSyn.half_unit_circle(-(3/2)pi)
+-1.5707963267948966
+```
+"""
+function half_unit_circle(value::T) where {T <: AbstractFloat}
+    return value % pi
+end
+
+
+"""
     gpu_allocation()
 
 Return the current fraction of the GPU memory allocated (in range [0, 1]).
@@ -109,6 +145,25 @@ julia> ProtoSyn.gpu_allocation()
 function gpu_allocation()
     mem = (CUDA.total_memory() - CUDA.available_memory()) / CUDA.total_memory()
     return ProtoSyn.Units.defaultFloat(mem)
+end
+
+
+"""
+    read_yml(_filename::String)
+
+Open and read the contents of a .yml file.
+
+# Examples
+```
+julia> ProtoSyn.read_yml("resources/Peptides/grammars.yml")
+Dict{Any, Any} with 2 entries:
+ (...)
+```
+"""
+function read_yml(_filename::String)
+    open(_filename, "r") do io
+        return YAML.load(io)
+    end
 end
 
 # --- Tree display -------------------------------------------------------------

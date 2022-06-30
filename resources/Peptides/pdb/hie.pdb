@@ -1,0 +1,40 @@
+MODEL        1
+ATOM      1    N HIE ?   1       3.326   1.548   0.000        0.00           N
+ATOM      2    H HIE ?   1       2.935   1.514   0.971        0.00           H
+ATOM      3   CX HIE ?   1       2.782   0.881  -0.596        0.00           C
+ATOM      4   CA HIE ?   1       4.734   1.205   0.000        0.00           C
+ATOM      5   HA HIE ?   1       4.966   0.620   0.890        0.00           H
+ATOM      6   CB HIE ?   1       5.099   0.384  -1.232        0.00           C
+ATOM      7  HB1 HIE ?   1       4.516  -0.537  -1.241        0.00           H
+ATOM      8  HB2 HIE ?   1       4.880   0.960  -2.131        0.00           H
+ATOM      9   CG HIE ?   1       6.550  -0.022  -1.321        0.00           C
+ATOM     10  ND1 HIE ?   1       7.042  -0.773  -2.383        0.00           N
+ATOM     11  CE1 HIE ?   1       8.332  -0.968  -2.183        0.00           C
+ATOM     12  HE1 HIE ?   1       8.915  -1.539  -2.905        0.00           H
+ATOM     13  NE2 HIE ?   1       8.681  -0.387  -1.062        0.00           N
+ATOM     14  HE2 HIE ?   1       9.615  -0.386  -0.677        0.00           H
+ATOM     15  CD2 HIE ?   1       7.603   0.214  -0.492        0.00           C
+ATOM     16  HD2 HIE ?   1       7.711   0.749   0.451        0.00           H
+ATOM     17    C HIE ?   1       5.602   2.456  -0.000        0.00           C
+ATOM     18    O HIE ?   1       5.123   3.485   0.448        0.00           O
+ATOM     19   NX HIE ?   1       6.734   2.367  -0.445        0.00           N
+CONECT    1    4    3    2
+CONECT    2    1
+CONECT    3    1
+CONECT    4   17    1    6    5
+CONECT    5    4
+CONECT    6    7    8    9    4
+CONECT    7    6
+CONECT    8    6
+CONECT    9   10    6   15
+CONECT   10   11    9
+CONECT   11   10   12   13
+CONECT   12   11
+CONECT   13   11   14   15
+CONECT   14   13
+CONECT   15   16   13    9
+CONECT   16   15
+CONECT   17    4   19   18
+CONECT   18   17
+CONECT   19   17
+ENDMDL

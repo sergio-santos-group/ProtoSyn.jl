@@ -5,7 +5,8 @@
     update_forces::Bool,
     verlet_list::Nothing,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
         n_atoms = length(coords) ÷ 3
@@ -22,10 +23,10 @@
                 dij = sqrt(@reduce 3 (+) u -> rij_u * rij_u)
 
                 if !update_forces
-                    energies[j, i] = potential(dij)
+                    energies[j, i] = potential(dij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 else
                     @nexprs 3 u -> rij_u = rij_u / dij # normalization
-                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3))
+                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3), qi = pose.state[i].δ, qj = pose.state[j].δ)
                 end
             end
         end
@@ -40,7 +41,8 @@ end
     update_forces::Bool,
     verlet_list::VerletList,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
 
@@ -70,7 +72,7 @@ end
                     energies[j, i] = potential(dij)
                 else
                     @nexprs 3 u -> rij_u = rij_u / dij # normalization
-                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3))
+                    energies[j, i], (forces[j, i, 1], forces[j, i, 2], forces[j, i, 3]), (forces[i, j, 1], forces[i, j, 2], forces[i, j, 3]) = potential(dij, v = (rij_1, rij_2, rij_3), qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 end
 
                 ptr += 1

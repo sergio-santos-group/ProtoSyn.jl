@@ -1,5 +1,3 @@
-using StatsBase: sample
-
 """
     DesignMutator(p_mut::AbstractFloat, grammar::LGrammar, selection::Opt{AbstractSelection}; [searchable_aminoacids::Dict{Char, Bool} = Peptides.available_aminoacids])
 
@@ -75,7 +73,7 @@ end
 
 function (design_mutator::DesignMutator)(pose::Pose)
     if design_mutator.selection === nothing
-        atoms = collect(eachatom(pose.graph))
+        atoms = Vector{Atom}(collect(eachatom(pose.graph)))
     else
         sele  = design_mutator.selection
         atoms = ProtoSyn.promote(sele, Atom)(pose, gather = true)
@@ -95,10 +93,10 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
             residue = atom.container
 
             # 1) Get different aminoacid
-            cr_name = Peptides.three_2_one[residue.name]
+            cr_name = ProtoSyn.three_2_one[residue.name]
             nr_name = cr_name
             while nr_name == cr_name
-                nr_name = sample(searchable_aas)
+                nr_name = rand(searchable_aas)
             end
 
             # 2) Perform mutation (already requests i2c)

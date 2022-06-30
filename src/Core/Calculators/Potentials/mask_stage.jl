@@ -95,12 +95,58 @@ end
 # ------------------------------------------------------------------------------
 # * Available potential masks
 
-"""
-    intra_residue_mask(pose::Pose, selection::AbstractSelection)
+function get_available_masks(m::Module)
+    all_functions  = [string(x) for x in names(m, all=true) if x ∉ (:eval, :include, :proxy) && getproperty(m, x) isa Function && !occursin("#", string(x))]
+    mask_functions = [x for x in all_functions if occursin("get", x) & occursin("mask", x) & !occursin("masks", x)]
+    push!(mask_functions, "load_map")
 
-For all the atoms in the provided `AbstractSelection` `selection` (N), return a
-2D N x N [`Mask`](@ref) with all the atoms of the given [`Pose`](@ref) `pose`
-not in the same residue selected. 
+    return mask_functions
+end
+
+get_available_masks() = get_available_masks(ProtoSyn.Calculators)
+
+
+"""
+    show_available_masks([io::IO], [m::Module])
+
+Prints all available masks for potential restraints Module m (defaults to
+`ProtoSyn.Calculators`) to the given `IO` `io` (defaults to `stdout`).
+Recursivelly searches any inner Module.
+
+# Examples
+```
+julia> ProtoSyn.Calculators.show_available_masks()
++-------------------------------------------------------+
+| Index | Mask function                                 |
++-------------------------------------------------------+
+| 1     | get_bonded_mask                               |
+| 2     | get_diagonal_mask                             |
++-------------------------------------------------------+
+  └── Consider using the `?` menu to learn more about each mask function.
+```
+"""
+function show_available_masks(io::IO, m::Module)
+    mask_functions = get_available_masks(m)
+
+    println(io, "+"*repeat("-", 55)*"+")
+    @printf(io, "| %-5s | %-45s |\n", "Index", "Mask function")
+    println(io, "+"*repeat("-", 55)*"+")
+    for (index, mask_function) in enumerate(mask_functions)
+        @printf(io, "| %-5d | %-45s |\n", index, mask_function)
+    end
+    println(io, "+"*repeat("-", 55)*"+")
+    println("  └── Consider using the `?` menu to learn more about each mask function.\n")
+end
+
+show_available_masks() = show_available_masks(stdout, ProtoSyn.Calculators)
+
+
+"""
+    get_intra_residue_mask(pose::Pose, [selection::Opt{AbstractSelection}])
+
+For all the [`Atom`](@ref) instances in the provided `AbstractSelection`
+`selection` (N), return a 2D N x N [`Mask`](@ref) with all the [`Atom`](@ref)
+instances of the given [`Pose`](@ref) `pose` not in the same residue selected. 
 
 !!! ukw "Note:"
     This function is rather heavy and has low performance. If no design effort
@@ -112,20 +158,30 @@ not in the same residue selected.
     [`get_intra_residue_mask`](@ref)).
 
 # See also
-[`diagonal_mask`](@ref) [`get_intra_residue_mask`](@ref)
+[`show_available_masks`](@ref)
 
 # Examples
 ```
-julia> ProtoSyn.Calculators.intra_residue_mask(pose, !an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)
-ProtoSyn.Mask{Atom}(Bool[1 1 … 0 0; 1 1 … 0 0; … ; 0 0 … 1 1; 0 0 … 1 1])
+julia> ProtoSyn.Calculators.get_intra_residue_mask(pose, !an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (1140, 1140)
+ ├── Count: 1279946 / 1299600
+ └── Content: [0 0 … 1 1; 0 0 … 1 1; … ; 1 1 … 0 0; 1 1 … 0 0]
 ```
 """
-function intra_residue_mask(pose::Pose, selection::AbstractSelection)
+function get_intra_residue_mask(pose::Pose, selection::Opt{AbstractSelection})
     # ! Note: This function is rather heavy. If no design effort is being made
     # ! (where the sequence changes), the resulting map from this function can
     # ! and should be re-used (only calculated once).
 
-    s = selection(pose)
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    s = sele(pose)
     N = count(s)
     mask = ProtoSyn.Mask{Atom}(N, N)
     for r in eachresidue(pose.graph)
@@ -137,125 +193,165 @@ function intra_residue_mask(pose::Pose, selection::AbstractSelection)
     return !mask
 end
 
-
-"""
-    get_intra_residue_mask(selection::AbstractSelection)
-
-Provides the [`intra_residue_mask`](@ref) function as a _functor_, which will
-calculate the intra residue mask for the given `AbstractSelection` `selection`.
-(Only the [`Atom`](@ref) instances in the selection are considered, all other
-atoms are not included in the [`Mask`](@ref)). Useful when creating a new
-[`EnergyFunctionComponent`](@ref) or when the [`Mask`](@ref) should be updated
-each step/call.
-
-# See also
-[`intra_residue_mask`](@ref)
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Calculators.get_intra_residue_mask(!an"^CA\$|^N\$|^C\$|^H\$|^O\$"r)
-(::ProtoSyn.Calculators.var"#_intra_residue_mask#5"{UnarySelection{ProtoSyn.Stateless}}) (generic function with 1 method)
-```
-"""
-function get_intra_residue_mask(selection::AbstractSelection)
-    return function _intra_residue_mask(pose::Pose)
-        s = selection(pose)
-        N = count(s)
-        mask = ProtoSyn.Mask{Atom}(N, N)
-        for r in eachresidue(pose.graph)
-            rm1 = ProtoSyn.promote(SerialSelection{Residue}(r.id, :id), Atom)(pose)
-            rm1.content = rm1.content[s.content]
-            mask |= ProtoSyn.cross2d(rm1)
-        end
-
-        return !mask
-    end
-end
+get_intra_residue_mask(pose::Pose) = get_intra_residue_mask(pose, nothing)
 
 
 """
-    diagonal_mask(pose::Pose, selection::AbstractSelection)
+    get_diagonal_mask(pose::Pose, [selection::Opt{AbstractSelection}])
 
 For all the atoms in the provided `AbstractSelection` `selection` (N), return a
 2D N x N [`Mask`](@ref) with all the [`Atom`](@ref) instances of the given
 [`Pose`](@ref) `pose` not in the natural diagonal selected (i.e. ignores same
-atom interaction artifacts).
-
-!!! ukw "Note:"
-    When the selection is constant but the resulting [`Mask`](@ref) needs to be
-    re-calculated every call/step (for example, due to a design or mutation
-    step), consider using the _functor_ from [`get_diagonal_mask`](@ref).
+[`Atom`](@ref) interaction artifacts).
 
 # See also
-[`intra_residue_mask`](@ref) [`get_diagonal_mask`](@ref)
+[`show_available_masks`](@ref)
 
 # Examples
 ```
-julia> ProtoSyn.Calculators.diagonal_mask(pose, an"CA")
-ProtoSyn.Mask{Atom}(3, 3)
-3×3 BitArray{2}:
- 0  1  1
- 1  0  1
- 1  1  0
+julia> ProtoSyn.Calculators.get_diagonal_mask(pose, an"CA")
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (73, 73)
+ ├── Count: 5256 / 5329
+ └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
 ```
 """
-function diagonal_mask(pose::Pose, selection::AbstractSelection)
+function get_diagonal_mask(pose::Pose, selection::Opt{AbstractSelection})
 
-    N = count(selection(pose))
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    N = count(sele(pose))
     return !ProtoSyn.Mask{Atom}(BitArray(Matrix{Bool}(I, N, N)))
 end
 
+get_diagonal_mask(pose::Pose) = get_diagonal_mask(pose, nothing)
+
 
 """
-    get_diagonal_mask(selection::AbstractSelection)
+    get_bonded_mask(pose::Pose, [selection::Opt{AbstractSelection}])
 
-Provides the [`diagonal_mask`](@ref) as a _functor_, which will calculate the
-diagonal mask for the given `AbstractSelection` `selection`. Useful when
-creating a new [`EnergyFunctionComponent`](@ref) or when the [`Mask`](@ref)
-should be updated each step/call.
+For all the atoms in the provided `AbstractSelection` `selection` (N), return a
+2D N x N [`Mask`](@ref): for each [`Atom`](@ref) instance of the given
+[`Pose`](@ref) `pose` mask out all other bonded [`Atom`](@ref) instance.
 
 # See also
-[`diagonal_mask`](@ref)
+[`show_available_masks`](@ref)
 
 # Examples
 ```
-julia> ProtoSyn.Calculators.get_diagonal_mask(an"CA")
-(::ProtoSyn.Calculators.var"#_diagonal_mask#6"{FieldSelection{ProtoSyn.Stateless,Atom}}) (generic function with 1 method)
+julia> ProtoSyn.Calculators.get_bonded_mask(pose, an"CA")
+ProtoSyn.Mask
+ ├── Type: Atom
+ ├── Size: (73, 73)
+ ├── Count: 5256 / 5329
+ └── Content: [0 1 … 1 1; 1 0 … 1 1; … ; 1 1 … 0 1; 1 1 … 1 0]
 ```
 """
-function get_diagonal_mask(selection::AbstractSelection)
-    return function _diagonal_mask(pose::Pose)
-        N = count(selection(pose))
-        return !ProtoSyn.Mask{Atom}(BitArray(Matrix{Bool}(I, N, N)))
+function get_bonded_mask(pose::Pose, selection::Opt{AbstractSelection})
+    
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
     end
-end
 
-function get_diagonal_mask()
-    return function _diagonal_mask(pose::Pose)
-        N = pose.state.size
-        return !ProtoSyn.Mask{Atom}(BitArray(Matrix{Bool}(I, N, N)))
-    end
-end
+    atoms = sele(pose, gather = true)
+    N = length(atoms)
+    m = .!Matrix{Bool}(I, N, N)
+    for (i, atom_i) in enumerate(atoms)
+        for (j, atom_j) in enumerate(atoms)
+            i === j && continue
 
-# ---
-# DEV
-"""
-# TODO
-"""
-function get_bonded_mask()
-    return function _diagonal_mask(pose::Pose)
-        N = pose.state.size
-        m = .!Matrix{Bool}(I, N, N)
-        for atom in eachatom(pose.graph)
-            i = atom.index
-            for bond in atom.bonds
-                j = bond.index
+            if atom_j in atom_i.bonds
                 m[i, j] = false
             end
         end
-
-        return ProtoSyn.Mask{Atom}(BitArray(m))
     end
+
+    return ProtoSyn.Mask{Atom}(BitArray(m))
+end
+
+get_bonded_mask(pose::Pose) = get_bonded_mask(pose, nothing)
+
+
+"""
+    get_upper_triangular_matrix_mask(pose::Pose, [selection::Opt{AbstractSelection}])
+
+For all the atoms in the provided `AbstractSelection` `selection` (N), return a
+2D N x N Matrix{T} with the bottom triangular matrix set to 0.0 (including
+diagonal) and upper triangular matrix set to 1.0.
+
+# See also
+[`show_available_masks`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.Calculators.get_upper_triangular_matrix_mask(pose, an"CA")
+73×73 Matrix{Float64}:
+ (...)
+```
+"""
+function get_upper_triangular_matrix_mask(pose::Pose, selection::Opt{AbstractSelection})
+
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    T = eltype(pose.state)
+    N = count(sele(pose))
+    map = Matrix(UpperTriangular(ones(T, (N, N))))
+    map[I(N)] .= zero(T)
+
+    return map
+end
+
+get_upper_triangular_matrix_mask(pose::Pose) = begin
+    get_upper_triangular_matrix_mask(pose, nothing)
+end
+
+
+"""
+    get_upper_triangular_matrix_mask(pose::Pose, [selection::Opt{AbstractSelection}])
+
+For all the atoms in the provided `AbstractSelection` `selection` (N), return a
+2D N x N Matrix{T} with the bottom triangular matrix set to 0.0 (including
+diagonal) and upper triangular matrix set to -1.0.
+
+# See also
+[`show_available_masks`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.Calculators.get_upper_triangular_matrix_inversed_mask(pose, an"CA")
+73×73 Matrix{Float64}:
+ (...)
+```
+"""
+function get_upper_triangular_matrix_inversed_mask(pose::Pose, selection::Opt{AbstractSelection})
+
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    T = eltype(pose.state)
+    N = count(sele(pose))
+    map = Matrix(UpperTriangular(ones(T, (N, N)) .* T(-1.0)))
+    map[I(N)] .= zero(T)
+
+    return map
+end
+
+get_upper_triangular_matrix_inversed_mask(pose::Pose) = begin
+    get_upper_triangular_matrix_inversed_mask(pose, nothing)
 end
 
 
@@ -277,7 +373,7 @@ optional type `T` is provided, will use `ProtoSyn.Units.defaultFloat`.
 ```
 julia> cmap = ProtoSyn.Calculators.load_map("contact_map_example.txt")
 73×73 Array{Float64,2}:
- ...
+ (...)
 ```
 """
 function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
@@ -311,52 +407,3 @@ function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
 end
 
 load_map(filename::String) = load_map(ProtoSyn.Units.defaultFloat, filename)
-
-# ---
-
-"""
-# TODO
-"""
-function get_upper_triangular_matrix(selection::AbstractSelection)
-    return function _upper_triangular_matrix(pose::Pose)
-        T = eltype(pose.state)
-        N = count(selection(pose))
-        map = Matrix(UpperTriangular(ones(T, (N, N))))
-        map[I(N)] .= zero(T)
-        return map
-    end
-end
-
-function get_upper_triangular_matrix()
-    return function _upper_triangular_matrix(pose::Pose)
-        T = eltype(pose.state)
-        N = pose.state.size
-        map = Matrix(UpperTriangular(ones(T, (N, N))))
-        map[I(N)] .= zero(T)
-        return map
-    end
-end
-
-
-"""
-# TODO
-"""
-function get_upper_triangular_matrix_inversed(selection::AbstractSelection)
-    return function _upper_triangular_matrix_inversed(pose::Pose)
-        T = eltype(pose.state)
-        N = count(selection(pose))
-        map = Matrix(UpperTriangular(ones(T, (N, N)) .* T(-1.0)))
-        map[I(N)] .= zero(T)
-        return map
-    end
-end
-
-function get_upper_triangular_matrix_inversed()
-    return function _upper_triangular_matrix_inversed(pose::Pose)
-        T = eltype(pose.state)
-        N = pose.state.size
-        map = Matrix(UpperTriangular(ones(T, (N, N)) .* T(-1.0)))
-        map[I(N)] .= zero(T)
-        return map
-    end
-end

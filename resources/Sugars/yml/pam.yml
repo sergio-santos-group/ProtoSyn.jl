@@ -1,0 +1,30 @@
+name: pam
+atoms:
+  - {name:   C, id:   1, symbol:  C, b:   9.286797, theta:   0.606968, phi:   0.000000, c: 0.0000}
+  - {name:   N, id:   2, symbol:  N, b:   1.463854, theta:   3.074691, phi:   0.000000, c: 0.0000}
+  - {name:  C2, id:   3, symbol:  C, b:   1.478229, theta:   0.624558, phi:   3.141593, c: 0.0000}
+  - {name:  C3, id:   4, symbol:  C, b:   1.496637, theta:   1.654272, phi:  -0.000000, c: 0.0000}
+  - {name:   O, id:   5, symbol:  O, b:   1.395585, theta:   1.508479, phi:   3.141593, c: 0.0000}
+  - {name:   H, id:   6, symbol:  H, b:   1.069461, theta:   1.456618, phi:   0.748407, c: 0.0000}
+  - {name:  H4, id:   7, symbol:  H, b:   1.070114, theta:   1.692033, phi:  -1.153256, c: 0.0000}
+  - {name:  H5, id:   8, symbol:  H, b:   1.070195, theta:   1.973122, phi:  -2.049613, c: 0.0000}
+  - {name:  H6, id:   9, symbol:  H, b:   0.985057, theta:   2.093941, phi:   0.000000, c: 0.0000}
+  - {name:  H7, id:  10, symbol:  H, b:   0.984647, theta:   2.094499, phi:   3.141593, c: 0.0000}
+bonds:
+  C: [C2, H, H4]
+  N: [H6, H7, C3]
+  C2: [C, C3, H5]
+  C3: [N, C2, O]
+  O: [C3]
+  H: [C]
+  H4: [C]
+  H5: [C2]
+  H6: [N]
+  H7: [N]
+graph:
+  root: C
+  adjacency:
+    C: [C2, H, H4]
+    N: [H6, H7]
+    C2: [C3, H5]
+    C3: [N, O]

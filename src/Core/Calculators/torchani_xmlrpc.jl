@@ -94,7 +94,7 @@ end
 
 
 """
-    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose, update_forces::Bool = false; model::Int = 3) where {A}
+    Calculators.calc_torchani_model_xmlrpc([::A], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [model::Int = 3]) where {A}
     
 Calculate the pose energy according to a single TorchANI model neural
 network, using the XML-RPC protocol. If no TorchANI XML-RPC server is found, a
@@ -120,7 +120,7 @@ julia> ProtoSyn.Calculators.TorchANI.calc_torchani_model_xmlrpc(pose, true)
 !!! ukw "Note:"
     If you use this function in a script, it is recommended to add `ProtoSyn.Calculators.TorchANI.stop_torchANI_server()` at the end of the script, as the automatic stopping of TorchANI XML-RPC server is not yet implemented, as of ProtoSyn >= 1.0.
 """
-function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3)
 
     # ! If an `IOError:("read: connection reset py peer, -104")` error is raised
     # ! when calling this function, check the GPU total allocation (using 
@@ -131,8 +131,15 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_
         global proxy = start_torchANI_server()
     end
 
-    c = collect(pose.state.x.coords')
-    s = ProtoSyn.Calculators.TorchANI.get_ani_species(pose)
+    if selection === nothing
+        sele = TrueSelection{Atom}()
+    else
+        sele = ProtoSyn.promote(selection, Atom)
+    end
+
+    c = collect(pose.state.x.coords[:, sele(pose).content]')
+
+    s = ProtoSyn.Calculators.TorchANI.get_ani_species(pose, selection)
     response = proxy.calc(s, c, update_forces, model)
     xml_string = replace(Base.join(Char.(response.body)), "\n" => "")
     xml = LightXML.parse_string(xml_string)
@@ -148,18 +155,18 @@ function calc_torchani_model_xmlrpc(::Type{ProtoSyn.CUDA_2}, pose::Pose, update_
     end
 end
 
-function calc_torchani_model_xmlrpc(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose; update_forces::Bool = false, model_index::Int = 3)
+function calc_torchani_model_xmlrpc(::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.SIMD_1}}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model_index::Int = 3)
     error("'calc_torchani_model_xmlrpc' requires CUDA_2 acceleration.")
 end
 
-calc_torchani_model_xmlrpc(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
-    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, update_forces, model = model)
+calc_torchani_model_xmlrpc(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3) = begin
+    calc_torchani_model_xmlrpc(ProtoSyn.acceleration.active, pose, selection, update_forces, model = model)
 end
 
 # * Default Energy Components --------------------------------------------------
 
 """
-    get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}
+    get_default_torchani_model_xmlrpc(;[α::T = 1.0]) where {T <: AbstractFloat}
 
 Return the default TorchANI model [`EnergyFunctionComponent`](@ref). `α`
 sets the component weight (on an
@@ -177,17 +184,27 @@ new XMLRPC server (in parallel) if necessary.
 # Examples
 ```
 julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc()
-         Name : TorchANI_ML_Model_XMLRPC
-   Weight (α) : 1.0
-Update forces : true
-      Setings :
-         :model => 3
+🞧  Energy Function Component:
++---------------------------------------------------+
+| Name           | TorchANI_ML_Model_XMLRPC         |
+| Alpha (α)      | 1.0                              |
+| Update forces  | true                             |
+| Calculator     | calc_torchani_model_xmlrpc       |
++---------------------------------------------------+
+ |    +----------------------------------------------------------------------------------+
+ ├──  ● Settings                      | Value                                            |
+ |    +----------------------------------------------------------------------------------+
+ |    | model                         | 3                                                |
+ |    +----------------------------------------------------------------------------------+
+ |    
+ └──  ○  Selection: nothing
 ```
 """
 function get_default_torchani_model_xmlrpc(;α::T = 1.0) where {T <: AbstractFloat}
     return EnergyFunctionComponent(
         "TorchANI_ML_Model_XMLRPC",
         calc_torchani_model_xmlrpc,
+        nothing,
         Dict{Symbol, Any}(:model => 3),
         α,
         true)

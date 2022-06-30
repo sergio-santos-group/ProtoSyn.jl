@@ -1,6 +1,4 @@
-println("-----------\n Selections submodule:")
-
-@testset verbose = true "Selections submodule    " begin
+@testset verbose = true "Selections submodule $(repeat("-", 36))" begin
 
     @testset verbose = true "SerialSelection     " begin
         pose = copy(backup)
@@ -28,7 +26,9 @@ println("-----------\n Selections submodule:")
     @testset verbose = true "TerminalSelection   " begin
         pose = copy(backup)
         
-        @test TerminalSelection()(pose).content == [true, false, true]
+        @test UpstreamTerminalSelection{Residue}()(pose).content == [true, false, false]
+        @test DownstreamTerminalSelection{Residue}()(pose).content == [false, false, true]
+        @test (DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}())(pose).content == [true, false, true]
     end
 
     @testset verbose = true "DistanceSelection   " begin
@@ -79,4 +79,34 @@ println("-----------\n Selections submodule:")
         @test count((an"CA" & an"CA" | an"CB")(pose)) === 5
     end
 
+    @testset verbose = true "AromaticSelection     " begin
+        pose = copy(backup)
+        ProtoSyn.Peptides.mutate!(pose, pose.graph[1, 2], Peptides.grammar, seq"W")
+        
+        @test count(AromaticSelection()(pose)) === 9
+        @test count(AromaticSelection(5)(pose)) === 5
+        @test count(AromaticSelection(4)(pose)) === 0
+    end
+
+    @testset verbose = true "BondCountSelection     " begin
+        pose = copy(backup)
+        
+        @test count(BondCountSelection(2)(pose)) === 3
+        @test count(BondCountSelection(3, <)(pose)) === 26
+        @test count(BondCountSelection(4, >=)(pose)) === 8
+    end
+
+    @testset verbose = true "BondedToSelection     " begin
+        pose = copy(backup)
+        
+        @test count(BondedToSelection(an"C")(pose)) === 8
+        @test count(BondedToSelection(an"CA")(pose)) === 12
+    end
+
+    @testset verbose = true "ChargeSelection     " begin
+        pose = copy(backup)
+        
+        @test count(ChargeSelection(0.0, >=)(pose)) === 23
+        @test count(ChargeSelection(0.0, <)(pose)) === 16
+    end
 end

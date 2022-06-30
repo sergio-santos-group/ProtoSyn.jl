@@ -4,15 +4,13 @@ export FieldSelection
 """
     FieldSelection{T}(pattern::String, field::Symbol, [is_regex::Bool = false]) where {T <: AbstractContainer}
 
-A [`FieldSelection`](@ref) takes an input `pattern` (as a `String`) and a `field` (as a
-`Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`) containing all
-instances of said type in the given `container` whose `field` matches the `pattern`.
-
-!!! ukw "Note:"
-    The given `pattern` can be considered as a Regular Expression (`Regex`), if
-    `is_regex` flag is set to `true`. Optinally, when using a short syntax,
-    appending an "r" flag at the end of the expression also sets `is_regex` to
-    `true`. Check the examples bellow.
+A [`FieldSelection`](@ref) takes an input `pattern` (as a `String`) and a
+`field` (as a `Symbol`) and outputs a `Mask` (of type `T <: AbstractContainer`)
+containing all instances of said type in the given `container` whose `field`
+matches the `pattern` marked as `true`. The given `pattern` can be considered as
+a Regular Expression (`Regex`), if `is_regex` flag is set to `true`. Optinally,
+when using a short syntax, appending an "r" flag at the end of the expression
+also sets `is_regex` to `true`.
 
 # State mode
 
@@ -66,7 +64,8 @@ function select(sele::FieldSelection{Stateless, T}, container::AbstractContainer
     n_items = counter(T)(container)
     mask = Mask{T}(n_items)
 
-    for (index, item) in enumerate(iterator(T)(container))
+    iter = typeof(container) > T ? iterator(T)(container) : [container]
+    for (index, item) in enumerate(iter)
         if sele.op(sele.pattern, getproperty(item, sele.field))
             mask[index] = true
         end
@@ -89,4 +88,14 @@ function Base.show(io::IO, fs::FieldSelection{M, T}, level_code::Opt{LevelCode} 
         level_code = LevelCode()
     end
     println(io, lead*"FieldSelection › $(T).$(fs.field) = $(fs.pattern)")
+end
+
+# --- Help ---------------------------------------------------------------------
+FieldSelection(pattern::String, field::Symbol; is_regex = false) = begin
+    @error """
+    SerialSelection requires specification of selection type: Atom, Residue or Segment. Some examples:
+     • FieldSelection{Atom}(\"$pattern\", :$field; is_regex = $is_regex)
+     • FieldSelection{Residue}(\"$pattern\", :$field; is_regex = $is_regex)
+     • FieldSelection{Segment}(\"$pattern\", :$field; is_regex = $is_regex)
+    """
 end

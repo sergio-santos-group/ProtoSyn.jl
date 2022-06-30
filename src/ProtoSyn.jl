@@ -1,33 +1,41 @@
-__precompile__(false)
+
 module ProtoSyn
+__precompile__()
 
 const _force_recompilation = 1
-const _version             = 1.01
+const _version             = 1.1
 
-mutable struct Verbose
-    mode::Bool
-end
+include("Core/Methods/log.jl")
 
-verbose = Verbose(false)
-
-@info "Loading required packages"
+print_loading("External packages")
 using CpuId
 using Printf
 
-@info " | Loading SIMD"
+printstyled(" | Loading SIMD\n", color = :cyan)
 using SIMD
-@info " | Loading CUDA"
+printstyled(" | Loading CUDA\n", color = :cyan)
 using CUDA
 
-@info "Setting up variables"
-
+print_loading("Setting up global variables")
 abstract type AbstractAccelerationType end
 abstract type SISD_0 <: AbstractAccelerationType end
 abstract type SIMD_1 <: AbstractAccelerationType end
 abstract type CUDA_2 <: AbstractAccelerationType end
 
+export Opt
+const Opt = Union{Nothing, T} where T
+
 mutable struct Acceleration
     active::Type{<: AbstractAccelerationType}
+end
+
+Base.show(io::IO, accel::Acceleration) = begin
+    check = accel.active === ProtoSyn.SISD_0 ? "✓" : ""
+    println(io, "SISD_0 $check")
+    check = accel.active === ProtoSyn.SIMD_1 ? "✓" : ""
+    println(io, "SIMD_1 $check")
+    check = accel.active === ProtoSyn.CUDA_2 ? "✓" : ""
+    println(io, "CUDA_2 $check")
 end
 
 acceleration = Acceleration(SISD_0)
@@ -41,7 +49,6 @@ catch LoadError
     @warn "SIMD package not loaded."
 end
 
-cuda_available = false
 try
     if CUDA.has_cuda() && CUDA.has_cuda_gpu()
         acceleration.active = CUDA_2
@@ -52,18 +59,15 @@ catch LoadError
     @warn "CUDA package not loaded."
 end
 
-@info "Current acceleration set to $acceleration"
+printstyled(" | Current acceleration set to $(acceleration.active)\n", color = :cyan)
 
 const resource_dir = joinpath(dirname(@__DIR__), "resources")
 
-@info "Loading Core"
-
-export Opt
-const Opt = Union{Nothing, T} where T
-
+print_loading("Core module")
 include("Core/Units/Units.jl")
+include("Core/Methods/python-packages.jl")
 include("Core/Methods/other.jl") # Requires Units.jl
-include("Core/Methods/constants.jl")
+include("Core/Types/constants.jl")
 include("Core/Types/other.jl")
 include("Core/Methods/macros.jl") # Requires other.jl
 include("Core/Types/graph.jl")
@@ -79,32 +83,35 @@ include("Core/Methods/iterators.jl")
 include("Core/Methods/align.jl")
 include("Core/Submodules/Clustering/Clustering.jl")
 include("Core/Submodules/Builder/grammar.jl")
+include("Core/Methods/tautomers.jl") # Requires grammar.jl
 include("Core/Submodules/Builder/Builder.jl")
-include("Core/Methods/pose.jl") # Requires grammar.jl
+include("Core/Methods/pose.jl") # Requires grammar.jl & graph.jl
+include("Core/Submodules/Builder/modifications.jl") # Requires pose.jl
+include("Core/Submodules/ExternalPackages/GROMACS/gromacs.jl") # Requires pose.jl
 
-@info "Loading Calculators"
+printstyled(" | Loading Calculators\n", color = :cyan)
 include("Core/Calculators/Calculators.jl")
-include("Core/Methods/pose-solvation.jl") # Requires selections.jl; distance_matrix.jl
+include("Core/Methods/histogram.jl") # Requires distance_matrix.jl
 
-@info "Loading Mutators"
+printstyled(" | Loading Mutators\n", color = :cyan)
 include("Core/Mutators/Mutators.jl")
 
-@info "Loading Drivers"
+printstyled(" | Loading Drivers\n", color = :cyan)
 include("Core/Drivers/Drivers.jl")
 
-@info "Loading Peptides"
+print_loading("Peptides module")
 include("Peptides/Peptides.jl")
 
-@info "Loading Materials"
+print_loading("Materials module")
 include("Materials/Materials.jl")
 
-@info "Loading Sugars"
+print_loading("Sugars module")
 include("Sugars/Sugars.jl")
 
-@info "Loading Common"
+print_loading("Common module")
 include("Common/Common.jl")
 
-@info "ProtoSyn loaded successfully!"
+print_loading("External models")
 
 function version()
     header = """
@@ -121,9 +128,13 @@ function version()
     println(" License      : GNU-GPL-3")
     println(" Developed by : José Pereira (jose.manuel.pereira@ua.pt)")
     println("                Sérgio Santos")
+    println("\n")
 end
 
-version()
+function __init__()
+    print_loading("ProtoSyn loaded successfully!", color = :green)
+    version()
+    set_logger_to_warn()
+end
 
 end # module
-

@@ -13,7 +13,11 @@ A major focus of ProtoSyn was the compilation of an extensive list of tutorials 
 + [9 - Sidechain packaging](@ref)
 + [10 - Rigid body docking](@ref)
 + [11 - Distributed computing](@ref)
-+ [12 - Materials & Sugars](@ref)
++ [12 - Ramified polymers & sugars](@ref)
++ [13 - Advanced mutators](@ref)
++ [14 - Non-canonical aminoacids (NCAAs)](@ref)
++ [15 - Post-translational modifications](@ref)
++ [16 - Materials & carbons](@ref)
 
 ## [1 - Getting started](@id examples-getting-started)
 
@@ -33,7 +37,7 @@ One of the main applications of ProtoSyn is the easy manipulation of molecular s
 ## 4 - Energy calculation
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/4-energy-calculation.ipynb).
-One of the main applications of ProtoSyn is the easy manipulation of molecular structures: add and remove residues and whole loops, mutate aminoacids, bond and unbond atoms or completly remove them from the structure, and even create completly new sequences of aminoacids from scratch. These are just some examples of the manipulations possible with the ProtoSyn framework. In the next examples we will explore a few of these tasks. For more details, check the Core [Pose](@ref pose-methods) methods and the Peptides [Pose](@ref peptides-pose-methods) methods sections.
+A crucial feature of the ProtoSyn framework is the ability to evaluate a given Pose based on a multitude of factors and potentials. In this example, a closer look on how to build an energy function is provided. Some of the available energy function components include Coulomb potentials, SASA/GB models, distance-based potentials, hydrogen network evaluators, etc. For more details and an exhaustive list of available potentials, check the [Calculators section](@ref).
 
 ## 5 - Monte Carlo
 
@@ -43,12 +47,12 @@ Besides the possibility to create custom simulation algorithms, ProtoSyn already
 ## 6 - Steepest Descent
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/6-steepest-descent.ipynb).
-ProtoSyn makes available the Steepest Descent Driver, whose simulation algorithm calculates the forces being felt on each atom of a molecular structure (via an Energy Function instance) and updates the atoms position in accordance, as to relax the structure. for more information check the [Steepest Descent Driver](@ref) section.
+ProtoSyn makes available the Steepest Descent Driver, whose simulation algorithm calculates the forces being felt on each atom of a molecular structure (via an Energy Function instance) and updates the atoms position in accordance, as to relax the structure. For more information check the [Steepest Descent Driver](@ref) section.
 
 ## 7 - ILS
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/7-ils.ipynb).
-ILS stands for "Iterated Local Search" and it's a conformational search algorithm. In short, this algorithm is divided in two main components, the inner and outer loop. The inner loop can be, for example, a Monte Carlo simulation, and should explore and sample the local minimum, while the outer loop performs a "jump": a large conformational change, taking the system to a whole different local minimum for the next inner loop iteration. In this way, the conformational space can be efficiantly sampled, with a higher certainty of exploring the global minimum during the simulation. In ProtoSyn, this algorithm is employed as a Driver, and will be briefly explored in this example. For more details, check the [ILS Driver](@ref) of this manual.
+ILS stands for "Iterated Local Search" and it's a conformational search algorithm. In short, this algorithm is divided in two main components, the inner and outer loop. The inner loop can be, for example, a Monte Carlo simulation, and should explore and sample the local minimum, while the outer loop performs a "jump": a large conformational change, taking the system to a whole different local minimum for the next inner loop iteration. In this way, the conformational space can be efficiently sampled, with a higher certainty of exploring the global minimum during the simulation. In ProtoSyn, this algorithm is employed as a Driver, and will be briefly explored in this example. For more details, check the [ILS Driver](@ref) of this manual.
 
 ## 8 - Design
 
@@ -58,7 +62,7 @@ One of the main goals of ProtoSyn is to provide an easy interface for the design
 ## 9 - Sidechain packaging
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/9-sidechain-packaging.ipynb).
-A sub-problem of protein design is the correct packaging of aminoacid sidechains, that is, to find the correct rotamer (i.e.: set of sidechain chi dihedral angles) that minimizes clashes and augments stabilizing interactions with other sidechains in the 3D space. The conformational space to explore is, therefore, enormous. Several rotamer libraries have been proposed in the past to minimize this space by impossing certain restrictions. By default, ProtoSyn employs the Dunbrack Rotamer Library 2011, which reduces the rotamers to the most observed combination in natural databases, as well as imposing backbone dependency (i.e.: certain rotamers are only present for a given combination of backbone phi and phi dihedral angles). This greatly reduces the conformational space to search, while improving the likelihood of acceptance of a new rotamer. With this mind, in ProtoSyn, we can load a rotamer library and sample new rotamers, in a Monte Carlo simulation, in order to improve the sidechain packaging of a peptide. For more details, check the [Rotamer Mutator](@ref) section of this manual.
+A sub-problem of protein design is the correct packaging of aminoacid sidechains, that is, to find the correct rotamer (i.e.: set of sidechain chi dihedral angles) that minimizes clashes and augments stabilizing interactions with other sidechains in the 3D space. The conformational space to explore is, therefore, enormous. Several rotamer libraries have been proposed in the past to minimize this space by imposing certain restrictions. By default, ProtoSyn employs the Dunbrack Rotamer Library 2011, which reduces the rotamers to the most observed combination in natural databases, as well as imposing backbone dependency (i.e.: certain rotamers are only present for a given combination of backbone phi and psi dihedral angles). This greatly reduces the conformational space to search, while improving the likelihood of acceptance of a new rotamer. With this mind, in ProtoSyn, we can load a rotamer library and sample new rotamers, in a Monte Carlo simulation, in order to improve the sidechain packaging of a peptide. For more details, check the [Rotamer Mutator](@ref) section of this manual.
 
 ## 10 - Rigid body docking
 
@@ -70,7 +74,30 @@ ProtoSyn makes available two Rigid Body Mutators: translational and rotational. 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/11-distributed-computing.ipynb).
 By being developed in Julia, ProtoSyn enjoys some of the features naturally provided by the language, such as easy SIMD and GPU acceleration, a rich package environment and, among others, access to high level parallel and distributed computing routines. In this example we will take a look on how to launch and gather several decoys of the same Monte Carlo simulation. By having multiple decoys in parallel, given the random nature of the algorithm, we can have a greater confidence in the complete sampling of the conformational space, and that the obtained result is real. For more information, reffer to the Julia's [Distributed Computing](https://docs.julialang.org/en/v1/stdlib/Distributed/) manual section.
 
-## 12 - Materials & Sugars
+## 12 - Ramified polymers & sugars
 
 [You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/12-materials-sugars.ipynb).
-Besides the Core and Peptides modules, ProtoSyn includes extra modules, such as the Materials and the Sugars modules. In this example, we will briefly explore the goals of each of these two modules. Note that these modules are not the focus of ProtoSyn, in its current version, and may be improved in future iterations. For more details, check the [Materials](@ref) and [Sugars](@ref) sections of this manual.
+Besides the Core and Peptides modules, ProtoSyn includes extra modules, such as the Sugars modules. In this example, we will briefly explore the goals of this modules: the introduction of ramified polymers. Note that this module is not the focus of ProtoSyn, in its current version, and may be improved in future iterations. For more details, check the [Sugars](@ref) sections of this manual.
+
+## 13 - Advanced mutators
+
+[You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/13-advanced-mutators.ipynb).
+Using the base ProtoSyn methods and mutators, users can build arbitrarily advanced and complex mutators for specific applications. In this example, we will explore how to build a Block Rotation Mutator (also known as _blockrot_). This advanced mutator is comprised of two rigid body mutators (translational and rotational), acting on a random block of sequential aminoacids, selected from a list of possible blocks. After rotation, since bonds are broken, a quick steepest descent drivers run is performed to re-close the severed connections. For this reason, the applied rotational and translational movement needs to be small. The final result is a concerted rotation of a whole block of aminoacids, in a peptide, whose occurrence using simple dihedral rotations was virtually impossible.
+
+## 14 - Non-canonical aminoacids (NCAAs)
+
+[You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/14-non-canonical-aminoacids.ipynb).
+ProtoSyn.jl allows users to define non-canonical aminoacids (NCAAs) and include them in simulations, such as design efforts and mutations. Besides using the NCAAs included with ProtoSyn, by default, in this brief tutorial the process to add a new NCAA is explored, as well as its implementation in a simple mutation application. The example NCAA is retrieved directly from a protein pose, by extracting the residue of interest from a downloaded file from Protein Data Bank (PDB).
+
+## 15 - Post-translational modifications
+
+[You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/15-post-translational-modifications.ipynb). Post translational modifications (PTMs) are structural modifications to a structure, usually performed after synthesis, and can include the removal or addition of functional groups. Some examples of PTMs include methylation and phosphorylation processes, where methyl- and phosphoryl- groups are grafted to a given residue. In this tutorial, both these processes will be exemplified, making use of ProtoSyn's structural manipulation methods.
+
+
+## 16 - Materials & carbons
+
+[You can find the example file here](https://github.com/sergio-santos-group/ProtoSyn.jl/blob/master/examples/16-materials-carbons.ipynb). 
+The objective of this example is to introduce methods and types for the creation and manipulation of both cristaline & amorphous inorganic structures. In the current version, this is restricted to a few basic unit cell repetitions and carbon sheets. These are, however, useful when setting up benchmarks for the measurement of speed/accuracy of new or improved energy functions, for example. In this example, we will create a repetition of one such basic unit cell, the primitive lattice. More interestingly, perhaps, are the methods for carbon sheet generation and manipulation. In this example, the topics of generation of simple carbon sheets, multi-layer carbon microcrystallites, pore generation and functionalization are explored and showcased.
+
+!!! ukw "Note:"
+    Would you like to see a topic covered in a more in-depth tutorial? Don't hesitate to contact or drop an issue in the [project's GitHub page](https://github.com/sergio-santos-group/ProtoSyn.jl/issues).

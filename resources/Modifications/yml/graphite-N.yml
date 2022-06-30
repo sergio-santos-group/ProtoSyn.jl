@@ -1,0 +1,10 @@
+name: grn
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.400000, theta:   2.094395, phi:   0.000000}
+  - {name:  NG, id:   2, symbol:  N, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.4979}
+bonds:
+  R: [NG]
+graph:
+  root: R
+  adjacency:
+    R: [NG]

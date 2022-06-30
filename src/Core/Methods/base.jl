@@ -262,9 +262,10 @@ end
 
 
 Base.copy(s0::Segment) = begin
-    s1 = Segment(s0.name, s0.id)
+    s1      = Segment(s0.name, s0.id)
+    s1.code = s0.code
     old2new = IdDict{AbstractContainer, AbstractContainer}()
-    root = ProtoSyn.root(s0)
+    root    = ProtoSyn.root(s0)
 
     # copy residues and atoms
     for r0 in eachresidue(s0)
@@ -278,6 +279,7 @@ Base.copy(s0::Segment) = begin
 
     # deal with atom graph and bonds
     for at0 in eachatom(s0)
+    # for at0 in ProtoSyn.travel_graph(s0[1, 1]) # This option doesn't set all relationships
         at1 = old2new[at0]
         if hasparent(at0) && !isparent(root, at0) && at0.parent in keys(old2new)
             setparent!(at1, old2new[at0.parent])
@@ -325,10 +327,24 @@ Base.copy(t0::Topology) = begin
     return t1
 end
 
-# !!!!!!!
 Base.copy(s::State{T}) where T = begin
     ns = State(T, s.size)
     # Updating item.t also updates the parent.x matrix
+    
+    # Also copies the current root coordinates, if they are present
+    if any((as) -> as.index < 0, s.items)
+        for (index, root_atomstate) in enumerate(s.items[1:3])
+            ns[index - 3].t = copy(root_atomstate.t)
+            ns[index - 3].r = copy(root_atomstate.r)
+            ns[index - 3].b = root_atomstate.b
+            ns[index - 3].θ = root_atomstate.θ
+            ns[index - 3].ϕ = root_atomstate.ϕ
+            ns[index - 3].Δϕ = root_atomstate.Δϕ
+            ns[index - 3].changed = root_atomstate.changed
+            ns[index - 3].δ = root_atomstate.δ
+        end
+    end
+
     for (index, atomstate) in enumerate(s)
         ns[index].t = copy(atomstate.t)
         ns[index].r = copy(atomstate.r)
@@ -337,6 +353,7 @@ Base.copy(s::State{T}) where T = begin
         ns[index].ϕ = atomstate.ϕ
         ns[index].Δϕ = atomstate.Δϕ
         ns[index].changed = atomstate.changed
+        ns[index].δ = atomstate.δ
     end
     ns.id = genid()
     ns.i2c = s.i2c
@@ -350,7 +367,7 @@ end
 """
     copy(pose::Pose)
 
-Return a copied [Pose](@ref) of the provided `pose`. The resulting [Pose](@ref)
+Return a copied [Pose](@ref pose-types) of the provided `pose`. The resulting [Pose](@ref pose-types)
 will have different `:id` fields for the [Graph](@ref state-types) [`Topology`](@ref) and
 [State](@ref state-types).
 
@@ -451,7 +468,7 @@ Detach and return the given [`Segment`](@ref) from it's container
 *This function is a Base module overload.*
 
 !!! ukw "Note:"
-    This function does not alter the [State](@ref state-types) of the [Pose](@ref)
+    This function does not alter the [State](@ref state-types) of the [Pose](@ref pose-types)
     containing the provided [`Segment`](@ref). 
 
 # Examples

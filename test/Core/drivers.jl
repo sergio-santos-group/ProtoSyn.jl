@@ -1,8 +1,6 @@
 using StaticArrays
 
-println("-----------\n Mutators:")
-
-@testset verbose = true "Drivers $(repeat("-", 45))" begin
+@testset verbose = true "Drivers $(repeat("-", 49))" begin
 
     @testset verbose = true "$(@sprintf "%-54s" "Thermostats")" begin
         pose = copy(backup)
@@ -64,6 +62,7 @@ println("-----------\n Mutators:")
             energy_function = ProtoSyn.Calculators.EnergyFunction([
                 ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
             ])
+            energy_function.update_forces = true
 
             sd = ProtoSyn.Drivers.SteepestDescent(energy_function, nothing, 100, 0.001, 0.1)
 
@@ -116,6 +115,7 @@ println("-----------\n Mutators:")
             energy_function = ProtoSyn.Calculators.EnergyFunction([
                 ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
             ])
+            energy_function.update_forces = true
 
             m = ProtoSyn.Mutators.DihedralMutator(() -> pi, 1.0, 1.0, an"C" & rid"2")
             t1 = ProtoSyn.Drivers.get_constant_temperature(1e10)

@@ -35,10 +35,12 @@ using SIMD
     update_forces::Bool,
     verlet_list::Nothing,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
-        n_atoms  = length(coords) ÷ 3
+        coords   = vcat(pose.state.x.coords[:], [0.0, 0.0, 0.0])
+        n_atoms  = length(indexes)
         forces   = zeros(T, n_atoms, n_atoms, 3)
         energies = zeros(T, n_atoms, n_atoms)
         _mask = Vec{4, T}((1, 1, 1, 0))
@@ -49,19 +51,20 @@ using SIMD
         end
 
         @inbounds @simd for i in 1:n_atoms - 1
-            i1 = i<<2 - (2 + i) # Conversion from atom number to array position
+            _i = indexes[i]
+            i1 = _i<<2 - (2 + _i) # Conversion from atom number to array position
             vi = vload(Vec{4, T}, coords, i1)
-            
             @inbounds @simd for j = i+1:n_atoms
-                j1 = j<<2 - (2 + j) # Conversion from atom number to array position
+                _j = indexes[j]
+                j1 = _j<<2 - (2 + _j) # Conversion from atom number to array position
                 rij = (vload(Vec{4, T}, coords, j1) - vi) * _mask
                 dij = sqrt(sum(rij * rij))
 
                 if !update_forces
-                    energies[j, i] = potential(dij)
+                    energies[j, i] = potential(dij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]
@@ -86,7 +89,8 @@ end
     update_forces::Bool,
     verlet_list::VerletList,
     coords::Vector{T},
-    mask::MaskMap) where {T <: AbstractFloat}
+    mask::MaskMap,
+    indexes::Vector{Int}) where {T <: AbstractFloat}
 
     quote
         n_atoms  = length(coords) ÷ 3
@@ -117,7 +121,7 @@ end
                     energies[j, i] = potential(dij)
                 else
                     rij = rij / dij # normalization
-                    energies[j, i], f1, f2 = potential(dij, v = rij)
+                    energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)
                     forces[j, i, 1] = f1[1]

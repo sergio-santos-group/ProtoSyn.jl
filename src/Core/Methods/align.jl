@@ -20,7 +20,7 @@ calculate the necessary rotation + translation movement. Sets `mobile.state.c2i`
 to `true` and returns the altered `mobile` [`Pose`](@ref) instance.
 
 !!! ukw "Note:"
-    This function can also align [Fragment](@ref) instances.
+    This function can also align [`Fragment`](@ref) instances.
 
 # See also
 [`rmsd`](@ref)
@@ -146,9 +146,11 @@ function center_of_mass(pose::Pose)
 end
 
 function center_of_mass(pose::Pose, selection::AbstractSelection)
-    idxs = findall(selection(pose).content)
+    idxs = findall(promote(selection, Atom)(pose).content)
     return center_of_mass(pose, idxs)
 end
+
+center_of_mass(pose::Pose, selection::Nothing) = center_of_mass(pose)
 
 function center_of_mass(pose::Pose, idxs::Vector{Int})
     return mean(pose.state.x[:, idxs], dims = 2)

@@ -9,7 +9,6 @@ docs/build/
 .vscode/
 .ipynb_checkpoints/
 *.zip
-*.png
 *.dat
 dev/
-test*
+conditional_model_*

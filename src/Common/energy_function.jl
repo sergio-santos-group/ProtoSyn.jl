@@ -6,81 +6,66 @@ export default_energy_function
     default_energy_function(::Type{T}) where {T <: AbstractFloat}
     default_energy_function()
 
-Returns a default energy function for ProtoSyn.
-
-!!! ukw "Note:" 
-    If no `Type{T}` is provided, will use `ProtoSyn.Units.defaultFloat`;
+Returns a default [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction)
+for ProtoSyn. If no `Type{T}` is provided, will use
+`ProtoSyn.Units.defaultFloat`. This
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) is optimized for
+evaluating protein systems.
 
 # Examples
 ```jldoctest
 julia> ProtoSyn.Common.default_energy_function()
-🗲  Energy Function (4 components):
+🗲  Energy Function (7 components):
 +----------------------------------------------------------------------+
 | Index | Component name                                | Weight (α)   |
 +----------------------------------------------------------------------+
-| 1     | TorchANI_ML_Model                             |      1.000   |
-| 2     | Caterpillar_Solvation                         |      0.010   |
-| 3     | Bond_Distance_Restraint                       |      1.000   |
-| 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
+| 1     | TorchANI_ML_Model                             |       1.00   |
+| 2     | All_Atom_Clash_Rest                           |       1.00   |
+| 3     | Hydrogen_Bonds                                |       0.50   |
+| 4     | Coulomb                                       |       0.60   |
+| 5     | TorchANI_Ref_Energy                           |       1.00   |
+| 6     | GB_Solvation                                  |       1.00   |
+| 7     | SASA_Solvation                                |   5.00e-04   |
 +----------------------------------------------------------------------+
+ ● Update forces: false
+ ● Selection: Set
+ └── TrueSelection (Atom)
 ```
 """
 default_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
+    torchani = ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
+
+    ref = ProtoSyn.Calculators.TorchANI.get_default_torchani_internal_energy()
+    ref.settings[:use_ensemble] = false
+    
+    gb = ProtoSyn.Calculators.GB.get_default_gb(α = 1.0)
+    gb.selection            = SidechainSelection()
+    gb.settings[:ϵ_protein] = 25.0
+    
+    sasa = ProtoSyn.Peptides.Calculators.SASA.get_default_sasa_energy(α = 0.0005)
+    max_sasas = copy(ProtoSyn.Peptides.Calculators.SASA.default_sidechain_max_sasa)
+    max_sasas["CBZ"] = 1217.0
+    sasa.settings[:max_sasas] = max_sasas
+    
+    coulomb = ProtoSyn.Calculators.Electrostatics.get_default_coulomb(α = 0.6)
+    coulomb.settings[:mask]      = ProtoSyn.Calculators.get_intra_residue_mask
+    coulomb.settings[:potential] = ProtoSyn.Calculators.get_bump_potential_charges(c = 0.0, r = 20.0)
+    
+    hydro_bonds = ProtoSyn.Calculators.HydrogenBonds.get_default_hydrogen_bond_network(α = 0.5)
+    
+    atom_clash = ProtoSyn.Calculators.Restraints.get_default_all_atom_clash_restraint(α = 1.0)
+    atom_clash.settings[:mask] = ProtoSyn.Calculators.get_intra_residue_mask
+    
     return ProtoSyn.Calculators.EnergyFunction([
-        ProtoSyn.Calculators.TorchANI.get_default_torchani_model(α = 1.0),
-        ProtoSyn.Peptides.Calculators.Caterpillar.get_default_solvation_energy(α = 0.01),
-        ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint(α = 1.0),
-        ProtoSyn.Peptides.Calculators.Restraints.get_default_ca_clash_restraint(α = 100.0)
-    ])
+        torchani,
+        atom_clash,
+        hydro_bonds,
+        coulomb,
+        ref,
+        gb,
+        sasa])
 end
 
 default_energy_function() = begin
     default_energy_function(ProtoSyn.Units.defaultFloat)
-end
-
-# ------------------------------------------------------------------------------
-
-export default_xmlrpc_energy_function
-
-@doc """
-    default_xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat}
-    default_xmlrpc_energy_function()
-
-Returns a default energy function for ProtoSyn, where a XML-RPC version of each
-component is employed (when available).
-
-!!! ukw "Note:" 
-    If no `Type{T}` is provided, will use `ProtoSyn.Units.defaultFloat`;
-
-!!! ukw "Note:"
-    Since this energy function employs the XML-RPC protocol whenever possible, it is slower, but safe in term of CUDA running out of memory.
-
-# See also
-[`default_energy_function`](@ref)
-
-# Examples
-```jldoctest
-julia> ProtoSyn.Common.default_xmlrpc_energy_function()
-🗲  Energy Function (4 components):
-+----------------------------------------------------------------------+
-| Index | Component name                                | Weight (α)   |
-+----------------------------------------------------------------------+
-| 1     | TorchANI_ML_Model_XMLRPC                      |      1.000   |
-| 2     | Caterpillar_Solvation                         |      0.010   |
-| 3     | Bond_Distance_Restraint                       |      1.000   |
-| 4     | Cα-Cα_Clash_Restraint                         |    100.000   |
-+----------------------------------------------------------------------+
-```
-"""
-default_xmlrpc_energy_function(::Type{T}) where {T <: AbstractFloat} = begin
-    return Calculators.EnergyFunction([
-        ProtoSyn.Calculators.TorchANI.get_default_torchani_model_xmlrpc(α = 1.0),
-        ProtoSyn.Peptides.Calculators.Caterpillar.get_default_solvation_energy(α = 0.01),
-        ProtoSyn.Calculators.Restraints.get_default_bond_distance_restraint(α = 1.0),
-        ProtoSyn.Peptides.Calculators.Restraints.get_default_ca_clash_restraint(α = 100.0)
-    ])
-end
-
-default_xmlrpc_energy_function() = begin
-    default_xmlrpc_energy_function(defaultFloat)
 end

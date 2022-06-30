@@ -3,26 +3,26 @@ using YAML
 export grammar
 
 """
-# TODO
-    grammar([::Type{T}];[verbose::Bool = true]) where {T <: AbstractFloat}
+    load_grammar_from_file([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
 
-Build a [`LGrammar`](@ref ProtoSyn.LGrammar) for peptides, taking as variables
-the [`Fragment`](@ref ProtoSyn.Fragment) instances in the default resource
-directory. If the optional type `T` is not provided, the `ProtoSyn.defaultFloat`
-value will be used. The returned [`LGrammar`](@ref ProtoSyn.LGrammar) is
-required for building peptides from [`Fragment`](@ref ProtoSyn.Fragment)
-instances, for example. If `verbose` is set to `true` (is, by default), print
-the loading status.
+Load a [`LGrammar`](@ref ProtoSyn.LGrammar) from the given `filename` (this
+should in .yml format, only loads the given `key`), typed to be of type
+`T <: AbstractFloat`. If not provided, will use `ProtoSyn.Units.defaultFloat`.
+
+# See also
+[`load_grammar_from_file!`](@ref)
 
 # Examples
 ```
-julia> res_lib = ProtoSyn.Peptides.grammar()
+julia> ProtoSyn.Peptides.load_grammar_from_file("grammars.yml", "default")
+LGrammar{Float64, String, Vector{String}}:
+ (...)
 ```
 """
 function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
     filename = joinpath(Peptides.resource_dir, filename)
     grammar = ProtoSyn.load_grammar_from_file(T, filename, key)
-    load_grammar_extras_from_file!(T, filename, key)
+    Peptides.load_grammar_extras_from_file!(T, filename, key)
 
     return grammar
 end
@@ -31,8 +31,23 @@ load_grammar_from_file(filename::AbstractString, key::String) = begin
     load_grammar_from_file(ProtoSyn.Units.defaultFloat, filename, key)
 end
 
+
 """
-# TODO
+    join_grammars!(g1::LGrammar{T, K, V}, g2::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V}
+
+Add [`LGrammar`](@ref) `g2` rules, variables and operators to [`LGrammar`](@ref)
+`g1`, joining both instances.
+
+# Examples
+```
+julia> g1 = ProtoSyn.Peptides.load_grammar_from_file("grammars.yml", "default");
+
+julia> g2 = ProtoSyn.Peptides.load_grammar_from_file("grammars.yml", "ncaa");
+
+julia> ProtoSyn.Peptides.join_grammars!(g1, g2)
+LGrammar{Float64, String, Vector{String}}:
+ (...)
+```
 """
 function join_grammars!(g1::LGrammar{T, K, V}, g2::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V}
     for (key, value) in g2.rules
@@ -64,8 +79,27 @@ function join_grammars!(g1::LGrammar{T, K, V}, g2::LGrammar{T, K, V}) where {T <
     return g1
 end
 
+
 """
-# TODO
+    load_grammar_from_file!([::Type{T}], grammar::LGrammar{T, K, V}, filename::AbstractString, key::String) where {T <: AbstractFloat, K, V}
+
+Load a [`LGrammar`](@ref ProtoSyn.LGrammar) from the given `filename` (this
+should in .yml format, only loads the given `key`), typed to be of type
+`T <: AbstractFloat`. If not provided, will use `ProtoSyn.Units.defaultFloat`.
+Automatically add the loaded [`LGrammar`](@ref) instance to the given `grammar`
+(using the [`join_grammars!`](@ref) method).
+
+# See also
+[`load_grammar_from_file`](@ref)
+
+# Examples
+```
+julia> g1 = ProtoSyn.Peptides.load_grammar_from_file("grammars.yml", "default");
+
+julia> g2 = ProtoSyn.Peptides.load_grammar_from_file!(g1, "grammars.yml", "ncaa")
+LGrammar{Float64, String, Vector{String}}:
+ (...)
+```
 """
 function load_grammar_from_file!(::Type{T}, grammar::LGrammar{T, K, V}, filename::AbstractString, key::String) where {T <: AbstractFloat, K, V}
     new_grammar = load_grammar_from_file(T, filename, key)
@@ -78,60 +112,104 @@ load_grammar_from_file!(grammar::LGrammar{T, K, V}, filename::AbstractString, ke
     load_grammar_from_file!(ProtoSyn.Units.defaultFloat, grammar, filename, key)
 end
 
+
 """
-# TODO
+    load_grammar_extras_from_file!([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
+
+Fill missing information in the following ProtoSyn constants with extra
+details from the loaded [`LGrammar`](@ref) .yml `filename` (under the `key`
+entry, typed as `T <: AbstractFloat`, if not provided will use
+`ProtoSyn.Units.defaultFloat`):
+
+* `ProtoSyn.Peptides.chi_dict`
+* `ProtoSyn.Peptides.available_aminoacids`
+* `ProtoSyn.three_2_one`
+* `ProtoSyn.one_2_three`
+
+# See also
+[`load_grammar_from_file`](@ref)
+
+# Examples
+```
+julia> ProtoSyn.Peptides.load_grammar_extras_from_file!("grammars.yml", "default")
+```
 """
 function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
-    
-    function read_yml(_filename::String)
-        open(_filename, "r") do io
-            return YAML.load(io)
-        end
-    end
 
-    # Re-read the YML grammar file
-    yml = read_yml(filename)[key]
-    
-    vars = yml["variables"]
-    for (key, name) in vars
-        var_filename = joinpath(ProtoSyn.resource_dir, name)
-        var_yml = read_yml(var_filename)
-        
-        # 1. Add chi entries to Peptides.Dihedral.chi_dict
+    function load_extras!(var_yml::Dict{Any, Any})
+        # 1. Add chi entries to Peptides.chi_dict
         if "chis" in keys(var_yml)
-            Peptides.Dihedral.chi_dict[var_yml["name"]] = var_yml["chis"]
+            Peptides.chi_dict[var_yml["name"]] = var_yml["chis"]
         end
 
         # 2. Add entries to the Peptides.available_aminoacids
         Peptides.available_aminoacids[var_yml["code"][1]] = true
 
-        # 3. Add entries to Peptides.three_2_one & Peptides.one_2_three
-        Peptides.three_2_one[var_yml["name"]] = var_yml["code"][1]
-        Peptides.one_2_three[var_yml["code"][1]] = var_yml["name"]
+        # 3. Add entries to ProtoSyn.three_2_one & ProtoSyn.one_2_three
+        ProtoSyn.three_2_one[var_yml["name"]] = var_yml["code"][1]
+        if var_yml["code"][1] in keys(ProtoSyn.one_2_three)
+            @info "Variable $(var_yml["code"][1]) already in the Protosyn.three_2_one dictionary (Currently assigned to $(ProtoSyn.one_2_three[var_yml["code"][1]]))."
+        else
+            ProtoSyn.one_2_three[var_yml["code"][1]] = var_yml["name"]
+        end
 
         # 4. Add same entries for any alternative name
         if "alt" in keys(var_yml)
             for alt_name in var_yml["alt"]
-                Peptides.three_2_one[alt_name] = var_yml["code"][1]
-                Peptides.Dihedral.chi_dict[alt_name] = var_yml["chis"]
+                ProtoSyn.three_2_one[alt_name] = var_yml["code"][1]
+                if alt_name in keys(Peptides.chi_dict)
+                    @info "Variable $(alt_name) already in the Peptides.chi_dict (Currently assigned to $(Peptides.chi_dict[alt_name])."
+                else
+                    Peptides.chi_dict[alt_name] = var_yml["chis"]
+                end
             end
+        end
+    end
+
+    # Re-read the YML grammar file
+    yml = ProtoSyn.read_yml(filename)[key]
+    
+    vars = yml["variables"]
+    for (key, name) in vars
+        if isa(name, Vector{String})
+            for _name in name
+                var_filename = joinpath(ProtoSyn.resource_dir, _name)
+                var_yml = ProtoSyn.read_yml(var_filename)
+                load_extras!(var_yml)
+            end
+        else
+            var_filename = joinpath(ProtoSyn.resource_dir, name)
+            var_yml = ProtoSyn.read_yml(var_filename)
+            load_extras!(var_yml)
         end
     end
 end
 
 load_grammar_extras_from_file!(filename::AbstractString, key::String) = begin
-    load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
+    Peptides.load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
 end
 
 
 """
-# TODO
+    load_default_grammar([::Type{T}])
+
+Load the default Peptides [`LGrammar`](@ref) (from the default
+resources/Peptides/ directory, types as `T <: AbstractFloat`, if not provided
+will use `ProtoSyn.Units.defaultFloat`).
+
+!!! ukw "Note:"
+    The default Peptides [`LGrammar`](@ref) is automatically loaded when using ProtoSyn. It can be found at `Peptides.grammar`.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.load_default_grammar()
+LGrammar{Float64, String, Vector{String}}:
+ (...)
+```
 """
 load_default_grammar(::Type{T}) where {T <: AbstractFloat} = load_grammar_from_file(T, "grammars.yml", "default")
 load_default_grammar() = load_default_grammar(ProtoSyn.Units.defaultFloat)
 
+@info " | Loading default peptides grammar"
 
-"""
-# TODO
-"""
 grammar = load_default_grammar()

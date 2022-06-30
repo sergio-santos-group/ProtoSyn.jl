@@ -1,0 +1,10 @@
+name: eth
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name:   O, id:   2, symbol:  O, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.5986}
+bonds:
+  R: [O]
+graph:
+  root: R
+  adjacency:
+    R: [O]

@@ -1,0 +1,36 @@
+MODEL        1
+ATOM      1    N GLU ?   1       3.326   1.548   0.000        0.00           N
+ATOM      2    H GLU ?   1       2.935   1.514   0.971        0.00           H
+ATOM      3   CX GLU ?   1       2.782   0.881  -0.596        0.00           C
+ATOM      4   CA GLU ?   1       4.734   1.205   0.000        0.00           C
+ATOM      5   HA GLU ?   1       4.966   0.620   0.890        0.00           H
+ATOM      6   CB GLU ?   1       5.099   0.384  -1.232        0.00           C
+ATOM      7  HB1 GLU ?   1       4.516  -0.537  -1.241        0.00           H
+ATOM      8  HB2 GLU ?   1       4.880   0.960  -2.131        0.00           H
+ATOM      9   CG GLU ?   1       6.570   0.048  -1.195        0.00           C
+ATOM     10  HG1 GLU ?   1       7.154   0.968  -1.186        0.00           H
+ATOM     11  HG2 GLU ?   1       6.789  -0.529  -0.296        0.00           H
+ATOM     12   CD GLU ?   1       6.936  -0.774  -2.429        0.00           C
+ATOM     13  OE1 GLU ?   1       7.304  -0.141  -3.454        0.00           O
+ATOM     14  OE2 GLU ?   1       6.844  -2.027  -2.334        0.00           O
+ATOM     15    C GLU ?   1       5.602   2.456  -0.000        0.00           C
+ATOM     16    O GLU ?   1       5.123   3.485   0.448        0.00           O
+ATOM     17   NX GLU ?   1       6.734   2.367  -0.445        0.00           N
+CONECT    1    4    3    2
+CONECT    2    1
+CONECT    3    1
+CONECT    4   15    1    6    5
+CONECT    5    4
+CONECT    6    7    8    9    4
+CONECT    7    6
+CONECT    8    6
+CONECT    9    6   10   11   12
+CONECT   10    9
+CONECT   11    9
+CONECT   12   14    9   13
+CONECT   13   12
+CONECT   14   12
+CONECT   15    4   17   16
+CONECT   16   15
+CONECT   17   15
+ENDMDL

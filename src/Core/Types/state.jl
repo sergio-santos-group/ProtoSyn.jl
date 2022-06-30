@@ -7,7 +7,7 @@ using Printf
 export AtomState, StateMatrix
 
 """
-    AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
+    AtomState{T}(parent::Any, index::Int, t::MVector{3, T}, r::MMatrix{3, 3, T, 9}, b::T, θ::T, ϕ::T, δ::T, Δϕ::T, changed::Bool) where {T <: AbstractFloat}
     
 An [`AtomState`](@ref) instance. Holds information regarding the state of the atom,
 including the cartesian and internal coordinates.
@@ -32,6 +32,7 @@ Return an empty [`AtomState`](@ref) instance, with all default values.
 * `b::T` - Distance (in Angstrom Å) to parent atom (default: 0)
 * `θ::T` - Angle (in radians) to ascendent atoms (default: 0)
 * `ϕ::T` - Dihedral angle (in radians) to ascendent atoms (default: 0)
+* `δ::T` - Atomic partial charge (default: 0.0)
 * `Δϕ::T` - Dihedral angle change (in radians) to be applied to children atoms (default: 0)
 * `changed::Bool` - Flag indicating whether this [`AtomState`](@ref) has been modified (useful in some functions such as [`i2c!`](@ref ProtoSyn.i2c!) and [`c2i!`](@ref ProtoSyn.c2i!)) (default: false)
 
@@ -49,9 +50,9 @@ AtomState{Float64}:
  Index: -1
  T: [0.000, 0.000, 0.000]
  b: 0.000 Å | θ:  0.000 rad (   0.00°) | ϕ:  0.000 rad (   0.00°) | Δϕ:  0.000 rad (   0.00°)
+ δ: 0.000
  Changed: false
 ```
-
 """
 mutable struct AtomState{T <: AbstractFloat}
     parent
@@ -62,7 +63,10 @@ mutable struct AtomState{T <: AbstractFloat}
     # internal coordinates
     b::T                    # self<->parent bond length
     θ::T                    # self<->parent<->grandparent angle
-    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral <- GRANDCHILDREN ?!
+    ϕ::T                    # self<->parent<->grandparent<->grand-grandparent dihedral
+
+    # charge
+    δ::T                    # partial charge
     
     Δϕ::T                   # change in dihedral angles (to be applied to children)
     changed::Bool           # flag
@@ -74,6 +78,7 @@ AtomState{T}() where {T} = begin
         -1,
         MVector{3,T}(zeros(T, 3)),
         MMatrix{3,3,T,9}(Matrix{T}(I,3,3)),
+        zero(T),
         zero(T),
         zero(T),
         zero(T),
@@ -94,7 +99,9 @@ Base.setproperty!(ns::AtomState{T}, key::Symbol, val) where T = begin
     elseif key == :t
         setfield!(ns, :changed, true)
         setfield!(ns, key, MVector{3, T}(val))
-        update_state_matrix(ns.parent.x, val, :, ns.index, update_items = false)
+        if ns.parent !== nothing
+            update_state_matrix(ns.parent.x, val, :, ns.index, update_items = false)
+        end
     else
         setfield!(ns, :changed, true)
         setfield!(ns, key, val)
@@ -112,6 +119,7 @@ function Base.show(io::IO, as::AtomState{T}) where {T <: AbstractFloat}
     @printf(io, " T: [%.3f, %.3f, %.3f]\n", as.t[1], as.t[2], as.t[3])
     # @printf(io, " b: $(as.b) | θ: $(as.θ) rad ($(deg2rad(as.θ))°) | ϕ: $(as.ϕ) | Δϕ: $(as.Δϕ)")
     @printf(io, " b: %5.3f Å | θ: %6.3f rad (%7.2f°) | ϕ: %6.3f rad (%7.2f°) | Δϕ: %6.3f rad (%7.2f°)\n", as.b, as.θ, rad2deg(as.θ), as.ϕ, rad2deg(as.ϕ), as.Δϕ, rad2deg(as.Δϕ))
+    @printf(io, " δ: %5.3f\n", as.δ)
     println(io, " Changed: $(as.changed)")
 end
 
@@ -335,11 +343,38 @@ end
 Base.getindex(s::State, i::Int) = begin
     s.items[i + s.index_offset]
 end
+
 Base.getindex(s::State, at::Atom) = begin
     s.items[at.index + s.index_offset]
 end
+
+Base.getindex(s::State, ats::Vector{Atom}) = begin
+    tr = Vector{AtomState}()
+    for at in ats
+        push!(tr, s[at])
+    end
+    
+    return tr
+end
+
 Base.getindex(s::State, seg::Segment) = begin
     s.items[(seg[1][1].index + s.index_offset):(seg[end][end].index + s.index_offset)]
+end
+
+function Base.setindex!(s::State, ns::AtomState{T}, at::Atom) where {T <: AbstractFloat}
+    os         = s[at]
+    os.parent  = s
+    os.b       = ns.b
+    os.θ       = ns.θ
+    os.ϕ       = ns.ϕ
+    os.Δϕ      = ns.Δϕ
+    os.δ       = ns.δ
+    os.changed = ns.changed
+    os.index   = ns.index
+    os.t       = ns.t
+    os.r       = ns.r
+
+    return os
 end
 
 Base.firstindex(s::State) = 1-s.index_offset
@@ -401,16 +436,25 @@ end
 Base.copy(as::AtomState{T}) where {T <: AbstractFloat} = begin
     return ProtoSyn.AtomState(
         nothing, as.index, copy(as.t), copy(as.r),
-        as.b, as.θ, as.ϕ, as.Δϕ, as.changed)
+        as.b, as.θ, as.ϕ, as.δ, as.Δϕ, as.changed)
+end
+
+Base.push!(s::State{T}, as::AtomState{T}) where T = begin
+    push!(s.items, as)
+    s.x.coords = hcat(s.x.coords, as.t)
+    s.f = hcat(s.f, [T(0.0), T(0.0), T(0.0)])
+    s.size += 1
+    as.parent = s
+    return s
 end
 
 #endregion State
 
 
 function atmax(state::State{T}, comp::Symbol) where T
-    m = T(0)
+    m   = T(0)
     idx = 0
-    x = getproperty(state, comp)
+    x   = getproperty(state, comp)
     for i = 1:state.size
         f = x[1, i]^2 + x[2, i]^2 + x[3, i]^2
         if f > m
@@ -418,6 +462,7 @@ function atmax(state::State{T}, comp::Symbol) where T
             idx = i
         end
     end
+    
     return sqrt(m), idx
 end
 

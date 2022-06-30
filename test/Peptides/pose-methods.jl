@@ -1,6 +1,17 @@
 using Printf
 
 @testset verbose = true "Peptides | Pose methods $(repeat("-", 33))" begin
+
+    @testset verbose = true "$(@sprintf "%-54s" "Identify terminals")" begin
+        pose = copy(backup)
+
+        @test ProtoSyn.Peptides.is_C_terminal(pose.graph[1, 1]) === false
+        @test ProtoSyn.Peptides.is_C_terminal(pose.graph[1, 3]) === true
+        @test ProtoSyn.Peptides.is_N_terminal(pose.graph[1, 1]) === true
+        @test ProtoSyn.Peptides.is_N_terminal(pose.graph[1, 3]) === false
+        @test ProtoSyn.Peptides.identify_c_terminal(pose.graph[1]) === pose.graph[1, 3, "C"]
+    end
+
     @testset verbose = true "$(@sprintf "%-54s" "Append fragment (from fragment, to end)")" begin
         pose = copy(backup)
         frag = ProtoSyn.fragment(res_lib, seq"AAA")
@@ -352,8 +363,6 @@ using Printf
         @test pose.graph[1][2]["HA2"] === nothing
 
         ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 21
@@ -379,8 +388,6 @@ using Printf
         @test pose.graph[1][3]["HA2"] === nothing
 
         ProtoSyn.Peptides.remove_sidechains!(pose, res_lib, rid"2")
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 29
@@ -406,8 +413,6 @@ using Printf
         @test pose.graph[1][2]["HA2"] === nothing
 
         ProtoSyn.Peptides.force_remove_sidechains!(pose)
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 15
@@ -432,8 +437,6 @@ using Printf
         @test pose.graph[1][3]["HA2"] === nothing
 
         ProtoSyn.Peptides.force_remove_sidechains!(pose, rid"2")
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 27
@@ -451,8 +454,6 @@ using Printf
     @testset verbose = true "$(@sprintf "%-54s" "Add sidechain (no selection)")" begin
         pose = copy(backup)
         ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 21
@@ -469,14 +470,12 @@ using Printf
         @test length(pose.graph[1][2]["CA"].children) === 3
         @test pose.graph[1][2]["HA1"] === nothing
         @test pose.graph[1][2]["HA2"] === nothing
-        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.5769993802877447, 3.654001694297366, 1.2320001352913499] atol = 1e-5
+        @test collect(pose.state[pose.graph[1][2]["CB"]].t) ≈ [3.792279900244243, -4.787108074155822, -1.2320025370097143] atol = 1e-5
     end
 
     @testset verbose = true "$(@sprintf "%-54s" "Add sidechain (with selection)")" begin
         pose = copy(backup)
         ProtoSyn.Peptides.remove_sidechains!(pose, res_lib)
-        @test pose.state.i2c == true
-        sync!(pose)
         @test pose.state.i2c == false
         @test pose.graph[1][2].name == "MET"
         @test pose.state.size == 21

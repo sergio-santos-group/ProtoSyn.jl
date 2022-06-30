@@ -12,21 +12,85 @@ module TorchANI
     const _model   = PyNULL()
 
     function __init__()
-        copy!(torch, pyimport("torch"))
-        copy!(torchani, pyimport("torchani"))
+        printstyled(" | Loading TorchANI\n", color = :cyan)
 
-        if torch.cuda.is_available()
-            copy!(device, torch.device("cuda"))
-        else
-            copy!(device, torch.device("cpu"))
+        torch_is_available = false
+        try
+            copy!(torch, pyimport("torch"))
+            torch_is_available = true
+        catch LoadError
+            if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+                ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+            end
+            if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
+                println()
+                @warn """
+                📍 ProtoSyn was not able to identify `torch` in this system.
+                PyCall is currently configured to use the Python version at $(PyCall.current_python()).
+                In order to use the TorchANI energy function component, make sure to:
+                    - Set ENV["PYTHON"] to the path of python executable you wish to use, run Pkg.build("PyCall") and re-launch Julia and ProtoSyn.
+                    - Make sure `torch` is installed in the machine trying to load ProtoSyn.
+
+                In order to install `torch`, follow the following instructions:
+                (1) Install Torch: pip install --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cu100/torch_nightly.html
+                (2) Re-launch Julia and ProtoSyn
+
+                ProtoSyn will continue loading, but the `Calculators.TorchANI` module will be unavailable.
+                To surpress further warnings for unavailable energy function components, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
+                \$ export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false
+                Optionally, add the above line to ~/.bashrc to persistently supress warnings in further sessions.
+
+                """
+            end
         end
-        
-        copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
-        if ProtoSyn.verbose.mode
-            @info "TorchANI is using:"
-            @info " torch version $(torch.__version__)"
-            @info " cuda-toolkit version $(torch.version.cuda)"
-            @info " torchani version $(torchani.__version__)"
+
+        torchani_is_available = false
+        try
+            copy!(torchani, pyimport("torchani"))
+            torchani_is_available = true
+        catch LoadError
+            if !("JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC" in keys(ENV))
+                ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] = true
+            end
+            if ENV["JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC"] === "true"
+                println()
+                @warn """
+                📍 ProtoSyn was not able to identify `torchani` in this system.
+                PyCall is currently configured to use the Python version at $(PyCall.current_python()).
+                In order to use the TorchANI energy function component, make sure to:
+                    - Set ENV["PYTHON"] to the path of python executable you wish to use, run Pkg.build("PyCall") and re-launch Julia and ProtoSyn.
+                    - Make sure `torchani` is installed in the machine trying to load ProtoSyn.
+
+                In order to install `torchani`, follow the following instructions:
+                (1) Install TorchANI: pip install torchani
+                (2) Re-launch Julia and ProtoSyn
+
+                ProtoSyn will continue loading, but the `Calculators.TorchANI` module will be unavailable.
+                To surpress further warnings for unavailable energy function components, set the JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC environment flag and re-launch Julia and ProtoSyn. 
+                \$ export JULIA_PROTOSYN_WARN_NON_AVALIABLE_EFC=false
+                Optionally, add the above line to ~/.bashrc to persistently supress warnings in further sessions.
+
+                """
+            end
+        end
+
+        if torch_is_available
+            if torch.cuda.is_available()
+                copy!(device, torch.device("cuda"))
+            else
+                copy!(device, torch.device("cpu"))
+            end
+        end
+
+        if torchani_is_available
+            copy!(_model, torchani.models.ANI2x(periodic_table_index = true).to(device))
+        end
+
+        if torch_is_available && torchani_is_available
+            # @info "TorchANI is using:"
+            # @info " torch version $(torch.__version__)"
+            # @info " cuda-toolkit version $(torch.version.cuda)"
+            # @info " torchani version $(torchani.__version__)"
         end
     end
 
@@ -61,24 +125,30 @@ module TorchANI
      8
     ```
     """
-    function get_ani_species(container::ProtoSyn.AbstractContainer)
+    function get_ani_species(pose::Pose, selection::Opt{AbstractSelection})
         
         periodic_table = Dict("H" => 1, "C" => 6, "N" => 7, "O" => 8, "S" => 16, "Se" => 34)
 
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
         species = Vector{Int64}()
-        for atom in eachatom(container)
+        for atom in sele(pose, gather = true)
             push!(species, periodic_table[atom.symbol])
         end
 
         return species
     end
 
-    get_ani_species(pose::Pose) = get_ani_species(pose.graph)
+    # get_ani_species(pose::Pose, selection::Opt{AbstractSelection}) = get_ani_species(pose, selection)
 
     # --- SINGLE MODEL
     
     """
-        Calculators.calc_torchani_model([::A], pose::Pose; update_forces::Bool = false, model::Int = 3) where {A}
+        calc_torchani_model([::A], pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3) where {A}
         
     Calculate and return the [`Pose`](@ref) `pose` energy according to a single
     TorchANI model neural network. The model can be defined using `model_index`
@@ -113,10 +183,17 @@ module TorchANI
 
         (2) - Use [`calc_torchani_model_xmlrpc`](@ref) instead.
     """
-    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false; model::Int = 3)
+    function calc_torchani_model(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = update_forces, device = device).float()
-        s           = get_ani_species(pose)
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        coords = pose.state.x.coords[:, sele(pose).content]'
+        coordinates = torch.tensor([coords], requires_grad = update_forces, device = device).float()
+        s           = get_ani_species(pose, selection)
         species     = torch.tensor([s], device = device)
         m1 = _model.species_converter((species, coordinates))
         m2 = _model.aev_computer(m1)
@@ -149,8 +226,8 @@ module TorchANI
         end
     end
 
-    calc_torchani_model(pose::Pose, update_forces::Bool = false; model::Int = 3) = begin
-        calc_torchani_model(ProtoSyn.acceleration.active, pose, update_forces, model = model)
+    calc_torchani_model(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; model::Int = 3) = begin
+        calc_torchani_model(ProtoSyn.acceleration.active, pose, selection, update_forces, model = model)
     end
 
     # --- ENSEMBLE
@@ -178,11 +255,18 @@ module TorchANI
     (-0.12801788747310638, [ ... ])
     ```
     """
-    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, update_forces::Bool = false)
+    function calc_torchani_ensemble(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false)
         
-        coordinates = torch.tensor([pose.state.x.coords'], requires_grad = true, device = device).float()
+        if selection === nothing
+            sele = TrueSelection{Atom}()
+        else
+            sele = ProtoSyn.promote(selection, Atom)
+        end
+
+        coords = pose.state.x.coords[:, sele(pose).content]'
+        coordinates = torch.tensor([coords], requires_grad = true, device = device).float()
         
-        s           = get_ani_species(pose)
+        s           = get_ani_species(pose, selection)
         species     = torch.tensor([s], device = device)
 
         m1 = _model.species_converter((species, coordinates))
@@ -197,14 +281,14 @@ module TorchANI
         end
     end
 
-    calc_torchani_ensemble(pose::Pose, update_forces::Bool = false) = begin
-        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, update_forces)
+    calc_torchani_ensemble(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false) = begin
+        calc_torchani_ensemble(ProtoSyn.acceleration.active, pose, selection, update_forces)
     end
 
     # * Default Energy Components ----------------------------------------------
 
     """
-        get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_torchani_model(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default TorchANI model [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an
@@ -221,19 +305,34 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_model()
-    Name : TorchANI_ML_Model
-    Weight (α) : 1.0
- Update forces : true
-       Setings :
-         :model => 3
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | TorchANI_ML_Model                |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_torchani_model              |
+    +---------------------------------------------------+
+     |    +----------------------------------------------------------------------------------+
+     ├──  ● Settings                      | Value                                            |
+     |    +----------------------------------------------------------------------------------+
+     |    | model                         | 3                                                |
+     |    +----------------------------------------------------------------------------------+
+     |    
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_torchani_model(;α::T = 1.0) where {T <: AbstractFloat}
-        EnergyFunctionComponent("TorchANI_ML_Model", calc_torchani_model, Dict{Symbol, Any}(:model => 3), α, true)
+        EnergyFunctionComponent(
+            "TorchANI_ML_Model",
+            calc_torchani_model,
+            nothing,
+            Dict{Symbol, Any}(:model => 3),
+            α,
+            true)
     end
     
     """
-        get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
+        get_default_torchani_ensemble(;[α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default TorchANI ensemble [`EnergyFunctionComponent`](@ref). `α`
     sets the component weight (on an
@@ -248,15 +347,26 @@ module TorchANI
     # Examples
     ```jldoctest
     julia> ProtoSyn.Calculators.TorchANI.get_default_torchani_ensemble()
-    Name : TorchANI_ML_Ensemble
-    Weight (α) : 1.0
- Update forces : true
-       Setings : -
+    🞧  Energy Function Component:
+    +---------------------------------------------------+
+    | Name           | TorchANI_ML_Ensemble             |
+    | Alpha (α)      | 1.0                              |
+    | Update forces  | true                             |
+    | Calculator     | calc_torchani_ensemble           |
+    +---------------------------------------------------+
+     └──  ○  Selection: nothing
     ```
     """
     function get_default_torchani_ensemble(;α::T = 1.0) where {T <: AbstractFloat}
-        return EnergyFunctionComponent("TorchANI_ML_Ensemble", calc_torchani_ensemble, Dict{Symbol, Any}(), α, true)
+        return EnergyFunctionComponent(
+            "TorchANI_ML_Ensemble",
+            calc_torchani_ensemble,
+            nothing,
+            Dict{Symbol, Any}(),
+            α,
+            true)
     end
 
     include("torchani_xmlrpc.jl")
+    include("torchani_ref_energy.jl")
 end

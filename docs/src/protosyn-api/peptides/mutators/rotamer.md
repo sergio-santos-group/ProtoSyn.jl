@@ -4,7 +4,7 @@ CurrentModule = ProtoSyn.Peptides.Mutators
 
 # Rotamer Mutator
 
-One of the `AbstractMutator` types made available by the ProtoSyn.Peptides module is the [`RotamerMutator`](@ref), allowing a user to sample the sidechain conformation of one or more [`Residue`](@ref) instances. This has, for example, applications in sidechain packaging, ligand adsorption stabilization or active site generation algorithms, among others.
+One of the `AbstractMutator` types made available by the ProtoSyn.Peptides module is the [`RotamerMutator`](@ref), allowing a user to sample the sidechain conformation of one or more [`Residue`](@ref) instances. This has, for example, applications in sidechain packaging, ligand adsorption stabilization or active site generation algorithms, among others. For more information, see the [Rotamers](@ref) submodule section.
 
 ```@docs
 RotamerMutator

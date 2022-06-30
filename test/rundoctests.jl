@@ -5,11 +5,13 @@
 # * regular test script `runtests.jl`. 
 
 using Test, Documenter, ProtoSyn
+ProtoSyn.set_logger_to_error()
+
 DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
     using ProtoSyn.Units;
     using Random; Random.seed!(1);
-    res_lib  = ProtoSyn.Peptides.grammar(Float64);
+    res_lib  = ProtoSyn.Peptides.grammar;
     frag     = fragment(res_lib, seq"AAA");
     pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL"); sync!(pose);
     pose_mod = copy(pose);

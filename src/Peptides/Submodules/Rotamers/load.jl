@@ -1,5 +1,4 @@
-using ProtoSyn.Peptides: Dihedral
-using StatsBase: Weights
+# TODO: Documentation?
 
 """
     load_dunbrack([::Type{T}], [filename::String]) where {T <: AbstractFloat}
@@ -55,12 +54,12 @@ function fill_BBD_library_matrices(::Type{T}, filename::String, matrices::Dict{S
             name = string(elem[1])
 
             #  b) Gather chi values/standard deviation
-            chis = Dict{DihedralType, Tuple{T, T}}()
+            chis = Dict{AbstractSelection, Tuple{T, T}}()
             for index in 1:4
                 elem[index + 4] == "0" && continue
                 value = deg2rad(parse(T, elem[index + 9]))
                 sd    = deg2rad(parse(T, elem[index + 13]))
-                chis[getfield(Dihedral, Symbol("chi$index"))] = (value, sd)
+                chis[ChiSelection(index)] = (value, sd)
             end
 
             #  c) Gather probability and create the Rotamer
@@ -174,11 +173,11 @@ function load_BBI_rotamer_library(::Type{T}, filename::String) where {T <: Abstr
             exists = map((x) -> parse(Bool, string(x)), elems[2:5])
             values = map((x) -> deg2rad(parse(T, string(x))), elems[6:end])
             push!(weights, values[1])
-            chis = Dict{DihedralType, Tuple{Opt{T}, T}}()
-            if exists[1]; chis[ProtoSyn.Peptides.Dihedral.chi1] = (values[2], values[6]); end
-            if exists[2]; chis[ProtoSyn.Peptides.Dihedral.chi2] = (values[3], values[7]); end
-            if exists[3]; chis[ProtoSyn.Peptides.Dihedral.chi3] = (values[4], values[8]); end
-            if exists[4]; chis[ProtoSyn.Peptides.Dihedral.chi4] = (values[5], values[9]); end
+            chis = Dict{AbstractSelection, Tuple{Opt{T}, T}}()
+            if exists[1]; chis[chi"1"] = (values[2], values[6]); end
+            if exists[2]; chis[chi"2"] = (values[3], values[7]); end
+            if exists[3]; chis[chi"3"] = (values[4], values[8]); end
+            if exists[4]; chis[chi"4"] = (values[5], values[9]); end
             push!(rotamers, Rotamer{T}(string(elems[1]), chis))
         end
 

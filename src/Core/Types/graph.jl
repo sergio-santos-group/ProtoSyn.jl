@@ -180,7 +180,7 @@ end
 Construct a [`Topology`](@ref), with the given `name` and `id`. A
 [`Topology`](@ref) is the top level of hierarchy in a Graph, and holds a `Root`
 [`Residue`](@ref), therefore initializing the internal coordinates system in the
-corresponding [State] of a [Pose](@ref).  *Note:* [`Topology`](@ref) is of super
+corresponding [State] of a [Pose](@ref pose-types).  *Note:* [`Topology`](@ref) is of super
 type `AbstractTopology`, which is an `AbstractContainer`.
 
 # Fields
@@ -192,7 +192,7 @@ type `AbstractTopology`, which is an `AbstractContainer`.
 * `container::Nothing` - Used to identify the root [`Residue`](@ref)  (default: `nothing`)
 
 !!! ukw "Note:"
-    When in a [Pose](@ref), both the [`Topology`](@ref) and the corresponding
+    When in a [Pose](@ref pose-types), both the [`Topology`](@ref) and the corresponding
     [State](@ref state-types) need to share the same `:id`. This is used to identify
     situations where a change in one of this structures was not reflected on the
     other.

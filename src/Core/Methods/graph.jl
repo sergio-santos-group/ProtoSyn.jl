@@ -10,16 +10,21 @@ Return the first `Atom` in `AbstractContainer` `container` that has no parent.
 The iteration follows the [`Atom`](@ref) instance `:id` field, if correctly
 indexed. If no [`Atom`](@ref) instance without parent is found (i.e.: circular
 structures), return `nothing`. Note that the [`root`](@ref) atoms are not
-considered. 
+considered. Note that if multiple origin [`Atom`](@ref) instances exists, this
+method return only the first found, based on the current [`Atom`](@ref) order
+in the given `AbstractContainer` `container`.
 
 # See also
-[`root`](@ref) [`reindex`](@ref)
+[`root`](@ref) [`reindex`](@ref) [`sort_atoms_by_graph!`](@ref)
 
 """
 origin(container::AbstractContainer) = begin
+    root = ProtoSyn.root(container)
     for atom in eachatom(container)
         !hasparent(atom) && return atom
+        atom.parent === root && return atom
     end
+    
     return nothing
 end
 
@@ -86,7 +91,7 @@ Set `parent` as the parent of `child`, while adding `child` to
 [`popparent!`](@ref)
 """
 function setparent!(child::T, parent::T) where {T <: AbstractContainer}
-    ProtoSyn.verbose.mode && @info "Setting $parent as the parent of $child ..."
+    @info "Setting $parent as the parent of $child ..."
     hasparent(child) && begin
         error("unable to setparent! of non-orphan item")
     end
@@ -107,7 +112,7 @@ from `parent.children` (only if `child` is a child of `parent`).
 [`setparent!`](@ref)
 """
 function popparent!(child::AbstractContainer)
-    ProtoSyn.verbose.mode && @info "Popping the parent of $child ..."
+    @info "Popping the parent of $child ..."
     if hasparent(child)
         parent = child.parent
         i = findfirst(x -> x === child, parent.children)
@@ -169,7 +174,7 @@ Segment{/UNK:1/UNK:1}
 ```
 """
 function reindex(topology::Topology; set_ascendents::Bool = true)
-    ProtoSyn.verbose.mode && @info "Re-indexing topology. Set ascendents = $(set_ascendents)."
+    @info "Re-indexing topology. Set ascendents = $(set_ascendents)."
     aid = rid = sid = 0
     for segment in topology.items
         segment.id    = (sid += 1)
@@ -188,6 +193,7 @@ function reindex(topology::Topology; set_ascendents::Bool = true)
     # of possible problems with index assignment)
     if set_ascendents
         for atom in eachatom(topology)
+            # println("\n Setting ascendents on atom: $atom")
             atom.ascendents = ascendents(atom, 4)
         end
     end
@@ -223,7 +229,7 @@ julia> ascendents(pose.graph[1][1][4], 4)
 ```
 """
 function ascendents(container::AbstractContainer, level::Int)
-    # println("$container (Level $level)")
+    # println("$container (Level $level) (Next: $(container.parent))")
     if level > 1
         return (container.index, ascendents(container.parent, level - 1)...)
     else
@@ -233,16 +239,39 @@ end
 
 
 """
-# TODO
+    rename!(atom::Atom, name::String; force_rename::Bool = false)
+
+Rename the selected [`Atom`](@ref) instance to the given `name`. Also updates
+the [`Atom`](@ref) container `:itemsbyname` field. If `force_rename` is set to
+`true` (`false`, by default), will change existing [`Atom`](@ref) instances with
+the same `name` trying to be introduced to adopt a temporary name (current name
+with \"_o\" appendix).
+
+# Examples
+```
+julia> ProtoSyn.rename!(pose.graph[1][1]["N"], "N1")
+Atom{/2a3d:51894/A:1/MET:1/N1:1}
+```
 """
-function rename!(atom::Atom, name::String)
+function rename!(atom::Atom, name::String; force_rename::Bool = false)
     similar = findfirst(atom -> atom.name === name, atom.container.items)
 
     # Change to same name
     similar !== nothing && atom.container.items[similar] === atom && return atom 
 
-    @assert similar === nothing "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar]))"
-    pop!(atom.container.itemsbyname, atom.name)
+    if !(similar === nothing)
+        if force_rename
+            @info "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar])). Changing existing atom to temporary placeholder."
+            similar_atom = atom.container.items[similar]
+            ProtoSyn.rename!(similar_atom, "$(similar_atom.name)_o") # Temporary
+        else
+            @assert similar === nothing "Tried to rename atom $atom to $name, but another atom in the same Residue was found with that name ($(atom.container.items[similar]))"
+        end
+    end
+
+    if !force_rename
+        pop!(atom.container.itemsbyname, atom.name)
+    end
     atom.name = name
     atom.container.itemsbyname[name] = atom
 
@@ -254,7 +283,7 @@ export unbond!
 """
     unbond!(pose::Pose, at1::Atom, at2::Atom; [keep_downstream_position::Bool = true])::Pose
     
-Return a [Pose](@ref) instance with both given [`Atom`](@ref) instances unbonded
+Return a [Pose](@ref pose-types) instance with both given [`Atom`](@ref) instances unbonded
 (removed from eachother `bonds` list, pops parenthood and sets the downstream
 [`Residue`](@ref)`.parent` field to be the Root of the upstream
 [`Topology`](@ref)). If `keep_downstream_position` is set to `true` (is, by
@@ -278,12 +307,13 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 ```
 """
 function unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = true)::Pose
-    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbond!ed."
+    @assert (at2 in at1.bonds) & (at1 in at2.bonds) "Atoms $at1 and $at2 are not bonded and therefore cannot be unbonded."
     isparent(at1, at2) && return _unbond!(pose, at1, at2; keep_downstream_position = keep_downstream_position)
     isparent(at2, at1) && return _unbond!(pose, at2, at1; keep_downstream_position = keep_downstream_position)
     
     # The two atoms might be bonded but not have a parenthood relationship, in
     # which case we just remove eachother from the bond list and return the pose
+    @info " Unbonding $at1 <-> $at2 (With NO parenthood relationships)"
     i = findfirst(at1, at2.bonds)
     i !== nothing && deleteat!(at2.bonds, i)
     j = findfirst(at2, at1.bonds)
@@ -293,6 +323,8 @@ end
 
 function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bool = true)::Pose
     
+    @info " Unbonding $at1 <-> $at2"
+
     # Following this two step example:
     # 1) ProtoSyn.setdihedral!(pose.state, pose.graph[1][10]["CG"], 90°)
     # 2) ProtoSyn.unbond!(pose, pose.graph[1][10]["CG"],pose.graph[1][10]["CB"])
@@ -321,6 +353,7 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
         at1.container.container.container !== nothing && begin
             setparent!(at2, _root)
         end
+        @info " $at2 parent is now Root."
         reindex(pose.graph) # To set new ascendents
     end
 
@@ -332,8 +365,12 @@ function _unbond!(pose::Pose, at1::Atom, at2::Atom; keep_downstream_position::Bo
     end
     
     if keep_downstream_position
+
         ProtoSyn.request_c2i!(pose.state, all = true)
-        !isfragment(pose) && sync!(pose)
+        !isfragment(pose) && begin
+            @info " Fixating cartesian positions."
+            sync!(pose)
+        end
     end
 
     ProtoSyn.request_i2c!(pose.state)    
@@ -357,7 +394,7 @@ julia> ProtoSyn.bond(pose.graph[1][1]["C"], pose.graph[1][2]["CA"])
 ```
 """
 @inline function bond(at1::Atom, at2::Atom)
-    @assert at1.container.container === at2.container.container "can only bond atoms within the same segment"
+    @assert at1.container.container === at2.container.container "Can only bond atoms within the same segment.\n Tried to bond $at1 <-> $at2"
     !in(at2, at1.bonds) && push!(at1.bonds, at2)
     !in(at1, at2.bonds) && push!(at2.bonds, at1)
     return nothing
@@ -421,49 +458,7 @@ count_atoms(r::Residue) = r.size
 count_atoms(a::Atom) = 1
 
 
-export travel_graph
-
-"""
-    travel_graph(start::Atom; [stop::Opt{Atom} = nothing])
-
-Return a `Vector{Atom}` with all atom instances between [`Atom`](@ref) `start`
-and `stop`, while following the structure's [Graph](@ref state-types). If no `stop`
-[`Atom`](@ref) instance is provided or if it isn't found as a downstream parent
-of the `start` [`Atom`](@ref), all instances until no children [`Atom`](@ref)
-instances are found are returned (for example, until the end of the current
-[Pose](@ref) of [`Segment`](@ref)). Note that the order of the returned
-[`Atom`](@ref) instances reflects the organization of the graph followed, and
-not the distance/parenthood to the `start` [`Atom`](@ref), and should therefore
-be ignored in most cases.
-
-# See also
-[`is_contiguous`](@ref) [`hasparent`](@ref) [`setparent!`](@ref)
- 
-# Examples
-```jldoctest
-julia> ProtoSyn.travel_graph(pose.graph[1][end][10])
-4-element Vector{Atom}:
- Atom{/UNK:1/UNK:1/LEU:21/CD1:334}
- Atom{/UNK:1/UNK:1/LEU:21/HD13:337}
- Atom{/UNK:1/UNK:1/LEU:21/HD12:336}
- Atom{/UNK:1/UNK:1/LEU:21/HD11:335}
-```
-"""
-function travel_graph(start::Atom, stop::Opt{Atom} = nothing)::Vector{Atom}
-    atoms = Vector{Atom}([start])
-    stack = Vector{Atom}(copy(start.children))
-
-    while length(stack) > 0
-        atom_i = pop!(stack)
-        if atom_i != stop
-            stack = vcat(stack, copy(atom_i.children))
-        end
-        push!(atoms, atom_i)
-    end
-
-    return atoms
-end
-
+include("travel-graph.jl")
 
 export ids
 """
@@ -568,6 +563,328 @@ function is_contiguous(pose::Pose, selection::ProtoSyn.AbstractSelection)
     return marks == length(selected_residues)
 end
 
+
+"""
+    infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing)
+
+Infers parenthood of [`Atom`](@ref) instances on the given `AbstractContainer`
+`container`, from bond information, using a custom algorithm similar to breath
+first algorithm (atoms are sorted based on the size of the downstream graph and
+aromaticity). By default, the [Graph](@ref graph-types) origin is set to the first
+[`Atom`](@ref) instance in the `container`. This behaviour can be controlled by
+setting a `start` [`Atom`](@ref) as the origin of the new infered parenthood
+[Graph](@ref graph-types). If `overwrite` is set to `true` (`false`, by default), will
+overwrite existing pranthood information. After infering parenthood, if changes
+to the [Graph](@ref graph-types) occurred, the existing internal coordinates match different
+cartesian coordinates. It's suggested to update internal coordinates
+([`request_i2c!`](@ref ProtoSyn.request_i2c!) &
+[`sync!`](@ref ProtoSyn.sync!)). For more details, see the
+[Travelling the Graph](@ref) section. If the `linear_aromatics` flag is set to
+`true` (is, by default), aromatic rings are treated as isolated structures is an
+otherwise linear [Graph](@ref graph-types) (for example, in some protein aminoacids). More
+complex structures (such as carbon sheets) have interlaced aromatic rings, and
+the `linear_aromatics` should be set to `false` to ensure all [`Atom`](@ref)
+instances are visited.
+
+# See also
+[`travel_bonds`](@ref) [`infer_bonds!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.infer_parenthood!(pose.graph[1], overwrite = true)
+Segment{/2a3d:8625/A:1}
+```
+"""
+function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing, linear_aromatics::Bool = true)
+
+    w = Dict{String, Int}("H" => 1, "N" => 5, "C" => 15, "O" => 10, "S" => 20)
+
+    @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
+
+    atoms   = collect(eachatom(container))
+
+    aromatics = AromaticSelection()(container)
+
+    if start === nothing
+        start = collect(eachatom(container))[1]
+    end
+
+    n_atoms = length(atoms)
+    visited = ProtoSyn.Mask{Atom}(n_atoms)
+    changed = ProtoSyn.Mask{Atom}(n_atoms)
+
+    # First atom is always connected to root
+    _root = ProtoSyn.root(container)
+    if overwrite && hasparent(start)
+        ProtoSyn.popparent!(start)
+    end
+    ProtoSyn.setparent!(start, _root)
+
+    # Note the usage of breath-first search (BFS) algorithm. This is the most
+    # chemically correct was of attributing parenthood relationships, in
+    # accordance with generally accepted conventions.
+    stack = Vector{Atom}([start])
+    
+    while length(stack) > 0
+
+        atom_i = pop!(stack)
+        i      = findfirst((a) -> a === atom_i, atoms)
+        @info "Focus on atom $atom_i - $i"
+        visited[i] = true
+
+        atom_i_bonds = Vector{Atom}()
+        for atom_j in atom_i.bonds
+            atom_j_index = findfirst((a) -> a === atom_j, atoms)
+            if atom_j_index !== nothing && !visited[atom_j_index]
+                push!(atom_i_bonds, atom_j)
+            end
+        end
+
+        if length(atom_i_bonds) === 0
+            continue
+        end
+
+        atom_i_bond_weight = [w[a.symbol] for a in atom_i_bonds]
+        atom_i_arom_weight = Vector{Int}()
+        for atom_j in atom_i_bonds
+            atom_j_index = findfirst((a) -> a === atom_j, atoms)
+            if atom_j_index === nothing
+                aw = 0
+            else
+                aw = aromatics[atom_j_index] ? 25 : 0
+            end
+            push!(atom_i_arom_weight, aw)
+        end
+        atom_i_weight      = atom_i_bond_weight .+ atom_i_arom_weight
+        @info "Atom: $atom_i"
+        @info " Non-visited Bonds: $([x.name for x in atom_i_bonds])"
+        @info "     Symbol weight: $atom_i_bond_weight"
+        @info "   Aromatic weight: $atom_i_arom_weight"
+
+        # Case exists same symbol & same aromaticity
+        atom_i_weight_set = collect(Set(atom_i_weight))
+        if length(atom_i_weight_set) < length(atom_i_weight)
+            for weight in atom_i_weight_set
+                eq_weight = findall((w) -> w === weight, atom_i_weight)
+                length(eq_weight) === 1 && continue
+                eq_weight_atoms = atom_i_bonds[eq_weight]
+
+                # Solve equalization with size of downstream bond graph
+                lengths = Vector{Int}()
+                for eq_weight_atom in eq_weight_atoms
+                    contacts_visited = false
+                    for range in 1:3
+                        atoms_in_range = ProtoSyn.travel_bonds(eq_weight_atom, range, atom_i)
+                        @info "For range $range, atoms in range of $eq_weight_atom : $atoms_in_range"
+                        for atom_in_range in atoms_in_range[2:end]
+                            atom_in_range_index = findfirst((a)->a === atom_in_range, atoms)
+                            if atom_in_range_index === nothing
+                                continue
+                            elseif visited[atom_in_range_index]
+                                push!(lengths, range)
+                                contacts_visited = true
+                                break
+                            end
+                        end
+                        contacts_visited && break
+                    end
+                    if !contacts_visited
+                        push!(lengths, 4)
+                    end
+                end
+
+                # If first one is, all equal weighted atoms are
+                # Aromatic     : longer first
+                # Non-aromatic : shorter first
+                permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
+                @info "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
+                atom_i_weight[eq_weight] .+= permvec
+            end
+        end
+
+        permvec = sortperm(atom_i_weight, rev = false)
+        atom_i_bonds = atom_i_bonds[permvec]
+        @info repeat("-", 40)
+        @info "      Final weight: $atom_i_weight"
+        @info "       Final order: $([a.name for a in atom_i_bonds]) (Note: Atoms are consumed in reverse.)\n"
+
+        for atom_j in atom_i_bonds
+            j = findfirst(atom -> atom === atom_j, atoms)
+            j !== nothing && @info " Bonded to atom $atom_j - $j (Visited? => $(visited[j]))"
+            if j !== nothing && !(visited[j]) && !(changed[j])
+
+                push!(stack, atom_j)
+
+                if overwrite && hasparent(atom_j)
+                    ProtoSyn.popparent!(atom_j)
+                end
+                if !hasparent(atom_j)
+                    ProtoSyn.setparent!(atom_j, atom_i)
+                    changed[j] = true
+                else
+                    @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
+                end
+
+                # Deal with aromatics
+                if linear_aromatics && atom_j.symbol !== "H" && aromatics[j]
+                    @info "  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ..."
+                    break
+                end
+            end
+        end
+    end
+
+    # Any non-connected atoms (by bonds) are children of root
+    for atom in atoms
+        !hasparent(atom) && ProtoSyn.setparent!(atom, _root)
+    end
+
+    if typeof(container) > Residue
+        reindex(container) # Doesn't set ascedents
+    end
+
+    @info "After infering parenthood, if changes to the Graph occured, the existing internal coordinates match different cartesian coordinates. It's suggested to update internal coordinates (request_c2i & sync!)."
+
+    return container
+end
+
+
+"""
+    infer_bonds!(pose::Pose; [threshold::T = 0.1]) where {T <: AbstractFloat}
+
+Infers bonds for all [`Atom`](@ref) instances of the given [`Pose`](@ref). A new
+bond is assigned when a pair of [`Atom`](@ref) instances are within a given
+distance, as defined in `ProtoSyn.Units.bond_lengths`. The `threshold` value is
+multiplied by the standard bond distance and added to the comparison value to
+allow some leeway in the bond distance (0.1, by default).
+
+# See also
+[`travel_bonds`](@ref) [`infer_parenthood!`](@ref)
+
+# Examples
+```jldoctest
+julia> ProtoSyn.infer_bonds!(pose)
+Pose{Topology}(Topology{/CRV:54976}, State{Float64}:
+ Size: 201
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
+```
+"""
+function infer_bonds!(pose::Pose; threshold::T = 0.1) where {T <: AbstractFloat}
+
+    @assert threshold > 0.0 "The given threshold value ($threshold) for `infer_bonds!` should be a value above 0.0!"
+
+    dm      = collect(ProtoSyn.Calculators.full_distance_matrix(pose))
+    atoms   = collect(eachatom(pose.graph))
+    for (i, atom_i) in enumerate(atoms)
+        for (j, atom_j) in enumerate(atoms)
+            i == j && continue
+            atom_j = atoms[j]
+            atom_j in atom_i.bonds && continue
+            putative_bond = "$(atom_i.symbol)$(atom_j.symbol)"
+
+            if !(putative_bond in keys(ProtoSyn.Units.bond_lengths))
+                continue
+            end
+
+            d = ProtoSyn.Units.bond_lengths[putative_bond]
+            d += d * threshold
+            dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
+        end
+    end
+
+    return pose
+end
+
+
+"""
+    identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+Returns one or more candidate [`Atom`](@ref) instances from the given
+`AbstractContainer` `container` that match the provided `pattern` (a Vector of
+[`Atom`](@ref) elements). This method follows the following hierarchical criteria:
+
+# Examples
+```
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["H", "N", "C", "C"])
+3-element Vector{Atom}:
+ Atom{/2a3d:3900/A:1/MET:1/H1:2}
+ Atom{/2a3d:3900/A:1/MET:1/H2:3}
+ Atom{/2a3d:3900/A:1/MET:1/H3:4}
+
+julia> ProtoSyn.identify_atom_by_bonding_pattern(pose.graph[1][1], ["C", "C", "C", "C", "H"])
+Atom{/2a3d:3900/A:1/MET:1/C:18}
+```
+
+"""
+function identify_atom_by_bonding_pattern(container::AbstractContainer, pattern::Vector{String})
+
+    function seek_pattern(atom::Atom, inner_pattern::Vector{String}, previous::Opt{Atom})
+        inner_candidates = [a for a in atom.bonds if (a.symbol === inner_pattern[1]) && (a !== previous)]
+        length(inner_candidates) === 0 && return false
+        deleteat!(inner_pattern, 1)
+        length(inner_pattern) === 0 && return true
+        return [seek_pattern(c, copy(inner_pattern), atom) for c in inner_candidates]
+    end
+
+    candidates = [a for a in eachatom(container) if a.symbol === pattern[1]]
+    length(candidates) === 1 && return candidates[1]
+    deleteat!(pattern, 1)
+    length(pattern) === 0 && return candidates
+
+    c = [seek_pattern(c, copy(pattern), nothing) for c in candidates]
+
+    # Unravel results
+    _c = Vector{Bool}([])
+    for group in c
+        for _ in 1:length(pattern)
+            group = reduce(vcat, group)
+        end
+        push!(_c, any(group))
+    end
+
+    hits = candidates[_c]
+    if length(hits) === 1
+        return hits[1]
+    else
+        return hits
+    end
+end
+
+
+"""
+    sequence(container::ProtoSyn.AbstractContainer)::String
+    sequence(pose::Pose)::String
+
+Return the sequence of residues (in 1 letter code) of the given container/
+[`Pose`](@ref)
+as a String. Checks the `ProtoSyn.three_2_one` dictionary for name to 1 letter
+code translation, uses '?' if no entry was found.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.sequence(pose)
+"SESEAEFKQRLAAIKTRLQAL"
+```
+"""
+function sequence(container::ProtoSyn.AbstractContainer)::String
+
+    sequence = ""
+    for residue in eachresidue(container)
+        try
+            sequence *= ProtoSyn.three_2_one[residue.name.content]
+        catch KeyError
+            sequence *= '?'
+        end
+    end
+
+    return sequence
+end
+
+sequence(pose::Pose) = sequence(pose.graph)
+
+
 # --- Visualize ----------------------------------------------------------------
 # Note: This functions are incomplete, as they cannot work with ramifications.
 # This may change in future iterations of ProtoSyn.
@@ -601,4 +918,3 @@ visualize(io::IO, frag::Fragment) = begin
 end
 
 visualize(frag::Fragment) = visualize(stdout, frag)
-

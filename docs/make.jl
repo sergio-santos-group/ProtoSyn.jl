@@ -1,12 +1,13 @@
 push!(LOAD_PATH, "../src")
 
 using Documenter, ProtoSyn, ProtoSyn.Peptides
+ProtoSyn.set_logger_to_warn()
 
 DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     using ProtoSyn;
     using ProtoSyn.Units;
     using Random; Random.seed!(1);
-    res_lib  = ProtoSyn.Peptides.grammar(Float64);
+    res_lib  = ProtoSyn.Peptides.grammar;
     frag     = fragment(res_lib, seq"AAA");
     pose     = build(res_lib, seq"SESEAEFKQRLAAIKTRLQAL"); sync!(pose);
     pose_mod = copy(pose);
@@ -23,12 +24,15 @@ DocMeta.setdocmeta!(ProtoSyn, :DocTestSetup, :(begin
     cb = ProtoSyn.Common.default_energy_step_frame_callback(10, "teste.pdb")
 end); recursive=true)
 
+
 makedocs(
     sitename="ProtoSyn.jl",
     authors="José Pereira & Sérgio Santos",
     format = Documenter.HTML(
         assets = ["assets/favicon.ico"],
-    ),
+        ),
+    doctest = false,
+    checkdocs=:exports,
     modules=[ProtoSyn],
     pages = [
         "Home" => "index.md",
@@ -52,6 +56,13 @@ makedocs(
                     "TorchANI" => "protosyn-api/core/calculators/torchani.md",
                     "Bond distance Restraint" => "protosyn-api/core/calculators/bond-distance-restraint.md",
                     "Potential Restraints" => "protosyn-api/core/calculators/potential-restraints.md",
+                    "Electrostatics" => "protosyn-api/core/calculators/electrostatics.md",
+                    "Generalized Born" => "protosyn-api/core/calculators/gb-solvation.md",
+                    "SASA" => "protosyn-api/core/calculators/sasa.md",
+                    "Hydrogen Bonds" => "protosyn-api/core/calculators/hydrogen-bonds.md",
+                    "Radius of gyration" => "protosyn-api/core/calculators/radius-gyration.md",
+                    "Custom reference energy" => "protosyn-api/core/calculators/custom-ref-energy.md",
+                    "REF-15" => "protosyn-api/core/calculators/ref15.md",
                 ],
                 "Mutators" => [
                     "Mutators Section" => "protosyn-api/core/mutators/mutators-section.md",
@@ -70,7 +81,8 @@ makedocs(
                 ],
                 "Submodules" => [
                     "Selections" => "protosyn-api/core/submodules/selections.md",
-                    "Builder" => "protosyn-api/core/submodules/builder.md"
+                    "Builder" => "protosyn-api/core/submodules/builder.md",
+                    "External packages" => "protosyn-api/core/submodules/external-packages.md",
                 ],
             ],
             "Peptides" => [
@@ -83,10 +95,13 @@ makedocs(
                     "Pose" => "protosyn-api/peptides/methods/pose.md"
                 ],
                 "Calculators" => [
-                    "Sidechain Clash Restraint" => "protosyn-api/peptides/calculators/sidechain-clash-restraint.md",
-                    "Contact Restraint" => "protosyn-api/peptides/calculators/contact-restraint.md",
-                    "Cα-Cα Clash Restraint" => "protosyn-api/peptides/calculators/ca-ca-clash-restraint.md",
-                    "Caterpillar Solvation" => "protosyn-api/peptides/calculators/caterpillar-solvation.md",
+                    "Potential Restraints" => "protosyn-api/peptides/calculators/potential-restraints.md",
+                    "Electrostatics" => "protosyn-api/peptides/calculators/electrostatics.md",
+                    "SASA" => "protosyn-api/peptides/calculators/sasa.md",
+                    "Natural frequency" => "protosyn-api/peptides/calculators/natural-frequency.md",
+                    "Secondary structure propensity" => "protosyn-api/peptides/calculators/ss-propensity.md",
+                    "Caterpilar solvation model" => "protosyn-api/peptides/calculators/caterpillar-solvation.md",
+                    "SeqDes model" => "protosyn-api/peptides/calculators/seqdes.md",
                 ],
                 "Mutators" => [
                     "Rotamer Mutator" => "protosyn-api/peptides/mutators/rotamer.md",
@@ -98,13 +113,15 @@ makedocs(
                 "Submodules" => [
                     "Selections" => "protosyn-api/peptides/submodules/selections.md",
                     "Builder" => "protosyn-api/peptides/submodules/builder.md",
-                    "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md"
+                    "Rotamers" => "protosyn-api/peptides/submodules/rotamers.md",
+                    "External packages" => "protosyn-api/peptides/submodules/external-packages.md",
                 ]
             ],
             "Materials" => [
                 "Introduction" => "protosyn-api/materials/introduction.md",
                 "Methods" => [
-                    "Lattices" => "protosyn-api/materials/methods/lattices.md"
+                    "Lattices" => "protosyn-api/materials/methods/lattices.md",
+                    "Carbons" => "protosyn-api/materials/methods/carbons.md",
                 ]
             ],
             "Sugars" => [
@@ -115,10 +132,10 @@ makedocs(
             ],
             "Common" => [
                 "Introduction" => "protosyn-api/common/introduction.md"
-            ]
+            ],
+            hide("Internals" => "protosyn-api/internals.md"),
         ]
     ],
-    doctest = true,
 )
 
 deploydocs(

@@ -1,23 +1,23 @@
 name: MET
 code: M
 atoms:
-  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
-  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
-  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
-  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276}
-  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300}
-  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563}
-  - {name:  CG, id:   8, symbol:  C, b:   1.525095, theta:   1.911075, phi:   3.141387}
-  - {name: HG1, id:   9, symbol:  H, b:   1.089995, theta:   1.910407, phi:  -1.046846}
-  - {name: HG2, id:  10, symbol:  H, b:   1.089791, theta:   1.910429, phi:   1.046235}
-  - {name:  SD, id:  11, symbol:  S, b:   1.809569, theta:   1.919995, phi:  -3.141542}
-  - {name:  CE, id:  12, symbol:  C, b:   1.780208, theta:   1.744936, phi:  -3.141530}
-  - {name: HE1, id:  13, symbol:  H, b:   1.089669, theta:   1.911699, phi:   1.046875}
-  - {name: HE2, id:  14, symbol:  H, b:   1.089815, theta:   1.911117, phi:  -3.141357}
-  - {name: HE3, id:  15, symbol:  H, b:   1.090033, theta:   1.911428, phi:  -1.047744}
-  - {name:   C, id:  16, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
-  - {name:   O, id:  17, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000, c: -0.5898}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593, c:  0.3752}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000, c: -0.1152}
+  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759, c:  0.2513}
+  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276, c: -0.3160}
+  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300, c:  0.2562}
+  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563, c:  0.2854}
+  - {name:  CG, id:   8, symbol:  C, b:   1.525095, theta:   1.911075, phi:   3.141387, c: -0.4705}
+  - {name: HG1, id:   9, symbol:  H, b:   1.089995, theta:   1.910407, phi:  -1.046846, c:  0.3472}
+  - {name: HG2, id:  10, symbol:  H, b:   1.089791, theta:   1.910429, phi:   1.046235, c:  0.2712}
+  - {name:  SD, id:  11, symbol:  S, b:   1.809569, theta:   1.919995, phi:  -3.141542, c:  0.3995}
+  - {name:  CE, id:  12, symbol:  C, b:   1.780208, theta:   1.744936, phi:  -3.141530, c: -0.7292}
+  - {name: HE1, id:  13, symbol:  H, b:   1.089669, theta:   1.911699, phi:   1.046875, c:  0.2893}
+  - {name: HE2, id:  14, symbol:  H, b:   1.089815, theta:   1.911117, phi:  -3.141357, c:  0.2893}
+  - {name: HE3, id:  15, symbol:  H, b:   1.090033, theta:   1.911428, phi:  -1.047744, c:  0.2981}
+  - {name:   C, id:  16, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.8097}
+  - {name:   O, id:  17, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7800}
 bonds:
   N: [H, CA]
   H: [N]

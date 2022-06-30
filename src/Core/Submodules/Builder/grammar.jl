@@ -1,4 +1,4 @@
-export StochasticRule, LGrammar
+export StochasticRule, LGrammar, Operation, Tautomer
 export derive, build, lgfactory, load_grammar_from_file
 export @seq_str
 
@@ -44,6 +44,37 @@ Base.show(io::IO, sr::StochasticRule) = begin
     println(io, sr.source, "(p=", sr.p, ") -> ", sr.production)
 end
 
+struct Operation
+    op::Function
+    r1::String
+    r2::String
+end
+
+(op::Operation)(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1, segment_index = 1) = begin
+    op.op(r1, f2, residue_index = residue_index, segment_index = segment_index)
+end
+
+function as_string(op::Operation)
+    return "$(op.op) (Between atoms $(op.r1) & $(op.r2))"
+end
+
+Base.show(io::IO, op::Operation) = begin
+    print(io, as_string(op))
+end
+
+struct Tautomer
+    list::Vector{Fragment}
+end
+
+Base.getindex(t::ProtoSyn.Tautomer, i::Int64) = t.list[i]
+
+function as_string(t::Tautomer)
+    return "$(t.list[1])(And $(length(t.list)-1) other tautomer(s) available.)"
+end
+
+Base.show(io::IO, t::Tautomer) = begin
+    print(io, as_string(t))
+end
 
 """
     LGrammar{T <: AbstractFloat, K, V}(rules::Dict{K, Vector{StochasticRule{K,V}}}, variables::Dict{K, Fragment}, operators::Dict{K, Function}, defop::Opt{Function})
@@ -79,22 +110,24 @@ LGrammar{Float64, String, Vector{String}}:
  Variables: None.
  Operators: None.
 
-julia> grammar = ProtoSyn.Peptides.grammar()
+julia> grammar = ProtoSyn.Peptides.grammar
 ```
 """
 mutable struct LGrammar{T <: AbstractFloat, K, V}
     rules::Dict{K, Vector{StochasticRule{T, K,V}}}
-    variables::Dict{K, Fragment}
-    operators::Dict{K, Function}
-    defop::Opt{Function}
+    variables::Dict{K, Union{Fragment, Tautomer}}
+    operators::Dict{K, Operation}
+    defop::Opt{Operation}
 end
 
 LGrammar{T, K, V}() where {T <: AbstractFloat, K, V} = LGrammar{T, K, V}(
     Dict{K, Vector{StochasticRule{T, K, V}}}(),
     Dict{K, Fragment}(),
-    Dict{K, Function}(),
+    Dict{K, Operation}(),
     nothing
 )
+
+LGrammar() = LGrammar{Float64, String, Vector{String}}()
 
 Base.show(io::IO, lgrammar::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V} = begin
     print(io, "LGrammar{$T, $K, $V}:\n Rules:")
@@ -120,7 +153,7 @@ Base.show(io::IO, lgrammar::LGrammar{T, K, V}) where {T <: AbstractFloat, K, V} 
         print(" None.")
     else
         for (key, operator) in lgrammar.operators
-            print(io, "\n $key => $operator")
+            print(io, "\n $key => $(as_string(operator))")
         end
     end
 end
@@ -143,8 +176,16 @@ end
 
 
 getvar(g::LGrammar, k) = begin
-    !haskey(g.variables, k) && throw(KeyError(k))
-    g.variables[k]
+    !haskey(g.variables, k) && begin
+        println(" - Key $k was not found in the provided LGrammar.")
+        throw(KeyError(k))
+    end
+
+    if isa(g.variables[k], Tautomer)
+        return g.variables[k][1]
+    else
+        return g.variables[k]
+    end
 end
 
 
@@ -169,12 +210,15 @@ Base.setindex!(g::LGrammar{T, K, V}, x::Fragment, key::K) where {T <: AbstractFl
     g
 end
 
-
-Base.setindex!(g::LGrammar{T, K, V}, x::Function, key::K) where {T <: AbstractFloat, K, V} = begin
-    g.operators[key] = x
+Base.setindex!(g::LGrammar{T, K, V}, x::Tautomer, key::K) where {T <: AbstractFloat, K, V} = begin
+    g.variables[key] = x
     g
 end
 
+Base.setindex!(g::LGrammar{T, K, V}, x::Operation, key::K) where {T <: AbstractFloat, K, V} = begin
+    g.operators[key] = x
+    g
+end
 
 # ---
 derive(lg::LGrammar, axiom) = begin
@@ -240,12 +284,18 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
     for letter in derivation
         if isop(grammar, letter)
             op = getop(grammar, letter)
-            push!(opstack, op)
+            push!(opstack, op.op)
         elseif letter == "["
             push!(stack, parent)
         elseif letter == "]"
             parent = pop!(stack)
         elseif isvar(grammar, letter)
+
+            # ! This is a quick fix and should be changed in future versions
+            if letter === "P"
+                push!(opstack, grammar.operators["γ"].op)
+            end
+
             frag = getvar(grammar, letter)
 
             frag2 = copy(frag)
@@ -253,6 +303,7 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
             if parent !== nothing
+                # println("$letter ($(typeof(letter)))-> $opstack")
                 join = isempty(opstack) ? grammar.defop : pop!(opstack)
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
@@ -292,13 +343,14 @@ Return the `operation` function (as a closure) given the input arguments `args`
 function opfactory(args::Any)
     # Note: residue_index is the index on the fragment/pose ('f2') used to
     # actually connect to 'r1'
-    return function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1, segment_index = 1)
+    op = function(r1::Residue, f2::Union{Fragment, Pose}; residue_index = 1, segment_index = 1)
         # residue_index is of f2
         if typeof(f2) == Fragment
             r2 = f2.graph[residue_index]
         else
             r2 = f2.graph[segment_index][residue_index]
         end
+
         ProtoSyn.join(r1, args["residue1"], r2, args["residue2"]) # Connects specifically C to N (in case of proteins) -> Adds bonds and sets parents
         state = f2.state
         
@@ -329,6 +381,7 @@ function opfactory(args::Any)
                         error("No 'measure' key found in dependence record")
                     end
                     measured_atom = dependence["measure"]
+                    r1[measured_atom] === nothing && continue
                     value = state[r1[measured_atom]].ϕ + state[r1[measured_atom].parent].Δϕ
 
                     haskey(dependence, "offset") && begin
@@ -340,6 +393,8 @@ function opfactory(args::Any)
             end
         end
     end
+
+    return Operation(op, args["residue1"], args["residue2"])
 end
 
 
@@ -351,8 +406,7 @@ Create an `LGrammar` instance from the contencts of a `template` Dict (normally
 read from a grammar file). Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). The `operators` entry is
 parsed by the [`opfactory`](@ref) method. Return the parsed [`LGrammar`](@ref)
-instance. If `verbose` is set to `true` (is, by default), print the loading
-status.
+instance.
 
 # See also
 [`LGrammar`](@ref) [`load_grammar_from_file`](@ref) [`opfactory`](@ref)
@@ -366,11 +420,24 @@ function lgfactory(::Type{T}, template::Dict) where T
 
     vars = template["variables"]
     for (key, name) in vars
-        filename = joinpath(ProtoSyn.resource_dir, name)
-        ProtoSyn.verbose.mode && @info "Loading variable '$key' from $filename"
-        pose = ProtoSyn.load(T, filename)
-        pose.graph.name = pose.graph[1].name # ! Hack for long filenames
-        grammar[key] = fragment(pose)
+        if isa(name, Vector{String})
+            poses = Vector{Fragment}()
+            for (i, _name) in enumerate(name)
+                filename = joinpath(ProtoSyn.resource_dir, _name)
+                @info "Loading variable '$key' (tautomer $i) from $filename"
+                pose = ProtoSyn.load(T, filename)
+                pose.graph.name = pose.graph[1].name # ! Hack for long filenames
+                push!(poses, fragment(pose))
+            end
+            grammar[key] = Tautomer(poses)
+        else
+            filename = joinpath(ProtoSyn.resource_dir, name)
+            @info "Loading variable '$key' from $filename"
+            pose = ProtoSyn.load(T, filename)
+            pose.graph.name = pose.graph[1].name # ! Hack for long filenames
+            grammar[key] = fragment(pose)
+        end
+
     end
 
     if haskey(template, "operators")
@@ -401,7 +468,7 @@ function lgfactory(::Type{T}, template::Dict) where T
                 end
             end
 
-            ProtoSyn.verbose.mode && @info "Loading operator $opname"
+            @info "Loading operator $opname"
             grammar[opname] = opfactory(opargs)
         end
     end
@@ -412,11 +479,11 @@ function lgfactory(::Type{T}, template::Dict) where T
 
     if haskey(template, "rules")
         for (key, rules) in template["rules"]
-            ProtoSyn.verbose.mode && @info "Loading productions for rule $key"
+            @info "Loading productions for rule $key"
             for rule in rules
                 sr = StochasticRule(rule["p"], key => rule["production"])
                 push!(grammar, sr)
-                ProtoSyn.verbose.mode && @info "  $sr"
+                @info "  $sr"
             end
         end
     end
@@ -434,7 +501,8 @@ Create an [`LGrammar`](@ref) instance from the contents of a grammar file (in
 .YML format) under the `key` entry. The file contents are parsed by the
 [`lgfactory`](@ref) method. Any numerical entry is parsed to the provided type
 `T` (or `Units.defaultFloat` if no type is provided). Return the parsed
-[`LGrammar`](@ref) instance.
+[`LGrammar`](@ref) instance. automatically calls
+[`load_grammar_extras_from_file!`](@ref).
 
 # See also
 [`LGrammar`](@ref) [`lgfactory`](@ref)
@@ -447,8 +515,9 @@ julia> lgrammar = load_grammar_from_file(filename, "peptide")
 ```
 """
 function load_grammar_from_file(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
+    ProtoSyn.load_grammar_extras_from_file!(T, filename, key)
     open(filename) do io
-        ProtoSyn.verbose.mode && @info "loading grammar from file $filename"
+        @info "loading grammar from file $filename"
         yml = YAML.load(io)
         return lgfactory(T, yml[key])
     end
@@ -456,4 +525,73 @@ end
 
 load_grammar_from_file(filename::AbstractString, key::String) = begin
     return load_grammar_from_file(Units.defaultFloat, filename, key)
+end
+
+
+"""
+    load_grammar_extras_from_file!([::Type{T}], filename::AbstractString, key::String) where {T <: AbstractFloat}
+
+Loads the `key` entry in the given [`LGrammar`](@ref) .YML file (`filename`)
+extras into the correct global variables in ProtoSyn. Any numerical entry is
+parsed to the provided type `T` (or `Units.defaultFloat` if no type is
+provided).
+
+The extra info loaded by this method is:
++ Any `alt` entry is added to `ProtoSyn.alt_residue_names`
+
+!!! ukw "Note:"
+    Other modules (such as [Peptides](@ref)) may retrieve extra information from the [`LGrammar`](@ref) file. As such, these modules often include an expanded method for [`load_grammar_extras_from_file!`](@ref).
+
+!!! ukw "Note:"
+    This method is automatically called from [`load_grammar_from_file`](@ref). This is the recommended way to load an [`LGrammar`](@ref) (this method shouldn't be called as a standalone for most applications).
+
+# Examples
+```
+julia> ProtoSyn.load_grammar_extras_from_file!(ProtoSyn.resource_dir*"/Peptides/grammars.yml", "default")
+```
+"""
+function load_grammar_extras_from_file!(::Type{T}, filename::AbstractString, key::String) where {T <: AbstractFloat}
+    
+    function load_alt_names!(var_yml::Dict{Any, Any})
+        if !(var_yml["name"] in keys(ProtoSyn.alt_residue_names))
+            ProtoSyn.alt_residue_names[var_yml["name"]] = Vector{String}([var_yml["name"]])
+        end
+        if "alt" in keys(var_yml)
+            for alt in var_yml["alt"]
+                if !(alt in ProtoSyn.alt_residue_names[var_yml["name"]])
+                    push!(ProtoSyn.alt_residue_names[var_yml["name"]], alt)
+                end
+
+                if alt in keys(ProtoSyn.alt_residue_names)
+                    if !(var_yml["name"] in ProtoSyn.alt_residue_names[alt])
+                        push!(ProtoSyn.alt_residue_names[alt], var_yml["name"])
+                    end
+                else
+                    ProtoSyn.alt_residue_names[alt] = Vector{String}([alt, var_yml["name"]])
+                end
+            end
+        end
+    end
+
+    # Re-read the YML grammar file
+    yml = ProtoSyn.read_yml(filename)[key]
+
+    vars = yml["variables"]
+    for (key, name) in vars
+        if isa(name, Vector{String})
+            for _name in name
+                var_filename = joinpath(ProtoSyn.resource_dir, _name)
+                var_yml = ProtoSyn.read_yml(var_filename)
+                load_alt_names!(var_yml)
+            end
+        else
+            var_filename = joinpath(ProtoSyn.resource_dir, name)
+            var_yml = ProtoSyn.read_yml(var_filename)
+            load_alt_names!(var_yml)
+        end
+    end
+end
+
+load_grammar_extras_from_file!(filename::AbstractString, key::String) = begin
+    ProtoSyn.load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
 end

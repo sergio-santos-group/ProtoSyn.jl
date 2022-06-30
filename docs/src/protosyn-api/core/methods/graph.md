@@ -13,6 +13,7 @@ others. These are subdivided by topics, for organization purposes:
 + [Indexation](@ref core-graph-methods-indexation)
 + [Counters and Iterators](@ref)
 + [Bonds](@ref)
++ [Travelling the Graph](@ref)
 
 ## Root vs Origin
 
@@ -21,6 +22,7 @@ The __root__ of a [Graph](@ref state-types) is a set of 3 pseudoatoms belonging 
 ```@docs
 origin
 root
+Root
 ```
 
 ## Parenthood relationships
@@ -34,8 +36,8 @@ setparent!
 popparent!
 ascendents
 Base.detach
-travel_graph
 is_contiguous
+infer_parenthood!
 ```
 
 ![ProtoSyn graph](../../../assets/ProtoSyn-graph2.png)
@@ -52,6 +54,10 @@ Base.push!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.insert!(::AbstractContainer{T}, ::Integer, ::T) where {T <: AbstractContainer}
 Base.delete!(::AbstractContainer{T}, ::T) where {T<:AbstractContainer}
 Base.copy(::Atom)
+rename!
+Atom!
+Residue!
+Segment!
 ```
 
 ## [Indexation](@id core-graph-methods-indexation)
@@ -63,8 +69,7 @@ An important initial detail when describing the [Graph](@ref core-graph-methods)
 ```@setup methods
 using ProtoSyn
 using ProtoSyn.Peptides
-res_lib = Peptides.grammar(Float64)
-pose = ProtoSyn.build(res_lib, seq"GME")
+pose = ProtoSyn.build(Peptides.grammar, seq"GME")
 ```
 
 ```@repl methods
@@ -99,7 +104,7 @@ Note that queries by [`Atom`](@ref)`.name` are case sensitive. Besides using it 
 "N" in pose.graph[1][1]
 ```
 
-The following methods deal with the correct indexation of the [Graph](@ref state-types). Note that, altough not necessary, some simulation functions assume that both the [Graph](@ref state-types) and [State](@ref state-types) indexation of a [Pose](@ref) are synched and are equal.
+The following methods deal with the correct indexation of the [Graph](@ref state-types). Note that, altough not necessary, some simulation functions assume that both the [Graph](@ref state-types) and [State](@ref state-types) indexation of a [Pose](@ref pose-types) are synched and are equal.
 
 ```@docs
 genid
@@ -126,6 +131,12 @@ for residue in eachresidue(pose.graph[1])
 end
 ```
 
+For [`Residue`](@ref) instances in specific, a more direct way to list all instances in a given [`Pose`](@ref) or `AbstractContainer` is to use the [`sequence`](@ref) method.
+
+```@docs
+sequence
+```
+
 ## Bonds
 
 The following methods deal with the bonding/unbonding of atoms (and respective
@@ -135,4 +146,24 @@ The following methods deal with the bonding/unbonding of atoms (and respective
 bond
 unbond!
 join
+infer_bonds!
+```
+
+## Travelling the Graph
+
+As further explored in the [Graph](@ref graph-types) section, the directed nature of the [`Pose`](@ref)'s [Graph](@ref graph-types) allows for easy travelling of the system. The following methods facilitate that process.
+
+```@docs
+get_graph_size
+sort_children
+travel_graph
+travel_bonds
+identify_atom_by_bonding_pattern
+```
+
+As explained above, certain methods in ProtoSyn travel the directed graph. There are, however, multiple ways to follow the same graph (as longs as its ramified), depending on the criteria used on bifurcations. In the Core module, ProtoSyn makes available for the BFS (breath-first search) and DFs (depth-first search) algorithms, a type of `SearchAlgorithm`.
+
+```@docs
+BFS
+DFS
 ```

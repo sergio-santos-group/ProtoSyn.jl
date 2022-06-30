@@ -1,11 +1,11 @@
 using ProtoSyn.Peptides
 
-@testset verbose = true "Core.Builder" begin
+@testset verbose = true "Core | Builder submodule $(repeat("-", 32))" begin
 
     @testset verbose = true "Building a pose from derivation" begin
-        res_lib = Peptides.grammar(Float64)
+        res_lib = Peptides.grammar
         @test length(res_lib.variables) === 21
-        @test length(res_lib.operators) === 2
+        @test length(res_lib.operators) === 3
         frag    = fragment(res_lib, seq"GME") 
         @test size(frag.graph) === (3, 39)
         @test typeof(frag.graph) === Segment
@@ -16,7 +16,7 @@ using ProtoSyn.Peptides
         @test pose.state[1].t == pose.state.x[:, 1]
     end
 
-    res_lib = Peptides.grammar(Float64)
+    res_lib = Peptides.grammar
     pose    = ProtoSyn.build(res_lib, seq"GME")
     sync!(pose)
 
@@ -25,7 +25,7 @@ using ProtoSyn.Peptides
         @test size(pose.graph) === size(backup.graph)
     end
 
-    backup = copy(pose)
+    global backup = copy(pose)
 
     @testset verbose = true "Appending from derivation" begin
         pose = copy(backup)

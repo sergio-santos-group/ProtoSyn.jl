@@ -1,0 +1,10 @@
+name: ine
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.400000, theta:   2.094395, phi:   0.000000}
+  - {name:   N, id:   2, symbol:  N, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.6130}
+bonds:
+  R: [N]
+graph:
+  root: R
+  adjacency:
+    R: [N]

@@ -1,15 +1,18 @@
 """
-    ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_count([::A], pose::Pose, update_forces::Bool = false; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity) where {A, T <: AbstractFloat}
+    ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_count([::A], pose::Pose, selection::Opt{AbstractSelection}, [update_forces::Bool = false]; [identification_curve::Function = null_identification_curve], [hydrophobicity_weight::Function = null_hydrophobicity_weight], [rmax::T = 9.0], [sc::T = 1.0], [Ω::Union{Int, T} = 750.0], [hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity]) where {A, T <: AbstractFloat}
 
 Calculate the given [`Pose`](@ref) `pose` caterpillar solvation energy using the
 Neighbour Count (NC) algorithm (see [this article](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0020853)).
-In this model, the burial degree `Ωi` of each atom is equal to the number
-(count) os neighbouring [`Atom`](@ref) instances (within the defined `rmax`
-cut-off (in Angstrom Å)) multiplied by a `w1` weight, provided by the 
-`identification_curve` `Function`. This `Function` receives the distance between
-each pair of neighbouring atoms (as a float), the `rmax` value and, optionally,
-a slope control `sc` value, and return a weight `w1` (as a float). The
-`identification_curve` signature is as follows:
+If an `AbstractSelection` `selection` is provided, consider only the selected
+[`Atom`](@ref) instances (any given `selection` will be promoted to be of
+[`Atom`](@ref) type, see [`ProtoSyn.promote`](@ref)). In this model, the burial
+degree `Ωi` of each atom is equal to the number (count) of neighbouring
+[`Atom`](@ref) instances (within the defined `rmax` cut-off, in Angstrom Å)
+multiplied by a `w1` weight, provided by the  `identification_curve` `Function`.
+This `Function` receives the distance between each pair of neighbouring atoms
+(as a float), the `rmax` value and, optionally, a slope control `sc` value, and
+return a weight `w1` (as a float). The `identification_curve` signature is as
+follows:
 
 ```
 identification_curve(distance::T; rmax::T = 9.0, sc::T = 1.0) where {T <: AbstractFloat}
@@ -44,9 +47,9 @@ hydrophobicity_weight(Ωi::Union{Int, T}; hydrophobicity_map_value::T = 0.0, Ω
 ```
 
 In order to use pre-defined `hydrophobicity_weight` `Function` instances defined
-in ProtoSyn, check [`scalling_exposed_only`](@ref),
-[`non_scalling_exposed_only`](@ref), [`scalling_all_contributions`](@ref)
-(recommended) and [`non_scalling_all_contributions`](@ref).
+in ProtoSyn, check [`nc_scalling_exposed_only`](@ref),
+[`nc_non_scalling_exposed_only`](@ref), [`nc_scalling_all_contributions`](@ref)
+(recommended) and [`nc_non_scalling_all_contributions`](@ref).
 
 The optional `A` parameter defines the acceleration
 mode used (SISD_0, SIMD_1 or CUDA_2). If left undefined the default
@@ -63,21 +66,27 @@ julia> ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_count(pose, false)
 (0.0, nothing)
 ```
 """
-function neighbour_count(::Type{A}, pose::Pose, update_forces::Bool; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
+function neighbour_count(::Type{A}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat}
     
-    dm    = ProtoSyn.Calculators.full_distance_matrix(A, pose, selection)
+    if selection === nothing
+        sele = TrueSelection{Atom}()
+    else
+        sele = ProtoSyn.promote(selection, Atom)
+    end
+
+    dm    = ProtoSyn.Calculators.full_distance_matrix(A, pose, sele)
     if A === ProtoSyn.CUDA_2
         dm = collect(dm)
     end
-    atoms = selection(pose, gather = true)
+    atoms = sele(pose, gather = true)
     
-    if length(atoms) != length(eachresidue(pose.graph))
-        @warn "The number of selected residues doesn't match the number of residues in the pose ($(length(atoms)) ≠ $(length(eachresidue(pose.graph))))"
-        return 0.0, nothing
-    end
+    # if length(atoms) != length(eachresidue(pose.graph))
+    #     @warn "The number of selected residues doesn't match the number of residues in the pose ($(length(atoms)) ≠ $(length(eachresidue(pose.graph))))"
+    #     return 0.0, nothing
+    # end
     
-    Ωis = Vector{T}() # !
-    esols = Vector{T}() # !
+    # Ωis = Vector{T}() # !
+    # esols = Vector{T}() # !
     esol = T(0.0)
     for i in 1:size(dm)[1]
         Ωi = 0.0
@@ -90,18 +99,17 @@ function neighbour_count(::Type{A}, pose::Pose, update_forces::Bool; selection::
         esol_i = hydrophobicity_weight(Ωi, hydrophobicity_map_value = DHI, Ω = Ω)
         esol += esol_i
         
-        push!(Ωis, Ωi) # !
-        push!(esols, esol_i) # !
+        # push!(Ωis, Ωi) # !
+        # push!(esols, esol_i) # !
     end
 
-    # return esol, nothing
-    return esol, nothing, Ωis, esols 
+    return esol, nothing
+    # return esol, nothing, Ωis, esols 
 end
 
 
-neighbour_count(pose::Pose, update_forces::Bool; selection::AbstractSelection = ProtoSyn.TrueSelection{Atom}(), identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
-    neighbour_count(ProtoSyn.acceleration.active, pose, update_forces,
-        selection = selection,
+neighbour_count(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool; identification_curve::Function = null_identification_curve, hydrophobicity_weight::Function = null_hydrophobicity_weight, rmax::T = 9.0, sc::T = 1.0, Ω::Union{Int, T} = 750.0, hydrophobicity_map::Dict{String, T} = ProtoSyn.Peptides.doolitle_hydrophobicity, kwargs...) where {A <: ProtoSyn.AbstractAccelerationType, T <: AbstractFloat} = begin
+    neighbour_count(ProtoSyn.acceleration.active, pose, selection, update_forces,
         identification_curve = identification_curve,
         hydrophobicity_weight = hydrophobicity_weight,
         rmax = rmax,

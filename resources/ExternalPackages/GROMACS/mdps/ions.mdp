@@ -1,0 +1,29 @@
+;**********************************************************
+;  IONS ADITION
+;**********************************************************
+;define                   = -DFLEXIBLE
+; RUN CONTROL PARAMETERS
+;----------------------------------------------------------
+integrator               = steep
+nsteps                   = 10000
+; OUTPUT CONTROL OPTIONS
+;----------------------------------------------------------
+nstenergy                = 1000
+nstlog                   = 1000
+nstxout-compressed       = 1000
+; NEIGHBORSEARCHING PARAMETERS
+;----------------------------------------------------------
+nstlist                  = 1
+cutoff-scheme            = Verlet
+PBC                      = xyz
+; OPTIONS FOR ELECTROSTATICS AND VDW
+;----------------------------------------------------------
+coulombtype              = cutoff
+rcoulomb                 = 1.2
+vdwtype                  = Cut-off
+rvdw                     = 1.2
+DispCorr                 = EnerPres
+; OPTIONS FOR BONDS
+;----------------------------------------------------------
+constraints              = none     ; H bonds will be treated as constraints (fixed length)
+constraint_algorithm     = lincs    ; holonomic constraints

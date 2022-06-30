@@ -19,7 +19,7 @@ ProtoSyn.eval(:(begin
     [`SecondaryStructure`](@ref ProtoSyn.Peptides.SecondaryStructure) type.
 
     # State mode
-    The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateful
+    The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateful.
 
     # Selection type
 
@@ -66,8 +66,8 @@ ProtoSyn.eval(:(begin
             for residue in eachresidue(container)
 
                 # Case residue does not have phi or psi (first of last residue)
-                phi_atom = ProtoSyn.Peptides.Dihedral.phi(residue)
-                psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
+                phi_atom = Peptides.phi(residue)
+                psi_atom = Peptides.psi(residue)
                 phi_atom == nothing || psi_atom == nothing && continue
                 
                 # Measure current phi and psi dihedral values
@@ -82,13 +82,13 @@ ProtoSyn.eval(:(begin
 
                 # Check phi
                 phi_compliant = false
-                if ss.ϕ - sele.threshold < phi < ss.ϕ + sele.threshold
+                if ss.ϕ.angle - sele.threshold < phi < ss.ϕ.angle + sele.threshold
                     phi_compliant = true
                 end
 
                 # Check psi
                 psi_compliant = false
-                if ss.ψ - sele.threshold < psi < ss.ψ + sele.threshold
+                if ss.ψ.angle - sele.threshold < psi < ss.ψ.angle + sele.threshold
                     psi_compliant = true
                 end
 
@@ -96,7 +96,6 @@ ProtoSyn.eval(:(begin
                 if phi_compliant && psi_compliant
                     mask[residue.index] = true
                 end
-
             end
 
             return mask

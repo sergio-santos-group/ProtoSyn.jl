@@ -1,0 +1,58 @@
+;**********************************************************
+; RUN CONTROL PARAMETERS
+;----------------------------------------------------------
+define                   -POSRES
+integrator               = md
+dt                       = 
+nsteps                   = 
+; OUTPUT CONTROL OPTIONS
+;----------------------------------------------------------
+nstxout                  = 
+nstenergy                = 
+nstlog                   = 
+nstxout-compressed       = 
+; NEIGHBORSEARCHING PARAMETERS
+;----------------------------------------------------------
+cutoff-scheme            = Verlet
+PBC                      = xyz
+; OPTIONS FOR ELECTROSTATICS AND VDW
+;----------------------------------------------------------
+coulombtype              = PME
+rcoulomb                 = 1.2
+vdwtype                  = Cut-off
+rvdw                     = 1.2
+DispCorr                 = EnerPres
+; TEMPERATURE COUPLING
+;----------------------------------------------------------
+tcoupl                   = v-rescale     ; Couple temperature to external heat bath
+tc-grps                  = System
+tau-t                    = 2.0           ; Coupling time constant, controlling strength of coupling
+ref-t                    = 300.0  	 ; Temperature of heat bath
+
+
+; PRESSURE COUPLING
+;----------------------------------------------------------
+pcoupl                   = no    	 ; no pressure coupling in NVT
+; GENERATE VELOCITIES FOR STARTUP RUN
+;----------------------------------------------------------
+gen_vel                  = no      	 ; Assign velocities to particles by taking them randomly from a Maxwell distribution
+gen_temp                 = 300     	 ; Temperature to generate corresponding Maxwell distribution
+; OPTIONS FOR BONDS
+;----------------------------------------------------------
+constraints              = H-bonds  ; H bonds will be treated as constraints (fixed length)
+constraint_algorithm     = lincs    ; holonomic constraints
+continuation             = yes       ; first dynamics run
+
+; Pull code
+pull                    = yes
+pull_ncoords            = 1         ; only one reaction coordinate 
+pull_ngroups            = 2         ; two groups defining one reaction coordinate 
+pull_group1_name        = ACTIVESITE 
+pull_group2_name        = CBZ 
+pull_coord1_type        = umbrella  ; harmonic potential
+pull_coord1_geometry    = distance  ; simple distance increase 
+pull_coord1_groups      = 1 2
+pull_coord1_start       = yes       ; define initial COM distance > 0
+pull_coord1_rate        = 0.02    ; 0.1 nm per ps = 100 nm per ns
+pull_coord1_k           = -1000      ; kJ mol^-1 nm^-2
+

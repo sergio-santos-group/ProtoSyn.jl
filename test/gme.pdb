@@ -1,0 +1,80 @@
+MODEL        1
+ATOM      1    N GLY A   1       0.600  -1.039  -0.000        0.00           N
+ATOM      2    H GLY A   1      -0.170  -1.692  -0.000        0.00           H
+ATOM      3   CA GLY A   1       2.049  -1.039   0.000        0.00           C
+ATOM      4  HA1 GLY A   1       2.413  -0.526  -0.890        0.00           H
+ATOM      5  HA2 GLY A   1       2.413  -0.526   0.890        0.00           H
+ATOM      6    C GLY A   1       2.579  -2.466  -0.000        0.00           C
+ATOM      7    O GLY A   1       1.803  -3.419  -0.000        0.00           O
+ATOM      8    N MET A   2       3.763  -2.666  -0.000        0.00           N
+ATOM      9    H MET A   2       4.406  -1.889   0.000        0.00           H
+ATOM     10   CA MET A   2       4.268  -4.025  -0.000        0.00           C
+ATOM     11   HA MET A   2       3.913  -4.544   0.890        0.00           H
+ATOM     12   CB MET A   2       3.792  -4.787  -1.232        0.00           C
+ATOM     13  HB1 MET A   2       2.703  -4.821  -1.241        0.00           H
+ATOM     14  HB2 MET A   2       4.147  -4.283  -2.131        0.00           H
+ATOM     15   CG MET A   2       4.344  -6.208  -1.195        0.00           C
+ATOM     16  HG1 MET A   2       5.433  -6.175  -1.186        0.00           H
+ATOM     17  HG2 MET A   2       3.989  -6.712  -0.296        0.00           H
+ATOM     18   SD MET A   2       3.788  -7.126  -2.652        0.00           S
+ATOM     19   CE MET A   2       4.564  -8.698  -2.341        0.00           C
+ATOM     20  HE1 MET A   2       4.201  -9.103  -1.397        0.00           H
+ATOM     21  HE2 MET A   2       4.324  -9.389  -3.149        0.00           H
+ATOM     22  HE3 MET A   2       5.645  -8.566  -2.287        0.00           H
+ATOM     23    C MET A   2       5.790  -4.043  -0.000        0.00           C
+ATOM     24    O MET A   2       6.426  -2.991  -0.000        0.00           O
+ATOM     25    N GLU A   3       6.378  -5.089  -0.000        0.00           N
+ATOM     26    H GLU A   3       5.862  -5.957  -0.000        0.00           H
+ATOM     27   CA GLU A   3       7.826  -5.106  -0.000        0.00           C
+ATOM     28   HA GLU A   3       8.196  -4.597  -0.890        0.00           H
+ATOM     29   CB GLU A   3       8.384  -4.402   1.232        0.00           C
+ATOM     30  HB1 GLU A   3       8.048  -3.365   1.241        0.00           H
+ATOM     31  HB2 GLU A   3       8.029  -4.905   2.131        0.00           H
+ATOM     32   CG GLU A   3       9.892  -4.441   1.195        0.00           C
+ATOM     33  HG1 GLU A   3      10.229  -5.478   1.186        0.00           H
+ATOM     34  HG2 GLU A   3      10.248  -3.937   0.296        0.00           H
+ATOM     35   CD GLU A   3      10.451  -3.736   2.429        0.00           C
+ATOM     36  OE1 GLU A   3      10.650  -4.441   3.454        0.00           O
+ATOM     37  OE2 GLU A   3      10.673  -2.499   2.334        0.00           O
+ATOM     38    C GLU A   3       8.357  -6.533  -0.000        0.00           C
+ATOM     39    O GLU A   3       7.582  -7.487  -0.000        0.00           O
+CONECT    1    3    2
+CONECT    2    1
+CONECT    3    4    1    5    6
+CONECT    4    3
+CONECT    5    3
+CONECT    6    3    7    8
+CONECT    7    6
+CONECT    8    9   10    6
+CONECT    9    8
+CONECT   10   23    8   12   11
+CONECT   11   10
+CONECT   12   13   14   15   10
+CONECT   13   12
+CONECT   14   12
+CONECT   15   18   12   16   17
+CONECT   16   15
+CONECT   17   15
+CONECT   18   15   19
+CONECT   19   20   18   22   21
+CONECT   20   19
+CONECT   21   19
+CONECT   22   19
+CONECT   23   10   24   25
+CONECT   24   23
+CONECT   25   26   27   23
+CONECT   26   25
+CONECT   27   38   25   29   28
+CONECT   28   27
+CONECT   29   30   31   32   27
+CONECT   30   29
+CONECT   31   29
+CONECT   32   29   33   34   35
+CONECT   33   32
+CONECT   34   32
+CONECT   35   37   32   36
+CONECT   36   35
+CONECT   37   35
+CONECT   38   27   39
+CONECT   39   38
+ENDMDL

@@ -18,10 +18,17 @@ include("true.jl")
 include("distance.jl")
 include("random.jl")
 include("terminal.jl")
+include("aromatic.jl")
+include("bond.jl")
+include("bond-count.jl")
+include("charge.jl")
 
 
 # --- Resolve Function ---------------------------------------------------------
 function (sele::AbstractSelection)(container::AbstractContainer; gather::Bool = false)
+
+    @assert selection_type(sele) <= typeof(container) "Can't select $(selection_type(sele))s from a container of type $(typeof(container))."
+
     mask = select(sele, container)
     if gather
         return ProtoSyn.gather(mask, container)
@@ -30,6 +37,9 @@ function (sele::AbstractSelection)(container::AbstractContainer; gather::Bool = 
 end
 
 function (sele::AbstractSelection)(container::AbstractContainer, state::State; gather::Bool = false)
+
+    @assert selection_type(sele) <= typeof(container) "Can't select $(selection_type(sele))s from a container of type $(typeof(container))."
+
     if state_mode_type(sele) == Stateful
         mask = select(sele, container)(state)
         if gather
@@ -72,6 +82,7 @@ function gather(mask::Mask{T}, container::AbstractContainer) where {T <: Abstrac
             push!(results, item)
         end
     end
+    
     return results
 end
 

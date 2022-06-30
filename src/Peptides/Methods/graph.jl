@@ -32,30 +32,165 @@ end
 
 
 """
-    sequence(container::ProtoSyn.AbstractContainer)::String
-    sequence(pose::Pose)::String
+    assign_default_atom_names!(pose::Pose, [selection::Opt{AbstractSelection} = nothing], [grammar::LGrammar = Peptides.grammar]; [force_rename::Bool = false])
 
-Return the sequence of aminoacids (in 1 letter mode) of the given container/pose
-as a string.
+Assigns the default [`Atom`](@ref) names to the given [`Pose`](@ref) `pose`. If
+an `AbstractSelection` `selection` is provided, only rename the selected
+[`Residue`](@ref) instances (any given `selection` will be promoted to be of
+[`Residue`](@ref) level using [`ProtoSyn.promote`](@ref)). The [`Atom`](@ref)
+default names are retrieved from the given [`LGrammar`](@ref) `grammar`
+(`Peptides.grammar`, by default). Both the given [`Pose`](@ref) and the built
+template from the `grammar`'s [Graph](@ref graph-types) are travelled to generate a 1-to-1
+correspondence between [`Atom`](@ref) instances (the [`Pose`](@ref)
+[`Atom`](@ref) names are then renamed to match the template, uses the
+[`ProtoSyn.travel_graph`](@ref) method with the `ProtoSyn.Peptides.IUPAC` search
+algorithm). This approach may sometimes fail, for example, when tautomers are
+present, in wich case this method attempts to find tautomer candidates in a
+[`Residue`](@ref) by [`Residue`](@ref) case. This method also attempts to verify
+if terminal [`Residue`](@ref) instances are capped, in which case the correct
+naming attribution is automatically taken into consideration.
+
+!!! ukw "Note:"
+    Some methods (such as, for example, the [`assign_default_charges!`](@ref ProtoSyn.Peptides.Calculators.Electrostatics.assign_default_charges!) method) expect default atom names. Consider using [`ProtoSyn.Peptides.diagnose`](@ref) to check whether the current [`Atom`](@ref) names are known.
+
+# See also
+[`rename!`](@ref ProtoSyn.rename!)
 
 # Examples
 ```
-julia> ProtoSyn.Peptides.sequence(pose)
-"SESEAEFKQRLAAIKTRLQAL"
+julia> ProtoSyn.Peptides.assign_default_atom_names!(pose)
+Pose{Topology}(Topology{/2a3d:42429}, State{Float64}:
+ Size: 1140
+ i2c: false | c2i: false
+ Energy: Dict(:Total => Inf)
+)
 ```
 """
-function sequence(container::ProtoSyn.AbstractContainer)::String
+function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection} = nothing, grammar::LGrammar = Peptides.grammar; force_rename::Bool = false)
 
-    sequence = ""
-    for residue in eachresidue(container)
-        try
-            sequence *= three_2_one[residue.name]
-        catch KeyError
-            sequence *= '?'
-        end
+    if selection === nothing
+        sele = TrueSelection{Residue}()
+    else
+        sele = ProtoSyn.promote(selection, Residue)
     end
 
-    return sequence
-end
+    for segment in eachsegment(pose.graph)
 
-sequence(pose::Pose) = sequence(pose.graph)
+        residues = sele(segment, gather = true)
+        
+        if length(residues) === 0
+            @info "Skipping $segment : No selected residues in this segment!"
+            
+            continue
+        end
+
+        pose_sequence = [string(ProtoSyn.three_2_one[residue.name.content]) for residue in residues]
+        template = ProtoSyn.build(grammar, pose_sequence)
+
+        # Check caps
+        # N-terminal
+        N_terminal_pose     = UpstreamTerminalSelection{Residue}()(segment, gather = true)[1]
+        N_terminal_template = UpstreamTerminalSelection{Residue}()(template, gather = true)[1]
+        N = ProtoSyn.identify_atom_by_bonding_pattern(N_terminal_pose, ["N", "C", "C", "O"])
+        if isa(N, Vector{Atom})
+            if length(N) === 0
+                @warn "Terminal N was not found on $segment"
+            elseif length(N) > 1
+                @warn "Multiple candidates identified for terminal N on segment $segment"
+            end
+        else
+            if length(N.bonds) > 2
+                Peptides.cap!(template, SerialSelection{Residue}(N_terminal_template.id, :id))
+            else
+                # Case already capped
+            end
+        end
+
+        # C-terminal
+        C_terminal_pose     = DownstreamTerminalSelection{Residue}()(segment, gather = true)[1]
+        C_terminal_template = DownstreamTerminalSelection{Residue}()(template, gather = true)[1]
+        C = identify_c_terminal(segment, supress_warn = true) # Uses multiple criteria to identify
+        if isa(C, Vector{Atom})
+            if length(C) === 0
+                @warn "Terminal C was not found on $segment"
+            elseif length(C) > 1
+                @warn "Multiple candidates identified for terminal C on segment $segment"
+            end
+        else
+            if length(C.bonds) > 2
+                Peptides.cap!(template, SerialSelection{Residue}(C_terminal_template.id, :id))
+            else
+                # Case already capped
+            end
+        end
+        
+        t_atoms = ProtoSyn.travel_graph(N_terminal_template[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
+        p_atoms = ProtoSyn.travel_graph(N_terminal_pose[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
+        
+        @assert length(t_atoms) === length(p_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_atoms))) don't match in number."
+        if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
+            for (t_atom, p_atom) in zip(t_atoms, p_atoms)
+                ProtoSyn.rename!(p_atom, t_atom.name, force_rename = force_rename)
+            end
+        end
+        
+        # In case the direct approach wasn't successful
+        @info "Possible tautomers identified, assigning default names residue by residue ..."
+        pose_temp_res = zip(eachresidue(segment), eachresidue(template.graph))
+        for (pose_residue, template_residue) in pose_temp_res
+            # println("\n$pose_residue - $template_residue")
+            
+            pose_res_name = string(ProtoSyn.three_2_one[pose_residue.name.content])
+            ind_pose_res  = copy(pose_residue) # Removes inter-residue connections
+            pose_N        = ProtoSyn.identify_atom_by_bonding_pattern(ind_pose_res, ["N", "C", "C", "O"])
+            pose_atoms    = ProtoSyn.travel_graph(pose_N, search_algorithm = ProtoSyn.BFS)
+            pose_graph    = [a.symbol for a in pose_atoms]
+            # println("Residue $pose_residue (Graph: $pose_graph)")
+            
+            if isa(grammar.variables[pose_res_name], Tautomer)
+                found_match = false
+                for tautomer in grammar.variables[pose_res_name].list
+                    temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(tautomer.graph[1], ["N", "C", "C", "O"])
+                    temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
+                    temp_graph = [a.symbol for a in temp_atoms]
+                    
+                    if all(pose_graph .=== temp_graph)
+                        # println("Match found.")
+                        for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
+                            pri = pose_residue.items
+                            actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
+                            ProtoSyn.rename!(pri[actual_pose_a], t_atom.name, force_rename = force_rename)
+                        end
+                        found_match = true
+                    end
+                end
+                !found_match && @warn "No available tautomer matched the residue $ind_pose_res !"
+            else
+                temp_res   = copy(template_residue)
+                temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(temp_res, ["N", "C", "C", "O"])
+                temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
+                temp_graph = [a.symbol for a in temp_atoms]
+                
+                if all(pose_graph .=== temp_graph)
+                    # println("Match found.")
+                    for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
+                        pri = pose_residue.items
+                        actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)
+                        # println("renaming atom $(pri[actual_pose_a]) to $(t_atom.name)")
+                        try
+                            ProtoSyn.rename!(pri[actual_pose_a], t_atom.name, force_rename = force_rename)
+                        catch AssertionError
+                            error("Multiple Atom instances with the same name identified. Suggested fix: run `assign_default_atom_names!` with `force_rename` set to `true`.")
+                        end
+                    end
+                else
+                    println("    Graph: $([x.name for x in pose_atoms])")
+                    println(" Template: $([x.name for x in temp_atoms])")
+                    @warn "Available template for $pose_residue doesn't match the graph.\n    Graph: $pose_graph\n Template: $temp_graph"
+                end
+            end
+        end
+    end
+        
+    return pose
+end

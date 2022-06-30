@@ -1,76 +1,30 @@
-one_2_three = Dict{Char,String}(
-    # '?' => "BKB",
-    # 'A' => "ALA",
-    # 'C' => "CYS",
-    # 'D' => "ASP",
-    # 'E' => "GLU",
-    # 'F' => "PHE",
-    # 'G' => "GLY",
-    # 'H' => "HIS",
-    # 'H' => "HIE",
-    # 'I' => "ILE",
-    # 'K' => "LYS",
-    # 'L' => "LEU",
-    # 'M' => "MET",
-    # 'N' => "ASN",
-    # 'P' => "PRO",
-    # 'Q' => "GLN",
-    # 'R' => "ARG",
-    # 'S' => "SER",
-    # 'T' => "THR",
-    # 'V' => "VAL",
-    # 'W' => "TRP",
-    # 'Y' => "TYR",
-)
+using CSV
 
-three_2_one = Dict{String, Char}(
-    # "BKB" => '?',
-    # "ALA" => 'A',
-    # "CYS" => 'C',
-    # "ASP" => 'D',
-    # "GLU" => 'E',
-    # "PHE" => 'F',
-    # "GLY" => 'G',
-    # "HIS" => 'H',
-    # "HIE" => 'H',
-    # "ILE" => 'I',
-    # "LYS" => 'K',
-    # "LEU" => 'L',
-    # "MET" => 'M',
-    # "ASN" => 'N',
-    # "PRO" => 'P',
-    # "GLN" => 'Q',
-    # "ARG" => 'R',
-    # "SER" => 'S',
-    # "THR" => 'T',
-    # "VAL" => 'V',
-    # "TRP" => 'W',
-    # "TYR" => 'Y',
-)
-
-
+# Positive values: Hydrophobic
+# Negative values: Hydrophilic
 const doolitle_hydrophobicity = Dict{String, ProtoSyn.Units.defaultFloat}(
-    "ILE" =>  4.5,
-    "VAL" =>  4.2,
-    "LEU" =>  3.8,
-    "PHE" =>  2.8,
-    "CYS" =>  2.5,
-    "MET" =>  1.9,
-    "ALA" =>  1.8,
-    "GLY" => -0.4,
-    "THR" => -0.7,
-    "SER" => -0.8,
-    "TRP" => -0.9,
-    "TYR" => -1.3,
-    "PRO" => -1.6,
-    "HIS" => -3.2,
-    "HIE" => -3.2,
-    "ASN" => -3.5,
-    "GLU" => -3.5,
-    "GLN" => -3.5,
-    "ASP" => -3.5,
-    "LYS" => -3.9,
-    "ARG" => -4.5
+    "ILE" =>  4.5, # I
+    "VAL" =>  4.2, # V
+    "LEU" =>  3.8, # L
+    "PHE" =>  2.8, # F
+    "CYS" =>  2.5, # C
+    "MET" =>  1.9, # M
+    "ALA" =>  1.8, # A
+    "GLY" => -0.4, # G
+    "THR" => -0.7, # T
+    "SER" => -0.8, # S
+    "TRP" => -0.9, # W
+    "TYR" => -1.3, # Y
+    "PRO" => -1.6, # P
+    "HIS" => -3.2, # H
+    "HIE" => -3.2, # H
+    "HID" => -3.2, # H
+    "ASN" => -3.5, # N
+    "GLU" => -3.5, # E
+    "GLN" => -3.5, # Q
+    "ASP" => -3.5, # D
+    "LYS" => -3.9, # K
+    "ARG" => -4.5  # R
 )
 
 const doolitle_hydrophobicity_mod1 = Dict{String, ProtoSyn.Units.defaultFloat}(
@@ -194,27 +148,23 @@ const doolitle_hydrophobicity_extreme = Dict{String, ProtoSyn.Units.defaultFloat
     "ARG" => 0.0
 )
 
-available_aminoacids = Dict{Char, Bool}(
-    # 'M' => true,
-    # 'K' => true,
-    # 'P' => true,
-    # 'Q' => true,
-    # 'I' => true,
-    # 'H' => true,
-    # 'E' => true,
-    # 'W' => true,
-    # 'S' => true,
-    # 'T' => true,
-    # 'C' => true,
-    # 'D' => true,
-    # 'A' => true,
-    # 'L' => true,
-    # 'Y' => true,
-    # 'V' => true,
-    # 'R' => true,
-    # 'G' => true,
-    # 'F' => true,
-    # 'N' => true
-)
+available_aminoacids = Dict{Char, Bool}()
 
-const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR", "TYR"]
+const polar_residues = ["ARG", "ASN", "ASP", "GLU", "GLN", "HIS", "LYS", "SER", "THR"]
+
+function load_aa_similarity(::Type{T}, filename::String) where {T <: AbstractFloat}
+
+    _filename = joinpath(Peptides.resource_dir, filename)
+    data = CSV.File(_filename; skipto = 2)
+
+    aa_similarity = Dict{String, Dict{String, T}}()
+
+    for row in data
+        k = string.(keys(row)[2:end])
+        aa_similarity[row[:X]] = Dict(zip(k, values(row)[2:end]))
+    end
+
+    return aa_similarity
+end
+
+const aminoacid_similarity = load_aa_similarity(ProtoSyn.Units.defaultFloat, "aa_similarity.csv")

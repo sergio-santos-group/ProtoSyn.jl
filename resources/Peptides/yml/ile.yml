@@ -1,25 +1,25 @@
 name: ILE
 code: I
 atoms:
-  - {name:    N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
-  - {name:    H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:   CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
-  - {name:   HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
-  - {name:   CB, id:   5, symbol:  C, b:   1.524918, theta:   1.910745, phi:   1.047141}
-  - {name:   HB, id:   6, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046429}
-  - {name:  CG2, id:   7, symbol:  C, b:   1.524918, theta:   1.910429, phi:   1.047117}
-  - {name: HG21, id:   8, symbol:  H, b:   1.090022, theta:   1.911754, phi:   1.047210}
-  - {name: HG22, id:   9, symbol:  H, b:   1.090181, theta:   1.911916, phi:   3.141367}
-  - {name: HG23, id:  10, symbol:  H, b:   1.090315, theta:   1.911842, phi:  -1.047048}
-  - {name:  CG1, id:  11, symbol:  C, b:   1.525005, theta:   1.910668, phi:   3.141451}
-  - {name: HG11, id:  12, symbol:  H, b:   1.089901, theta:   1.911026, phi:  -1.047094}
-  - {name: HG12, id:  13, symbol:  H, b:   1.089872, theta:   1.911080, phi:   1.046787}
-  - {name:  CD1, id:  14, symbol:  C, b:   1.524918, theta:   1.910668, phi:   3.141593}
-  - {name:  HD11, id:  15, symbol:  H, b:   1.090962, theta:   1.910901, phi:   1.047427}
-  - {name:  HD12, id:  16, symbol:  H, b:   1.089863, theta:   1.911228, phi:   3.140674}
-  - {name:  HD13, id:  17, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046288}
-  - {name:    C, id:  18, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
-  - {name:    O, id:  19, symbol:  O, b:   1.228850, theta:   2.103163, phi:   3.141593}
+  - {name:     N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000, c: -0.5880}
+  - {name:     H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593, c:  0.3731}
+  - {name:    CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000, c: -0.1467}
+  - {name:    HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759, c:  0.2499}
+  - {name:    CB, id:   5, symbol:  C, b:   1.524918, theta:   1.910745, phi:   1.047141, c: -0.0791}
+  - {name:    HB, id:   6, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046429, c:  0.2328}
+  - {name:   CG2, id:   7, symbol:  C, b:   1.524918, theta:   1.910429, phi:   1.047117, c: -0.5624}
+  - {name:  HG21, id:   8, symbol:  H, b:   1.090022, theta:   1.911754, phi:   1.047210, c:  0.3230}
+  - {name:  HG22, id:   9, symbol:  H, b:   1.090181, theta:   1.911916, phi:   3.141367, c:  0.2696}
+  - {name:  HG23, id:  10, symbol:  H, b:   1.090315, theta:   1.911842, phi:  -1.047048, c:  0.3089}
+  - {name:   CG1, id:  11, symbol:  C, b:   1.525005, theta:   1.910668, phi:   3.141451, c: -0.3226}
+  - {name:  HG11, id:  12, symbol:  H, b:   1.089901, theta:   1.911026, phi:  -1.047094, c:  0.3312}
+  - {name:  HG12, id:  13, symbol:  H, b:   1.089872, theta:   1.911080, phi:   1.046787, c:  0.2582}
+  - {name:   CD1, id:  14, symbol:  C, b:   1.524918, theta:   1.910668, phi:   3.141593, c: -0.5705}
+  - {name:  HD11, id:  15, symbol:  H, b:   1.090962, theta:   1.910901, phi:   1.047427, c:  0.2733}
+  - {name:  HD12, id:  16, symbol:  H, b:   1.089863, theta:   1.911228, phi:   3.140674, c:  0.2778}
+  - {name:  HD13, id:  17, symbol:  H, b:   1.089902, theta:   1.911299, phi:  -1.046288, c:  0.2723}
+  - {name:     C, id:  18, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.8026}
+  - {name:     O, id:  19, symbol:  O, b:   1.228850, theta:   2.103163, phi:   3.141593, c: -0.7848}
 bonds:
   N: [H, CA]
   H: [N]

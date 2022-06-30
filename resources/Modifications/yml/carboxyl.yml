@@ -1,0 +1,19 @@
+name: xyl
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name: CX1, id:   2, symbol:  C, b:   1.400000, theta:   2.094395, phi:   0.000000, c:  0.080}
+  - {name: CX2, id:   3, symbol:  C, b:   1.490000, theta:   2.094395, phi:   3.141592, c:  0.720}
+  - {name:  O1, id:   4, symbol:  O, b:   1.218000, theta:   2.094395, phi:   3.141592, c: -0.760}
+  - {name:  O2, id:   5, symbol:  O, b:   1.344000, theta:   2.094395, phi:   0.000000, c: -0.760}
+bonds:
+  R: [CX1]
+  CX1: [CX2]
+  CX2: [CX1, O1, O2]
+  O1: [CX2]
+  O2: [CX2]
+graph:
+  root: R
+  adjacency:
+    R: [CX1]
+    CX1: [CX2]
+    CX2: [O1, O2]

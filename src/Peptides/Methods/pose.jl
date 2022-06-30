@@ -1,4 +1,5 @@
 using ProtoSyn.Units
+using ProgressMeter
 
 # * ----------------------------------------------------------------------------
 # * Append and insert fragments
@@ -163,8 +164,9 @@ single aminoacid at a time.
 !!! ukw "Note:"
     Sidechains are selected based on the [`Atom`](@ref)`.name` (backbone
     [`Atom`](@ref) instances must be named N, H, CA, C and O, exclusively. Non
-    backbone [`Atom`](@ref) instances should have other names, such as H1, H2,
-    etc.)
+    backbone [`Atom`](@ref) instances should have other names, such as HB1, HB2,
+    etc.) This function attempts to keep terminal caps intact (doesn't remove
+    any atom named H1, H2, etc or OXT).
 
 # See also
 [`force_mutate!`](@ref)
@@ -184,9 +186,10 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     T = eltype(pose.state)
     @assert length(derivation) == 1 "Derivation must have length = 1."
     
-    sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
+    # ! The definition of sidechain could be improved in future versions !
+    sidechain = (!an"^CA$|^N$|^C$|^H\d*$|^O$|^OXT$"r)(residue, gather = true)
 
-    same_aminoacid = string(ProtoSyn.Peptides.three_2_one[residue.name]) == derivation[1]
+    same_aminoacid = string(ProtoSyn.ProtoSyn.three_2_one[residue.name]) == derivation[1]
     if same_aminoacid && length(sidechain) > 0 && !ignore_existing_sidechain
         # println("No mutation required, residue already has sidechain of the requested type.")
         return pose
@@ -220,9 +223,9 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # Here we are measuring the default difference between those two angles in
     # the template fragment. This value could, in a later version of ProtoSyn,
     # be parametrized somewhere.
-    _ϕ = ProtoSyn.getdihedral(frag.state, frag.graph[1]["C"])
+    _ϕ = ProtoSyn.getdihedral(frag.state, frag.graph[1]["C"]) # in template
     ϕ  = ProtoSyn.unit_circle(_ϕ)
-    for (index, atom) in enumerate(frag_sidechain)
+    for (index, atom) in enumerate(frag_sidechain) # in template
         parent_is_CA = false
         bonded_to_CA = false
         if atom.parent.name == "CA"
@@ -264,7 +267,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     pose_sidechain = (!an"^CA$|^N$|^C$|^H$|^O$"r)(residue, gather = true)
     Δϕ             = pose.state[residue["CA"]].Δϕ
     index          = 1
-    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+    _ϕ = ProtoSyn.getdihedral(pose.state, Peptides.phi(residue))
     ϕ  = ProtoSyn.unit_circle(_ϕ)
     for child in residue["CA"].children
         if child in pose_sidechain
@@ -274,7 +277,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
         end
     end
     
-    residue.name = ProtoSyn.ResidueName(Peptides.one_2_three[derivation[1][1]])
+    residue.name = ProtoSyn.ResidueName(ProtoSyn.one_2_three[derivation[1][1]])
     ProtoSyn.request_i2c!(pose.state)
 
     return pose
@@ -314,19 +317,27 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # 1) Insert new residue in position R, shifting all downstream residues + 1
     # The inserted residue backbone dihedrals should match the secondary
     # structure pre-existent in the pose
-    phi   = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-    psi_atom = Peptides.Dihedral.psi(residue)
+    phi   = ProtoSyn.getdihedral(pose.state, Peptides.phi(residue))
+    
+    psi_atom = Peptides.psi(residue)
     if psi_atom !== nothing
         psi = ProtoSyn.getdihedral(pose.state, psi_atom)
     else
         psi = 0.0
     end
-    omega = ProtoSyn.getdihedral(pose.state, Peptides.Dihedral.omega(residue))
+    
+    omega_atom = Peptides.omega(residue)
+    if omega_atom !== nothing
+        omega = ProtoSyn.getdihedral(pose.state, omega_atom)
+    else
+        omega = 0.0
+    end
+
     T     = eltype(pose.state)
     ss    = ProtoSyn.Peptides.SecondaryStructureTemplate{T}(phi, psi, omega)
     old_r_pos = findfirst(residue, residue.container.items)
     Peptides.insert_fragment!(pose, residue, grammar, derivation,
-        ss = ss, op = op)
+        ss = nothing, op = op)
     new_residue = residue.container.items[old_r_pos]
 
     # 2) Remove old residue (now in position R + 1)
@@ -341,7 +352,7 @@ function force_mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar
     # deleted the R + 1 old residue). Current parents (after pop_residue! are
     # the root).
     downstream_r_pos = old_r_pos
-    if downstream_r_pos < length(Peptides.sequence(pose))
+    if downstream_r_pos <= length(ProtoSyn.sequence(pose))
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos])
         ProtoSyn.popparent!(new_residue.container.items[downstream_r_pos]["N"])
         
@@ -361,16 +372,16 @@ end
 # * Remove and add sidechains
 
 """
-    remove_sidechains!(pose::Pose{Topology}, res_lib::selection::LGrammar, Opt{AbstractSelection} = nothing)
+    remove_sidechains!(pose::Pose{Topology}, res_lib::LGrammar, Opt{AbstractSelection} = nothing)
 
 Removes the sidechain atoms of the given [`Pose`](@ref) `pose`. If an
 `AbstractSelection` `selection` is provided, only the sidechain atoms belonging
 to the [`Residue`](@ref) instances of that selection are considered for possible
 removal. Essentially, the selected [`Residue`](@ref) instances are mutated to
 Glycine, based on the provided residue library `res_lib`, without changing the
-peptide [`sequence`](@ref). Therefore, the original [`sequence`](@ref) can be
+peptide [`sequence`](@ref ProtoSyn.sequence). Therefore, the original [`sequence`](@ref ProtoSyn.sequence) can be
 recovered using the [`add_sidechains!`](@ref) method and energy components such
-as [`calc_solvation_energy`](@ref ProtoSyn.Peptides.Calculators.Caterpillar.calc_solvation_energy)
+as [`neighbour_vector`](@ref ProtoSyn.Peptides.Calculators.Caterpillar.neighbour_vector)
 can perform correctly.
 
 !!! ukw "Note:"
@@ -476,7 +487,7 @@ based on the templates of the provided `grammar`. If an `AbstractSelection`
 `selection` is given, only the residues of that selection (promoted to `Residue`
 instances, using the default aggregator function) are considered for sidechain
 addition. The addition is performed using the [`mutate!`](@ref) function, and
-follows the current [`Pose`](@ref) [`sequence`](@ref).
+follows the current [`Pose`](@ref) [`sequence`](@ref ProtoSyn.sequence).
 
 # Examples
 ```jldoctest
@@ -502,7 +513,7 @@ function add_sidechains!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt
         residues = collect(eachresidue(pose.graph))
     end
     for residue in residues
-        derivation = [string(Peptides.three_2_one[residue.name])]
+        derivation = [string(ProtoSyn.three_2_one[residue.name])]
         derivation == ["P"] && continue
         Peptides.mutate!(pose, residue, grammar, derivation,
             ignore_existing_sidechain = true)
@@ -548,6 +559,58 @@ end
 
 
 """
+    identify_c_terminal(seg::Segment; supress_warn::Bool = false)
+
+Attempts to identify the C terminal of a given [`Segment`](@ref) `seg`, using
+the following criteria:
+ + Bonding patter: the C terminal follows the bonding pattern C-C-N-C, there the C-terminal is the first C atom of the pattern.
+ + Bond number: the C terminal must not exceed 3 bonds.
+ + By atom name: the C terminal must be bonded to an atom named CA
+As such, this method does not use parenthood relationships to identify the C
+terminal. If the `supress_warn` is set to `true` (`false`, by default), any
+generated warnings are ignored.
+
+# Examples
+```
+julia> ProtoSyn.Peptides.identify_c_terminal(pose.graph[1])
+Atom{/2a3d:40139/A:1/ASN:73/C:1138}
+```
+"""
+function identify_c_terminal(seg::Segment; supress_warn::Bool = false)
+
+    # Criterium 1. Identify atom by the bonding pattern
+    #  - The C terminal is connected to a C, which is connected to a N, which is
+    # connected to a C, in the last residue of the segment (based on the residue
+    # numbering only)
+    last_r = seg[end]
+    Cs = ProtoSyn.identify_atom_by_bonding_pattern(last_r, ["C", "C", "N", "C"])
+    if isa(Cs, Atom)
+        C = Cs
+    else
+        # Criterium 2. Identify atom by the number of bonds
+        #  - The C terminal cannot have more than 3 bonded atoms.
+        C = [c for c in Cs if (length(c.bonds) <= 3)]
+        if length(C) > 1
+            # Criterium 3. Identify atom by a specific bond
+            #  - The C terminal should be connected to an atom called "CA"
+            C = [c for c in C if c.container["CA"] in c.bonds]
+        end
+        if length(C) > 1
+            !supress_warn && @warn "Multiple candidates for C terminal identification found. Assuming $(C[1]) as C terminal. Check if this is the desired behaviour".
+            C = C[1]
+        elseif length(C) === 1
+            C = C[1]
+        elseif length(C) === 0
+            !supress_warn && @warn "Terminal C was not found on $seg"
+            return Atom[]
+        end
+    end
+
+    return C
+end
+
+
+"""
     uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
 Remove all bonded [`Atom`](@ref) instances to the N- and C-terminal (except Cα)
@@ -574,7 +637,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     # * (N-terminal residue has an atom named "N" and C-terminal has an atom
     # * named "C", both with a bond to a "CA" atom).
 
-    _selection = ProtoSyn.TerminalSelection()
+    _selection = DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}()
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -588,6 +651,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     for residue in residues
         if is_C_terminal(residue)
             terminal = residue["C"]
+            @assert terminal !== nothing "Can't find atom \"C\" in terminal residue $residue"
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
                 if !(bond.name in ["CA"])
@@ -653,7 +717,7 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     sync!(pose)
 
     # * Search for terminals to cap
-    _selection = ProtoSyn.TerminalSelection()
+    _selection = DownstreamTerminalSelection{Residue}() | UpstreamTerminalSelection{Residue}()
     if selection !== nothing
         _selection = _selection & selection
     end
@@ -705,152 +769,4 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     return pose
 end
 
-
-"""
-# TODO
-"""
-function add_hydrogens!(pose::Pose{Topology}, grammar::LGrammar, selection::Opt{AbstractSelection} = nothing; predict_unknown_aminoacids::Bool = false)
-    if selection !== nothing
-        residues = selection(pose, gather = true)
-    else
-        residues = collect(eachresidue(pose.graph))
-    end
-    for residue in residues
-
-        # 1. Check if backbone has hydrogen
-        backbone_h = "H" in [a.name for a in residue["N"].children]
-        if !backbone_h
-            h = Atom("H", -1, -1, "H")
-            h_state = AtomState()
-            h_state.b = 0.98
-            h_state.θ = 120°
-            h_state.ϕ = 0°
-            ProtoSyn.insert_atom_as_children!(pose, residue["N"], h, h_state)
-        end
-
-        # Don't change sidechains in NCAA
-        if !(residue.name in keys(Peptides.three_2_one))
-            if predict_unknown_aminoacids
-                @warn "Possible NCAA found at residue $residue. Predicting hydrogens."
-                predict_hydrogens!(pose, SerialSelection{Residue}(residue.id, :id))
-            else
-                @warn "Possible NCAA found at residue $residue. Skipping this residue. Set `predict_unknown_aminoacids` flag to `true` to try to place hydrogens on this structure."
-            end
-            continue
-        end
-        
-        derivation = [string(Peptides.three_2_one[residue.name])]
-        derivation == ["P"] && continue
-
-        # 2. Save rotamer
-        rotamer = get_rotamer(pose, residue, ignore_non_existent = true)
-
-        # 3. Mutate to the same aminoacid (add hydrogens)
-        Peptides.mutate!(pose, residue, grammar, derivation,
-            ignore_existing_sidechain = true)
-
-        # 4. Apply pre-existing rotamer
-        apply!(pose.state, rotamer, residue)
-    end
-
-    return pose
-end
-
-
-function predict_hydrogens!(pose, selection::Opt{AbstractSelection} = nothing)
-    if selection !== nothing
-        residues = selection(pose, gather = true)
-    else
-        residues = collect(eachresidue(pose.graph))
-    end
-
-    for residue in residues
-        CA = residue["CA"]
-        sidechain = ProtoSyn.SidechainSelection()(residue, gather = true)
-        cg = [x for x in ProtoSyn.travel_graph(CA) if x in sidechain]
-
-        for (i, atom) in enumerate(cg[1:(end - 1)])
-            h = Atom("H$i", -1, -1, "H")
-            h_state = AtomState()
-            h_state.b = 1.09
-            h_state.θ = 110°
-            h_state.ϕ = 0°
-
-            if atom.symbol === "C"
-                # Check if already has at least 1 hydrogen children
-                if "H" in [a.symbol for a in atom.children]
-                    continue
-                end
-
-                ψ = ProtoSyn.getdihedral(pose.state, atom.children[1])
-                println("Atom $atom chi dihedral = $(rad2deg(ψ))")
-                println("Atom $atom Δϕ = $(pose.state[atom].Δϕ)")
-                
-                h1 = copy(h)
-                h1_state = copy(h_state)
-                println("H1: $(rad2deg(ProtoSyn.unit_circle(ψ - 120° - pose.state[atom].Δϕ)))")
-                h1_state.ϕ = ψ - 120° - pose.state[atom].Δϕ
-                h1.name = h1.name * "1"
-                ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
-
-                h2 = copy(h)
-                h2_state = copy(h_state)
-                println("H1: $(rad2deg(ProtoSyn.unit_circle(ψ - 240° - pose.state[atom].Δϕ)))")
-                h2_state.ϕ = ψ - 240° - pose.state[atom].Δϕ
-                h2.name = h2.name * "2"
-                ProtoSyn.insert_atom_as_children!(pose, atom, h2, h2_state)
-                
-            elseif atom.symbol === "N"
-                # Check if already has at least 1 hydrogen children
-                if "H" in [a.symbol for a in atom.children]
-                    continue
-                end
-                
-                ψ = ProtoSyn.getdihedral(pose.state, atom.children[1])
-
-                h1 = copy(h)
-                h1_state = copy(h_state)
-                h1_state.θ = 120°
-                h1_state.ϕ = ψ - pose.state[atom].Δϕ
-                ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
-            else
-                continue
-            end
-        end
-
-        # Last residue should have an extra hydrogen (CH3 / NH3)
-        atom = cg[end]
-        i = length(cg)
-        h = Atom("H$i", -1, -1, "H")
-        h_state = AtomState()
-        h_state.b = 1.09
-        h_state.θ = 110°
-        h_state.ϕ = 0°
-
-        if "H" in [a.symbol for a in atom.children]
-            continue
-        end
-            
-        h1 = copy(h)
-        h1_state = copy(h_state)
-        h1_state.ϕ = -60°
-        h1.name = h1.name * "1"
-        ProtoSyn.insert_atom_as_children!(pose, atom, h1, h1_state)
-
-        h2 = copy(h)
-        h2_state = copy(h_state)
-        h2_state.ϕ = 60°
-        h2.name = h2.name * "2"
-        ProtoSyn.insert_atom_as_children!(pose, atom, h2, h2_state)
-
-        h3 = copy(h)
-        h3_state = copy(h_state)
-        h3_state.ϕ = -180°
-        h3.name = h3.name * "3"
-        ProtoSyn.insert_atom_as_children!(pose, atom, h3, h3_state)
-    end
-
-    reindex(pose.graph; set_ascendents = true)
-    reindex(pose.state)
-    ProtoSyn.request_i2c!(pose.state; all = true)
-end
+include("pose-diagnose.jl")

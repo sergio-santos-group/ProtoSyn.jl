@@ -1,5 +1,6 @@
 using ProtoSyn.Calculators: EnergyFunction
 using ProtoSyn.Mutators: AbstractMutator
+using Printf
 
 """
     MonteCarloState{T <: AbstractFloat}(step::Int = 0, converged::Bool = false, completed::Bool = false, stalled::Bool = false, acceptance_count = 0, temperature::T = T(0.0))
@@ -69,7 +70,7 @@ is performed. A companion [`MonteCarloState`](@ref) `DriverState` instance is
 also updated each step and provided to the [`Callback`](@ref) `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `sample!::Union{Function, AbstractMutator, Driver}` - The sampler method, receives a [`Pose`](@ref) `pose` as the single input argument;
 * `callback::Opt{Callback}` - An optional [`Callback`](@ref) instance, receives two input arguments: the current [`Pose`](@ref) `pose` and the current `DriverState` `driver_state`;
 * `max_steps::Int` - The total number of simulation steps to be performed;
@@ -138,26 +139,28 @@ function (driver::MonteCarlo)(pose::Pose)
     T = eltype(pose.state)
     driver_state = MonteCarloState{T}()
     driver_state.temperature = driver.temperature(0)
-    
+
+    previous_energy = driver.eval!(pose)
     previous_state  = copy(pose)
-    previous_energy = driver.eval!(pose, false)
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
-            
+        
         driver.sample!(pose)
         sync!(pose)
-        energy = driver.eval!(pose, false)
+        energy = driver.eval!(pose)
         
         n = rand()
         driver_state.temperature = driver.temperature(driver_state.step)
         m = exp((-(energy - previous_energy)) / driver_state.temperature)
         if (energy < previous_energy) || (n < m)
+            # println("Accepted")
             previous_energy = energy
-            previous_state = copy(pose)
+            ProtoSyn.recoverfrom!(previous_state, pose) # If copy, the chain is broken
             driver_state.acceptance_count += 1
         else
-            ProtoSyn.recoverfrom!(pose, previous_state)
+            # println("Rejected")
+            ProtoSyn.recoverfrom!(pose, previous_state) # If copy, the chain is broken
         end
 
         driver_state.step += 1

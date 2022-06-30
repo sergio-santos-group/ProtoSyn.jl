@@ -1,0 +1,73 @@
+name: CQ1
+code: c
+atoms:
+  - {name:   N, id:   1, symbol:  N, b:   1.430660, theta:   2.117655, phi:  -0.856617}
+  - {name: CA1, id:   2, symbol:  C, b:   1.437319, theta:   2.147497, phi:   3.017644}
+  - {name: CB1, id:   3, symbol:  C, b:   1.531661, theta:   1.911023, phi:   2.122076}
+  - {name: CG1, id:   4, symbol:  C, b:   1.475796, theta:   1.903623, phi:  -1.210264}
+  - {name: OG1, id:   5, symbol:  O, b:   1.457966, theta:   1.932739, phi:   0.874955}
+  - {name:  C1, id:   6, symbol:  C, b:   1.458117, theta:   1.872355, phi:  -2.045651}
+  - {name:  N2, id:   7, symbol:  N, b:   1.396681, theta:   2.208247, phi:  -1.715244}
+  - {name: CA2, id:   8, symbol:  C, b:   1.337716, theta:   1.808463, phi:   3.084686}
+  - {name: CB2, id:   9, symbol:  C, b:   1.439959, theta:   2.152703, phi:   3.077551}
+  - {name: CG2, id:  10, symbol:  C, b:   1.477094, theta:   2.196848, phi:   0.268015}
+  - {name: CD2, id:  11, symbol:  C, b:   1.359981, theta:   2.002830, phi:   2.934462}
+  - {name: CE2, id:  12, symbol:  C, b:   1.340237, theta:   2.124610, phi:  -3.122720}
+  - {name: CD1, id:  13, symbol:  C, b:   1.401401, theta:   2.189180, phi:  -0.054320}
+  - {name: CE1, id:  14, symbol:  C, b:   1.393968, theta:   2.067556, phi:   3.111159}
+  - {name:  CZ, id:  15, symbol:  C, b:   1.401542, theta:   2.088972, phi:  -0.060195}
+  - {name:  NW, id:  16, symbol:  N, b:   1.381552, theta:   2.182736, phi:  -3.119409}
+  - {name:  NX, id:  17, symbol:  N, b:   1.308262, theta:   2.053258, phi:  -0.446062}
+  - {name:  NY, id:  18, symbol:  N, b:   1.325789, theta:   3.089168, phi:   1.277660}
+  - {name:  N3, id:  19, symbol:  N, b:   1.396558, theta:   2.143855, phi:   1.483890}
+  - {name:  C2, id:  20, symbol:  C, b:   1.295886, theta:   1.833622, phi:   3.055330}
+  - {name:  O2, id:  21, symbol:  O, b:   1.299317, theta:   2.168036, phi:   2.979483}
+  - {name: CA3, id:  22, symbol:  C, b:   1.464133, theta:   2.202667, phi:  -0.106461}
+  - {name:   C, id:  23, symbol:  C, b:   1.480145, theta:   1.965419, phi:   1.887198}
+  - {name:  O3, id:  24, symbol:  O, b:   1.255558, theta:   2.068223, phi:   2.953943}
+bonds:
+  N: [CA1]
+  CA1: [C1, N, CB1]
+  CB1: [CA1, CG1, OG1]
+  CG1: [CB1]
+  OG1: [CB1]
+  C1: [N2, N3, CA1]
+  N2: [CA2, C1]
+  CA2: [CB2, N2, C2]
+  CB2: [CG2, CA2]
+  CG2: [CD1, CD2, CB2]
+  CD2: [CE2, CG2]
+  CE2: [CZ, CD2]
+  CD1: [CE1, CG2]
+  CE1: [CZ, CD1]
+  CZ: [NW, CE1, CE2]
+  NW: [NX, CZ]
+  NX: [NY, NW]
+  NY: [NX]
+  N3: [C2, CA3, C1]
+  C2: [CA2, O2, N3]
+  O2: [C2]
+  CA3: [N3, C]
+  C: [CA3, O3]
+  O3: [C]
+graph:
+  root: N
+  adjacency:
+    N: [CA1]
+    CA1: [CB1, C1]
+    CB1: [CG1, OG1]
+    C1: [N2, N3]
+    N2: [CA2]
+    CA2: [CB2]
+    CB2: [CG2]
+    CG2: [CD2, CD1]
+    CD2: [CE2]
+    CD1: [CE1]
+    CE1: [CZ]
+    CZ: [NW]
+    NW: [NX]
+    NX: [NY]
+    N3: [C2, CA3]
+    C2: [O2]
+    CA3: [C]
+    C: [O3]

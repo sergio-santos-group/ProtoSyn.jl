@@ -15,8 +15,7 @@ Each module in ProtoSyn may include a [Mutators section](@ref), containing types
 
 # Creating custom mutators
 
-Mutators are most useful when employed in a `Driver` instance (see [Drivers section](@ref)), who expects the following signature. Note that the Mutator instances are `struct` instances (of type `<: AbstractMutator`), but are also _functors_, meaning that are callable by the encompassing `Driver`. For this call, only a [`Pose`](@ref) `pose` instance is given as input, and all conformational changes should be in-place (no output is expected and any internal to cartesian coordinate conversion, or vice-versa, should be requested at the end of the function call). Note that, as a general rule, `AbstractMutator` instances should [`sync!`](@ref) any required internal to cartesian coordinate conversion (or vice-versa) at the start of the function call (using [`i2c!`](@ref ProtoSyn.i2c!) or [`c2i!`](@ref ProtoSyn.c2i!) methods). As an example, [`DihedralMutator`](@ref) syncs any pending cartesian to internal coordinate conversion before applying itself. In the same fashion, at the end of the function call, `AbstractMutators` should request any internal to cartesian coordinate conversion (or vice-versa), depending on the change performed, therefore requesting a pending [`sync!`](@ref). However, `AbstractMutators`
-should not [`sync!`](@ref), in most cases. As an example, ten sequential [`DihedralMutator`](@ref) calls do not require a [`sync!`](@ref) between each of them.
+Mutators are most useful when employed in a `Driver` instance (see [Drivers section](@ref)), who expects the following signature. Note that the Mutator instances are `struct` instances (of type `<: AbstractMutator`), but are also _functors_, meaning that are callable by the encompassing `Driver`. For this call, only a [`Pose`](@ref) `pose` instance is given as input, and all conformational changes should be in-place (no output is expected and any internal to cartesian coordinate conversion, or vice-versa, should be requested at the end of the function call). Note that, as a general rule, `AbstractMutator` instances should [`sync!`](@ref) any required internal to cartesian coordinate conversion (or vice-versa) at the start of the function call (using [`i2c!`](@ref ProtoSyn.i2c!) or [`c2i!`](@ref ProtoSyn.c2i!) methods). As an example, [`DihedralMutator`](@ref) syncs any pending cartesian to internal coordinate conversion before applying itself, as it will apply changes to the internal coordinates. In the same fashion, at the end of the function call, `AbstractMutators` should request any internal to cartesian coordinate conversion (or vice-versa), depending on the change performed, therefore requesting a pending [`sync!`](@ref). However, `AbstractMutators` should not [`sync!`](@ref), in most cases. As an example, ten sequential [`DihedralMutator`](@ref) calls do not require a [`sync!`](@ref) between each of them.
 
 ```julia
 struct NewMutator <: AbstractMutator
@@ -38,10 +37,10 @@ end
 
 # Available mutators
 
-Besides all the machinery to create custom mutators, ProtoSyn's `Core` module makes available some simple `AbstractMutator` instances. Since this is not a specialized module, available mutators should be indiferent to the type of molecular structure being sampled. As of ProtoSyn 1.0, the following `AbstractMutator` instances are made available from the `Core` module, and can be further explored in the respectivelly dedicated pages of this manual:
+Besides all the machinery to create custom mutators, ProtoSyn's `Core` module makes available some simple `AbstractMutator` instances. Since this is not a specialized module, available mutators should be indiferent to the type of molecular structure being sampled. As of ProtoSyn 1.1, the following `AbstractMutator` instances are made available from the `Core` module, and can be further explored in the respectivelly dedicated pages of this manual:
 
 * [Dihedral Mutator](@ref)
 * [Crankshaft Mutator](@ref)
 * [Rigid Body Mutators](@ref)
-* [Backrub Mutators](@ref)
+* [Backrub Mutator](@ref)
 * [Compound Mutator](@ref)

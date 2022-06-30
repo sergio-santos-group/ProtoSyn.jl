@@ -1,0 +1,28 @@
+MODEL        1
+ATOM      1    N CYS ?   1       3.326   1.548   0.000        0.00           N
+ATOM      2    H CYS ?   1       2.935   1.514   0.971        0.00           H
+ATOM      3   CX CYS ?   1       2.782   0.881  -0.596        0.00           C
+ATOM      4   CA CYS ?   1       4.734   1.205   0.000        0.00           C
+ATOM      5   HA CYS ?   1       4.966   0.620   0.890        0.00           H
+ATOM      6   CB CYS ?   1       5.099   0.384  -1.232        0.00           C
+ATOM      7  HB1 CYS ?   1       4.516  -0.537  -1.241        0.00           H
+ATOM      8  HB2 CYS ?   1       4.880   0.960  -2.131        0.00           H
+ATOM      9   SG CYS ?   1       6.833  -0.118  -1.366        0.00           S
+ATOM     10   HG CYS ?   1       6.700  -0.770  -2.518        0.00           H
+ATOM     11    C CYS ?   1       5.602   2.456  -0.000        0.00           C
+ATOM     12    O CYS ?   1       5.123   3.485   0.448        0.00           O
+ATOM     13   NX CYS ?   1       6.734   2.367  -0.445        0.00           N
+CONECT    1    4    3    2
+CONECT    2    1
+CONECT    3    1
+CONECT    4   11    1    6    5
+CONECT    5    4
+CONECT    6    7    8    9    4
+CONECT    7    6
+CONECT    8    6
+CONECT    9   10    6
+CONECT   10    9
+CONECT   11    4   13   12
+CONECT   12   11
+CONECT   13   11
+ENDMDL

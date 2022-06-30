@@ -46,20 +46,20 @@ a maximum of `n_steps`), all [`Residue`](@ref) instances in the provided
 [`Pose`](@ref) `pose` (in random order) may suffer a rotamer conformation
 change. As such, for each [`Residue`](@ref) instance, all `n_first` most likely
 [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances in the `rotamer_library`
-(according to the current backbone phi and psi
-[`Dihedral`](@ref ProtoSyn.Peptides.Dihedral) angles) are applied (using the
-[`apply!`](@ref ProtoSyn.Peptides.apply!) method) and evaluated by the provided
-`eval!` [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom
-function. Once all `n_first` most likely
-[`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances are looped over, the most
-favourable (least energetic) one is re-applied. Each step, a call to an optional
+(according to the current backbone phi and psi dihedral angles) are applied
+(using the [`apply!`](@ref ProtoSyn.Peptides.apply!) method) and evaluated by
+the provided `eval!`
+[`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom function.
+Once all `n_first` most likely [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer)
+instances are looped over, the most favourable (least energetic) one is
+re-applied. Each step, a call to an optional
 [`Callback`](@ref ProtoSyn.Drivers.Callback) `callback` is performed. A
 companion [`RotamerBlitzState`](@ref) `DriverState` instance is also updated
 each step and provided to the [`Callback`](@ref ProtoSyn.Drivers.Callback)
 `callback`.
 
 # Fields
-* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom function, receives two input arguments: a [`Pose`](@ref) `pose` and a `calc_forces::Bool` boolean;
+* `eval!::Union{Function, EnergyFunction}` - The evaluator [`EnergyFunction`](@ref ProtoSyn.Calculators.EnergyFunction) or custom function, receives a [`Pose`](@ref) `pose` as the single argument;
 * `rotamer_library::Dict{String, ProtoSyn.Peptides.BBD_RotamerLibrary}` - The rotamer library used to sample new [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances from;
 * `n_first::Int` - Maximum number of [`Rotamer`](@ref ProtoSyn.Peptides.Rotamer) instances to try, ordered from most to less likely;
 * `max_steps::Int` - The total number of simulation steps to be performed;
@@ -138,8 +138,8 @@ function (driver::RotamerBlitz)(pose::Pose)
                 rotamer => energy)
 
             # Get the correct rotamer stack
-            phi = getdihedral(pose.state, Peptides.Dihedral.phi(residue))
-            psi = getdihedral(pose.state, Peptides.Dihedral.phi(residue))
+            phi = getdihedral(pose.state, Peptides.phi(residue))
+            psi = getdihedral(pose.state, Peptides.psi(residue))
             rotamer_stack = driver.rotamer_library[residue.name][phi, psi]
 
             # Iterate the 'n_first' rotamers, saving the evaluated energy

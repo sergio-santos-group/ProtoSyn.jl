@@ -1,21 +1,21 @@
 name: GLU
 code: E
 atoms:
-  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000}
-  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593}
-  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000}
-  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759}
-  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276}
-  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300}
-  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563}
-  - {name:  CG, id:   8, symbol:  C, b:   1.509448, theta:   1.910799, phi:   3.141414}
-  - {name: HG1, id:   9, symbol:  H, b:   1.089861, theta:   1.911432, phi:  -1.046965}
-  - {name: HG2, id:  10, symbol:  H, b:   1.090285, theta:   1.911294, phi:   1.046702}
-  - {name:  CD, id:  11, symbol:  C, b:   1.526986, theta:   1.910885, phi:  -3.141165}
-  - {name: OE1, id:  12, symbol:  O, b:   1.259501, theta:   2.045791, phi:   1.571076}
-  - {name: OE2, id:  13, symbol:  O, b:   1.260364, theta:   2.045155, phi:  -1.570973}
-  - {name:   C, id:  14, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593}
-  - {name:   O, id:  15, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000}
+  - {name:   N, id:   1, symbol:  N, b:   3.668594, theta:   2.705986, phi:  -0.000000, c: -0.5985}
+  - {name:   H, id:   2, symbol:  H, b:   1.009388, theta:   1.750948, phi:   3.141593, c:  0.4238}
+  - {name:  CA, id:   3, symbol:  C, b:   1.448979, theta:   2.466964, phi:   0.000000, c: -0.1048}
+  - {name:  HA, id:   4, symbol:  H, b:   1.089872, theta:   1.911157, phi:  -1.047759, c:  0.2900}
+  - {name:  CB, id:   5, symbol:  C, b:   1.524840, theta:   1.939203, phi:   1.047276, c: -0.2728}
+  - {name: HB1, id:   6, symbol:  H, b:   1.089995, theta:   1.910813, phi:  -1.047300, c:  0.3221}
+  - {name: HB2, id:   7, symbol:  H, b:   1.089791, theta:   1.911300, phi:   1.046563, c:  0.3477}
+  - {name:  CG, id:   8, symbol:  C, b:   1.509448, theta:   1.910799, phi:   3.141414, c: -0.4437}
+  - {name: HG1, id:   9, symbol:  H, b:   1.089861, theta:   1.911432, phi:  -1.046965, c:  0.4135}
+  - {name: HG2, id:  10, symbol:  H, b:   1.090285, theta:   1.911294, phi:   1.046702, c:  0.3529}
+  - {name:  CD, id:  11, symbol:  C, b:   1.526986, theta:   1.910885, phi:  -3.141165, c:  1.0652}
+  - {name: OE1, id:  12, symbol:  O, b:   1.259501, theta:   2.045791, phi:   1.571076, c: -0.7259}
+  - {name: OE2, id:  13, symbol:  O, b:   1.260364, theta:   2.045155, phi:  -1.570973, c: -0.8011}
+  - {name:   C, id:  14, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.8796}
+  - {name:   O, id:  15, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7165}
 bonds:
   N: [H, CA]
   H: [N]

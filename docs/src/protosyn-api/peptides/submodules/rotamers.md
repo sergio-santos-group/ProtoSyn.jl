@@ -16,19 +16,19 @@ A [`Rotamer`](@ref) is a collection of chi angles for a specific conformation fo
 
 ```@docs
 Rotamer
-RotamerStack
+BBI_RotamerLibrary
 BBD_RotamerLibrary
 ```
 
 ![ProtoSyn Rotamer Library](../../../assets/ProtoSyn-rotamer-library.png)
 
-**Figure 1 |** A diagram representation of a ProtoSyn Rotamer Library organization. For each entry in a dictionary (where the keys are the aminoacid names with a rotatable sidechain), a [`BBD_RotamerLibrary`](@ref) can be queried for with the backbone phi and psi dihedral angles, retrieving the backbone dependent [`RotamerStack`](@ref). This object organizes all the plausible [`Rotamer`](@ref) conformations, based on the probability of natural occurrence, from where a specific [`Rotamer`](@ref) can be sampled. Finally, a [`Rotamer`](@ref) is simply a list of chi dihedral angles (and the corresponding standard deviation), and can be applied to a [`Pose`](@ref) (using the [`apply!`](@ref) method).
+**Figure 1 |** A diagram representation of a ProtoSyn Rotamer Library organization. For each entry in a dictionary (where the keys are the aminoacid names with a rotatable sidechain), a [`BBD_RotamerLibrary`](@ref) can be queried for with the backbone phi and psi dihedral angles, retrieving the backbone dependent [`BBI_RotamerLibrary`](@ref). This object organizes all the plausible [`Rotamer`](@ref) conformations, based on the probability of natural occurrence, from where a specific [`Rotamer`](@ref) can be sampled. Finally, a [`Rotamer`](@ref) is simply a list of chi dihedral angles (and the corresponding standard deviation), and can be applied to a [`Pose`](@ref) (using the [`apply!`](@ref) method).
 
 # Applying a Rotamer Library
 
 ```@docs
 apply!
-sample
+sample_rotamer
 get_rotamer
 ```
 

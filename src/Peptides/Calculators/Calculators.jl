@@ -4,12 +4,14 @@ module Calculators
     using Serialization
     using Polynomials
 
-    phi_file = joinpath(Peptides.resource_dir, "ramachandran/phi-potential.jls")
-    psi_file = joinpath(Peptides.resource_dir, "ramachandran/psi-potential.jls")
-    phi_potential = open(deserialize, phi_file)
-    psi_potential = open(deserialize, psi_file)
-
     include("Caterpillar/Caterpillar.jl")
     include("restraints.jl")
-    include("hydrogen_bonds.jl")
+    include("natural_frequency.jl")
+    include("ss_propensity.jl")
+    include("electrostatics.jl")
+    include("sasa.jl")
+    include("seq_des.jl")
+
+    show_available_energy_function_components() = ProtoSyn.Calculators.show_available_energy_function_components(stdout, ProtoSyn.Peptides.Calculators)
+    get_available_energy_function_components() = ProtoSyn.Calculators.get_available_energy_function_components(ProtoSyn.Peptides.Calculators)
 end

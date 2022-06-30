@@ -2,11 +2,15 @@ export RandomSelection
 # Note: RandomSelection is a LEAF selection.
 
 """
-    RandomSelection{T}() where {T <: AbstractContainer}
+    RandomSelection{T}(sele::Opt{AbstractSelection}) where {T <: AbstractContainer}
 
 A [`RandomSelection`](@ref) outputs a [`Mask`](@ref) (of type
 `T <: AbstractContainer`) containing a random instance of said type in the given
-`container`.
+`container`. Optionally, if an `AbstractSelection` `sele` is provided, the
+random selection is performed from the previously selected instances (from the
+inner `sele`). Note that, despite the inner `sele` selection type, the output
+will always be promoted to be of `T` type (using the
+[`promote`](@ref ProtoSyn.promote) method.)
 
 # State mode    
 
@@ -14,8 +18,7 @@ The state mode of [`RandomSelection`](@ref) `M` is forced to be `Stateless`.
 
 # Selection type
 
-The selection type of [`RandomSelection`](@ref) can be any
-`T <: AbstractContainer`.
+The selection type of [`RandomSelection`](@ref) can be any `T <: AbstractContainer`.
 
 !!! ukw "Note:"
     This selection does not have a short syntax version.
@@ -24,6 +27,16 @@ The selection type of [`RandomSelection`](@ref) can be any
 ```jldoctest
 julia> sele = RandomSelection{Residue}()
 RandomSelection › Residue.id
+
+julia> RandomSelection{Atom}(rid"1")
+RandomSelection › Atom.id › From
+ └── SerialSelection › Residue.id = 1
+
+julia> RandomSelection{Atom}(an"C" & rid"1")
+RandomSelection › Atom.id › From
+ └── BinarySelection ❯  & "and" (Atom)
+      ├── FieldSelection › Atom.name = C
+      └── SerialSelection › Residue.id = 1
 ```
 """
 struct RandomSelection{M, T} <: AbstractSelection
@@ -73,6 +86,16 @@ function Base.show(io::IO, rs::RandomSelection{M, T}, level_code::Opt{LevelCode}
     else
         println(io, lead*"RandomSelection › $T.id")
     end
+end
+
+# --- Help ---------------------------------------------------------------------
+RandomSelection(sele::Opt{AbstractSelection} = nothing) = begin
+    @error """
+    RandomSelection requires specification of selection type: Atom, Residue or Segment. Some examples:
+     • RandomSelection{Atom}(...)
+     • RandomSelection{Residue}(...)
+     • RandomSelection{Segment}(...)
+    """
 end
 
 # ------------------------------------------------------------------------------

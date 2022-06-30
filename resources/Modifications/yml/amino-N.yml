@@ -1,0 +1,19 @@
+name: amn
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name:  CN, id:   2, symbol:  C, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.613}
+  - {name:  NH, id:   3, symbol:  N, b:   1.490000, theta:   2.094395, phi:   3.141592, c:  0.387}
+  - {name:  H1, id:   4, symbol:  H, b:   1.218000, theta:   2.094395, phi:   3.141592, c:  0.000}
+  - {name:  H2, id:   5, symbol:  H, b:   1.344000, theta:   2.094395, phi:   0.000000, c:  0.000}
+bonds:
+  R: [CN]
+  CN: [NH]
+  NH: [CN, H1, H2]
+  H1: [NH]
+  H2: [NH]
+graph:
+  root: R
+  adjacency:
+    R: [CN]
+    CN: [NH]
+    NH: [H1, H2]

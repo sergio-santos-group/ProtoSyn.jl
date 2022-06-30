@@ -7,7 +7,7 @@ default:
     E: Peptides/yml/glu.yml
     F: Peptides/yml/phe.yml
     G: Peptides/yml/gly.yml
-    H: Peptides/yml/hie.yml
+    H: [Peptides/yml/hie.yml, Peptides/yml/hid.yml]
     I: Peptides/yml/ile.yml
     K: Peptides/yml/lys.yml
     L: Peptides/yml/leu.yml
@@ -30,23 +30,30 @@ default:
         H:  {θ: 120°, ϕ:   0°}
         CA: {θ: 120°, ϕ: 180°}
       dependents:
-        N: {ϕ: {measure: O, offset: 180°}}
+        N: {ϕ: {measure: O, offset: 180°}} # On residue 2, measure the O dihedral and set N to be value + offset 
     β: # N.ϕ is set to 180° (useful when building new peptides from derivation)
       residue1: C
       residue2: N
-      presets:
+      presets: # These values will be set on residue 2
         N:  {θ: 120°, ϕ: 180°, b: 1.2Å}
         H:  {θ: 120°, ϕ:   0°}
         CA: {θ: 120°, ϕ: 180°}
-      offsets:
+      offsets: # All sibling atoms are rotated so that this atom has this value
         CA: 180°
         C:  180°
         O:  0°
+    γ: # Don't adjust backbone angles with offsets (quick fix for prolines)
+      residue1: C
+      residue2: N
+      presets: # These values will be set on residue 2
+        N:  {θ: 120°, ϕ: 180°, b: 1.2Å}
+        CA: {θ: 120°, ϕ: 180°}
   defop: β
 ncaa:
   variables:
     a: Peptides/NCAA/yml/cma.yml
     b: Peptides/NCAA/yml/mse.yml
+    c: Peptides/NCAA/yml/cq1.yml
   operators:
     α: # N.ϕ is defined based on parent residue
       residue1: C

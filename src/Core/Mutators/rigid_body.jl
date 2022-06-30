@@ -103,12 +103,12 @@ function Base.show(io::IO, trbm::TranslationRigidBodyMutator, level_code::Opt{Le
 
 
     println(io, lead*"⚯  Translation Rigid Body Mutator:")
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
-    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
-    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "translation_vector_sampler", "Function $(trbm.translation_vector_sampler)")
-    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 2, "step_size", trbm.step_size)
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-40s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-40s |\n", inner_lead, 1, "translation_vector_sampler", "Function $(trbm.translation_vector_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-40.4f |\n", inner_lead, 2, "step_size", trbm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
     
     if trbm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")
@@ -240,14 +240,14 @@ function Base.show(io::IO, rrbm::RotationRigidBodyMutator, level_code::Opt{Level
     end
 
     println(io, lead*"⚯  Rotation Rigid Body Mutator:")
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
-    @printf(io, "%s| %-5s | %-27s | %-30s |\n", inner_lead, "Index", "Field", "Value")
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
-    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 1, "axis_sampler", "Function $(rrbm.axis_sampler)")
-    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 2, "angle_sampler", "Function $(rrbm.angle_sampler)")
-    @printf(io, "%s| %-5d | %-27s | %-30s |\n", inner_lead, 3, "pivot_sampler", "Function $(rrbm.pivot_sampler)")
-    @printf(io, "%s| %-5d | %-27s | %-30.4f |\n", inner_lead, 4, "step_size", rrbm.step_size)
-    println(io, inner_lead*"+"*repeat("-", 70)*"+")
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
+    @printf(io, "%s| %-5s | %-27s | %-40s |\n", inner_lead, "Index", "Field", "Value")
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
+    @printf(io, "%s| %-5d | %-27s | %-40s |\n", inner_lead, 1, "axis_sampler", "Function $(rrbm.axis_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-40s |\n", inner_lead, 2, "angle_sampler", "Function $(rrbm.angle_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-40s |\n", inner_lead, 3, "pivot_sampler", "Function $(rrbm.pivot_sampler)")
+    @printf(io, "%s| %-5d | %-27s | %-40.4f |\n", inner_lead, 4, "step_size", rrbm.step_size)
+    println(io, inner_lead*"+"*repeat("-", 80)*"+")
     
     if rrbm.selection !== nothing
         println(io, inner_lead*" ● Selection: Set")

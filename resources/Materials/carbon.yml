@@ -1,0 +1,20 @@
+# --- Carbon generation file
+
+Shape:
+  x: 10          # Number of carbon-rings in the x-axis
+  y: 10          # Number of carbon-rings in the y-axis
+  z: 3           # Number of carbon layers in z-axis
+  porosity: 0.33 # Porosity % (should be between 0.0 and 1.0)
+
+Functional-groups:
+  GRN: 0.05 # Graphitic-N --
+  OXN: 0.05 # Oxidized-N    |
+  NYL: 0.05 # Carbonyl      |
+  XYL: 0.05 # Carboxyl      | -- The functional group values should be
+  HYL: 0.05 # Hydroxyl      |    between 0.0 and 1.0
+  INE: 0.05 # Pyridine      |
+  AMN: 0.05 # Amino-N       |
+  ETH: 0.05 # Ether       --
+
+Hydrogens:
+  saturate: true

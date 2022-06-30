@@ -1,0 +1,14 @@
+name: nyl
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name:  NO, id:   2, symbol:  N, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.2750}
+  - {name:   O, id:   3, symbol:  O, b:   1.430000, theta:   2.094395, phi:   3.141592, c: -0.6296}
+bonds:
+  R: [NO]
+  NO: [O]
+  O: [NO]
+graph:
+  root: R
+  adjacency:
+    R: [NO]
+    NO: [O]

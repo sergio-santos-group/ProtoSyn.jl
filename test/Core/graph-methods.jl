@@ -1,10 +1,10 @@
-@testset verbose = true "Graph methods" begin
+@testset verbose = true "Graph methods $(repeat("-", 43))" begin
 
     @testset verbose = true "Root & Origin" begin
         pose = copy(backup)
 
         @test ProtoSyn.root(pose.graph) === pose.graph[1][1][1].parent
-        @test ProtoSyn.origin(pose.graph) === nothing
+        @test ProtoSyn.origin(pose.graph) === pose.graph[1][1][1]
     end
 
     @testset verbose = true "Parenthood relationships" begin
@@ -40,6 +40,8 @@
 
         @test length(travel_graph(pose.graph[1][3][1])) === 15
         @test length(unique([a.container.id for a in travel_graph(pose.graph[1][3][1])])) === 1
+        @test ProtoSyn.travel_graph(pose.graph[1, 3, "CA"], search_algorithm = ProtoSyn.BFS)[1:4] == [pose.graph[1, 3, "CA"], pose.graph[1, 3, "HA"], pose.graph[1, 3, "C"], pose.graph[1, 3, "CB"]]
+        @test ProtoSyn.travel_graph(pose.graph[1, 3, "CA"], search_algorithm = ProtoSyn.DFS)[1:4] == [pose.graph[1, 3, "CA"], pose.graph[1, 3, "CB"], pose.graph[1, 3, "CG"], pose.graph[1, 3, "CD"]]
         @test ProtoSyn.is_contiguous(pose, rid"2:3")
         @test ProtoSyn.is_contiguous(pose, an"K") === nothing
         @test !ProtoSyn.is_contiguous(pose, rid"1" | rid"3")
@@ -111,7 +113,7 @@
         sync!(pose)
         @test pose.state.i2c == false
         @test length(pose.graph[1][2]["CB"].children) == 2
-        @test collect(pose.state[pose.graph[1][2]["CG"]].t) == [4.800701090587441, -4.607782270435299, -2.3619776332006834]
+        @test all(collect(pose.state[pose.graph[1][2]["CG"]].t) .≈ [4.800701090587441, -4.607782270435299, -2.3619776332006834])
     end
 
 end

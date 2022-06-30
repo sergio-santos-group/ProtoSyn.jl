@@ -1,0 +1,48 @@
+MODEL        1
+ATOM      1    N TYR ?   1       3.326   1.548   0.000        0.00           N
+ATOM      2    H TYR ?   1       2.935   1.514   0.971        0.00           H
+ATOM      3   CX TYR ?   1       2.782   0.881  -0.596        0.00           C
+ATOM      4   CA TYR ?   1       4.734   1.205   0.000        0.00           C
+ATOM      5   HA TYR ?   1       4.966   0.620   0.890        0.00           H
+ATOM      6   CB TYR ?   1       5.099   0.384  -1.232        0.00           C
+ATOM      7  HB1 TYR ?   1       4.516  -0.537  -1.241        0.00           H
+ATOM      8  HB2 TYR ?   1       4.880   0.960  -2.131        0.00           H
+ATOM      9   CG TYR ?   1       6.570   0.048  -1.195        0.00           C
+ATOM     10  CD1 TYR ?   1       7.143  -0.705  -2.227        0.00           C
+ATOM     11  HD1 TYR ?   1       6.526  -1.048  -3.058        0.00           H
+ATOM     12  CE1 TYR ?   1       8.508  -1.017  -2.193        0.00           C
+ATOM     13  HE1 TYR ?   1       8.953  -1.602  -2.997        0.00           H
+ATOM     14   CZ TYR ?   1       9.299  -0.576  -1.126        0.00           C
+ATOM     15   OH TYR ?   1      10.625  -0.879  -1.092        0.00           O
+ATOM     16   HH TYR ?   1      10.910  -1.397  -1.848        0.00           H
+ATOM     17  CE2 TYR ?   1       8.727   0.177  -0.094        0.00           C
+ATOM     18  HE2 TYR ?   1       9.344   0.521   0.737        0.00           H
+ATOM     19  CD2 TYR ?   1       7.362   0.489  -0.128        0.00           C
+ATOM     20  HD2 TYR ?   1       6.917   1.075   0.676        0.00           H
+ATOM     21    C TYR ?   1       5.602   2.456  -0.000        0.00           C
+ATOM     22    O TYR ?   1       5.123   3.485   0.448        0.00           O
+ATOM     23   NX TYR ?   1       6.734   2.367  -0.445        0.00           N
+CONECT    1    4    3    2
+CONECT    2    1
+CONECT    3    1
+CONECT    4   21    1    6    5
+CONECT    5    4
+CONECT    6    7    8    9    4
+CONECT    7    6
+CONECT    8    6
+CONECT    9    6   10   19
+CONECT   10   12    9   11
+CONECT   11   10
+CONECT   12   10   13   14
+CONECT   13   12
+CONECT   14   12   17   15
+CONECT   15   16   14
+CONECT   16   15
+CONECT   17   14   18   19
+CONECT   18   17
+CONECT   19   20   17    9
+CONECT   20   19
+CONECT   21    4   23   22
+CONECT   22   21
+CONECT   23   21
+ENDMDL

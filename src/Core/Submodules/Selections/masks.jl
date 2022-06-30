@@ -95,7 +95,7 @@ function Base.show(io::IO, m::Mask{T}) where {T <: AbstractContainer}
     print(io, "ProtoSyn.Mask\n")
     print(io, " ├── Type: $T\n")
     print(io, " ├── Size: $(size(m.content))\n")
-    print(io, " ├── Count: $(count(m.content))\n")
+    print(io, " ├── Count: $(count(m.content)) / $(length(m.content))\n")
     print(io, " └── Content: $c")
 end
 
@@ -173,7 +173,7 @@ expects a 1D [`Mask`](@ref) as input, otherwise will just return the received
 [`Mask`](@ref).
 
 # See also
-[``tile!`](@ref)
+[`tile!`](@ref)
 
 # Examples
 ```
@@ -251,3 +251,14 @@ function cross2d(m1::Mask{T}, m2::Mask{T}) where {T <: AbstractContainer}
 end
 
 cross2d(m1::Mask{T}) where {T <: AbstractContainer} = cross2d(m1, m1')
+
+# # --- Dynamic masks
+
+# mutable struct DynamicMask
+#     f::Function
+#     sele::AbstractSelection
+# end
+
+# (dm::dynamicMask)(pose::Pose) = begin
+#     return dm.f(pose, dm.sele)
+# end

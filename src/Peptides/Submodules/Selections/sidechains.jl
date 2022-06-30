@@ -1,6 +1,6 @@
 using ProtoSyn
 
-# Using the ProtoSyn.eval(:(...)), PolarSelection actually becomes registered
+# Using the ProtoSyn.eval(:(...)), SidechainSelection actually becomes registered
 # under the ProtoSyn module, as therefore works out of the box.
 ProtoSyn.eval(:(begin
 
@@ -11,7 +11,7 @@ ProtoSyn.eval(:(begin
 
     A [`SidechainSelection`](@ref) outputs a [`Mask`](@ref) of [`Atom`](@ref)
     instances where the sidechain atoms are marked as true (all atoms not named
-    `C`, `H`, `CA`, `N` or `O`).
+    `C`, `H`, `CA`, `N` or `O` - marks caps as true).
 
     # State mode
     The state mode of [`SidechainSelection`](@ref) `M` is forced to be Stateless
@@ -51,6 +51,7 @@ ProtoSyn.eval(:(begin
                 mask[atom.index] = true
             end
         end
+
         return mask
     end
 

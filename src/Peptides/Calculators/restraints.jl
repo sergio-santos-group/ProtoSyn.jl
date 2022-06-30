@@ -6,7 +6,7 @@ module Restraints
     # * Default Energy Components ----------------------------------------------
 
     """
-        get_default_sidechain_clash_restraint(;α::T = 1.0, mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
+        get_default_sidechain_clash_restraint(;[α::T = 1.0], [mask::Opt{ProtoSyn.Mask} = nothing]) where {T <: AbstractFloat}
 
     Return the default sidechain clash restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent).
@@ -45,21 +45,22 @@ module Restraints
         # * Note: The default :d1 and :d2 distances were parametrized based on
         # * the 2A3D PDB structure.
         
-        _sele = !an"^CA$|^N$|^C$|^H$|^O$"r
+        _sele = !SidechainSelection()
         if mask === nothing
-            mask = ProtoSyn.Calculators.get_intra_residue_mask(_sele)
+            mask = ProtoSyn.Calculators.get_intra_residue_mask
         end
         return EnergyFunctionComponent(
-            "Clash_Sidechain_Restraint",
+            "Sidechain_Clash",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 1.5, :d3 => Inf, :d4 => Inf, :mask => mask),
             α,
             true)
     end
 
 
     """
-        get_default_contact_restraint(filename::String; α::T = 1.0) where {T <: AbstractFloat}
+        get_default_contact_restraint(filename::String; [α::T = 1.0]) where {T <: AbstractFloat}
 
     Return the default contact map restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent)
@@ -97,20 +98,25 @@ module Restraints
             :d3 => 8.0
     ```
     """
-    function get_default_contact_restraint(filename::String; α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+    function get_default_contact_restraint(;filename::String = "", α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
         _sele = an"CA"
-        mask  = ProtoSyn.Calculators.load_map(T, filename)
+        if filename === ""
+            mask = nothing
+        else
+            mask  = ProtoSyn.Calculators.load_map(T, filename)
+        end
         return EnergyFunctionComponent(
             "Contact_Map",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 0.0, :d2 => 0.0, :d3 => 8.0, :d4 => 12.0, :selection => _sele, :mask => mask),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 0.0, :d2 => 0.0, :d3 => 8.0, :d4 => 12.0, :mask => mask),
             α,
             false)
     end
 
 
     """
-        get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
+        get_default_ca_clash_restraint(;[α::T = 1.0]) where {T <: AbstractFloat}
     
     Return the default Cα-Cα clash restraint
     [`EnergyFunctionComponent`](@ref ProtoSyn.Calculators.EnergyFunctionComponent).
@@ -152,71 +158,13 @@ module Restraints
     function get_default_ca_clash_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
         _sele = an"CA"
         if mask === nothing
-            mask = ProtoSyn.Calculators.get_diagonal_mask(_sele)
+            mask = ProtoSyn.Calculators.get_diagonal_mask
         end
         return EnergyFunctionComponent(
             "Cα-Cα_Clash_Restraint",
             ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.5, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask, :vlist => nothing),
-            α,
-            false)
-    end
-
-    # """
-    # # TODO
-    # """
-    # function get_default_disulfide_restraint(;α::T = ProtoSyn.Units.defaultFloat(1.0), mask::Opt{ProtoSyn.Mask} = nothing) where {T <: AbstractFloat}
-    #     _sele = rn"CYS" & an"CA"
-    #     if mask === nothing
-    #         mask = ProtoSyn.Calculators.get_upper_triangular_matrix_inversed(_sele)
-    #     end
-    #     return EnergyFunctionComponent(
-    #         "Disulfide_Restraint",
-    #         ProtoSyn.Calculators.Restraints.calc_flat_bottom_restraint,
-    #         Dict{Symbol, Any}(:d1 => 5.0, :d2 => 6.0, :d3 => Inf, :d4 => Inf, :selection => _sele, :mask => mask, :vlist => nothing),
-    #         α,
-    #         false)
-    # end
-
-    function ramachandran_potential(pose::Pose, residue::Residue)
-        e = 0.0
-        
-        phi_atom = ProtoSyn.Peptides.Dihedral.phi(residue)
-        if phi_atom !== nothing
-            phi = ProtoSyn.getdihedral(pose.state, phi_atom)
-            e += ProtoSyn.Peptides.Calculators.phi_potential(phi)
-        end
-
-        psi_atom = ProtoSyn.Peptides.Dihedral.psi(residue)
-        if psi_atom !== nothing
-            psi = ProtoSyn.getdihedral(pose.state, psi_atom)
-            e += ProtoSyn.Peptides.Calculators.psi_potential(psi)
-        end
-
-        return e
-    end
-
-    function calc_residue_level_potential(pose::Pose, update_forces::Bool; selection::Opt{AbstractSelection} = nothing, potential::Function = (res::Residue) -> 0.0)
-        
-        if selection === nothing
-            selection = TrueSelection{Residue}()
-        else
-            selection = promote(selection, Residue)
-        end
-        
-        e = 0.0
-        for residue in selection(pose, gather = true)
-            e += potential(pose, residue)
-        end
-
-        return e, nothing
-    end
-
-    function get_default_ramachandran_potential(;α::T = ProtoSyn.Units.defaultFloat(1.0)) where {T <: AbstractFloat}
-        return EnergyFunctionComponent(
-            "Ramachandran_Potential",
-            calc_residue_level_potential,
-            Dict{Symbol, Any}(:selection => nothing, :potential => ramachandran_potential),
+            _sele,
+            Dict{Symbol, Any}(:d1 => 1.0, :d2 => 3.5, :d3 => Inf, :d4 => Inf, :mask => mask, :vlist => nothing),
             α,
             false)
     end
