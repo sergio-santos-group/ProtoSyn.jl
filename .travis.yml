@@ -13,7 +13,7 @@ julia:
 env:
   - PYTHON=~/.julia/conda/3/bin/python
 before_install:
-  - julia -e 'using Pkg; Pkg.add.(["PyCall"]); Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -m pip install torch`);run(`$(PyCall.python) -m pip install torchani`)'
+  - julia -e 'using Pkg; Pkg.add.(["PyCall"]); Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -m pip install torch`);run(`$(PyCall.python) -m pip install torchani`);run(`$(PyCall.python) -c 'import torchani; model = torchani.models.ANI2x(periodic_table_index=True)')'
 notifications:
   email: false
 git:
