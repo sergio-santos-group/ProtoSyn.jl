@@ -13,7 +13,11 @@ julia:
 env:
   - PYTHON=~/.julia/conda/3/bin/python
 before_install:
-  - julia -e 'using Pkg; Pkg.add.(["PyCall"]); Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -m pip install torch`);run(`$(PyCall.python) -m pip install torchani`);run(`$(PyCall.python) -c 'import torchani; model = torchani.models.ANI2x(periodic_table_index=True)')'
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda env create -f protosyn.yml
+  - julia -e 'using Pkg; Pkg.add.(["PyCall"]); Pkg.build("PyCall");using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)");run(`$(PyCall.python) -c "import torchani; torchani.models.ANI2x()"`)'
 notifications:
   email: false
 git:
