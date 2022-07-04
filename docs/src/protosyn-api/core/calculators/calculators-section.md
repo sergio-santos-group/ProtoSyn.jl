@@ -31,22 +31,48 @@ An [`EnergyFunction`](@ref) instance is actually a __functor__, meaning it is ca
 
 An application example is provided bellow, using the [TorchANI](https://aiqm.github.io/torchani/) model as the sole [`EnergyFunctionComponent`](@ref):
 
-```@setup calculators
-using ProtoSyn
-using ProtoSyn.Peptides
-using ProtoSyn.Calculators
-pose = ProtoSyn.build(Peptides.grammar, seq"GME")
-torchani = Calculators.TorchANI.get_default_torchani_model()
-energy_function = Calculators.EnergyFunction([torchani])
-energy_function(pose)
-```
+```julia
+julia> torchani = Calculators.TorchANI.get_default_torchani_model()
+🞧  Energy Function Component:
++---------------------------------------------------+
+| Name           | TorchANI_ML_Model                |
+| Alpha (α)      | 1.0                              |
+| Update forces  | true                             |
+| Calculator     | calc_torchani_model              |
++---------------------------------------------------+
+ |    +----------------------------------------------------------------------------------+
+ ├──  ● Settings                      | Value                                            |
+ |    +----------------------------------------------------------------------------------+
+ |    | model                         | 3                                                |
+ |    +----------------------------------------------------------------------------------+
+ |    
+ └──  ○  Selection: nothing
 
-```@repl calculators
-torchani = Calculators.TorchANI.get_default_torchani_model()
-energy_function = Calculators.EnergyFunction([torchani])
-energy_function(pose)
-energy_function(pose, true) # Calculating forces ...
-pose.state.f
+
+julia> energy_function = Calculators.EnergyFunction([torchani])
+🗲  Energy Function (1 components):
++----------------------------------------------------------------------+
+| Index | Component name                                | Weight (α)   |
++----------------------------------------------------------------------+
+| 1     | TorchANI_ML_Model                             |       1.00   |
++----------------------------------------------------------------------+
+ ● Update forces: false
+ ● Selection: Set
+ └── TrueSelection (Atom)
+
+
+julia> energy_function(pose)
+-0.12573561072349548
+
+julia> energy_function(pose, update_forces_overwrite = true) # Calculating forces ...
+
+-0.1257355958223343
+
+julia> pose.state.f
+3×39 Matrix{Float64}:
+  0.105621      0.0429586   -0.213427     0.0153761    0.0157833    -0.378909    -0.0517234   0.424317     0.0279231     0.0093389   -0.0056106   …   0.011298    0.00833148   0.0184882   0.00465198   0.00608612  0.00112979  -0.00733359  -0.00735081  -0.068546    0.0993318
+  0.0848035    -0.0298163   -0.0332622    0.0199625    0.0200265     0.0077734   -0.0119481  -0.0495319   -0.0105625     0.00514565  -0.00300045     -0.00854456  0.00345127  -0.0185168  -0.00338795  -0.020893    0.0465067   -0.00867537  -0.0175688   -0.155421    0.116816
+ -0.000401706  -2.23697e-5   0.00150126  -0.000534238  0.000625417  -0.00081389   0.0103037   0.00440437   0.000742536  -0.0176396    0.00642139      0.0106405   0.00660759  -0.0158945  -0.0291799   -0.00430939  0.076713    -0.0245234   -0.0209203    0.00455828  0.00180759
 ```
 
 ![ProtoSyn Energy Function](../../../assets/ProtoSyn-energy-function.png)

@@ -9,7 +9,7 @@ os:
 dist:
   - bionic
 julia:
-  - 1.7.3
+  - 1.7.2
 notifications:
   email: false
 git:
@@ -17,21 +17,20 @@ git:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.7.3
+      julia: 1.7.2
       os: linux
       env: 
       script:
-        - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-        - bash miniconda.sh -b -p $HOME/miniconda
-        - export PATH="$HOME/miniconda/bin:$PATH"
-        - conda env create -f protosyn.yml
-        - source $(conda info --root)/etc/profile.d/conda.sh
-        - conda activate protosyn
-        - python -c "import torchani; torchani.models.ANI2x()"
-        - which python
-        - julia -e 'using Pkg; Pkg.add.(["PyCall"]); ENV["PYTHON"]="/home/travis/miniconda/envs/protosyn/bin/python"; Pkg.build("PyCall");'
-        - julia -e 'using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)"); run(`$(PyCall.python) -m pip install torch`); run(`$(PyCall.python) -m pip install torchani`)'
-        # - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
-        # - julia --project=docs/ docs/make.jl
-        - julia docs/make.jl
+        # - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+        # - bash miniconda.sh -b -p $HOME/miniconda
+        # - export PATH="$HOME/miniconda/bin:$PATH"
+        # - conda env create -f protosyn.yml
+        # - source $(conda info --root)/etc/profile.d/conda.sh
+        # - conda activate protosyn
+        # - python -c "import torchani; torchani.models.ANI2x()"
+        # - which python
+        # - julia -e 'using Pkg; Pkg.add.(["PyCall"]); ENV["PYTHON"]="/home/travis/miniconda/envs/protosyn/bin/python"; Pkg.build("PyCall");'
+        # - julia -e 'using PyCall;println("Python for Julia $(PyCall.python) ver. $(PyCall.pyversion)"); run(`$(PyCall.python) -m pip install torch`); run(`$(PyCall.python) -m pip install torchani`)'
+        - julia --project=docs/ -e 'using Pkg; Pkg.add("Documenter"); Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd()))'
+        - julia --project=docs/ docs/make.jl
       after_success: skip
