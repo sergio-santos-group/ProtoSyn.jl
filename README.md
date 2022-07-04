@@ -4,9 +4,7 @@
 <h3 align="center"> José M. Pereira & Sérgio M. Santos </h3>
 <h5 align="center"> CICECO & Departamento de Química - <a href="https://www.ua.pt">Universidade de Aveiro</a></h5>
 
-
 ---
-
 
 [![][docs-stable-img]][docs-stable-url] [![][build-status-img]][build-status-url]
 
