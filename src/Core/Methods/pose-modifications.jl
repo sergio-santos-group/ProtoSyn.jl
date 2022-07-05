@@ -242,6 +242,7 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     parent_container    = parent === root ? atom.children[1].container : parent.container
     parent_index        = parent === root ? atom.children[1].index - 1 : parent.index # In the state
     index_in_res        = findfirst(x -> x === atom, parent_container.items)
+    current_charge      = pose.state[atom].δ
 
     @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Index in residue = $index_in_res (out of $(length(parent_container.items)))"
 
@@ -264,12 +265,11 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
 
     # Add fragment to residue (start with the first atom in the fragment,
     # children of the fake fragment root) - change name, symbol and charge only
-    frag_origin = ProtoSyn.origin(fragment.graph)
-    first_atom  = frag_origin.children[1]
-
-    atom.name   = first_atom.name
-    atom.symbol = first_atom.symbol
-    pose.state[atom].δ = fragment.state[first_atom].δ
+    frag_origin        = ProtoSyn.origin(fragment.graph)
+    first_atom         = frag_origin.children[1]
+    atom.name          = first_atom.name
+    atom.symbol        = first_atom.symbol
+    pose.state[atom].δ = fragment.state[first_atom].δ + current_charge
 
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
 
@@ -304,10 +304,11 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     reindex(pose.state)
 
     # Spread excess charge over the bonded atoms to first_atom
+    bonds = [bond for bond in atom.bonds if bond !== root]
     if spread_excess_charge
-        charge_per_bond     = excess_charge / length(atom.bonds)
+        charge_per_bond     = excess_charge / length(bonds)
 
-        for bond in atom.bonds
+        for bond in bonds
             pose.state[bond].δ -= charge_per_bond
         end
     end

@@ -413,20 +413,28 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
         generate_porosity(pose, shape["porosity"], random = true, neat_indexation = true)
     end
 
+    # 3.1) Count anchorage points
+    c_available = count(as"C"(pose))
+
     # 4. Add functional groups
+    if "Attempt-minimization" in keys(data) && data["Attempt-minimization"]
+        attempt_minimization = true
+    else
+        attempt_minimization = false
+    end
+
     if "Functional-groups" in keys(data)
         f = Dict{Fragment, eltype(pose.state)}()
         for (fcn, value) in data["Functional-groups"]
             f[ProtoSyn.getvar(ProtoSyn.modification_grammar, fcn)] = value
         end
-        functionalize!(pose, f)
+        _, log = functionalize!(pose, f,
+            attempt_minimization = attempt_minimization)
     end
 
     # 5. Add hydrogens
-    if "Hydrogens" in keys(data) && "saturate" in keys(data["Hydrogens"])
-        if data["Hydrogens"]["saturate"]
-            add_hydrogens!(pose, ProtoSyn.modification_grammar, nothing)
-        end
+    if "Hydrogens" in keys(data) && data["Hydrogens"]
+        add_hydrogens!(pose, ProtoSyn.modification_grammar, nothing)
     end
 
     # 5. Write output to file
@@ -435,7 +443,19 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
         ProtoSyn.write(pose, output)
     end
 
-    println("All tasks done!")
+    # 6. write log to file
+    println("[ Carbon details ]")
+    @printf("    Atom count: %6d\n", ProtoSyn.count_atoms(pose.graph))
+    c = sum([x.δ for x in pose.state.items[4:end]])
+    @printf("Partial charge: %6.3f\n", c)
+
+    println("\n[ Functionalization details ]")
+    @printf("%4s | %6s (%%) | %4s\n%s\n", "TYPE", "QUANT.", "N", repeat("-", 24))
+    for key in keys(log)
+        @printf("%4s | %10.4f | %4d\n", uppercase(key), (log[key] / c_available) * 100, log[key])
+    end
+
+    println("\nAll tasks done!")
 
     return pose
 end
