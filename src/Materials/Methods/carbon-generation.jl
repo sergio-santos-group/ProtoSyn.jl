@@ -399,7 +399,7 @@ Pose{Topology}(Topology{/CRV:40141}, State{Float64}:
 
 ```
 """
-function generate_carbon_from_file(filename::String, output::Opt{String} = nothing)
+function generate_carbon_from_file(filename::String, output::Opt{String} = nothing, log::Opt{String} = nothing)
 
     # 1. Read file
     data = ProtoSyn.read_yml(filename)
@@ -428,7 +428,7 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
         for (fcn, value) in data["Functional-groups"]
             f[ProtoSyn.getvar(ProtoSyn.modification_grammar, fcn)] = value
         end
-        _, log = functionalize!(pose, f,
+        _, _log = functionalize!(pose, f,
             attempt_minimization = attempt_minimization)
     end
 
@@ -439,20 +439,33 @@ function generate_carbon_from_file(filename::String, output::Opt{String} = nothi
 
     # 5. Write output to file
     if output !== nothing
-        println("Outputing results to $output")
+        println("Outputing results to $output ...")
         ProtoSyn.write(pose, output)
     end
 
     # 6. write log to file
-    println("[ Carbon details ]")
-    @printf("    Atom count: %6d\n", ProtoSyn.count_atoms(pose.graph))
-    c = sum([x.δ for x in pose.state.items[4:end]])
-    @printf("Partial charge: %6.3f\n", c)
+    if log !== nothing
+        println("Outputing details to $log ...")
+        open(log, "w") do io
+            println(io, "\n[ Carbon details ]\n")
+            tc = ProtoSyn.count_atoms(pose.graph)
+            @printf(io, "    Atom count: %6d\n", tc)
+            c = sum([x.δ for x in pose.state.items[4:end]])
+            @printf(io, "Partial charge: %6.3f\n", c)
 
-    println("\n[ Functionalization details ]")
-    @printf("%4s | %6s (%%) | %4s\n%s\n", "TYPE", "QUANT.", "N", repeat("-", 24))
-    for key in keys(log)
-        @printf("%4s | %10.4f | %4d\n", uppercase(key), (log[key] / c_available) * 100, log[key])
+            println(io, "\n[ Functionalization details ]\n")
+            @printf(io, "%5s | %6s (%%) | %4s\n%s\n", "TYPE", "QUANT.", "N", repeat("-", 25))
+            for key in keys(_log)
+                @printf(io, "%5s | %10.4f | %4d\n", uppercase(key), (_log[key] / c_available) * 100, _log[key])
+            end
+
+            println(io, "\n[ Elemental details ]\n")
+            @printf(io, "%5s | %6s (%%) | %4s\n%s\n", "ELEM.", "QUANT.", "N", repeat("-", 25))
+            for elem in ["C", "N", "O", "H"]
+                c = count(FieldSelection{Atom}(elem, :symbol)(pose))
+                @printf(io, "%5s | %10.4f | %4d\n", elem, (c / tc) * 100, c)
+            end
+        end
     end
 
     println("\nAll tasks done!")
