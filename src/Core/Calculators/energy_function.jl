@@ -180,7 +180,7 @@ ProtoSyn.Mask
 function fixate_masks!(ef::EnergyFunction, pose::Pose)
     for efc in ef.components
         if (:mask in keys(efc.settings)) && isa(efc.settings[:mask], Function)
-            efc.settings[:mask] = efc.settings[:mask](pose)
+            efc.settings[:mask] = efc.settings[:mask](pose, efc.selection)
         end
     end
 end
