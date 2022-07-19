@@ -12,6 +12,8 @@ module Calculators
     # Load energy function components
     include("energy_function_component.jl")
 
+    println(keys(env))
+    println(ENV["USE_TORCHANI"])
     if "USE_TORCHANI" in keys(ENV) && ENV["USE_TORCHANI"] === "false"
         @warn "Environment variable USE_TORCHANI set to `false`. Not loading torchani."
     else
