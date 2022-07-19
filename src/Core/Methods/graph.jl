@@ -597,7 +597,7 @@ Segment{/2a3d:8625/A:1}
 """
 function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing, linear_aromatics::Bool = true)
 
-    w = Dict{String, Int}("H" => 1, "N" => 5, "C" => 15, "O" => 10, "S" => 20)
+    w = Dict{String, Int}("H" => 1, "N" => 5,  "O" => 10, "C" => 15, "S" => 20, "FE" => 25)
 
     @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
 
