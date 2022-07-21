@@ -120,7 +120,7 @@ function splice_trajectory(filename::String)
     # Create temporary folder
     dirname::String = "$(filename[1:(end-4)])_spliced"
     isdir(dirname) && begin
-        @info @info "Found pre-existent $dirname folder. Overwritting."
+        @info "Found pre-existent $dirname folder. Overwritting."
         rm(dirname, recursive = true)
     end
     mkdir(dirname)
@@ -196,7 +196,7 @@ function load_trajectory(::Type{T}, filename::AbstractString, ::Type{K}; bonds_b
         push!(poses, pose)
     end
 
-    rm(models, recursive = true)
+    # rm(models, recursive = true)
 
     return poses
 end

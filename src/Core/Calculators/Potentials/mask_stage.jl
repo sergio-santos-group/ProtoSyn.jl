@@ -376,21 +376,17 @@ julia> cmap = ProtoSyn.Calculators.load_map("contact_map_example.txt")
  (...)
 ```
 """
-function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
+function load_PFRMAT_RR_map(::Type{T}, filename::String, i::Int) where {T <: AbstractFloat}
 
     _map = Dict{Tuple{Int, Int}, T}()
 
     open(filename, "r") do map_file
         for line in eachline(map_file)
             elems = split(line)
-            length(elems[1]) > 4 && continue
-            elems[1] == "END" && continue
-            try
-                α = parse(T, elems[5])
-                _map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
-            catch BoundsError
-                continue
-            end
+            tryparse(Int, elems[1]) === nothing && continue
+
+            α = parse(T, elems[i])
+            _map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
         end
     end
 
@@ -406,4 +402,5 @@ function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
     return map
 end
 
-load_map(filename::String) = load_map(ProtoSyn.Units.defaultFloat, filename)
+load_PFRMAT_RR_map(filename::String, i::Int) = load_PFRMAT_RR_map(ProtoSyn.Units.defaultFloat, filename, i)
+load_PFRMAT_RR_map(filename::String)         = load_PFRMAT_RR_map(ProtoSyn.Units.defaultFloat, filename, 3)

@@ -103,7 +103,7 @@ module Restraints
         if filename === ""
             mask = nothing
         else
-            mask  = ProtoSyn.Calculators.load_map(T, filename)
+            mask  = ProtoSyn.Calculators.load_PFRMAT_RR_map(T, filename, 3)
         end
         return EnergyFunctionComponent(
             "Contact_Map",
