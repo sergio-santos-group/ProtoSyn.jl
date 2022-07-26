@@ -149,7 +149,7 @@ module GB
             sele = ProtoSyn.promote(selection, Atom)
         else
             sele = TrueSelection{Atom}()
-        end
+        end # if
 
         # Pre-calculate atomic distances
         atoms  = sele(pose, gather = true)
@@ -159,7 +159,7 @@ module GB
         # Predict born radii if necessary
         if isa(born_radii, Function)
             born_radii = born_radii(pose, sele, dm = dm, models = models)
-        end
+        end # if
 
         env = - (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
         int = T(0.0)
@@ -184,11 +184,15 @@ module GB
                 αj = αj < 0 ? 0.0 : αj
                 f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))
                 int += (qi * qj) / f
-            end
-        end
+            end # for
+        end # for
 
         @debug "Env: $env\nInt: $int"
         e = T(env * int)
+
+        if abs(e) === 0.0 && all(x -> x.δ === 0.0, pose.state.items[4:end])
+            @warn "The calculated GB energy is 0.0 and it seems the evaluated Pose does not have any assigned charges. Consider using the `ProtoSyn.Calculators.Electrostatics.assign_default_charges!` method."
+        end # if
 
         return e, nothing
     end
