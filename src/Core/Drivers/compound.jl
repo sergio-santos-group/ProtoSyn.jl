@@ -91,7 +91,7 @@ mutable struct CompoundDriver <: Driver
     p::Float64
 end
 
-CompoundDriver(drivers::Vector{Any}) = begin
+CompoundDriver(drivers::Vector{<: Any}) = begin
     CompoundDriver(drivers, 1.0)
 end
 

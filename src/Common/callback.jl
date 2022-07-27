@@ -93,7 +93,13 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
         N = 20 + _N - length(msg)
         M = floor(Int, N/2) - 3
         E = N-6-(M*2)
-        acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        
+        if :acceptance_count in fieldnames(typeof(driver_state))
+            acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        else
+            acc = 1.0
+        end
+
         if driver_state.step === 0
             s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
             s *= @sprintf("%6s%14s", "Step", "Accept-Ratio")
@@ -204,7 +210,13 @@ function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::S
         N = 20 + (20 * length(pose.state.e)) - length(msg)
         M = floor(Int, N/2) - 3
         E = N-6-(M*2)
-        acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+
+        if :acceptance_count in fieldnames(typeof(driver_state))
+            acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        else
+            acc = 1.0
+        end
+
         if driver_state.step === 0
             s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
             s *= @sprintf("%6s%14s", "Step", "Accept-Ratio")
