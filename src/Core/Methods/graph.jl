@@ -670,32 +670,38 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 eq_weight_atoms = atom_i_bonds[eq_weight]
 
                 # Solve equalization with size of downstream bond graph
-                lengths = Vector{Int}()
-                for eq_weight_atom in eq_weight_atoms
-                    contacts_visited = false
-                    for range in 1:3
+                equal_downstream = true
+                range            = 1
+                N                = length(eq_weight_atoms)
+                lengths          = Vector{Int}()
+                max_range        = 5
+                while equal_downstream
+                    lengths = Vector{Int}() 
+                    for eq_weight_atom in eq_weight_atoms
                         atoms_in_range = ProtoSyn.travel_bonds(eq_weight_atom, range, atom_i)
-                        @info "For range $range, atoms in range of $eq_weight_atom : $atoms_in_range"
-                        for atom_in_range in atoms_in_range[2:end]
-                            atom_in_range_index = findfirst((a)->a === atom_in_range, atoms)
-                            if atom_in_range_index === nothing
-                                continue
-                            elseif visited[atom_in_range_index]
-                                push!(lengths, range)
-                                contacts_visited = true
+                        @info "For range $range, atoms in range of $eq_weight_atom : ($(length(atoms_in_range))) $atoms_in_range"
+                        push!(lengths, length(atoms_in_range))
+                    end
+                    
+                    equal_downstream = false
+                    for i in 1:(N-1)
+                        for j in i+1:N
+                            if lengths[i] === lengths[j]
+                                equal_downstream = true
                                 break
                             end
                         end
-                        contacts_visited && break
                     end
-                    if !contacts_visited
-                        push!(lengths, 4)
-                    end
+
+                    range += 1
+                    range > max_range && break
                 end
 
                 # If first one is, all equal weighted atoms are
                 # Aromatic     : longer first
                 # Non-aromatic : shorter first
+                @info "Aromatic: $(aromatics[eq_weight[1]])"
+                @info "Final lengths: $(lengths)"
                 permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
                 @info "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
                 atom_i_weight[eq_weight] .+= permvec

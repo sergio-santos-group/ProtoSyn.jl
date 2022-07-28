@@ -164,9 +164,14 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
             else
                 pose_child = atom.children[1]
                 χ_pose     = ProtoSyn.getdihedral(pose.state, pose_child)
-                temp_child = temp.children[findfirst((a) -> a.name === pose_child.name, temp.children)]
-                χ_temp     = ProtoSyn.getdihedral(template.state, temp_child)
-                Δχ         = χ_pose - χ_temp
+                tc_id      = findfirst((a) -> a.name === pose_child.name, temp.children)
+                if tc_id !== nothing
+                    temp_child = temp.children[tc_id]
+                    χ_temp     = ProtoSyn.getdihedral(template.state, temp_child)
+                    Δχ         = χ_pose - χ_temp
+                else
+                    Δχ = 0.0
+                end
             end
 
             for t in temp.bonds
@@ -187,10 +192,10 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
         end
     end
 
-    reindex(pose.graph; set_ascendents = true)
-    reindex(pose.state)
     ProtoSyn.request_i2c!(pose.state; all = true)
     sync!(pose)
+    reindex(pose.graph; set_ascendents = true)
+    reindex(pose.state)
 end
 
 
