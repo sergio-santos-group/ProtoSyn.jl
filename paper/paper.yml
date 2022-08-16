@@ -1,0 +1,19 @@
+title: "ProtoSyn.jl: a novel platform for computational molecular manipulation and simulation with a focus on protein design"
+keywords:
+  - Julia
+  - Protein Design
+  - Molecular manipulation
+  - Simulation
+authors:
+  - name: José M. S. Pereira
+    orcid: 0000-0001-5622-8010
+    affiliation: 1
+  - name: José R. B. Gomes
+    affiliation: 1
+  - name: Sérgio M. Santos
+    affiliation: 1
+affiliations:
+  - name: Dep. Química \& CICECO, Universidade de Aveiro, Aveiro, Portugal
+    index: 1
+date: 16 August 2022
+bibliography: ref.bib
