@@ -230,8 +230,9 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, 
         infer_parenthood!(pose.graph)
         ProtoSyn.request_c2i!(pose.state)
         sync!(pose)
-end
-    pose
+    end
+
+    return pose
 end
 
 load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where K = begin

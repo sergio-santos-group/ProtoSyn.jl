@@ -641,6 +641,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
         end
 
         if length(atom_i_bonds) === 0
+            @info " $atom_i has no non-visited bonds."
             continue
         end
 
@@ -700,9 +701,11 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 # If first one is, all equal weighted atoms are
                 # Aromatic     : longer first
                 # Non-aromatic : shorter first
-                @info "Aromatic: $(aromatics[eq_weight[1]])"
+                id = findfirst((a) -> a.id === eq_weight_atoms[1].id, atoms)
+                @info "Aromatic: $(aromatics[id]) (ID: $id)"
+                @info "EQ weight: $eq_weight"
                 @info "Final lengths: $(lengths)"
-                permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
+                permvec = sortperm(lengths, rev = aromatics[id])
                 @info "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
                 atom_i_weight[eq_weight] .+= permvec
             end
@@ -719,7 +722,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
             j !== nothing && @info " Bonded to atom $atom_j - $j (Visited? => $(visited[j]))"
             if j !== nothing && !(visited[j]) && !(changed[j])
 
-                push!(stack, atom_j)
+                insert!(stack, 1, atom_j)
 
                 if overwrite && hasparent(atom_j)
                     ProtoSyn.popparent!(atom_j)
@@ -729,12 +732,6 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                     changed[j] = true
                 else
                     @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
-                end
-
-                # Deal with aromatics
-                if linear_aromatics && atom_j.symbol !== "H" && aromatics[j]
-                    @info "  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ..."
-                    break
                 end
             end
         end
@@ -796,7 +793,9 @@ function infer_bonds!(pose::Pose; threshold::T = 0.1) where {T <: AbstractFloat}
 
             d = ProtoSyn.Units.bond_lengths[putative_bond]
             d += d * threshold
-            dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
+            if dm[i, j] < d && atom_i.container.container === atom_j.container.container
+                ProtoSyn.bond(atom_i, atom_j)
+            end
         end
     end
 

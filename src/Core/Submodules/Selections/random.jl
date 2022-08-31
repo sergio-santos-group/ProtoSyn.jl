@@ -1,5 +1,5 @@
 export RandomSelection
-# Note: RandomSelection is a LEAF selection.
+# Note: RandomSelection is a LEAF/BRANCH selection.
 
 """
     RandomSelection{T}(sele::Opt{AbstractSelection}) where {T <: AbstractContainer}

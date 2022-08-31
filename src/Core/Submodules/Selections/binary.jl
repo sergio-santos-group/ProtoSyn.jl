@@ -96,8 +96,6 @@ Base.:|(sele::AbstractSelection, ::Nothing) = sele
 Base.:&(::Nothing, ::Nothing) = nothing
 Base.:|(::Nothing, ::Nothing) = nothing
 
-
-
 # --- Select -------------------------------------------------------------------
 select(sele::BinarySelection{Stateless, Stateless}, container::AbstractContainer) = begin
     
