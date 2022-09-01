@@ -303,7 +303,6 @@ function fragment(grammar::LGrammar{T, K, V}, derivation) where {T <: AbstractFl
             push!(seg, frag2.graph.items...) # Appending the residues to the segment
             append!(state, frag2.state)      # Merging the 2 states
             if parent !== nothing
-                # println("$letter ($(typeof(letter)))-> $opstack")
                 join = isempty(opstack) ? grammar.defop : pop!(opstack)
                 join(parent.graph[end], frag2) # Adding ascendents and bonds correctly
             end
@@ -594,4 +593,17 @@ end
 
 load_grammar_extras_from_file!(filename::AbstractString, key::String) = begin
     ProtoSyn.load_grammar_extras_from_file!(ProtoSyn.Units.defaultFloat, filename, key)
+end
+
+function expand(grammar::LGrammar{T}, derivation; n::Int = 1) where {T <: AbstractFloat}
+    for j in 1:n
+        new_derivation = []
+        for i in derivation
+            new_derivation = vcat(new_derivation, ProtoSyn.getrule(grammar, i))
+        end
+
+        derivation = copy(new_derivation)
+    end
+
+    return derivation
 end

@@ -16,6 +16,7 @@ primitive
 
 ```@docs
 body_centered
+face_centered
 ```
 
 ![ProtoSyn Body Centered Lattice](../../../assets/ProtoSyn-body-centered-lattice.gif)

@@ -1,9 +1,14 @@
 amylose:
   rules:
+    α:
+      - {p: 0.50, production: [α,A,α,A,α]}
+      - {p: 0.50, production: [β,B,"[",ɣ,C,"]",α]}
     A:
-      - {p: 1.0, production: [A,α,A]}
-      # - {p: 0.75, production: [A,α,A]}
-      # - {p: 0.25, production: [B,"[",α,A,"]",β,A]}
+      - {p: 0.80, production: [A,α,A]}
+      - {p: 0.20, production: [A]}
+    ɣ:
+      - {p: 0.90, production: [ɣ,C,ɣ,C,ɣ]}
+      - {p: 0.10, production: [ɣ]}
   variables:
     A: Sugars/yml/glu-O4-rooted.yml
     B: Sugars/yml/glu-O6-rooted.yml
