@@ -146,7 +146,7 @@ module SASA
             nothing,
             Dict{Symbol, Any}(
                 :n_points           => 100,
-                :probe_radius       => 1.4,
+                :probe_radius       => 5.0,
             ),
             α,
             false)

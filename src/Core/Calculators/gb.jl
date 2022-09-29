@@ -105,7 +105,7 @@ module GB
             born_radii[mask.content] .= radii[mask.content]
         end
 
-        return born_radii
+        return 1 ./ born_radii
     end
 
 
@@ -143,7 +143,7 @@ module GB
     (124.4289232784785, nothing)
     ```
     """
-    function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat}
+    function calc_gb(A::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx, cut_off::T = 9.0) where {T <: AbstractFloat}
 
         if selection !== nothing
             sele = ProtoSyn.promote(selection, Atom)
@@ -154,7 +154,7 @@ module GB
         # Pre-calculate atomic distances
         atoms  = sele(pose, gather = true)
         natoms = length(atoms)
-        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(pose, sele))
+        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(A, pose, sele))
 
         # Predict born radii if necessary
         if isa(born_radii, Function)
@@ -166,11 +166,12 @@ module GB
 
         for i in 1:natoms
             atomi = atoms[i]
-            qi = pose.state[atomi].δ
-            αi = born_radii[i]
+            qi    = pose.state[atomi].δ
+            αi    = born_radii[i]
 
             for j in 1:natoms
                 i === j && continue
+                dm[i, j] > cut_off && continue
 
                 atomj = atoms[j]
                 qj    = pose.state[atomj].δ
@@ -197,8 +198,8 @@ module GB
         return e, nothing
     end
 
-    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat} = begin
-        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models)
+    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx, cut_off::T = 9.0) where {T <: AbstractFloat} = begin
+        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models, cut_off = cut_off)
     end
 
 
@@ -249,6 +250,7 @@ module GB
                 :born_radii => predict_igbr_nn_born_radii,
                 :ϵ_protein  => 4.0,
                 :ϵ_solvent  => 80.0,
+                :cut_off    => 9.0,
                 :models     => models_onnx
             ),
             α,

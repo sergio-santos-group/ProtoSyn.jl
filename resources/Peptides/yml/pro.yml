@@ -33,10 +33,10 @@ bonds:
 graph:
   root: N
   adjacency:
-    N: [CD]
-    CA: [HA, C]
-    CB: [CA, HB1, HB2]
-    CG: [CB, HG1, HG2]
+    N: [CD, CA]
+    CA: [HA, C, CB]
+    CB: [HB1, HB2]
+    CG: [HG1, HG2]
     CD: [CG, HD1, HD2]
     C: [O]
 chis: [CB, CG, CD, HD2]

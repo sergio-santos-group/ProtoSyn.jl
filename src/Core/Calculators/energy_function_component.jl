@@ -149,6 +149,8 @@ function Base.show(io::IO, efc::EnergyFunctionComponent{T}, level_code::Opt{Leve
                 N = length(keys(value))
                 e = N === 1 ? "" : "s"
                 val = "Dict{$(p[1]), $(p[2])}($N component$e)"
+            elseif isa(value, ProtoSyn.Mask)
+                val = "Static mask ($(count(value)) entries)"
             else
                 val = string(value)
                 if length(val) > 45
