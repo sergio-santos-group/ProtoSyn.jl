@@ -125,7 +125,7 @@ function splice_trajectory(filename::String)
     dirname::String = "$(filename[1:(end-4)])_spliced"
     isdir(dirname) && begin
         @info "Found pre-existent $dirname folder. Overwritting."
-        rm(dirname, recursive = true)
+        rm(dirname, recursive = true, force = true)
     end
     mkdir(dirname)
 

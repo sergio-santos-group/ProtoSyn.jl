@@ -80,12 +80,23 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         
         if length(residues) === 0
             @info "Skipping $segment : No selected residues in this segment!"
-            
             continue
         end
 
         pose_sequence = [string(ProtoSyn.three_2_one[residue.name.content]) for residue in residues]
         template = ProtoSyn.build(grammar, pose_sequence)
+
+        # Check cysteines
+        cysteines = (sele & rn"CYS" & as"S")(segment, gather = true)
+        if length(cysteines) > 0
+            template_cysteines = (sele & rn"CYS" & as"S")(template, gather = true)
+            for (S_pose, S_template) in zip(cysteines, template_cysteines)
+                if !("H" in [a.symbol for a in S_pose.bonds])
+                    H = [a for a in S_template.bonds if a.symbol === "H"][1]
+                    ProtoSyn.pop_atom!(template, H)
+                end
+            end
+        end
 
         # Check caps
         # N-terminal
@@ -126,8 +137,10 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         
         t_atoms = ProtoSyn.travel_graph(N_terminal_template[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
         p_atoms = ProtoSyn.travel_graph(N_terminal_pose[1], search_algorithm = ProtoSyn.Peptides.IUPAC)
-        
-        @assert length(t_atoms) === length(p_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_atoms))) don't match in number."
+        p_selected_atoms = reduce(vcat, [r.items for r in residues])
+        p_atoms = p_atoms[p_atoms .∈ [p_selected_atoms]]
+
+        @assert length(t_atoms) === length(p_selected_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_selected_atoms))) don't match in number."
         if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
             for (t_atom, p_atom) in zip(t_atoms, p_atoms)
                 ProtoSyn.rename!(p_atom, t_atom.name, force_rename = force_rename)

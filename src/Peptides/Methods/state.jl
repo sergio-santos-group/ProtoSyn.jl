@@ -178,6 +178,11 @@ This method attempts to categorize the given [`Pose`](@ref) `pose`
 !!! ukw "Note:"
     In ProtoSyn 1.1, this method offers notoriously sub-par predictions. Using external tools such as DSSP or RaptorX secondary structure prediction server is recommended.
 
+    
+!!! ukw "Note:"
+    Since this method is based on the hydrogen bonds, it requires the evaluated structure to have charges assigned. 
+
+
 # Examples
 ```
 julia> ProtoSyn.Peptides.categorize_ss_from_dihedral_angles(pose)
@@ -189,7 +194,7 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
     if selection === nothing
         sele = TrueSelection{Residue}()
     else
-        sele = promote(selection, Residue)
+        sele = ProtoSyn.promote(selection, Residue)
     end
 
     residues = sele(pose, gather = true)
@@ -201,55 +206,55 @@ function categorize_ss_from_dihedral_angles(pose::Pose, selection::Opt{ProtoSyn.
 
     # 1. Get geometrical criteria ----------------------------------------------
 
-    phi_potentials = Vector{Polynomial}([
-        ProtoSyn.Peptides.phi_α_L_potential,
-        ProtoSyn.Peptides.phi_α_R_potential,
-        ProtoSyn.Peptides.phi_β_potential,
-        ProtoSyn.Peptides.phi_coil_potential])
+    # phi_potentials = Vector{Polynomial}([
+    #     ProtoSyn.Peptides.phi_α_L_potential,
+    #     ProtoSyn.Peptides.phi_α_R_potential,
+    #     ProtoSyn.Peptides.phi_β_potential,
+    #     ProtoSyn.Peptides.phi_coil_potential])
 
-    phi_keys   = [  1,   1,   2,   3]
-    phi_values = [0.0, 0.0, 0.0, 0.0]
+    # phi_keys   = [  1,   1,   2,   3]
+    # phi_values = [0.0, 0.0, 0.0, 0.0]
 
-    psi_potentials = Vector{Polynomial}([
-        ProtoSyn.Peptides.psi_α_L_potential,
-        ProtoSyn.Peptides.psi_α_R_potential,
-        ProtoSyn.Peptides.psi_β_potential,
-        ProtoSyn.Peptides.psi_coil_potential])
+    # psi_potentials = Vector{Polynomial}([
+    #     ProtoSyn.Peptides.psi_α_L_potential,
+    #     ProtoSyn.Peptides.psi_α_R_potential,
+    #     ProtoSyn.Peptides.psi_β_potential,
+    #     ProtoSyn.Peptides.psi_coil_potential])
 
-    psi_keys   = [  1,   1,   2,   3]
-    psi_values = [0.0, 0.0, 0.0, 0.0]
+    # psi_keys   = [  1,   1,   2,   3]
+    # psi_values = [0.0, 0.0, 0.0, 0.0]
 
-    for (residue_index, residue) in enumerate(residues)
-        phi_atom = Peptides.phi(residue)
-        phi_atom === nothing && continue
-        phi = ProtoSyn.getdihedral(pose.state, phi_atom)
+    # for (residue_index, residue) in enumerate(residues)
+    #     phi_atom = Peptides.phi(residue)
+    #     phi_atom === nothing && continue
+    #     phi = ProtoSyn.getdihedral(pose.state, phi_atom)
         
-        for (ss_index, potential) in enumerate(phi_potentials)
-            value = potential(phi)
-            phi_values[ss_index] = value
-        end
-        @info "Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])"
-        phi_ss = phi_keys[argmin(phi_values)]
+    #     for (ss_index, potential) in enumerate(phi_potentials)
+    #         value = potential(phi)
+    #         phi_values[ss_index] = value
+    #     end
+    #     @info "Phi:\n values = $phi_values\n keys = $phi_keys\n Min value: $(argmin(phi_values))\n Chosen key: $(phi_keys[argmin(phi_values)])"
+    #     phi_ss = phi_keys[argmin(phi_values)]
         
-        psi_atom = Peptides.psi(residue)
-        psi_atom === nothing && continue
-        psi = ProtoSyn.getdihedral(pose.state, psi_atom)
-        for (ss_index, potential) in enumerate(psi_potentials)
-            value = potential(psi)
-            psi_values[ss_index] = value
-        end
-        @info "Psi:\n values = $psi_values\n keys = $psi_keys\n Min value: $(argmin(psi_values))\n Chosen key: $(psi_keys[argmin(psi_values)])"
-        psi_ss = psi_keys[argmin(psi_values)]
+    #     psi_atom = Peptides.psi(residue)
+    #     psi_atom === nothing && continue
+    #     psi = ProtoSyn.getdihedral(pose.state, psi_atom)
+    #     for (ss_index, potential) in enumerate(psi_potentials)
+    #         value = potential(psi)
+    #         psi_values[ss_index] = value
+    #     end
+    #     @info "Psi:\n values = $psi_values\n keys = $psi_keys\n Min value: $(argmin(psi_values))\n Chosen key: $(psi_keys[argmin(psi_values)])"
+    #     psi_ss = psi_keys[argmin(psi_values)]
 
-        if phi_ss === psi_ss
-            points[phi_ss, residue_index] += 2.0
-            points[psi_ss, residue_index] += 2.0
-        else
-            points[phi_ss, residue_index] += 1.0
-            points[psi_ss, residue_index] += 1.0
-            points[3, residue_index] += 0.5
-        end
-    end
+    #     if phi_ss === psi_ss
+    #         points[phi_ss, residue_index] += 4.0
+    #         points[psi_ss, residue_index] += 4.0
+    #     else
+    #         points[phi_ss, residue_index] += 4.0
+    #         points[psi_ss, residue_index] += 4.0
+    #         points[3, residue_index] += 0.5
+    #     end
+    # end
 
     # 2. Get hydrogen bonding pattern criteria ---------------------------------
 
