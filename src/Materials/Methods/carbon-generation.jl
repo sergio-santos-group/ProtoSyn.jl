@@ -345,7 +345,7 @@ function generate_porosity(pose::Pose, pore_fraction::T; clean_sweeps::Int = 15,
     # still be children of root and may cause problems downstream).
     for segment in eachsegment(pose.graph)
         ProtoSyn.count_atoms(segment) === 0 && continue
-        ProtoSyn.infer_parenthood!(pose.graph, overwrite = true, start = segment[1, 1], linear_aromatics = false) 
+        ProtoSyn.infer_parenthood!(pose.graph, overwrite = true, start = segment[1, 1], linear_aromatics = true) 
     end
 
     # Since the graph structure has changes, a new update of the internal

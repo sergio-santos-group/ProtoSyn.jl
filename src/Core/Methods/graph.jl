@@ -231,6 +231,7 @@ julia> ascendents(pose.graph[1][1][4], 4)
 function ascendents(container::AbstractContainer, level::Int)
     # println("$container (Level $level) (Next: $(container.parent))")
     if level > 1
+        @assert container.parent !== nothing "$container has no parent."
         return (container.index, ascendents(container.parent, level - 1)...)
     else
         (container.index,)
@@ -702,10 +703,15 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 # Aromatic     : longer first
                 # Non-aromatic : shorter first
                 id = findfirst((a) -> a.id === eq_weight_atoms[1].id, atoms)
-                @info "Aromatic: $(aromatics[id]) (ID: $id)"
-                @info "EQ weight: $eq_weight"
-                @info "Final lengths: $(lengths)"
-                permvec = sortperm(lengths, rev = aromatics[id])
+                @info "          Aromatic: $(aromatics[id]) (ID: $id)"
+                @info "         EQ weight: $eq_weight"
+                @info "     Final lengths: $lengths"
+                if all(y->y==lengths[1], lengths)
+                    permvec = sortperm([x.name for x in atom_i_bonds[eq_weight]], rev = false)
+                    @info "     ... Sorting by name ..."
+                else
+                    permvec = sortperm(lengths, rev = aromatics[id])
+                end
                 @info "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
                 atom_i_weight[eq_weight] .+= permvec
             end
@@ -722,6 +728,23 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
             j !== nothing && @info " Bonded to atom $atom_j - $j (Visited? => $(visited[j]))"
             if j !== nothing && !(visited[j]) && !(changed[j])
 
+                atom_j_index = findfirst((a) -> a === atom_j, atoms)
+                if linear_aromatics && aromatics[atom_j_index]
+                    push!(stack, atom_j)
+                    @info "Linear aromatics! Pushing $atom_j to the top of the stack."
+
+                    if overwrite && hasparent(atom_j)
+                        ProtoSyn.popparent!(atom_j)
+                    end
+                    if !hasparent(atom_j)
+                        ProtoSyn.setparent!(atom_j, atom_i)
+                        changed[j] = true
+                    else
+                        @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
+                    end
+
+                    break
+                end
                 insert!(stack, 1, atom_j)
 
                 if overwrite && hasparent(atom_j)

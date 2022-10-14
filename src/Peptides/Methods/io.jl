@@ -91,7 +91,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                         starting_atom = starting_atom[1]
                     end
                 end
-                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
+                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom, linear_aromatics = false)
                 sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
                 for residue_index in 2:n_residues
@@ -110,7 +110,7 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                             starting_atom = starting_atom[1]
                         end
                     end
-                    ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
+                    ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom, linear_aromatics = false)
                     sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
                     # Inter-residue parenthood
