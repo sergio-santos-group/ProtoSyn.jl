@@ -67,10 +67,11 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(\s*))"
+    er = r"^\w+\s+(?<aid>\d+)\s+(?<an>\w{1,4}?)\s*(?<al>(?:\w{1}(?=\w{3}\s))|\s)(?<rn>\S{3,4})\s*(?<sn>\w{0,1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s*(?|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(?:(\w)[0-9]*[+-]*\s*)|(?<as>\w+[+-]*)(?=\s*$))$"
 
     aid = 0
-    ignored_atoms = Vector{Int}()
+    ignored_atoms     = Vector{Int}()
+    uncommon_residues = Vector{Int}()
     conect_records_present = false
     for line in eachline(io)
         
@@ -88,20 +89,29 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
 
             # * Choose alternative locations
             al = string(atom["al"])
-            if al !== "" && al !== alternative_location
+            if al !== " " && al !== alternative_location
                 continue
             end
 
-            segname = atom["sn"] == " " ? "?" : string(atom["sn"]) # * Default
+            segname   = atom["sn"] in [" ", ""] ? "?" : string(atom["sn"])                   # * Default
+            atom_symb = atom["as"] == ""  ? string(atom["an"][1]) : string(atom["as"]) # * Default
 
             if seg.name != segname
                 seg = Segment!(top, segname, segid)
-                seg.code = isempty(segname) ? '-' : segname[1]
+                seg.code = segname[1]
                 segid += 1
             end
 
             resid = parse(Int, atom["rid"])
             resname = string(atom["rn"])
+            if length(resname) > 3
+                if !(resid in uncommon_residues)
+                    @warn "Uncommon residue name found in residue $resid: $resname.\nProtoSyn.jl will use $(resname[1:3]) as the residue's name. Check if this is the desired behaviour."
+                    push!(uncommon_residues, resid)
+                end
+
+                resname = resname[1:3]
+            end
 
             # New residue
             if res.id != resid || res.name.content != resname
@@ -122,7 +132,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
                 an,
                 parse(Int, atom["aid"]),
                 atmindex,
-                string(atom["as"]))
+                atom_symb)
 
             id2atom[parse(Int, atom["aid"])] = new_atom
             

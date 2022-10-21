@@ -632,7 +632,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_terminal::Bool = false, skip_C_terminal::Bool = false)
     # * This function assumes that the N- and C- terminals are correctly named
     # * (N-terminal residue has an atom named "N" and C-terminal has an atom
     # * named "C", both with a bond to a "CA" atom).
@@ -649,7 +649,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     end
 
     for residue in residues
-        if is_C_terminal(residue)
+        if is_C_terminal(residue) && !skip_C_terminal
             terminal = residue["C"]
             @assert terminal !== nothing "Can't find atom \"C\" in terminal residue $residue"
 
@@ -660,7 +660,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             end
         end
 
-        if is_N_terminal(residue) # * Note: A residue can be both N- and C- terminal
+        if is_N_terminal(residue) && !skip_N_terminal # * Note: A residue can be both N- and C- terminal
             terminal = residue["N"]
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
@@ -698,22 +698,27 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_terminal::Bool = false, skip_C_terminal::Bool = false)
     # * This function assumes that the N- and C- terminals are correctly ordered
     # * (N -> CA -> C, in both terminal backbones).
 
     # * Default terminal fragments
     T               = eltype(pose.state)
-    n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
-    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
-    n_term_atoms    = ["H1", "H2", "H3"]
+    if !skip_N_terminal
+        n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
+        n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
+        n_term_atoms    = ["H1", "H2", "H3"]
+    end
 
-    c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
-    c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
-    c_term_atoms    = ["O", "OXT"]
+    if !skip_C_terminal
+        c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
+        c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
+        c_term_atoms    = ["O", "OXT"]
+    end
 
     # * Remove any existing caps
-    uncap!(pose, selection)
+    uncap!(pose, selection,
+        skip_N_terminal = skip_N_terminal, skip_C_terminal = skip_C_terminal)
     sync!(pose)
 
     # * Search for terminals to cap
@@ -726,7 +731,8 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
 
     # * Cap terminals
     for residue in residues
-        if is_N_terminal(residue)
+        if is_N_terminal(residue) && !skip_N_terminal
+            @info "Capping $residue as N-terminal"
             terminal = residue["N"]
             # * Align terminal fragment with existing structure
             mobile_selection = an"^N$|^CA$"r
@@ -748,7 +754,9 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             ProtoSyn.request_c2i!(pose.state)
             sync!(pose)
         end
-        if is_C_terminal(residue) # * Note: A residue can be both N- and C- terminal
+
+        if is_C_terminal(residue) && !skip_C_terminal # * Note: A residue can be both N- and C- terminal
+            @info "Capping $residue as C-terminal"
             terminal = residue["C"]
 
             # * Transfer ownership of terminal atoms from fragment to Pose

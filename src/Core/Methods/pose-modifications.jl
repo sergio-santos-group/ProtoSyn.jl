@@ -247,14 +247,8 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     parent_container    = parent === root ? atom.children[1].container : parent.container
     parent_index        = parent === root ? atom.children[1].index - 1 : parent.index # In the state
     index_in_res        = findfirst(x -> x === atom, parent_container.items)
-    current_charge      = pose.state[atom].δ
 
     @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Index in residue = $index_in_res (out of $(length(parent_container.items)))"
-
-    if spread_excess_charge
-        excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
-        @info "Excess charge = $excess_charge"
-    end
 
     last_position_in_res  = index_in_res === length(parent_container.items)
     last_position_in_pose = last_position_in_res && parent_container === collect(eachresidue(pose.graph))[end]
@@ -269,12 +263,16 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     end
 
     # Add fragment to residue (start with the first atom in the fragment,
-    # children of the fake fragment root) - change name, symbol and charge only
+    # children of the fake fragment root) - change name, symbol, charge and bond
+    # distance
     frag_origin        = ProtoSyn.origin(fragment.graph)
     first_atom         = frag_origin.children[1]
+    pop!(atom.container.itemsbyname, atom.name)
     atom.name          = first_atom.name
     atom.symbol        = first_atom.symbol
-    pose.state[atom].δ = fragment.state[first_atom].δ + current_charge
+    atom.container.itemsbyname[atom.name] = atom
+    pose.state[atom].δ = fragment.state[first_atom].δ
+    pose.state[atom].b = fragment.state[first_atom].b
 
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
 
@@ -308,17 +306,37 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     reindex(pose.graph, set_ascendents = true)
     reindex(pose.state)
 
-    # Spread excess charge over the bonded atoms to first_atom
-    bonds = [bond for bond in atom.bonds if bond !== root]
+    # Spread excess charge over the modified residue
     if spread_excess_charge
-        charge_per_bond     = excess_charge / length(bonds)
-
-        for bond in bonds
-            pose.state[bond].δ -= charge_per_bond
-        end
+        spread_excess_charge!(pose, FieldSelection{Residue}(atom.container.name.content, :name))
     end
 
     ProtoSyn.request_i2c!(pose.state)
+
+    return pose
+end
+
+
+"""
+# TODO: Documentation
+"""
+function spread_excess_charge!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    atoms = sele(pose, gather = true)
+
+    excess_charge = sum([pose.state[atom].δ for atom in atoms])
+    cpa = excess_charge / length(atoms)
+    @info "CPA: $cpa"
+
+    for atom in atoms
+        pose.state[atom].δ += cpa
+    end
 
     return pose
 end

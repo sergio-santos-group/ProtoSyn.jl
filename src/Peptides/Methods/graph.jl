@@ -102,36 +102,44 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         # N-terminal
         N_terminal_pose     = UpstreamTerminalSelection{Residue}()(segment, gather = true)[1]
         N_terminal_template = UpstreamTerminalSelection{Residue}()(template, gather = true)[1]
-        N = ProtoSyn.identify_atom_by_bonding_pattern(N_terminal_pose, ["N", "C", "C", "O"])
-        if isa(N, Vector{Atom})
-            if length(N) === 0
-                @warn "Terminal N was not found on $segment"
-            elseif length(N) > 1
-                @warn "Multiple candidates identified for terminal N on segment $segment"
-            end
+        if !(N_terminal_pose in residues)
+            @info "N-terminal not identified as being selected: skipping cap check on this residue."
         else
-            if length(N.bonds) > 2
-                Peptides.cap!(template, SerialSelection{Residue}(N_terminal_template.id, :id))
+            N = ProtoSyn.identify_atom_by_bonding_pattern(N_terminal_pose, ["N", "C", "C", "O"])
+            if isa(N, Vector{Atom})
+                if length(N) === 0
+                    @warn "Terminal N was not found on $segment"
+                elseif length(N) > 1
+                    @warn "Multiple candidates identified for terminal N on segment $segment"
+                end
             else
-                # Case already capped
+                if length(N.bonds) > 2
+                    Peptides.cap!(template, SerialSelection{Residue}(N_terminal_template.id, :id), skip_C_terminal = true)
+                else
+                    # Case already capped
+                end
             end
         end
 
         # C-terminal
         C_terminal_pose     = DownstreamTerminalSelection{Residue}()(segment, gather = true)[1]
         C_terminal_template = DownstreamTerminalSelection{Residue}()(template, gather = true)[1]
-        C = identify_c_terminal(segment, supress_warn = true) # Uses multiple criteria to identify
-        if isa(C, Vector{Atom})
-            if length(C) === 0
-                @warn "Terminal C was not found on $segment"
-            elseif length(C) > 1
-                @warn "Multiple candidates identified for terminal C on segment $segment"
-            end
+        if !(C_terminal_pose in residues)
+            @info "C-terminal not identified as being selected: skipping cap check on this residue."
         else
-            if length(C.bonds) > 2
-                Peptides.cap!(template, SerialSelection{Residue}(C_terminal_template.id, :id))
+            C = identify_c_terminal(segment, supress_warn = true) # Uses multiple criteria to identify
+            if isa(C, Vector{Atom})
+                if length(C) === 0
+                    @warn "Terminal C was not found on $segment"
+                elseif length(C) > 1
+                    @warn "Multiple candidates identified for terminal C on segment $segment"
+                end
             else
-                # Case already capped
+                if length(C.bonds) > 2
+                    Peptides.cap!(template, SerialSelection{Residue}(C_terminal_template.id, :id), skip_N_terminal = true)
+                else
+                    # Case already capped
+                end
             end
         end
         
@@ -149,7 +157,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         
         # In case the direct approach wasn't successful
         @info "Possible tautomers identified, assigning default names residue by residue ..."
-        pose_temp_res = zip(eachresidue(segment), eachresidue(template.graph))
+        pose_temp_res = zip(residues, eachresidue(template.graph))
         for (pose_residue, template_residue) in pose_temp_res
             # println("\n$pose_residue - $template_residue")
             
@@ -184,8 +192,8 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
                 temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
                 temp_graph = [a.symbol for a in temp_atoms]
                 
+                @assert length(temp_atoms) === length(pose_atoms) "Number of atoms in $ind_pose_res and corresponding template don't match: $(length(pose_atoms)) in Pose <-> $(length(temp_atoms)) in template.\n$(repeat(" ", 23))Does the Pose residue have any missing or added atoms? Consider ignoring this residue by setting an AbstractSelection."
                 if all(pose_graph .=== temp_graph)
-                    # println("Match found.")
                     for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)
                         pri = pose_residue.items
                         actual_pose_a = findfirst((a)->a.index == p_atom.index, pri)

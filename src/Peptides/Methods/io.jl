@@ -84,10 +84,10 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                 starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
                 if isa(starting_atom, Vector{Atom})
                     if length(starting_atom) === 0
-                        @warn "No starting atom found on residue $residue. Will use atom $(collect(eachatom(residue))[1]), check if this is the desired behaviour."
+                        @warn "No starting atom found on residue $residue for graph inference.\nThis seems to be a ligand or NCAA. ProtoSyn.jl will use atom $(collect(eachatom(residue))[1]), check if this is the desired behaviour."
                         starting_atom = collect(eachatom(residue))[1]
                     else
-                        @warn "Multiple starting atoms identified on residue $residue. Will use atom $(starting_atom[1]), check if this is the desired behaviour."
+                        @warn "Multiple starting atoms identified on residue $residue for graph inference.\nThis seems to be a ligand or NCAA. ProtoSyn.jl will use atom $(starting_atom[1]), check if this is the desired behaviour."
                         starting_atom = starting_atom[1]
                     end
                 end

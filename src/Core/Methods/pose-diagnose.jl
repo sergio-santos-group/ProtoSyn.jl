@@ -123,7 +123,7 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
         else
             N = findall((x) -> x === false, atoms_from_list .=== atoms_from_graph)
             if length(N) > 0
-                push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment, the atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
+                push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment:\nThe atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
             end
         end
     end
