@@ -66,7 +66,11 @@ function hist_by_distance_by_elem(pose::Pose, selection::Opt{AbstractSelection} 
             d > cutoff && continue
 
             # Find the initial element position in the histogram
-            init_elem_pos = elempos[atoms[j].symbol]
+            s = atoms[j].symbol
+            if !(s in elems)
+                continue
+            end
+            init_elem_pos = elempos[s]
             
             # Find the bin position after the initial element position
             bin_pos = ceil(Int, d / bin)

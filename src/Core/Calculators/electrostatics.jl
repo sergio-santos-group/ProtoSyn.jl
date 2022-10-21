@@ -95,6 +95,7 @@ module Electrostatics
         end
 
         residues = sele(pose, gather = true)
+        k = keys(res_lib.variables)
 
         for residue in residues
 
@@ -104,6 +105,10 @@ module Electrostatics
                 continue
             end
             name = string(ProtoSyn.three_2_one[residue.name.content])
+            if !(name in k)
+                @warn "Possible NCAA or ligand identified: $residue\nProtoSyn.jl will skip charge attribution in this residue.\nCheck if this is the desired behaviour."
+                continue
+            end
             template = res_lib.variables[name]
             if isa(template, Tautomer)
                 # If multiple templates exist for a particular residue type,

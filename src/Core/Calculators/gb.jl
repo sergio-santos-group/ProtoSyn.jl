@@ -161,7 +161,7 @@ module GB
             born_radii = born_radii(pose, sele, dm = dm, models = models)
         end # if
 
-        env = - (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
+        env = (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
         int = T(0.0)
 
         for i in 1:natoms

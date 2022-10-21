@@ -58,6 +58,11 @@ module GMX
 
         # Generate Pose to file from just the selected region. No check on
         # validity on the given selection is done.
+        if count(selection(pose)) === 0
+            @warn "The provided selection yielded no Residue instances for .itp generation using PDB2GMX."
+            return nothing
+        end
+
         frag      = Pose(fragment(pose, selection))
         temp_path = tempname(".")
         temp_file = temp_path*".pdb"
@@ -175,13 +180,16 @@ module GMX
         # Attempts to identify protein and non-protein molecules based on
         # ProteinSelection
         # Generate .itp for protein molecule
-        generate_gmx_itp(pose, ProteinSelection(),
-            molecule_itp_filename  = protein_itp_filename,
-            overwrite          = overwrite,
-            keep_temp_files    = keep_temp_files,
-            gmx_histidine_type = gmx_histidine_type,
-            gmx_water_model    = gmx_water_model,
-            gmx_forcefield     = gmx_forcefield)
+        N_protein_molecules = count(ProteinSelection()(pose))
+        if N_protein_molecules > 0
+            generate_gmx_itp(pose, ProteinSelection(),
+                molecule_itp_filename  = protein_itp_filename,
+                overwrite          = overwrite,
+                keep_temp_files    = keep_temp_files,
+                gmx_histidine_type = gmx_histidine_type,
+                gmx_water_model    = gmx_water_model,
+                gmx_forcefield     = gmx_forcefield)
+        end
 
         # Generate .itp for non-protein molecules (if present)
         N_non_protein_molecules = count(!ProteinSelection()(pose))
@@ -214,23 +222,27 @@ module GMX
             Base.write(topol, "#include \"$(gmx_forcefield).ff/$(gmx_water_model).itp\"\n")
             Base.write(topol, "\n; Include topology for ions\n")
             Base.write(topol, "#include \"$(gmx_forcefield).ff/ions.itp\"\n")
-            Base.write(topol, "\n; Include topology for protein\n")
-            Base.write(topol, "#include \"$(protein_itp_filename)\"\n")
+            if N_protein_molecules > 0
+                Base.write(topol, "\n; Include topology for protein\n")
+                Base.write(topol, "#include \"$(protein_itp_filename)\"\n")
+            end
             if N_non_protein_molecules > 0
                 Base.write(topol, "\n; Include topology for ligands\n")
                 Base.write(topol, "#include \"$(molecule_itp_filename)\"\n")
             end
             Base.write(topol, "\n[ system ]\n; Name\n$(pose.graph.name)\n")
             Base.write(topol, "\n[ molecules ]\n; Compound        #mols\n")
-            Base.write(topol, @sprintf("%-19s %-d\n", protein_itp_filename[1:(end-4)], 1))
+            if N_protein_molecules > 0
+                Base.write(topol, @sprintf("%-19s %-d\n", protein_itp_filename[1:(end-4)], 1))
+            end
             if N_non_protein_molecules > 0
                 Base.write(topol, @sprintf("%-19s %-d\n", molecule_itp_filename[1:(end-4)], 1))
             end
         end
 
         if !keep_temp_files
-            rm("conf.gro")
-            rm("posre.itp")
+            isfile("conf.gro")  && rm("conf.gro")
+            isfile("posre.itp") && rm("posre.itp")
         end
     end
 
@@ -528,8 +540,10 @@ module GMX
         include_atomtypes::Bool    = true,
         mdps_dir::String           = "/home/jpereira/scripts/mdps",
         verbose::Bool              = true,
+        copy_log::Bool             = false,
         steps::Int                 = 5000,
-        print_every::Int           = 500)
+        print_every::Int           = 500,
+        box_threshold::T           = 1.0) where {T <: AbstractFloat}
 
         wp = pwd()
         d  = mktempdir()
@@ -547,7 +561,7 @@ module GMX
             topology_filename      = topology_filename,
             include_atomtypes      = include_atomtypes)
 
-        mol_size = maximum(ProtoSyn.Calculators.distance_matrix(pose)) * 0.22 # 200% + 20% the maximum size
+        mol_size = maximum(ProtoSyn.Calculators.distance_matrix(pose)) * (T(0.2) * (T(1.0) + box_threshold / (T(2.0)))) # 200% + threshold% the maximum size
         name     = output_pdb_filename[1:(end-4)]
         output_file_pdb_filename_box = name*"_box.pdb"
         ProtoSyn.GMX.add_bounding_box(output_pdb_filename, output_file_pdb_filename_box, mol_size)
@@ -563,12 +577,37 @@ module GMX
         redirect_stdio(stderr = v, stdout = v) do
             run(`gmx mdrun -deffnm $name -s $tpr`)
         end
+
+        # Get number of steps
+        function count_steps(filename::String)
+            open(filename, "r") do io
+                for line in eachline(io)
+                    if startswith(line, "Steepest Descents converged")
+                        elems = split(line)
+                        if elems[4] === "machine"
+                            return parse(Int, elems[7])
+                        else
+                            return parse(Int, elems[8])
+                        end
+                    end
+                end
+
+                return nothing
+            end
+        end
+
+        N_conv = count_steps("$name.log")
+        N_conv = N_conv !== nothing ? N_conv : steps
+
         cp(tpr, wp*"/$tpr", force = true)
         cp(trr, wp*"/$trr", force = true)
+        if copy_log
+            cp(name*".log", wp*"/$name.log", force = true)
+        end
         cd(wp)
 
         redirect_stdio(stderr = v, stdout = v) do
-            run(pipeline(`echo 0 \n 0`, `gmx trjconv -f $trr -o $(name*"_last_frame.pdb") -s $tpr -pbc mol -center -b $steps`))
+            run(pipeline(`echo 0 0`, `gmx trjconv -f $trr -o $(name*"_last_frame.pdb") -s $tpr -pbc mol -center -b $N_conv`))
         end
     end
 
