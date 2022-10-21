@@ -1,18 +1,24 @@
 name: po4
 atoms:
   - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
-  - {name:  PM, id:   2, symbol:  P, b:   1.536460, theta:   0.000960, phi:  -2.100663}
-  - {name: OM2, id:   3, symbol:  O, b:   1.539196, theta:   1.910145, phi:   0.207633}
-  - {name: OM3, id:   4, symbol:  O, b:   1.537131, theta:   1.911996, phi:   2.300976}
-  - {name: OM4, id:   5, symbol:  O, b:   1.537052, theta:   1.911933, phi:  -1.884765}
+  - {name:  PM, id:   2, symbol:  P, b:   1.536460, theta:   0.000960, phi:  -2.100663, c:  2.5914}
+  - {name: OM2, id:   3, symbol:  O, b:   1.539196, theta:   1.910145, phi:   0.207633, c: -1.4412}
+  - {name: HM2, id:   4, symbol:  H, b:   0.799290, theta:   2.094395, phi:   3.141592, c:  0.6694}
+  - {name: OM3, id:   5, symbol:  O, b:   1.537131, theta:   1.911996, phi:   2.300976, c: -1.3786}
+  - {name: HM3, id:   6, symbol:  H, b:   0.799290, theta:   2.094395, phi:   3.141592, c:  0.6504}
+  - {name: OM4, id:   7, symbol:  O, b:   1.537052, theta:   1.911933, phi:  -1.884765, c: -0.9167}
 bonds:
   R: [PM]
   PM: [R, OM2, OM3, OM4]
-  OM2: [PM]
-  OM3: [PM]
+  OM2: [PM, HM2]
+  OM3: [PM, HM3]
   OM4: [PM]
+  HM2: [OM2]
+  HM3: [OM3]
 graph:
   root: R
   adjacency:
     R: [PM]
     PM: [OM2, OM3, OM4]
+    OM2: [HM2]
+    OM3: [HM3]

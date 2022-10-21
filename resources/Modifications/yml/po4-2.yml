@@ -1,0 +1,18 @@
+name: po4-2
+atoms:
+  - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
+  - {name:  PM, id:   2, symbol:  P, b:   1.536460, theta:   0.000960, phi:  -2.100663}
+  - {name: OM2, id:   3, symbol:  O, b:   1.539196, theta:   1.910145, phi:   0.207633}
+  - {name: OM3, id:   4, symbol:  O, b:   1.537131, theta:   1.911996, phi:   2.300976}
+  - {name: OM4, id:   5, symbol:  O, b:   1.537052, theta:   1.911933, phi:  -1.884765}
+bonds:
+  R: [PM]
+  PM: [R, OM2, OM3, OM4]
+  OM2: [PM]
+  OM3: [PM]
+  OM4: [PM]
+graph:
+  root: R
+  adjacency:
+    R: [PM]
+    PM: [OM2, OM3, OM4]
