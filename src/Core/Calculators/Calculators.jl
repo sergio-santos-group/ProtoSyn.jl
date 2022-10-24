@@ -7,7 +7,7 @@ module Calculators
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     include("verlet_list.jl")
-    include("distance_matrix.jl")
+    include("distance_matrix.jl") # Requires verlet_list.jl
 
     # Load energy function components
     include("energy_function_component.jl")
@@ -44,7 +44,7 @@ module Calculators
     @info " | Loading Energy Function"
     include("energy_function.jl")
 
-    include("ref15.jl")
+    # include("ref15.jl")
 
     # --- Show available Energy Function Components
 

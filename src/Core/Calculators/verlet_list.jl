@@ -1,20 +1,4 @@
 """
-    @reduce(n::Int, op::Symbol, ex::Expr)
-
-        Wrapping macro for @ncall. Is equivalent and generates
-        op(ex_1, ..., ex_n)
-
-    Example:
-
-        @reduce 2 (+) u -> v_u^2
-        > Generates +(v_1^2, v_2^2)
-"""
-macro reduce(n::Int, op::Symbol, ex::Expr)
-    esc(:(@ncall($n, $op, $ex)))
-end
-
-
-"""
     VerletList(size::Int, capacity::Int, cutoff::Float64, offset::Vector{Int}, list::Vector{Int})
 
 Hold information regarding the neighbouring particles of each particle
