@@ -67,7 +67,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
     
     segid = atmindex = 1 # ! segment and atom index are overwritten by default 
 
-    er = r"^\w+\s+(?<aid>\d+)\s+(?<an>\w{1,4}?)\s*(?<al>(?:\w{1}(?=\w{3}\s))|\s)(?<rn>\S{3,4})\s*(?<sn>\w{0,1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s*(?|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(?:(\w)[0-9]*[+-]*\s*)|(?<as>\w+[+-]*)(?=\s*$))$"
+    er = r"^\w+\s+(?<aid>\d+)\s+(?<an>\w{1,4}?)\s*(?<al>(?:\w{1}(?=\w{3}\s))|\s)(?<rn>\S{3,4})\s*(?<sn>\w|[?]{0,1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s*(?|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(?:(\w)[0-9]*[+-]*\s*)|(?<as>\w+[+-]*)(?=\s*$))$"
 
     aid = 0
     ignored_atoms     = Vector{Int}()
@@ -93,7 +93,7 @@ load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_
                 continue
             end
 
-            segname   = atom["sn"] in [" ", ""] ? "?" : string(atom["sn"])                   # * Default
+            segname   = atom["sn"] in [" ", ""] ? "?" : string(atom["sn"])             # * Default
             atom_symb = atom["as"] == ""  ? string(atom["an"][1]) : string(atom["as"]) # * Default
 
             if seg.name != segname
