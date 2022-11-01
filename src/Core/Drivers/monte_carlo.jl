@@ -159,7 +159,7 @@ function (driver::MonteCarlo)(pose::Pose)
             ProtoSyn.recoverfrom!(previous_state, pose) # If copy, the chain is broken
             driver_state.acceptance_count += 1
         else
-            # println("Rejected")
+            # println("Rejected: $previous_energy < $energy")
             ProtoSyn.recoverfrom!(pose, previous_state) # If copy, the chain is broken
         end
 

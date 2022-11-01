@@ -112,7 +112,7 @@ function sort_atoms_by_graph!(state::State, container::Union{Topology, Segment};
     
     residues = (!ignore_sele)(container, gather = true)
     for residue in residues
-        ProtoSyn.sort_atoms_by_graph!(state, residue, start = start, search_algorithm = search_algorithm)
+        ProtoSyn.sort_atoms_by_graph!(state, residue, start = nothing, search_algorithm = search_algorithm)
     end
 
     reindex(container)

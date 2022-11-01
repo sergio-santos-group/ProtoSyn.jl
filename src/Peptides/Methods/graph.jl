@@ -149,7 +149,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
         p_atoms = p_atoms[p_atoms .∈ [p_selected_atoms]]
 
         @assert length(t_atoms) === length(p_selected_atoms) "Template atoms ($(length(t_atoms))) and pose atoms ($(length(p_selected_atoms))) don't match in number."
-        if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_atoms])
+        if all([a.symbol for a in t_atoms] .=== [a.symbol for a in p_selected_atoms])
             for (t_atom, p_atom) in zip(t_atoms, p_atoms)
                 ProtoSyn.rename!(p_atom, t_atom.name, force_rename = force_rename)
             end
@@ -166,6 +166,7 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
             pose_N        = ProtoSyn.identify_atom_by_bonding_pattern(ind_pose_res, ["N", "C", "C", "O"])
             pose_atoms    = ProtoSyn.travel_graph(pose_N, search_algorithm = ProtoSyn.BFS)
             pose_graph    = [a.symbol for a in pose_atoms]
+            # _pose_graph    = [a.name for a in pose_atoms]
             # println("Residue $pose_residue (Graph: $pose_graph)")
             
             if isa(grammar.variables[pose_res_name], Tautomer)
@@ -174,7 +175,10 @@ function assign_default_atom_names!(pose::Pose, selection::Opt{AbstractSelection
                     temp_N     = ProtoSyn.identify_atom_by_bonding_pattern(tautomer.graph[1], ["N", "C", "C", "O"])
                     temp_atoms = ProtoSyn.travel_graph(temp_N, search_algorithm = ProtoSyn.BFS)
                     temp_graph = [a.symbol for a in temp_atoms]
+                    # _temp_graph = [a.name for a in temp_atoms]
                     
+                    # println(_pose_graph)
+                    # println(_temp_graph)
                     if all(pose_graph .=== temp_graph)
                         # println("Match found.")
                         for (t_atom, p_atom) in zip(temp_atoms, pose_atoms)

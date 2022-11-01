@@ -280,6 +280,7 @@ module GMX
                 deleteat!(bonds, c_index)
             end
         end
+
         return vcat(bonds, stack)
     end
 
@@ -303,7 +304,7 @@ module GMX
     GMXS = GMXSA()
 
     """
-        sort_atoms_and_graph_gmx!(pose::Pose)
+        sort_atoms_and_graph_gmx(pose::Pose)
 
     Sorts [`Atom`](@ref) instances in the encompassing `AbstractContainer`
     structures and the resulting [Graph](@ref graph-types) for Gromacs simulations (Gromacs
@@ -316,7 +317,7 @@ module GMX
 
     # Examples
     ```
-    julia> ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx!(pose)
+    julia> ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx(pose)
     Pose{Topology}(Topology{/2a3d:60945}, State{Float64}:
      Size: 1140
      i2c: false | c2i: false
@@ -324,10 +325,12 @@ module GMX
     )
     ```
     """
-    function sort_atoms_and_graph_gmx!(pose::Pose)
+    function sort_atoms_and_graph_gmx(pose::Pose)
+
+        _pose = copy(pose)
 
         # Deal with Prolines
-        for container in rn"PRO"(pose, gather = true)
+        for container in rn"PRO"(_pose, gather = true)
 
             @assert container.name == "PRO" "Can't sort Proline atoms and graph on a non-Proline residue ($container)."
 
@@ -346,7 +349,7 @@ module GMX
         end
 
         # Deal with Tryptophans
-        for container in rn"TRP"(pose, gather = true)
+        for container in rn"TRP"(_pose, gather = true)
 
             @assert container.name == "TRP" "Can't sort Tryptophan atoms and graph on a non-Tryptophan residue ($container)."
 
@@ -366,7 +369,7 @@ module GMX
         end
         
         # Deal with other aromatic residues
-        aromatic_residues = rn"TYR|PHE|HIS"r(pose, gather = true)
+        aromatic_residues = rn"TYR|PHE|HIS|HIE"r(_pose, gather = true)
 
         for residue in aromatic_residues
             p = residue["N"].parent
@@ -377,13 +380,13 @@ module GMX
 
         # Sort atoms in the container according to the new parenthoods
         # The GMXSA already deals with threonines
-        ProtoSyn.sort_atoms_by_graph!(pose, search_algorithm = GMXSA())
+        ProtoSyn.sort_atoms_by_graph!(_pose, search_algorithm = GMXSA())
 
         # Re-calculate internal coordinates based on new parenthoods
-        ProtoSyn.request_c2i!(pose.state)
-        sync!(pose)
+        ProtoSyn.request_c2i!(_pose.state)
+        sync!(_pose)
 
-        return pose
+        return _pose
     end
 
 
@@ -398,7 +401,7 @@ module GMX
     [`ProtoSyn.promote`](@ref)).
 
     # See also
-    [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) [`rename!`](@ref ProtoSyn.rename!) [`sort_atoms_and_graph_gmx!`](@ref) [`generate_gmx_files`](@ref)
+    [`assign_default_atom_names!`](@ref ProtoSyn.Peptides.assign_default_atom_names!) [`rename!`](@ref ProtoSyn.rename!) [`sort_atoms_and_graph_gmx`](@ref) [`generate_gmx_files`](@ref)
     
     # Examples
     ```
@@ -462,7 +465,7 @@ module GMX
     please check [`generate_gmx_topology`](@ref) documentation: all arguments
     used in that method are also input arguments of this one. For .pdb
     generation, ProtoSyn attempts to sort (using
-    [`sort_atoms_and_graph_gmx!`](@ref)) and rename (using
+    [`sort_atoms_and_graph_gmx`](@ref)) and rename (using
     [`assign_gmx_atom_names!`](@ref)) [`Atom`](@ref) instances in accordance to
     the expected values in Gromacs before exporting the given [`Pose`](@ref)
     `pose` to a `output_pdb_filename` file. Check these methods documentation
@@ -489,8 +492,9 @@ module GMX
         include_atomtypes::Bool    = true)
 
         p = copy(pose)
-        assign_gmx_atom_names!(p) # Assign names first, as graph changes after
-        sort_atoms_and_graph_gmx!(p)
+        ProtoSyn.Peptides.cap!(p) # GMX templates always have caps
+        ProtoSyn.Peptides.GMX.assign_gmx_atom_names!(p) # Assign names first, as graph changes after
+        ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx(p)
         generate_gmx_topology(p,
             protein_itp_filename   = protein_itp_filename,
             atomtypes_itp_filename = atomtypes_itp_filename,
@@ -610,5 +614,7 @@ module GMX
             run(pipeline(`echo 0 0`, `gmx trjconv -f $trr -o $(name*"_last_frame.pdb") -s $tpr -pbc mol -center -b $N_conv`))
         end
     end
+
+    include("gromacs-launch.jl")
 
 end # module

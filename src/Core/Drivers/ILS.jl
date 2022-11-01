@@ -174,7 +174,7 @@ function (driver::ILS)(pose::Pose)
         m = exp((-(energy - previous_energy)) / driver_state.temperature)
         if (energy < previous_energy) || (n < m)
             previous_energy = energy
-            previous_state = copy(pose)
+            previous_state  = copy(pose)
             driver_state.acceptance_count += 1
         else
             ProtoSyn.recoverfrom!(pose, previous_state)
@@ -184,7 +184,10 @@ function (driver::ILS)(pose::Pose)
         driver.callback !== nothing && driver.callback(pose, driver_state)
 
         # Jump
-         driver_state.step < driver.max_steps && driver.jump!(pose)
+        if driver_state.step < driver.max_steps
+            driver.jump!(pose)
+            sync!(pose)
+        end
     end
 
     driver_state.completed = true

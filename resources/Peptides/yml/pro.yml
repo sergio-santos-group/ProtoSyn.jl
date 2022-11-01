@@ -4,7 +4,7 @@ atoms:
   - {name:   N, id:   1, symbol:  N, b:   1.311455, theta:   2.033866, phi:  -0.855816, c: -0.6159}
   - {name:  CA, id:   2, symbol:  C, b:   1.524260, theta:   1.841536, phi:  -0.400300, c:  0.2685}
   - {name:  HA, id:   3, symbol:  H, b:   1.077182, theta:   1.935570, phi:   0.748746, c:  0.2685}
-  - {name:  CB, id:   4, symbol:  C, b:   1.499310, theta:   1.884770, phi:   0.198482, c: -0.2975}
+  - {name:  CB, id:   4, symbol:  C, b:   1.499310, theta:   1.808839, phi:   2.812231, c: -0.2975}
   - {name: HB1, id:   5, symbol:  H, b:   1.080250, theta:   1.923393, phi:  -2.477115, c:  0.2900}
   - {name: HB2, id:   6, symbol:  H, b:   1.080192, theta:   1.923915, phi:   1.676576, c:  0.2623}
   - {name:  CG, id:   7, symbol:  C, b:   1.511373, theta:   1.825220, phi:  -3.053767, c: -0.3714}

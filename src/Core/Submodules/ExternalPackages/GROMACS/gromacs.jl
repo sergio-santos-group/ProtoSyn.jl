@@ -270,4 +270,35 @@ module GMX
         return nothing
     end # function
 
+    """
+    # TODO Documentation
+    """
+    function generate_restraints(input_filename::String;
+        input_topology::String = "topol.top",
+        attempt_auto::Opt{Int} = nothing,
+        verbose::Bool          = true)
+
+        v = verbose ? nothing : devnull
+        redirect_stdio(stderr = v, stdout = v) do
+            if attempt_auto !== nothing
+                run(pipeline(`echo $attempt_auto`, `gmx genrestr -f $input_filename -fc 10000 10000 10000`))
+            else
+                run(`gmx genrestr -f $input_filename`)
+            end
+        end
+
+        content = readlines(input_topology)
+        insert!(content, 15, "#ifdef POSRES")
+        insert!(content, 16, "#include \"posre.itp\"")
+        insert!(content, 17, "#endif")
+        insert!(content, 18, "")
+        open(input_topology, "w") do io
+            for line in content
+                write(io, line*"\n")
+            end
+        end
+
+        return nothing
+    end # function
+
 end # module
