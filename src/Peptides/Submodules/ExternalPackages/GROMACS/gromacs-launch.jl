@@ -38,6 +38,7 @@ minimization_2    = GMX_Step(     "2-minimization", 0.002,   50_000,  1_000, tru
 nvt_equilibration = GMX_Step("3-nvt-equilibration", 0.002,  250_000, 10_000, true)
 npt_equilibration = GMX_Step("4-npt-equilibration", 0.002,  250_000, 10_000, true)
 collection        = GMX_Step(       "5-collection", 0.002, 5000_000, 10_000, true)
+single_point      = GMX_Step(      "0-single-step", 0.000,        0,      1, true) # Note: Print every can't be 0.0
 
 
 """
@@ -65,19 +66,22 @@ end
 # TODO Documentation
 """
 function launch_md_simulation(pose::Pose;
-    gmx_steps::Vector{GMX_Step}  = Vector{GMX_Step}(
+    gmx_steps::Vector{GMX_Step}       = Vector{GMX_Step}(
         [minimization_1,
         minimization_2,
         nvt_equilibration,
         npt_equilibration,
         collection]),
-    mdps_dir::String             = "/home/jpereira/scripts/mdps",
-    simulation_name::Opt{String} = nothing,
-    overwrite::Bool              = false,
-    protein_itp_filename::String = "protein.itp",
-    gmx_histidine_type::Int      = 0,
-    box_threshold::T             = 1.0,
-    verbose::Bool                = true) where {T <: AbstractFloat}
+    selection::Opt{AbstractSelection} = nothing,
+    mdps_dir::String                  = "/home/jpereira/scripts/mdps",
+    simulation_name::Opt{String}      = nothing,
+    overwrite::Bool                   = false,
+    protein_itp_filename::String      = "protein.itp",
+    gmx_histidine_type::Int           = 0,
+    box_threshold::T                  = 1.0,
+    include_atomtypes::Bool           = true,
+    verbose::Bool                     = true,
+    add_solvent::Bool                 = true) where {T <: AbstractFloat}
 
     function check_file(filename::String)
         file_exists = false
@@ -123,8 +127,10 @@ function launch_md_simulation(pose::Pose;
 
     if !protein_itp_filename_exists
         generate_gmx_files(pose;
+            selection = selection,
             protein_itp_filename = protein_itp_filename,
-            gmx_histidine_type   = gmx_histidine_type)
+            gmx_histidine_type   = gmx_histidine_type,
+            include_atomtypes    = include_atomtypes)
     end
 
     # 3. Add bounding box
@@ -134,19 +140,27 @@ function launch_md_simulation(pose::Pose;
         mol_size = maximum(ProtoSyn.Calculators.distance_matrix(pose)) * (T(0.2) * (T(1.0) + box_threshold / (T(2.0)))) # 200% + threshold% the maximum size
         ProtoSyn.GMX.add_bounding_box("system.pdb", filename_2, mol_size)
     end
-
+    
     # 4. Add solvent
-    filename_3_exists = check_file(filename_3)
+    if add_solvent
+        filename_3_exists = check_file(filename_3)
 
-    if !filename_3_exists
-        ProtoSyn.GMX.add_solvent(filename_2, filename_3)
-    end
+        if !filename_3_exists
+            ProtoSyn.GMX.add_solvent(filename_2, filename_3)
+        end
 
-    # 5. Add ions
-    filename_4_exists = check_file(filename_4)
+        # 5. Add ions
+        filename_4_exists = check_file(filename_4)
 
-    if !filename_4_exists
-        ProtoSyn.GMX.add_ions(filename_3, filename_4, attempt_auto = 13)
+        if !filename_4_exists
+            ion_substitution_group = 13
+            if count((!ProteinSelection())(pose)) > 0
+                ion_substitution_group = 15
+            end
+            ProtoSyn.GMX.add_ions(filename_3, filename_4, attempt_auto = ion_substitution_group)
+        end
+    else
+        cp(filename_2, filename_4)
     end
 
     # 6. Generate restraints
@@ -180,7 +194,7 @@ function launch_md_simulation(pose::Pose;
         # 7.2 Set-up .mdp file
         mdp = Base.joinpath(mdps_dir, "$(step.name).mdp")
         cp(mdp, Base.joinpath(pwd(), "$(step.name).mdp"), force = true)
-        configure_mdp("$(step.name).mdp", step.n_steps, step.print_every)
+        configure_mdp("$(step.name).mdp", step.n_steps, step.print_every, step.time_step)
 
         # 7.3 Launch simulation step
         tpr = step.name*".tpr"
@@ -198,7 +212,7 @@ function launch_md_simulation(pose::Pose;
         N_conv = N_conv !== nothing ? N_conv : convert(Int, step.n_steps / step.print_every)
 
         redirect_stdio(stderr = v, stdout = v) do
-            run(pipeline(`echo 0 0`, `gmx trjconv -f $trr -o $(step.name)_last_frame.pdb -s $tpr -pbc mol -center -b $N_conv`))
+            run(pipeline(`echo 0 0`, `gmx trjconv -f $trr -o $(step.name)_last_frame.pdb -s $tpr -pbc mol -center -b $N_conv -conect`))
         end
 
         previous_filename = "../$(step.name)/$(step.name)_last_frame.pdb"

@@ -479,22 +479,27 @@ module GMX
     ```
     """
     function generate_gmx_files(pose::Pose;
-        protein_itp_filename::String   = "protein.itp",
-        output_pdb_filename::String    = "system.pdb",
-        atomtypes_itp_filename::String = "atomtypes.itp",
-        molecule_itp_filename::String  = "molecule.itp",
-        overwrite::Bool            = true,
-        keep_temp_files::Bool      = false,
-        gmx_histidine_type::Int    = 0,
-        gmx_water_model::String    = "tip3p",
-        gmx_forcefield::String     = "amber99sb-ildn",
-        topology_filename::String  = "topol.top",
-        include_atomtypes::Bool    = true)
+        selection::Opt{AbstractSelection} = nothing,
+        protein_itp_filename::String      = "protein.itp",
+        output_pdb_filename::String       = "system.pdb",
+        atomtypes_itp_filename::String    = "atomtypes.itp",
+        molecule_itp_filename::String     = "molecule.itp",
+        overwrite::Bool                   = true,
+        keep_temp_files::Bool             = false,
+        gmx_histidine_type::Int           = 0,
+        gmx_water_model::String           = "tip3p",
+        gmx_forcefield::String            = "amber99sb-ildn",
+        topology_filename::String         = "topol.top",
+        include_atomtypes::Bool           = true)
 
         p = copy(pose)
-        ProtoSyn.Peptides.cap!(p) # GMX templates always have caps
-        ProtoSyn.Peptides.GMX.assign_gmx_atom_names!(p) # Assign names first, as graph changes after
-        ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx(p)
+        if selection !== nothing
+            ProtoSyn.pop_atoms!(p, !selection)
+        end
+        ProtoSyn.Peptides.cap!(p, ProteinSelection()) # GMX templates always have caps
+        ProtoSyn.Peptides.GMX.assign_gmx_atom_names!(p, ProteinSelection()) # Assign names first, as graph changes after
+        p = ProtoSyn.Peptides.GMX.sort_atoms_and_graph_gmx(p)
+        # print(p.graph[1, 1].items)
         generate_gmx_topology(p,
             protein_itp_filename   = protein_itp_filename,
             atomtypes_itp_filename = atomtypes_itp_filename,
@@ -513,12 +518,14 @@ module GMX
 
     """
     """
-    function configure_mdp(filename::String, steps::Int = 5000, print_every::Int = 500)
+    function configure_mdp(filename::String, steps::Int = 5000, print_every::Int = 500, dt::T = 0.001) where {T <: AbstractFloat}
         content = readlines(filename)
         open(filename, "w") do io
             for line in content
                 if startswith(line, "nsteps")
                     line *= "$steps"
+                elseif startswith(line, "dt")
+                    line *= "$dt"
                 elseif startswith(line, "nstxout") | startswith(line, "nstenergy") | startswith(line, "nstlog") | startswith(line, "nstxout-compressed")
                     line *= "$print_every"
                 end
@@ -571,7 +578,7 @@ module GMX
         ProtoSyn.GMX.add_bounding_box(output_pdb_filename, output_file_pdb_filename_box, mol_size)
         mdp = Base.joinpath(mdps_dir, "minimization_1.mdp")
         cp(mdp, pwd()*"/minimization_1.mdp", force = true)
-        configure_mdp("minimization_1.mdp", steps, print_every)
+        configure_mdp("minimization_1.mdp", steps, print_every, 0.001)
         tpr = name*".tpr"
         trr = name*".trr"
         v   = verbose ? nothing : devnull

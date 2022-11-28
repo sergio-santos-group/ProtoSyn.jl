@@ -80,16 +80,16 @@ function get_flat_bottom_potential(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn
             e = m1 * d + b1
             
             v !== nothing && begin
-                f1 = .- v .* m1
-                f2 =    v .* m1
+                f1 =    v .* m1
+                f2 = .- v .* m1
             end
         elseif d1 <= d < d2 # * Quadratic Left (2)
             e = (d - d2) * (d - d2)
             
             v !== nothing && begin
                 factor1 = 2 * (d - d2)
-                f1      = .- v .* factor1
-                f2      =    v .* factor1
+                f1      =    v .* factor1
+                f2      = .- v .* factor1
             end
         elseif d2 <= d <= d3 # * Flat (3)
             e = T(0)
@@ -98,15 +98,15 @@ function get_flat_bottom_potential(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn
                 
             v !== nothing && begin
                 factor2 = 2 * (d - d3)
-                f1      = .- v .* factor2
-                f2      =    v .* factor2
+                f1      =    v .* factor2
+                f2      = .- v .* factor2
             end            
         else # * Linear Right (5)
             e = m2 * d + b2
             
             v !== nothing && begin
-                f1 = .- v .* m2
-                f2 =    v .* m2
+                f1 =    v .* m2
+                f2 = .- v .* m2
             end
         end
 
@@ -147,16 +147,16 @@ function get_flat_bottom_potential(A::Type{ProtoSyn.SIMD_1}; d1::T = 0.0, d2::T 
             e = m1 * d + b1
             
             v !== nothing && begin
-                f1 = - v * m1
-                f2 =   v * m1
+                f1 =   v * m1
+                f2 = - v * m1
             end
         elseif d1 <= d < d2 # * Quadratic Left (2)
             e = (d - d2) * (d - d2)
             
             v !== nothing && begin
                 factor1 = 2 * (d - d2)
-                f1      = - v * factor1
-                f2      =   v * factor1
+                f1      =   v * factor1
+                f2      = - v * factor1
             end
             elseif d2 <= d <= d3 # * Flat (3)
                 e = T(0)
@@ -165,15 +165,15 @@ function get_flat_bottom_potential(A::Type{ProtoSyn.SIMD_1}; d1::T = 0.0, d2::T 
                 
                 v !== nothing && begin
                 factor2 = 2 * (d - d3)
-                f1      = - v * factor2
-                f2      =   v * factor2
+                f1      =   v * factor2
+                f2      = - v * factor2
             end            
         else # * Linear Right (5)
             e = m2 * d + b2
             
             v !== nothing && begin
-            f1 = - v * m2
-            f2 =   v * m2
+            f1 =   v * m2
+            f2 = - v * m2
         end
     end
 

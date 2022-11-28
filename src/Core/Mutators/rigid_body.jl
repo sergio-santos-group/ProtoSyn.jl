@@ -200,7 +200,8 @@ end
 function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose)
 
     # RotationRigidBodyMutator requires updated cartesian coordinates
-    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
+    sync!(pose)
+    # ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
 
     axis  = rigid_body_mutator.axis_sampler()
     angle = rigid_body_mutator.angle_sampler() * rigid_body_mutator.step_size
@@ -216,7 +217,8 @@ end
 function (rigid_body_mutator::RotationRigidBodyMutator)(pose::Pose, atoms::Vector{Atom})
 
     # RotationRigidBodyMutator requires updated cartesian coordinates
-    ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
+    sync!(pose)
+    # ProtoSyn.i2c!(pose.state, pose.graph) # Checks pose.state.i2c flag inside
 
     axis  = rigid_body_mutator.axis_sampler()
     angle = rigid_body_mutator.angle_sampler() * rigid_body_mutator.step_size

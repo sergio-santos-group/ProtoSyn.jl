@@ -19,7 +19,7 @@ julia> coulomb(2.0, qi = 1.0, qj = -1.0)
 -0.5
 ```
 """
-function get_coulomb_potential()
+function get_coulomb_potential(A::Union{Type{ProtoSyn.SISD_0}, Type{ProtoSyn.CUDA_2}})
     
     return function coulomb_potential(d::T; v::Opt{Tuple{T, T, T}} = nothing, kwargs...) where {T <: AbstractFloat}
         qi = kwargs[:qi]
@@ -36,4 +36,27 @@ function get_coulomb_potential()
         v !== nothing && return e, f1, f2
         return e
     end
+end
+
+function get_coulomb_potential(A::Type{ProtoSyn.SIMD_1})
+    
+    return function coulomb_potential(d::T; v::Opt{Vec{4, T}} = nothing, kwargs...) where {T <: AbstractFloat}
+        qi = kwargs[:qi]
+        qj = kwargs[:qj]
+
+        e = (qi*qj)/d
+
+        v !== nothing && begin
+            _f = (qi*qj)/(d * d)
+            f1 = - _f * v
+            f2 =   _f * v
+        end
+
+        v !== nothing && return e, f1, f2
+        return e
+    end
+end
+
+get_coulomb_potential() where {T <: AbstractFloat} = begin
+    get_coulomb_potential(ProtoSyn.acceleration.active)
 end
