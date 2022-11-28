@@ -376,8 +376,8 @@ Pose{Atom}(Atom{/H:6299}, State{Float64}:
 function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::Bool = true)::Pose{Atom}
 
     @info "Removing atom $atom ..."
-    if atom.container.container.container !== pose.graph
-        error("Atom $atom does not belong to the provided topology.")
+    if atom.container.container.container.id !== pose.graph.id
+        error("Atom $atom does not belong to the provided topology.\n$(atom.container.container.container)\n$(pose.graph)")
     end
 
     # Save information to return
@@ -391,7 +391,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
         # atoms and sets parent of downstream atom to origin
         ProtoSyn.unbond!(pose, atom, other, keep_downstream_position = keep_downstream_position)
     end
-    sync!(pose) # ? Unsure why 100%, but we need to sync here.
+    # sync!(pose) # ? Unsure why 100%, but we need to sync here.
 
     # During the last step, this atom might have been severed in an
     # inter-residue connection while being a child, therefore, it's parent was
@@ -458,6 +458,22 @@ function pop_atoms!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = no
 
     for atom in reverse(atoms)
         ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = keep_downstream_position)
+    end
+
+    # Clear empty residues
+    for residue in eachresidue(pose.graph)
+        if count_atoms(residue) === 0
+            deleteat!(residue.container.items, findfirst((x) -> x === residue, residue.container.items))
+            residue.container.size -= 1
+        end
+    end
+
+    # Clear empty segments
+    for segment in eachsegment(pose.graph)
+        if count_atoms(segment) === 0
+            deleteat!(segment.container.items, findfirst((x) -> x === segment, segment.container.items))
+            segment.container.size -= 1
+        end
     end
 
     return pose
