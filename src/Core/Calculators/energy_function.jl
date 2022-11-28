@@ -196,6 +196,7 @@ end
 function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Opt{Bool} = nothing)
     e              = 0.0
     performed_calc = false
+    sync!(pose)
 
     for component in energy_function.components
 
