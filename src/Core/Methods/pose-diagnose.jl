@@ -243,7 +243,6 @@ julia> ProtoSyn.write_forces(pose, "forces.dat")
 function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
     open(filename, "w") do file_out
         for (i, atom) in enumerate(eachatom(pose.graph))
-            !any(k -> k != 0, pose.state.f[:, i]) && continue
             x  = pose.state[atom].t[1]
             y  = pose.state[atom].t[2]
             z  = pose.state[atom].t[3]
