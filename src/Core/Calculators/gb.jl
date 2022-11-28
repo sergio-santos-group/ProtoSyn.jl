@@ -3,14 +3,14 @@ module GB
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
     using ONNX
-    using Ghost
+    using Umlaut
 
     mutable struct GBModels
-        C::Opt{Ghost.Tape}
-        N::Opt{Ghost.Tape}
-        H::Opt{Ghost.Tape}
-        O::Opt{Ghost.Tape}
-        S::Opt{Ghost.Tape}
+        C::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        N::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        H::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        O::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        S::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
     end
 
     models_onnx = nothing
@@ -85,7 +85,7 @@ module GB
             model = getproperty(models, elem)
             elem  = string(elem)
             sele  = FieldSelection{Atom}(string(elem), :symbol) & selection
-            radii = Ghost.play!(model, hist')
+            radii = Umlaut.play!(model, hist')
 
             # 3.1) For this specific case, the mask needs to consider only the
             # selected atoms (not all the atoms in the pose). Currently (in

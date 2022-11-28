@@ -20,6 +20,8 @@ Pose{Topology}(Topology{/2a3d:31788}, State{Float64}:
 function recoverfrom!(pose::Pose, backup::Pose)
     pose.state = copy(backup.state)
     pose.graph = copy(backup.graph)
+    pose.graph.id = backup.graph.id # Set this to maintain ID
+    pose.state.id = backup.state.id # Set this to maintain ID
     
     return pose
 end

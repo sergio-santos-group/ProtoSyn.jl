@@ -205,6 +205,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # Remove old sidechain
     for atom in reverse(sidechain)
         ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = false)
+        # Note: pop_atom! already re-indexes the pose
     end
 
     # Insert new sidechain
@@ -707,13 +708,13 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_te
     if !skip_N_terminal
         n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
         n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
-        n_term_atoms    = ["H1", "H2", "H3"]
+        n_term_atoms    = ["H3", "H2", "H1"] # Reverse order than of desired
     end
 
     if !skip_C_terminal
         c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
         c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
-        c_term_atoms    = ["O", "OXT"]
+        c_term_atoms    = ["OXT", "O"] # Reverse order than of desired
     end
 
     # * Remove any existing caps
@@ -727,7 +728,10 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_te
         _selection = _selection & selection
     end
     residues = _selection(pose, gather = true)
-    @assert length(residues) > 0 "The provided selection/pose doesn't seem to have terminal residues."
+    if length(residues) === 0
+        @warn "The provided selection/pose doesn't seem to have terminal residues. No capping process will be done. Check if this is the expected behaviour!"
+        return pose
+    end
 
     # * Cap terminals
     for residue in residues
