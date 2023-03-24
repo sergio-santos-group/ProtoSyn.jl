@@ -1,7 +1,7 @@
 name = "ProtoSyn"
 uuid = "c9758760-7c0d-11e9-0ffc-fb9355b7d293"
 authors = ["José M. Pereira <jose.manuel.pereira@ua.pt>", "Sergio M. Santos <smf.dos.santos@gmail.com>"]
-version = "0.4.0"
+version = "1.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
