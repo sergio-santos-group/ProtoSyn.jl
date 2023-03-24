@@ -1,5 +1,22 @@
 using Base.Cartesian
 
+export @reduce
+
+"""
+    @reduce(n::Int, op::Symbol, ex::Expr)
+
+        Wrapping macro for @ncall. Is equivalent and generates
+        op(ex_1, ..., ex_n)
+
+    Example:
+
+        @reduce 2 (+) u -> v_u^2
+        > Generates +(v_1^2, v_2^2)
+"""
+macro reduce(n::Int, op::Symbol, ex::Expr)
+    esc(:(@ncall($n, $op, $ex)))
+end
+
 @doc """
 > @macroexpand @dot u a_u b_u
 :(a_1 * b_1 + a_2 * b_2 + a_3 * b_3)

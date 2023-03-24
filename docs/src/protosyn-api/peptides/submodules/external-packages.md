@@ -15,7 +15,7 @@ For the Gromacs simulation suite, the Peptides module introduces methods to defi
 ```@docs
 generate_gmx_itp
 generate_gmx_topology
-sort_atoms_and_graph_gmx!
+sort_atoms_and_graph_gmx
 GMXS
 assign_gmx_atom_names!
 generate_gmx_files

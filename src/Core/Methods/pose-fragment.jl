@@ -60,6 +60,10 @@ function fragment(pose::Pose{Topology}, selection::ProtoSyn.AbstractSelection)
     # Assumes all residues selected belong to the same Segment
 
     sele = promote(selection, Residue)
+    if count(sele(pose)) === 0
+        @error "The provided selection yielded no Residue instances for fragmentation."
+        return nothing
+    end
     if !ProtoSyn.is_contiguous(pose, sele)
         error("Tried to fragment a non-contigous selection of residues.")
     end

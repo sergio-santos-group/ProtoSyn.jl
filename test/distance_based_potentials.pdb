@@ -1,0 +1,66 @@
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.000   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.200   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.300   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.400   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.500   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.600   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.700   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.800   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   0.900   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   1.000   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL
+MODEL        1
+ATOM      1   a1  r1 ?   1       0.000   0.000   0.000        0.00           X
+ATOM      2   a2  r1 ?   1       0.000   1.100   0.000        0.00           X
+CONECT    1
+CONECT    2
+ENDMDL

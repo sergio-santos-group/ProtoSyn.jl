@@ -132,6 +132,9 @@ end
 Base.pop!(energy_function::EnergyFunction) = begin
     component = pop!(energy_function.components)
     delete!(energy_function.components_by_name, component.name)
+    for (i, comp) in enumerate(energy_function.components)
+        energy_function.components_by_name[comp.name] = i
+    end
     return component
 end
 
@@ -139,6 +142,9 @@ Base.pop!(energy_function::EnergyFunction, efc::EnergyFunctionComponent) = begin
     e = findall(x -> x == efc, energy_function.components)
     deleteat!(energy_function.components, e)
     delete!(energy_function.components_by_name, efc.name)
+    for (i, comp) in enumerate(energy_function.components)
+        energy_function.components_by_name[comp.name] = i
+    end
     return efc
 end
 
@@ -180,7 +186,7 @@ ProtoSyn.Mask
 function fixate_masks!(ef::EnergyFunction, pose::Pose)
     for efc in ef.components
         if (:mask in keys(efc.settings)) && isa(efc.settings[:mask], Function)
-            efc.settings[:mask] = efc.settings[:mask](pose)
+            efc.settings[:mask] = efc.settings[:mask](pose, ef.selection & efc.selection) # intersected masks
         end
     end
 end
@@ -190,6 +196,7 @@ end
 function (energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Opt{Bool} = nothing)
     e              = 0.0
     performed_calc = false
+    sync!(pose)
 
     for component in energy_function.components
 

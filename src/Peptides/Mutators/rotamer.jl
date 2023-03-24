@@ -98,7 +98,8 @@ end
 function (rotamer_mutator::RotamerMutator)(pose::Pose, atoms::Vector{Atom})
     
     # RotamerMutator requires updated internal coordinates
-    ProtoSyn.c2i!(pose.state, pose.graph) # Checks pose.state.c2i flag inside
+    sync!(pose)
+    # ProtoSyn.c2i!(pose.state, pose.graph) # Checks pose.state.c2i flag inside
     
     for atom in atoms
         if rand() < rotamer_mutator.p_mut

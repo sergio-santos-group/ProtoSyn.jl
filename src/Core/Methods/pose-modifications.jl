@@ -164,9 +164,14 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
             else
                 pose_child = atom.children[1]
                 χ_pose     = ProtoSyn.getdihedral(pose.state, pose_child)
-                temp_child = temp.children[findfirst((a) -> a.name === pose_child.name, temp.children)]
-                χ_temp     = ProtoSyn.getdihedral(template.state, temp_child)
-                Δχ         = χ_pose - χ_temp
+                tc_id      = findfirst((a) -> a.name === pose_child.name, temp.children)
+                if tc_id !== nothing
+                    temp_child = temp.children[tc_id]
+                    χ_temp     = ProtoSyn.getdihedral(template.state, temp_child)
+                    Δχ         = χ_pose - χ_temp
+                else
+                    Δχ = 0.0
+                end
             end
 
             for t in temp.bonds
@@ -187,10 +192,10 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
         end
     end
 
-    reindex(pose.graph; set_ascendents = true)
-    reindex(pose.state)
     ProtoSyn.request_i2c!(pose.state; all = true)
     sync!(pose)
+    reindex(pose.graph; set_ascendents = true)
+    reindex(pose.state)
 end
 
 
@@ -245,11 +250,6 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
 
     @info "Environment:\n Parent = $parent\n Parent === root? $(parent === root)\n Parent index = $parent_index\n Index in residue = $index_in_res (out of $(length(parent_container.items)))"
 
-    if spread_excess_charge
-        excess_charge       = sum([fragment.state[a].δ for a in eachatom(fragment.graph)])
-        @info "Excess charge = $excess_charge"
-    end
-
     last_position_in_res  = index_in_res === length(parent_container.items)
     last_position_in_pose = last_position_in_res && parent_container === collect(eachresidue(pose.graph))[end]
     
@@ -263,13 +263,16 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     end
 
     # Add fragment to residue (start with the first atom in the fragment,
-    # children of the fake fragment root) - change name, symbol and charge only
-    frag_origin = ProtoSyn.origin(fragment.graph)
-    first_atom  = frag_origin.children[1]
-
-    atom.name   = first_atom.name
-    atom.symbol = first_atom.symbol
+    # children of the fake fragment root) - change name, symbol, charge and bond
+    # distance
+    frag_origin        = ProtoSyn.origin(fragment.graph)
+    first_atom         = frag_origin.children[1]
+    pop!(atom.container.itemsbyname, atom.name)
+    atom.name          = first_atom.name
+    atom.symbol        = first_atom.symbol
+    atom.container.itemsbyname[atom.name] = atom
     pose.state[atom].δ = fragment.state[first_atom].δ
+    pose.state[atom].b = fragment.state[first_atom].b
 
     for (i, frag_atom) in enumerate(ProtoSyn.travel_graph(first_atom)[2:end])
 
@@ -303,16 +306,37 @@ function replace_by_fragment!(pose::Pose, atom::Atom, fragment::Fragment;
     reindex(pose.graph, set_ascendents = true)
     reindex(pose.state)
 
-    # Spread excess charge over the bonded atoms to first_atom
+    # Spread excess charge over the modified residue
     if spread_excess_charge
-        charge_per_bond     = excess_charge / length(atom.bonds)
-
-        for bond in atom.bonds
-            pose.state[bond].δ -= charge_per_bond
-        end
+        spread_excess_charge!(pose, FieldSelection{Residue}(atom.container.name.content, :name))
     end
 
     ProtoSyn.request_i2c!(pose.state)
+
+    return pose
+end
+
+
+"""
+# TODO: Documentation
+"""
+function spread_excess_charge!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+
+    if selection !== nothing
+        sele = ProtoSyn.promote(selection, Atom)
+    else
+        sele = TrueSelection{Atom}()
+    end
+
+    atoms = sele(pose, gather = true)
+
+    excess_charge = sum([pose.state[atom].δ for atom in atoms])
+    cpa = excess_charge / length(atoms)
+    @info "CPA: $cpa"
+
+    for atom in atoms
+        pose.state[atom].δ += cpa
+    end
 
     return pose
 end
@@ -352,8 +376,8 @@ Pose{Atom}(Atom{/H:6299}, State{Float64}:
 function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::Bool = true)::Pose{Atom}
 
     @info "Removing atom $atom ..."
-    if atom.container.container.container !== pose.graph
-        error("Atom $atom does not belong to the provided topology.")
+    if atom.container.container.container.id !== pose.graph.id
+        error("Atom $atom does not belong to the provided topology.\n$(atom.container.container.container)\n$(pose.graph)")
     end
 
     # Save information to return
@@ -367,7 +391,7 @@ function pop_atom!(pose::Pose{Topology}, atom::Atom; keep_downstream_position::B
         # atoms and sets parent of downstream atom to origin
         ProtoSyn.unbond!(pose, atom, other, keep_downstream_position = keep_downstream_position)
     end
-    sync!(pose) # ? Unsure why 100%, but we need to sync here.
+    # sync!(pose) # ? Unsure why 100%, but we need to sync here.
 
     # During the last step, this atom might have been severed in an
     # inter-residue connection while being a child, therefore, it's parent was
@@ -434,6 +458,22 @@ function pop_atoms!(pose::Pose{Topology}, selection::Opt{AbstractSelection} = no
 
     for atom in reverse(atoms)
         ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = keep_downstream_position)
+    end
+
+    # Clear empty residues
+    for residue in eachresidue(pose.graph)
+        if count_atoms(residue) === 0
+            deleteat!(residue.container.items, findfirst((x) -> x === residue, residue.container.items))
+            residue.container.size -= 1
+        end
+    end
+
+    # Clear empty segments
+    for segment in eachsegment(pose.graph)
+        if count_atoms(segment) === 0
+            deleteat!(segment.container.items, findfirst((x) -> x === segment, segment.container.items))
+            segment.container.size -= 1
+        end
     end
 
     return pose

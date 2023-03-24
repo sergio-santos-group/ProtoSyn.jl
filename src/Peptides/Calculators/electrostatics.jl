@@ -57,7 +57,7 @@ module Electrostatics
             else
                 C = [c for c in Cs if length(c.bonds) <= 3][1]
             end
-            if length(C.bonds) > 2 
+            if length(C.bonds) > 2 && segment[last_res_id, "OXT"] !== nothing
                 pose.state[segment[last_res_id, "OXT"]].δ = -0.7800
             end
         end

@@ -63,7 +63,7 @@ using SIMD
                 if !update_forces
                     energies[j, i] = potential(dij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                 else
-                    rij = rij / dij # normalization
+                    rij = rij / dij
                     energies[j, i], f1, f2 = potential(dij, v = rij, qi = pose.state[indexes[i]].δ, qj = pose.state[indexes[j]].δ)
                     vstore(f1, arr1, 1)
                     vstore(f2, arr2, 1)

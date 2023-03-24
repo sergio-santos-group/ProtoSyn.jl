@@ -23,7 +23,11 @@ function apply!(state::State, rotamer::Rotamer, residue::Residue)
             continue
         end
         _value = (randn() * sd) + value
-        if chi(residue, gather = true)[1] === nothing
+        chi_atoms = chi(residue, gather = true)
+        if length(chi(residue, gather = true)) > 1
+            @warn "It seems the selected residue $residue has no sidechain. Can't apply rotamer to this residue."
+            chis[chi] = (NaN, T(0))
+        elseif chi_atoms[1] === nothing
             @warn "Tried to apply $chi on residue $residue, but the requested atom was not found. Not performing any action."
             chis[chi] = (NaN, T(0))
         else

@@ -54,6 +54,7 @@ ncaa:
     a: Peptides/NCAA/yml/cma.yml
     b: Peptides/NCAA/yml/mse.yml
     c: Peptides/NCAA/yml/cq1.yml
+    f: Peptides/NCAA/yml/fpk.yml
   operators:
     α: # N.ϕ is defined based on parent residue
       residue1: C

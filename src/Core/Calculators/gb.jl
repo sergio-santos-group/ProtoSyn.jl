@@ -3,14 +3,14 @@ module GB
     using ProtoSyn
     using ProtoSyn.Calculators: EnergyFunctionComponent
     using ONNX
-    using Ghost
+    using Umlaut
 
     mutable struct GBModels
-        C::Opt{Ghost.Tape}
-        N::Opt{Ghost.Tape}
-        H::Opt{Ghost.Tape}
-        O::Opt{Ghost.Tape}
-        S::Opt{Ghost.Tape}
+        C::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        N::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        H::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        O::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
+        S::Opt{Umlaut.Tape{ONNX.ONNXCtx}}
     end
 
     models_onnx = nothing
@@ -85,7 +85,7 @@ module GB
             model = getproperty(models, elem)
             elem  = string(elem)
             sele  = FieldSelection{Atom}(string(elem), :symbol) & selection
-            radii = Ghost.play!(model, hist')
+            radii = Umlaut.play!(model, hist')
 
             # 3.1) For this specific case, the mask needs to consider only the
             # selected atoms (not all the atoms in the pose). Currently (in
@@ -105,7 +105,7 @@ module GB
             born_radii[mask.content] .= radii[mask.content]
         end
 
-        return born_radii
+        return 1 ./ born_radii
     end
 
 
@@ -143,34 +143,35 @@ module GB
     (124.4289232784785, nothing)
     ```
     """
-    function calc_gb(::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat}
+    function calc_gb(A::Type{<: ProtoSyn.AbstractAccelerationType}, pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx, cut_off::T = 9.0) where {T <: AbstractFloat}
 
         if selection !== nothing
             sele = ProtoSyn.promote(selection, Atom)
         else
             sele = TrueSelection{Atom}()
-        end
+        end # if
 
         # Pre-calculate atomic distances
         atoms  = sele(pose, gather = true)
         natoms = length(atoms)
-        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(pose, sele))
+        dm     = collect(ProtoSyn.Calculators.full_distance_matrix(A, pose, sele))
 
         # Predict born radii if necessary
         if isa(born_radii, Function)
             born_radii = born_radii(pose, sele, dm = dm, models = models)
-        end
+        end # if
 
-        env = - (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
+        env = (1/2) * ((1/ϵ_protein) - (1/ϵ_solvent)) # Dieletric term
         int = T(0.0)
 
         for i in 1:natoms
             atomi = atoms[i]
-            qi = pose.state[atomi].δ
-            αi = born_radii[i]
+            qi    = pose.state[atomi].δ
+            αi    = born_radii[i]
 
             for j in 1:natoms
                 i === j && continue
+                dm[i, j] > cut_off && continue
 
                 atomj = atoms[j]
                 qj    = pose.state[atomj].δ
@@ -184,17 +185,21 @@ module GB
                 αj = αj < 0 ? 0.0 : αj
                 f = sqrt(d_sqr + (αi * αj * exp((-d_sqr) / (4 * αi * αj))))
                 int += (qi * qj) / f
-            end
-        end
+            end # for
+        end # for
 
         @debug "Env: $env\nInt: $int"
         e = T(env * int)
 
+        if abs(e) === 0.0 && all(x -> x.δ === 0.0, pose.state.items[4:end])
+            @warn "The calculated GB energy is 0.0 and it seems the evaluated Pose does not have any assigned charges. Consider using the `ProtoSyn.Calculators.Electrostatics.assign_default_charges!` method."
+        end # if
+
         return e, nothing
     end
 
-    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx) where {T <: AbstractFloat} = begin
-        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models)
+    calc_gb(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; born_radii::Union{Vector{T}, Function} = predict_igbr_nn_born_radii, ϵ_protein::T = 1.0, ϵ_solvent::T = 80.0, models::GBModels = models_onnx, cut_off::T = 9.0) where {T <: AbstractFloat} = begin
+        calc_gb(ProtoSyn.acceleration.active, pose, selection, update_forces, born_radii = born_radii, ϵ_protein = ϵ_protein, ϵ_solvent = ϵ_solvent, models = models, cut_off = cut_off)
     end
 
 
@@ -245,6 +250,7 @@ module GB
                 :born_radii => predict_igbr_nn_born_radii,
                 :ϵ_protein  => 4.0,
                 :ϵ_solvent  => 80.0,
+                :cut_off    => 9.0,
                 :models     => models_onnx
             ),
             α,

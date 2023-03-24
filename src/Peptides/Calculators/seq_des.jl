@@ -280,19 +280,19 @@ module SeqDes
             n_chis = length(ProtoSyn.Peptides.chi_dict[residue.name])
             chi_vals = Vector{T}()
             chi_exs  = Vector{T}()
-            for (i, chi) in enumerate([:chi1, :chi2, :chi3, :chi4])
+            for (i, chi) in enumerate([1, 2, 3, 4])
                 if i >= n_chis
                     chi_val = 0.0
                     chi_ex  = 0.0
                 else
-                    chi_fcn  = getproperty(ProtoSyn.Peptides.Dihedral, chi)
-                    chi_atom = chi_fcn(residue)
-                    if chi_atom === nothing
-                        @warn "Tried to retrieve $chi_fcn from $residue, but couldn't find the necessary atom by name."
+                    chi_sele  = ChiSelection(chi)
+                    chi_atom = chi_sele(residue, gather = true)
+                    if length(chi_atom) === 0
+                        @warn "Tried to retrieve chi-$chi from $residue, but couldn't find the necessary atom by name."
                         chi_val = 0.0
                         chi_ex  = 0.0
                     else
-                        chi_val = ProtoSyn.getdihedral(pose.state, chi_atom)
+                        chi_val = ProtoSyn.getdihedral(pose.state, chi_atom[1])
                         chi_ex  = 1.0
                     end
                 end # if
@@ -372,7 +372,7 @@ module SeqDes
             use_cuda=use_cuda,
         )
 
-        return float(log_p_mean)(), nothing, log_p_per_res, logits
+        return -float(log_p_mean)(), nothing, log_p_per_res, logits
     end # function
 
     calc_seqdes(pose::Pose, selection::Opt{AbstractSelection}, update_forces::Bool = false; use_cuda::Bool = true) = begin

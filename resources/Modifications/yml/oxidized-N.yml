@@ -1,4 +1,4 @@
-name: nyl
+name: oxn
 atoms:
   - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
   - {name:  NO, id:   2, symbol:  N, b:   1.400000, theta:   2.094395, phi:   0.000000, c: -0.2750}

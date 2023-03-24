@@ -356,7 +356,7 @@ end
 
 
 """
-    load_map([::Type{T}], filename::String) where {T <: AbstractFloat}
+    load_PFRMAT_RR_map([::Type{T}], filename::String) where {T <: AbstractFloat}
 
 Load the map in the `filename` file (i.e. Contact Map). The file should be in
 PFRMAT RR format (See: [https://predictioncenter.org/casp13/index.cgi?page=format#RR](https://predictioncenter.org/casp13/index.cgi?page=format#RR)).
@@ -371,26 +371,22 @@ optional type `T` is provided, will use `ProtoSyn.Units.defaultFloat`.
 
 # Examples
 ```
-julia> cmap = ProtoSyn.Calculators.load_map("contact_map_example.txt")
+julia> cmap = ProtoSyn.Calculators.load_PFRMAT_RR_map("contact_map_example.txt")
 73×73 Array{Float64,2}:
  (...)
 ```
 """
-function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
+function load_PFRMAT_RR_map(::Type{T}, filename::String, i::Int) where {T <: AbstractFloat}
 
     _map = Dict{Tuple{Int, Int}, T}()
 
     open(filename, "r") do map_file
         for line in eachline(map_file)
             elems = split(line)
-            length(elems[1]) > 4 && continue
-            elems[1] == "END" && continue
-            try
-                α = parse(T, elems[5])
-                _map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
-            catch BoundsError
-                continue
-            end
+            tryparse(Int, elems[1]) === nothing && continue
+
+            α = parse(T, elems[i])
+            _map[(parse(Int, elems[1]), parse(Int, elems[2]))] = α
         end
     end
 
@@ -406,4 +402,5 @@ function load_map(::Type{T}, filename::String) where {T <: AbstractFloat}
     return map
 end
 
-load_map(filename::String) = load_map(ProtoSyn.Units.defaultFloat, filename)
+load_PFRMAT_RR_map(filename::String, i::Int) = load_PFRMAT_RR_map(ProtoSyn.Units.defaultFloat, filename, i)
+load_PFRMAT_RR_map(filename::String)         = load_PFRMAT_RR_map(ProtoSyn.Units.defaultFloat, filename, 3)

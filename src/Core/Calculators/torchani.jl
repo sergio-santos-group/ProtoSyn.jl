@@ -87,10 +87,10 @@ module TorchANI
         end
 
         if torch_is_available && torchani_is_available
-            # @info "TorchANI is using:"
-            # @info " torch version $(torch.__version__)"
-            # @info " cuda-toolkit version $(torch.version.cuda)"
-            # @info " torchani version $(torchani.__version__)"
+            # @warn "TorchANI is using:"
+            # @warn " torch version $(torch.__version__)"
+            # @warn " cuda-toolkit version $(torch.version.cuda)"
+            # @warn " torchani version $(torchani.__version__)"
         end
     end
 

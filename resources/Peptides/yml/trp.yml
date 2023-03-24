@@ -13,16 +13,16 @@ atoms:
   - {name: HD1, id:  10, symbol:  H, b:   1.080067, theta:   2.189390, phi:   0.000641, c:  0.2243}
   - {name: NE1, id:  11, symbol:  N, b:   1.384645, theta:   1.902850, phi:  -3.141490, c: -0.6257}
   - {name: HE1, id:  12, symbol:  H, b:   0.980623, theta:   2.185270, phi:  -3.141179, c:  0.3691}
-  - {name: CE2, id:  13, symbol:  C, b:   1.379946, theta:   1.950853, phi:   0.000017, c:  0.2955}
-  - {name: CZ2, id:  14, symbol:  C, b:   1.406233, theta:   2.338808, phi:   3.141510, c: -0.2521}
-  - {name: HZ2, id:  15, symbol:  H, b:   1.080528, theta:   2.099154, phi:  -0.000285, c:  0.2563}
-  - {name: CH2, id:  16, symbol:  C, b:   1.410112, theta:   2.086008, phi:   3.141480, c: -0.1137}
+  - {name: CE2, id:  13, symbol:  C, b:   1.379946, theta:   1.891745, phi:  -3.141179, c:  0.2955}
+  - {name: CZ2, id:  14, symbol:  C, b:   1.406233, theta:   2.121373, phi:   3.141500, c: -0.2521}
+  - {name: HZ2, id:  15, symbol:  H, b:   1.080528, theta:   2.099154, phi:   3.140984, c:  0.2563}
+  - {name: CH2, id:  16, symbol:  C, b:   1.410112, theta:   2.086008, phi:  -0.000437, c: -0.1137}
   - {name: HH2, id:  17, symbol:  H, b:   1.080387, theta:   2.093960, phi:  -3.141396, c:  0.2330}
-  - {name: CZ3, id:  18, symbol:  C, b:   1.413578, theta:   2.095399, phi:   0.000819, c: -0.1462}
+  - {name: CZ3, id:  18, symbol:  C, b:   1.413578, theta:   2.095399, phi:  -3.141179, c: -0.1462}
   - {name: HZ3, id:  19, symbol:  H, b:   1.079844, theta:   2.093566, phi:  -3.141051, c:  0.2462}
-  - {name: CE3, id:  20, symbol:  C, b:   1.416443, theta:   2.098129, phi:  -0.001216, c: -0.1007}
-  - {name: HE3, id:  21, symbol:  H, b:   1.080391, theta:   2.091114, phi:   3.140907, c:  0.2554}
-  - {name: CD2, id:  22, symbol:  C, b:   1.419178, theta:   2.101978, phi:   0.001225, c:  0.0176}
+  - {name: CE3, id:  20, symbol:  C, b:   1.416443, theta:   2.327957, phi:  -0.000631, c: -0.1007}
+  - {name: HE3, id:  21, symbol:  H, b:   1.080391, theta:   2.091114, phi:   0.001776, c:  0.2554}
+  - {name: CD2, id:  22, symbol:  C, b:   1.419178, theta:   2.244235, phi:   1.528997, c:  0.0176}
   - {name:   C, id:  23, symbol:  C, b:   1.533715, theta:   1.928322, phi:  -1.175905, c:  0.7696}
   - {name:   O, id:  24, symbol:  O, b:   1.214060, theta:   2.112258, phi:   2.950969, c: -0.7841}
 bonds:
@@ -56,13 +56,14 @@ graph:
     N: [H, CA]
     CA: [HA, CB, C]
     CB: [HB1, HB2, CG]
-    CG: [CD1]
+    CG: [CD1, CD2]
     CD1: [HD1, NE1]
-    NE1: [HE1, CE2]
+    CD2: [CE3, CE2]
+    NE1: [HE1]
     CE2: [CZ2]
     CZ2: [HZ2, CH2]
-    CH2: [HH2, CZ3]
-    CZ3: [HZ3, CE3]
-    CE3: [HE3, CD2]
+    CH2: [HH2]
+    CZ3: [HZ3]
+    CE3: [HE3, CZ3]
     C: [O]
 chis: [CB, CG, CD1]

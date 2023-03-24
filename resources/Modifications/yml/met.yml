@@ -1,10 +1,10 @@
 name: met
 atoms:
   - {name:   R, id:   1, symbol:  R, b:   0.004899, theta:   1.991331, phi:   2.677945}
-  - {name:  CM, id:   2, symbol:  C, b:   1.090120, theta:   0.609774, phi:  -2.231728}
-  - {name: HM1, id:   3, symbol:  H, b:   1.090285, theta:   1.910059, phi:  -2.326971}
-  - {name: HM2, id:   4, symbol:  H, b:   1.089834, theta:   1.910705, phi:  -0.233011}
-  - {name: HM3, id:   5, symbol:  H, b:   1.089913, theta:   1.910256, phi:   1.861884}
+  - {name:  CM, id:   2, symbol:  C, b:   1.524840, theta:   0.609774, phi:  -2.231728, c: -0.4878}
+  - {name: HM1, id:   3, symbol:  H, b:   1.090285, theta:   1.910059, phi:  -2.326971, c:  0.2425}
+  - {name: HM2, id:   4, symbol:  H, b:   1.089834, theta:   1.910705, phi:  -0.233011, c:  0.2425}
+  - {name: HM3, id:   5, symbol:  H, b:   1.089913, theta:   1.910256, phi:   1.861884, c:  0.2425}
 bonds:
   R: [CM]
   CM: [R, HM1, HM2, HM3]

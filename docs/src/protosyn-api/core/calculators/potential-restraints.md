@@ -47,6 +47,7 @@ A list of available potentials in ProtoSyn is described bellow. See [Creating cu
 * [`get_coulomb_potential`](@ref ProtoSyn.Calculators.get_coulomb_potential)
 * [`get_bump_potential`](@ref ProtoSyn.Calculators.get_bump_potential)
 * [`get_harmonic_potential`](@ref ProtoSyn.Calculators.get_harmonic_potential)
+* [`get_lennard_jones_potential`](@ref ProtoSyn.Calculators.get_harmonic_potential)
 
 ```@docs
 Calculators.get_flat_bottom_potential
@@ -54,11 +55,12 @@ Calculators.get_coulomb_potential
 Calculators.get_bump_potential
 Calculators.get_bump_potential_charges
 Calculators.get_harmonic_potential
+Calculators.get_lennard_jones_potential
 ```
 
 ![ProtoSyn Flat Bottom Potential](../../../assets/ProtoSyn-potentials.png)
 
-**Figure 1 |** Visual depiction of the various potentials made available with ProtoSyn (version 1.1).
+**Figure 1 |** Visual depiction of various potentials made available with ProtoSyn (version 1.1).
 
 ## Creating custom potential functions
 

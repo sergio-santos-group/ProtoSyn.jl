@@ -32,6 +32,7 @@ include("Methods/travel-graph.jl")
 include("Methods/state.jl")
 include("Methods/pose.jl")
 include("Methods/other.jl") # Requires constants.jl
+include("Methods/measure.jl") # Requires constants.jl
 include("Submodules/Builder/Builder.jl")
 include("Submodules/Builder/grammar.jl")
 include("Calculators/Calculators.jl") # Requires grammar.jl

@@ -173,4 +173,21 @@ module SASA
             false
         )
     end
+
+
+    """
+    # TODO
+    """
+    function get_default_sasa(;α::T = 1.0) where {T <: AbstractFloat}
+        return ProtoSyn.Calculators.EnergyFunctionComponent(
+            "SASA",
+            ProtoSyn.Calculators.SASA.calc_sasa,
+            an"CA",
+            Dict{Symbol, Any}(
+                :n_points           => 100,
+                :probe_radius       => 5.0,
+            ),
+            α,
+            false)
+    end
 end

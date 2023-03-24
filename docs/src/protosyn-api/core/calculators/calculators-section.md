@@ -26,8 +26,10 @@ Calculators.EnergyFunction
 An [`EnergyFunction`](@ref) instance is actually a __functor__, meaning it is callable in order to apply any energy function type to any [`Pose`](@ref) instance, using the following signature:
 
 ```julia
-(energy_function::EnergyFunction)(pose::Pose, update_forces::Bool = false)
+(energy_function::EnergyFunction)(pose::Pose; update_forces_overwrite::Opt{Bool} = nothing)::T where {T <: AbstractFloat}
 ```
+
+As such, custom [`EnergyFunction`](@ref) instances can actually be functions with the same signature, altough it is reccomended (in most cases) to define custom [`EnergyFunctionComponent`](@ref) instances (see [Creating a custom EnergyFunctionComponent](@ref)).
 
 An application example is provided bellow, using the [TorchANI](https://aiqm.github.io/torchani/) model as the sole [`EnergyFunctionComponent`](@ref):
 

@@ -13,10 +13,10 @@ atoms:
   - {name: ND1, id:   9, symbol:  N, b:   1.390068, theta:   2.129231, phi:  -3.141546, c: -0.4698}
   - {name: CE1, id:  10, symbol:  C, b:   1.320049, theta:   1.885492, phi:  -3.141177, c:  0.2381}
   - {name: HE1, id:  11, symbol:  H, b:   1.089771, theta:   2.095009, phi:  -3.141351, c:  0.2368}
-  - {name: NE2, id:  12, symbol:  N, b:   1.359805, theta:   1.856107, phi:   0.000000, c: -0.5908}
+  - {name: NE2, id:  12, symbol:  N, b:   1.359805, theta:   1.856107, phi:  -3.141158, c: -0.5908}
   - {name: HE2, id:  13, symbol:  H, b:   1.010161, theta:   2.181227, phi:  -3.141158, c:  0.3959}
-  - {name: CD2, id:  14, symbol:  C, b:   1.360079, theta:   1.856107, phi:   0.000579, c:  0.0169}
-  - {name: HD2, id:  15, symbol:  H, b:   1.089409, theta:   2.332226, phi:  -3.141158, c:  0.2858}
+  - {name: CD2, id:  14, symbol:  C, b:   1.360079, theta:   2.216568, phi:   0.000579, c:  0.0169}
+  - {name: HD2, id:  15, symbol:  H, b:   1.089409, theta:   2.332226, phi:   0.000000, c:  0.2858}
   - {name:   C, id:  16, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.7243}
   - {name:   O, id:  17, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7914}
 bonds:
@@ -43,10 +43,10 @@ graph:
     N: [H, CA]
     CA: [HA, CB, C]
     CB: [HB1, HB2, CG]
-    CG: [ND1]
+    CG: [ND1, CD2]
     ND1: [CE1]
-    CE1: [HE1, NE2]
-    NE2: [HE2, CD2]
-    CD2: [HD2]
+    CE1: [HE1]
+    CD2: [HD2, NE2]
+    NE2: [HE2]
     C: [O]
 chis: [CB, CG, ND1]

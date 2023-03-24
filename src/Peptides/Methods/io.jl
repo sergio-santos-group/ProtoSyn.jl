@@ -84,14 +84,14 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                 starting_atom = ProtoSyn.identify_atom_by_bonding_pattern(residue, ["N", "C", "C", "O"])
                 if isa(starting_atom, Vector{Atom})
                     if length(starting_atom) === 0
-                        @warn "No starting atom found on residue $residue. Will use atom $(collect(eachatom(residue))[1]), check if this is the desired behaviour."
+                        @warn "No starting atom found on residue $residue for graph inference.\nThis seems to be a ligand or NCAA. ProtoSyn.jl will use atom $(collect(eachatom(residue))[1]), check if this is the desired behaviour."
                         starting_atom = collect(eachatom(residue))[1]
                     else
-                        @warn "Multiple starting atoms identified on residue $residue. Will use atom $(starting_atom[1]), check if this is the desired behaviour."
+                        @warn "Multiple starting atoms identified on residue $residue for graph inference.\nThis seems to be a ligand or NCAA. ProtoSyn.jl will use atom $(starting_atom[1]), check if this is the desired behaviour."
                         starting_atom = starting_atom[1]
                     end
                 end
-                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
+                ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom, linear_aromatics = false)
                 sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
                 for residue_index in 2:n_residues
@@ -110,7 +110,14 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
                             starting_atom = starting_atom[1]
                         end
                     end
-                    ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom)
+
+                    # Note: Aromatic residues are NOT linearized.
+                    # Most applications require ramified aromatics.
+                    # For example: to make sure that different atom orders results in the same DAG.
+                    # The only applications with linearized aromatics are (Nov 2022):
+                    # - Carbon materials
+                    # - GMX integration (check GMX tools to adjust the DAG)
+                    ProtoSyn.infer_parenthood!(residue, overwrite = true, start = starting_atom, linear_aromatics = false)
                     sort_atoms_by_graph && ProtoSyn.sort_atoms_by_graph!(pose.state, residue, start = starting_atom, search_algorithm = Peptides.IUPAC)
 
                     # Inter-residue parenthood

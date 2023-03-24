@@ -55,6 +55,7 @@ Pose(::Type{T}, frag::Fragment) where {T <: AbstractFloat} = begin
 end
 
 Pose(frag::Fragment) = Pose(Units.defaultFloat, frag)
+Pose(pose::Pose)     = pose
 
 Pose() = Pose(Topology("unk", -1), State())
 

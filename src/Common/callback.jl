@@ -89,11 +89,17 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
         if file_out !== nothing
             io = open(file_out, "a")
         end
-        _N = (20 * length(pose.state.e))
+        _N = (20 * length(pose.state.e)) + 4
         N = 20 + _N - length(msg)
         M = floor(Int, N/2) - 3
         E = N-6-(M*2)
-        acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        
+        if :acceptance_count in fieldnames(typeof(driver_state))
+            acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        else
+            acc = 1.0
+        end
+
         if driver_state.step === 0
             s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
             s *= @sprintf("%6s%14s", "Step", "Accept-Ratio")
@@ -122,7 +128,8 @@ function default_energy_step_detailed(n::Int, msg::String = "Callback", color::S
         for component in sort(collect(keys(pose.state.e)))
             s *= @sprintf("%20.3f", pose.state.e[component])
         end
-        s*= "\n"
+        lsa = driver_state.last_step_accepted ? " (✓)" : " (X)"
+        s*= "$lsa\n"
         print_to_sdtout && printstyled(s, color = color)
         if file_out !== nothing
             print(io, s)
@@ -167,7 +174,7 @@ end
 export default_energy_step_frame_detailed
 
 """
-    default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
+    default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true; [step_msg::Opt{String} = nothing])::Callback
 
 Returns a detailed [`Callback`](@ref ProtoSyn.Drivers.Callback) that prints the
 current step and all energy components of the [`Pose`](@ref) every `n` steps,
@@ -191,7 +198,7 @@ julia> ProtoSyn.Common.default_energy_step_detailed(1)
 +----------------------------------------------------------------------+
 ```
 """
-function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true)::Callback
+function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::String = "Callback", color::Symbol = :none, output_log::Opt{String} = nothing, print_to_sdtout::Bool = true; step_msg::Opt{String} = nothing)::Callback
     function energy_step_frame_detailed(pose::Pose, driver_state::ProtoSyn.Drivers.DriverState)
         
         # Write structure to output file
@@ -201,10 +208,17 @@ function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::S
         if output_log !== nothing
             io = open(output_log, "a")
         end
-        N = 20 + (20 * length(pose.state.e)) - length(msg)
+        _N = (20 * length(pose.state.e))
+        N = 20 + _N - length(msg)
         M = floor(Int, N/2) - 3
         E = N-6-(M*2)
-        acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+
+        if :acceptance_count in fieldnames(typeof(driver_state))
+            acc = driver_state.step === 0 ? 1.0 : driver_state.acceptance_count/driver_state.step
+        else
+            acc = 1.0
+        end
+
         if driver_state.step === 0
             s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*msg*" "*repeat("-", M)*" |")
             s *= @sprintf("%6s%14s", "Step", "Accept-Ratio")
@@ -216,13 +230,25 @@ function default_energy_step_frame_detailed(n::Int, output_frame::String, msg::S
             if output_log !== nothing
                 print(io, s)
             end
+        else
+            if step_msg !== nothing
+                N = 20 + _N - length(step_msg)
+                M = floor(Int, N/2) - 3
+                E = N-6-(M*2)
+                s  = @sprintf("%s\n", "| "*repeat("-", M)*" "*repeat(" ", E)*step_msg*" "*repeat("-", M)*" |")
+                print_to_sdtout && printstyled(s, color = color)
+                if output_log !== nothing
+                    print(io, s)
+                end
+            end
         end
 
         s = @sprintf("%6d%14.3f", driver_state.step, acc)
         for component in sort(collect(keys(pose.state.e)))
             s *= @sprintf("%20.3f", pose.state.e[component])
         end
-        s*= "\n"
+        lsa = driver_state.last_step_accepted ? " (✓)" : " (X)"
+        s*= "$lsa\n"
         print_to_sdtout && printstyled(s, color = color)
         if output_log !== nothing
             print(io, s)

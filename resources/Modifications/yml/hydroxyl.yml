@@ -1,17 +1,14 @@
 name: hyl
 atoms:
   - {name:   R, id:   1, symbol:  O, b:   1.537366, theta:   3.004778, phi:  -1.906121}
-  - {name:  CH, id:   2, symbol:  C, b:   1.400000, theta:   2.094395, phi:   0.000000, c:  0.2999}
-  - {name:   O, id:   3, symbol:  O, b:   1.490000, theta:   2.094395, phi:   3.141592, c: -0.8273}
-  - {name:   H, id:   4, symbol:  H, b:   0.799290, theta:   2.094395, phi:   3.141592, c:  0.4476}
+  - {name:   O, id:   3, symbol:  O, b:   1.490000, theta:   2.094395, phi:   3.141592, c: -0.9818}
+  - {name:   H, id:   4, symbol:  H, b:   0.799290, theta:   2.094395, phi:   3.141592, c:  0.6314}
 bonds:
-  R: [CH]
-  CH: [O]
-  O: [H, CH]
+  R: [O]
+  O: [H]
   H: [O]
 graph:
   root: R
   adjacency:
-    R: [CH]
-    CH: [O]
+    R: [O]
     O: [H]

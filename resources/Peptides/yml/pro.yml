@@ -2,41 +2,41 @@ name: PRO
 code: P
 atoms:
   - {name:   N, id:   1, symbol:  N, b:   1.311455, theta:   2.033866, phi:  -0.855816, c: -0.6159}
-  - {name:  CA, id:   2, symbol:  C, b:   1.479154, theta:   2.101026, phi:   3.134113, c:  0.2685}
-  - {name:  HA, id:   3, symbol:  H, b:   1.077182, theta:   1.935833, phi:   0.749588, c:  0.2685}
-  - {name:  CB, id:   4, symbol:  C, b:   1.524260, theta:   1.808839, phi:   2.812231, c: -0.2975}
-  - {name: HB1, id:   5, symbol:  H, b:   1.080250, theta:   1.924049, phi:   2.512175, c:  0.2900}
-  - {name: HB2, id:   6, symbol:  H, b:   1.080192, theta:   1.923872, phi:  -1.641108, c:  0.2623}
-  - {name:  CG, id:   7, symbol:  C, b:   1.499310, theta:   1.841536, phi:   0.435797, c: -0.3714}
-  - {name: HG1, id:   8, symbol:  H, b:   1.079393, theta:   1.915955, phi:   1.686764, c:  0.2610}
-  - {name: HG2, id:   9, symbol:  H, b:   1.079640, theta:   1.916550, phi:  -2.488125, c:  0.2654}
-  - {name:  CD, id:  10, symbol:  C, b:   1.511373, theta:   1.884770, phi:  -0.400300, c:  0.4078}
-  - {name: HD1, id:  11, symbol:  H, b:   1.077986, theta:   1.919641, phi:   2.267890, c:  0.2080}
-  - {name: HD2, id:  12, symbol:  H, b:   1.079778, theta:   1.928349, phi:  -1.878740, c:  0.2004}
-  - {name:   C, id:  13, symbol:  C, b:   1.532079, theta:   1.915555, phi:  -1.401749, c:  0.7882}
-  - {name:   O, id:  14, symbol:  O, b:   1.219916, theta:   2.122644, phi:   0.000000, c: -0.7951}
+  - {name:  CA, id:   2, symbol:  C, b:   1.524260, theta:   1.841536, phi:  -0.400300, c:  0.2685}
+  - {name:  HA, id:   3, symbol:  H, b:   1.077182, theta:   1.935570, phi:   0.748746, c:  0.2685}
+  - {name:  CB, id:   4, symbol:  C, b:   1.499310, theta:   1.808839, phi:   2.812231, c: -0.2975}
+  - {name: HB1, id:   5, symbol:  H, b:   1.080250, theta:   1.923393, phi:  -2.477115, c:  0.2900}
+  - {name: HB2, id:   6, symbol:  H, b:   1.080192, theta:   1.923915, phi:   1.676576, c:  0.2623}
+  - {name:  CG, id:   7, symbol:  C, b:   1.511373, theta:   1.825220, phi:  -3.053767, c: -0.3714}
+  - {name: HG1, id:   8, symbol:  H, b:   1.079393, theta:   1.914865, phi:  -1.889271, c:  0.2610}
+  - {name: HG2, id:   9, symbol:  H, b:   1.079640, theta:   1.915210, phi:   2.287153, c:  0.2654}
+  - {name:  CD, id:  10, symbol:  C, b:   1.468903, theta:   2.228380, phi:  -0.006870, c:  0.4078}
+  - {name: HD1, id:  11, symbol:  H, b:   1.077986, theta:   1.927201, phi:   1.165150, c:  0.2080}
+  - {name: HD2, id:  12, symbol:  H, b:   1.079778, theta:   1.930145, phi:  -0.977760, c:  0.2004}
+  - {name:   C, id:  13, symbol:  C, b:   1.532079, theta:   1.936407, phi:  -1.618948, c:  0.7882}
+  - {name:   O, id:  14, symbol:  O, b:   1.219916, theta:   2.122644, phi:  -1.901541, c: -0.7951}
 bonds:
-  N: [CD, CA]
-  CD: [N, HD1, HD2, CG]
-  HD1: [CD]
-  HD2: [CD]
-  CG: [CD, HG1, HG2, CB]
-  HG1: [CG]
-  HG2: [CG]
-  CB: [CG, HB1, HB2, CA]
+  N: [CA, CD]
+  CA: [N, C, CB, HA]
+  HA: [CA]
+  CB: [CA, CG, HB1, HB2]
   HB1: [CB]
   HB2: [CB]
-  CA: [N, CB, HA, C]
-  HA: [CA]
+  CG: [CB, CD, HG1, HG2]
+  HG1: [CG]
+  HG2: [CG]
+  CD: [N, CG, HD1, HD2]
+  HD1: [CD]
+  HD2: [CD]
   C: [CA, O]
   O: [C]
 graph:
   root: N
   adjacency:
-    N: [CA]
-    CA: [CB, HA, C]
-    CB: [HB1, HB2, CG]
-    CG: [HG1, HG2, CD]
-    CD: [HD1, HD2]
+    N: [CD, CA]
+    CA: [HA, C, CB]
+    CB: [HB1, HB2]
+    CG: [HG1, HG2]
+    CD: [CG, HD1, HD2]
     C: [O]
 chis: [CB, CG, CD, HD2]

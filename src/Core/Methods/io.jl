@@ -6,12 +6,14 @@ const PDB = Val{1}
 const YML = Val{2}
 const PQR = Val{3}
 const XYZ = Val{4}
+const SDF = Val{5}
 
 const supported_formats = [
-    ".PDB => Read: ✓ | Write: ✓",
-    ".YML => Read: ✓ | Write: ✓",
-    ".PQR => Read: ✗ | Write: ✓",
-    ".XYZ => Read: ✗ | Write: ✓"]
+    ".PDB => Read: YES | Write: YES",
+    ".YML => Read: YES | Write: YES",
+    ".PQR => Read: YES | Write: YES",
+    ".XYZ => Read: YES | Write: YES",
+    ".SDF => Read: NO  | Write: NO "]
 
 """
     load([::Type{T}], filename::AbstractString, [bonds_by_distance::Bool = false], [alternative_location::String = "A"], [ignore_residues::Vector{String} = Vector{String}()], [ignore_chains::Vector{String} = Vector{String}()]) where {T <: AbstractFloat}
@@ -60,6 +62,8 @@ function load(::Type{T}, filename::AbstractString; bonds_by_distance::Bool = fal
         return load(T, filename, XYZ, bonds_by_distance = bonds_by_distance, infer_parenthood = false)
     elseif endswith(filename, ".pqr")
         return load(T, filename, PQR, bonds_by_distance = bonds_by_distance, infer_parenthood = true)
+    elseif endswith(filename, ".sdf")
+        return load(T, filename, SDF, bonds_by_distance = bonds_by_distance, infer_parenthood = true)
     else
         error("Unable to load '$filename': unsupported file type")
     end
@@ -120,8 +124,8 @@ function splice_trajectory(filename::String)
     # Create temporary folder
     dirname::String = "$(filename[1:(end-4)])_spliced"
     isdir(dirname) && begin
-        @info @info "Found pre-existent $dirname folder. Overwritting."
-        rm(dirname, recursive = true)
+        @info "Found pre-existent $dirname folder. Overwritting."
+        rm(dirname, recursive = true, force = true)
     end
     mkdir(dirname)
 
@@ -222,298 +226,20 @@ load(::Type{T}, filename::AbstractString, ::Type{K}; bonds_by_distance = false, 
     bonds_by_distance && infer_bonds!(pose, threshold = 0.1)
 
     # Set parenthood of atoms (infered)
-    infer_parenthood && infer_parenthood!(pose.graph)
+    infer_parenthood && begin
+        infer_parenthood!(pose.graph)
+        ProtoSyn.request_c2i!(pose.state)
+        sync!(pose)
+    end
 
-    ProtoSyn.request_c2i!(pose.state)
-    sync!(pose)
-    pose
+    return pose
 end
 
 load(filename::AbstractString, ::Type{K}; bonds_by_distance = false, alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where K = begin
     load(Float64, filename, K, bonds_by_distance = bonds_by_distance, alternative_location = alternative_location, ignore_chains = ignore_chains, ignore_residues = ignore_residues)
 end
 
-# --- YML ----------------------------------------------------------------------
-
-load(::Type{T}, io::IO, ::Type{YML}; alternative_location::String = "A", kwargs...) where {T<:AbstractFloat} = begin
-    
-    yml = YAML.load(io)
-    natoms = length(yml["atoms"])
-    
-    state = State{T}(natoms)
-    top = Topology(yml["name"], 1)
-    seg = Segment!(top, top.name, 1)
-    res = Residue!(seg, top.name, 1)
-    
-    # add atoms
-    for (index, pivot) in enumerate(yml["atoms"])
-        atom = Atom!(res, pivot["name"], pivot["id"], index, pivot["symbol"])
-        s = state[index]
-
-        s.θ = ProtoSyn.Units.tonumber(T, pivot["theta"])
-        s.ϕ = ProtoSyn.Units.tonumber(T, pivot["phi"])
-        s.b = ProtoSyn.Units.tonumber(T, pivot["b"])
-
-        # load charge
-        if "c" in keys(pivot)
-            s.δ = ProtoSyn.Units.tonumber(T, pivot["c"])
-        end
-    end
-
-    # add bonds
-    for (pivot, others) in yml["bonds"]
-        atom = res[pivot]
-        foreach(other -> bond(atom, res[other]), others)
-    end
-
-    # bond graph
-    graph = yml["graph"]
-    for (pivot, others) in graph["adjacency"]
-        atom = res[pivot]
-        foreach(other -> setparent!(res[other], atom), others)
-    end
-
-    setparent!(
-        res[graph["root"]],
-        ProtoSyn.root(top)
-    )
-    
-    for atom in eachatom(top)
-        atom.ascendents = ascendents(atom, 4)
-    end
-
-    request_i2c!(state; all=true)
-    top.id = state.id = genid()
-    sync!(Pose(top, state))
-end
-
-# --- PDB ----------------------------------------------------------------------
-
-load(::Type{T}, io::IO, ::Type{PDB}; alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T<:AbstractFloat} = begin
-    
-    top  = Topology("UNK", -1)
-    seg  = Segment("", -1)     # orphan segment
-    res  = Residue("", -1)     # orphan residue
-    
-    id2atom = Dict{Int, Atom}()
-    
-    state = State{T}() # empty state
-    
-    segid = atmindex = 1 # ! segment and atom index are overwritten by default 
-
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?:\w)*\s+(?:\d+\.\d+)*\s+(?:\d+\.\d+)*\s+(?|(?<as>\w+[+-]*)(?=\s*$)|(?:\w*\s+(\w)[0-9]*[+-]*\s*)|(\s*))"
-
-    aid = 0
-    ignored_atoms = Vector{Int}()
-    conect_records_present = false
-    for line in eachline(io)
-        
-        # if startswith(line, "TITLE")
-        #     top.name = string(strip(line[11:end]))
-
-        if startswith(line, "ATOM") || startswith(line, "HETATM")
-            
-            atom = match(er, line)
-
-            if in(atom["rn"], ignore_residues) || in(atom["sn"], ignore_chains)
-                push!(ignored_atoms, parse(Int, atom["aid"]))
-                continue
-            end
-
-            # * Choose alternative locations
-            al = string(atom["al"])
-            if al !== "" && al !== alternative_location
-                continue
-            end
-
-            segname = atom["sn"] == " " ? "?" : string(atom["sn"]) # * Default
-
-            if seg.name != segname
-                seg = Segment!(top, segname, segid)
-                seg.code = isempty(segname) ? '-' : segname[1]
-                segid += 1
-            end
-
-            resid = parse(Int, atom["rid"])
-            resname = string(atom["rn"])
-
-            # New residue
-            if res.id != resid || res.name.content != resname
-                res = Residue!(seg, resname, resid)
-                setparent!(res, ProtoSyn.root(top).container)
-                aid = 1
-            end
-
-            # Deal with repeated atom names
-            an = string(atom["an"])
-            while an in keys(res.itemsbyname)
-                @warn "Atom named $an already found in residue $res. Adding atom identifier $aid."
-                aid += 1
-                an = an * string(aid)
-            end
-
-            new_atom = Atom!(res,
-                an,
-                parse(Int, atom["aid"]),
-                atmindex,
-                string(atom["as"]))
-
-            id2atom[parse(Int, atom["aid"])] = new_atom
-            
-            s = AtomState()
-            s.t[1] = parse(T, atom["x"])
-            s.t[2] = parse(T, atom["y"])
-            s.t[3] = parse(T, atom["z"])
-            push!(state, s)
-
-        elseif startswith(line, "CONECT")
-            conect_records_present = true
-            idxs = map(s -> parse(Int, s), split(line)[2:end])
-
-            # Consider ignored atoms in previous steps
-            if idxs[1] in ignored_atoms
-                continue
-            end
-
-            if !(idxs[1] in keys(id2atom))
-                @warn "Found CONECT record $(idxs[1]) but not the corresponding atom."
-                continue
-            end
-            pivot = id2atom[idxs[1]]
-            for i in idxs[2:end]
-                # Case this connect doesn't have a corresponding atom
-                if !(i in keys(id2atom))
-                    @warn "Found CONECT record $i but not the corresponding atom."
-                    continue
-                end
-                other_atom = id2atom[i]
-                bond(pivot, other_atom)
-            end
-        end
-    end
-
-    if !conect_records_present
-        @warn "It seems the loaded pose does not have CONECT records present. Consider setting the `bonds_by_distance` flag to `true`."
-    end
-
-    top.id = state.id = genid()
-   
-    pose = Pose(top, state)
-    reindex(pose.graph, set_ascendents = false)
-    reindex(pose.state)
-    return pose
-end
-
-# --- PQR ----------------------------------------------------------------------
-load(::Type{T}, io::IO, ::Type{PQR}; alternative_location::String = "A", ignore_residues::Vector{String} = Vector{String}(), ignore_chains::Vector{String} = Vector{String}()) where {T<:AbstractFloat} = begin
-    
-    top  = Topology("UNK", -1)
-    seg  = Segment("", -1)     # orphan segment
-    res  = Residue("", -1)     # orphan residue
-    
-    id2atom = Dict{Int, Atom}()
-    
-    state = State{T}() # empty state
-    
-    segid = atmindex = 1 # ! segment and atom index are overwritten by default 
-
-    er = r"\w+\s+(?<aid>\d+)\s+(?|((?:(?<an>\w{1,4})(?<al>\w))(?=\w{3}\s)(?<rn>\w{3}))|((\w+)\s+(\w?)(\w{3}))|((\w+)\s(\w*)\s(\w*)))\s+(?<sn>\D{1})\s*(?<rid>\d+)\s+(?<x>-*\d+\.\d+)\s+(?<y>-*\d+\.\d+)\s+(?<z>-*\d+\.\d+)\s+(?<c>-*\d+\.\d+)\s+(?:-*\d+\.\d+)"
-    
-    aid = 0
-    ignored_atoms = Vector{Int}()
-    for line in eachline(io)
-        
-        # if startswith(line, "TITLE")
-        #     top.name = string(strip(line[11:end]))
-
-        if startswith(line, "ATOM") || startswith(line, "HETATM")
-            
-            atom = match(er, line)
-
-            if in(atom["rn"], ignore_residues) || in(atom["sn"], ignore_chains)
-                push!(ignored_atoms, parse(Int, atom["aid"]))
-                continue
-            end
-
-            # * Choose alternative locations
-            al = string(atom["al"])
-            if al !== "" && al !== alternative_location
-                continue
-            end
-
-            segname = atom["sn"] == " " ? "?" : string(atom["sn"]) # * Default
-
-            if seg.name != segname
-                seg = Segment!(top, segname, segid)
-                seg.code = isempty(segname) ? '-' : segname[1]
-                segid += 1
-            end
-
-            resid = parse(Int, atom["rid"])
-            resname = string(atom["rn"])
-
-            # New residue
-            if res.id != resid || res.name.content != resname
-                res = Residue!(seg, resname, resid)
-                setparent!(res, ProtoSyn.root(top).container)
-                aid = 1
-            end
-
-            # Deal with repeated atom names
-            an = string(atom["an"])
-            while an in keys(res.itemsbyname)
-                @warn "Atom named $an already found in residue $res. Adding atom identifier $aid."
-                aid += 1
-                an = an * string(aid)
-            end
-
-            new_atom = Atom!(res,
-                an,
-                parse(Int, atom["aid"]),
-                atmindex,
-                string(an[1]))
-
-            id2atom[parse(Int, atom["aid"])] = new_atom
-            
-            s = AtomState()
-            s.t[1] = parse(T, atom["x"])
-            s.t[2] = parse(T, atom["y"])
-            s.t[3] = parse(T, atom["z"])
-            s.δ    = parse(T, atom["c"])
-            push!(state, s)
-
-        elseif startswith(line, "CONECT")
-            idxs = map(s -> parse(Int, s), split(line)[2:end])
-
-            # Consider ignored atoms in previous steps
-            if idxs[1] in ignored_atoms
-                continue
-            end
-
-            if !(idxs[1] in keys(id2atom))
-                @warn "Found CONECT record $(idxs[1]) but not the corresponding atom."
-                continue
-            end
-            pivot = id2atom[idxs[1]]
-            for i in idxs[2:end]
-                # Case this connect doesn't have a corresponding atom
-                if !(i in keys(id2atom))
-                    @warn "Found CONECT record $i but not the corresponding atom."
-                    continue
-                end
-                other_atom = id2atom[i]
-                bond(pivot, other_atom)
-            end
-        end
-    end
-
-    top.id = state.id = genid()
-   
-    pose = Pose(top, state)
-    reindex(pose.graph, set_ascendents = false)
-    reindex(pose.state)
-    return pose
-end
+include("io-read.jl")
 
 # --- WRITE --------------------------------------------------------------------
 # --- PDB ----------------------------------------------------------------------

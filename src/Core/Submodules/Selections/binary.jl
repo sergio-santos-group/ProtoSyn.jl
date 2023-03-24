@@ -96,8 +96,6 @@ Base.:|(sele::AbstractSelection, ::Nothing) = sele
 Base.:&(::Nothing, ::Nothing) = nothing
 Base.:|(::Nothing, ::Nothing) = nothing
 
-
-
 # --- Select -------------------------------------------------------------------
 select(sele::BinarySelection{Stateless, Stateless}, container::AbstractContainer) = begin
     
@@ -145,7 +143,11 @@ function Base.show(io::IO, bs::BinarySelection{M, T}, level_code::Opt{LevelCode}
     if level_code === nothing
         level_code = LevelCode()
     end
-    println(io, lead*"BinarySelection ❯  $(bs.op) \"$(dict[bs.op])\" ($(selection_type(bs)))")
-    Base.show(io, bs.left, vcat(level_code, 3))
-    Base.show(io, bs.right, vcat(level_code, 4))
+    if length(level_code.levels) > 5
+        println(io, lead*"(...)")
+    else
+        println(io, lead*"BinarySelection ❯  $(bs.op) \"$(dict[bs.op])\" ($(selection_type(bs)))")
+        Base.show(io, bs.left, vcat(level_code, 3))
+        Base.show(io, bs.right, vcat(level_code, 4))
+    end
 end

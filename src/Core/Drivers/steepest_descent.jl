@@ -182,12 +182,12 @@ function (driver::SteepestDescent)(pose::Pose)
             break
         end
 
-        if energy >= driver.eval!(backup_pose)
+        if energy >= backup_pose.state.e[:Total]
             γ *= γdec
-            pose = copy(backup_pose)
+            ProtoSyn.recoverfrom!(pose, backup_pose)
             driver_state.max_force = ProtoSyn.atmax(pose.state, :f)
         else
-            backup_pose = copy(pose)
+            backup_pose = ProtoSyn.recoverfrom!(backup_pose, pose)
             γ *= γinc
         end
 

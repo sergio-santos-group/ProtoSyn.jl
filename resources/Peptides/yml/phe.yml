@@ -15,10 +15,10 @@ atoms:
   - {name: HE1, id:  12, symbol:  H, b:   1.090109, theta:   2.094229, phi:  -3.141518, c:  0.2351}
   - {name:  CZ, id:  13, symbol:  C, b:   1.399979, theta:   2.094563, phi:  -0.001370, c: -0.1480}
   - {name:  HZ, id:  14, symbol:  H, b:   1.089356, theta:   2.094598, phi:  -3.141064, c:  0.2397}
-  - {name: CE2, id:  15, symbol:  C, b:   1.399982, theta:   2.094934, phi:   0.000000, c: -0.1228}
+  - {name: CE2, id:  15, symbol:  C, b:   1.399982, theta:   2.094934, phi:  -3.141438, c: -0.1228}
   - {name: HE2, id:  16, symbol:  H, b:   1.089518, theta:   2.095557, phi:  -3.141438, c:  0.2464}
   - {name: CD2, id:  17, symbol:  C, b:   1.399359, theta:   2.094454, phi:   0.000377, c: -0.1339}
-  - {name: HD2, id:  18, symbol:  H, b:   1.090316, theta:   2.095024, phi:  -3.141438, c:  0.2849}
+  - {name: HD2, id:  18, symbol:  H, b:   1.090316, theta:   2.095024, phi:   0.000000, c:  0.2849}
   - {name:   C, id:  19, symbol:  C, b:   1.522543, theta:   1.938616, phi:   3.141593, c:  0.7951}
   - {name:   O, id:  20, symbol:  O, b:   1.228850, theta:   2.103163, phi:   0.000000, c: -0.7761}
 bonds:
@@ -29,7 +29,7 @@ bonds:
   CB: [CA, HB1, HB2, CG]
   HB1: [CB]
   HB2: [CB]
-  CG: [CB, CD1, CD2]
+  CG: [CB, CD2, CD1]
   CD1: [CG, HD1, CE1]
   HD1: [CD1]
   CE1: [CD1, HE1, CZ]
@@ -48,11 +48,11 @@ graph:
     N: [H, CA]
     CA: [HA, CB, C]
     CB: [HB1, HB2, CG]
-    CG: [CD1]
+    CG: [CD2, CD1]
     CD1: [HD1, CE1]
     CE1: [HE1, CZ]
-    CZ: [HZ, CE2]
-    CE2: [HE2, CD2]
-    CD2: [HD2]
+    CZ: [HZ]
+    CD2: [HD2, CE2]
+    CE2: [HE2]
     C: [O]
 chis: [CB, CG, CD1]

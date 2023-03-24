@@ -205,6 +205,7 @@ function mutate!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, deri
     # Remove old sidechain
     for atom in reverse(sidechain)
         ProtoSyn.pop_atom!(pose, atom; keep_downstream_position = false)
+        # Note: pop_atom! already re-indexes the pose
     end
 
     # Insert new sidechain
@@ -632,7 +633,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_terminal::Bool = false, skip_C_terminal::Bool = false)
     # * This function assumes that the N- and C- terminals are correctly named
     # * (N-terminal residue has an atom named "N" and C-terminal has an atom
     # * named "C", both with a bond to a "CA" atom).
@@ -649,7 +650,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
     end
 
     for residue in residues
-        if is_C_terminal(residue)
+        if is_C_terminal(residue) && !skip_C_terminal
             terminal = residue["C"]
             @assert terminal !== nothing "Can't find atom \"C\" in terminal residue $residue"
 
@@ -660,7 +661,7 @@ function uncap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             end
         end
 
-        if is_N_terminal(residue) # * Note: A residue can be both N- and C- terminal
+        if is_N_terminal(residue) && !skip_N_terminal # * Note: A residue can be both N- and C- terminal
             terminal = residue["N"]
 
             for bond in reverse(terminal.bonds) # Note the reverse loop
@@ -698,22 +699,27 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
+function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing; skip_N_terminal::Bool = false, skip_C_terminal::Bool = false)
     # * This function assumes that the N- and C- terminals are correctly ordered
     # * (N -> CA -> C, in both terminal backbones).
 
     # * Default terminal fragments
     T               = eltype(pose.state)
-    n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
-    n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
-    n_term_atoms    = ["H1", "H2", "H3"]
+    if !skip_N_terminal
+        n_term_filename = Peptides.resource_dir * "/pdb/nterminal.pdb"
+        n_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, n_term_filename))
+        n_term_atoms    = ["H3", "H2", "H1"] # Reverse order than of desired
+    end
 
-    c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
-    c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
-    c_term_atoms    = ["O", "OXT"]
+    if !skip_C_terminal
+        c_term_filename = Peptides.resource_dir * "/pdb/cterminal.pdb"
+        c_term          = ProtoSyn.ProtoSyn.fragment(Peptides.load(T, c_term_filename))
+        c_term_atoms    = ["OXT", "O"] # Reverse order than of desired
+    end
 
     # * Remove any existing caps
-    uncap!(pose, selection)
+    uncap!(pose, selection,
+        skip_N_terminal = skip_N_terminal, skip_C_terminal = skip_C_terminal)
     sync!(pose)
 
     # * Search for terminals to cap
@@ -722,11 +728,15 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
         _selection = _selection & selection
     end
     residues = _selection(pose, gather = true)
-    @assert length(residues) > 0 "The provided selection/pose doesn't seem to have terminal residues."
+    if length(residues) === 0
+        @warn "The provided selection/pose doesn't seem to have terminal residues. No capping process will be done. Check if this is the expected behaviour!"
+        return pose
+    end
 
     # * Cap terminals
     for residue in residues
-        if is_N_terminal(residue)
+        if is_N_terminal(residue) && !skip_N_terminal
+            @info "Capping $residue as N-terminal"
             terminal = residue["N"]
             # * Align terminal fragment with existing structure
             mobile_selection = an"^N$|^CA$"r
@@ -748,7 +758,9 @@ function cap!(pose::Pose, selection::Opt{AbstractSelection} = nothing)
             ProtoSyn.request_c2i!(pose.state)
             sync!(pose)
         end
-        if is_C_terminal(residue) # * Note: A residue can be both N- and C- terminal
+
+        if is_C_terminal(residue) && !skip_C_terminal # * Note: A residue can be both N- and C- terminal
+            @info "Capping $residue as C-terminal"
             terminal = residue["C"]
 
             # * Transfer ownership of terminal atoms from fragment to Pose

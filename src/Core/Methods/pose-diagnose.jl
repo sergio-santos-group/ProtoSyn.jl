@@ -123,7 +123,7 @@ function diagnose(pose::Pose; return_issues::Bool = false, atom_order_search_alg
         else
             N = findall((x) -> x === false, atoms_from_list .=== atoms_from_graph)
             if length(N) > 0
-                push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment, the atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
+                push!(atom_level_graph_issues, "Using the $atom_order_search_algorithm graph search algorithm and travelling from the first atom on $segment:\nThe atom order doesn't match the established list of atoms in each AbstractContainer.\nTotal number of atoms in different order: $(length(N))/$(length(atoms_from_list)).\nSuggested fix: Consider using the sort_atoms_by_graph! function (with the desired search algorithm convention) or diagnose using a different graph search algorithm.")
             end
         end
     end
@@ -243,7 +243,6 @@ julia> ProtoSyn.write_forces(pose, "forces.dat")
 function write_forces(pose::Pose, filename::String, α::T = 1.0) where {T <: AbstractFloat}
     open(filename, "w") do file_out
         for (i, atom) in enumerate(eachatom(pose.graph))
-            !any(k -> k != 0, pose.state.f[:, i]) && continue
             x  = pose.state[atom].t[1]
             y  = pose.state[atom].t[2]
             z  = pose.state[atom].t[3]

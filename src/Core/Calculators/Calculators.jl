@@ -7,13 +7,13 @@ module Calculators
     MaskMap = Opt{Union{ProtoSyn.Mask{<: ProtoSyn.AbstractContainer}, Matrix{<: AbstractFloat}, Function}}
 
     include("verlet_list.jl")
-    include("distance_matrix.jl")
+    include("distance_matrix.jl") # Requires verlet_list.jl
 
     # Load energy function components
     include("energy_function_component.jl")
 
-    if "NO_TORCHANI" in keys(ENV) && ENV["NO_TORCHANI"] === "true"
-        @warn "Environment variable NO_TORCHANI set to `true`. Not loading torchani."
+    if "USE_TORCHANI" in keys(ENV) && ENV["USE_TORCHANI"] === "false"
+        @warn "Environment variable USE_TORCHANI set to `false`. Not loading torchani."
     else
         @info " | Loading TorchANI"
         include("torchani.jl")
@@ -26,8 +26,12 @@ module Calculators
     include("sasa.jl")
     include("radius_gyration.jl")
 
-    @info " | Loading GB"
-    include("gb.jl")
+    if "USE_IGBR_NN" in keys(ENV) && ENV["USE_IGBR_NN"] === "false"
+        @warn "Environment variable USE_IGBR_NN set to `false`. Not loading iGBR-NN ONNX models."
+    else
+        @info " | Loading GB"
+        include("gb.jl")
+    end
 
     @info " | Loading Electrostatics"
     include("electrostatics.jl")
@@ -40,7 +44,7 @@ module Calculators
     @info " | Loading Energy Function"
     include("energy_function.jl")
 
-    include("ref15.jl")
+    # include("ref15.jl")
 
     # --- Show available Energy Function Components
 

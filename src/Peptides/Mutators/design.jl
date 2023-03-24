@@ -86,7 +86,8 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
     searchable_aas = [a for (a, v) in design_mutator.searchable_aminoacids if v]
 
     # DesignMutator requires updated internal coordinates
-    ProtoSyn.c2i!(pose.state, pose.graph) # Checks pose.state.c2i flag inside
+    sync!(pose)
+    # ProtoSyn.c2i!(pose.state, pose.graph) # Checks pose.state.c2i flag inside
 
     for atom in atoms
         if rand() < design_mutator.p_mut
@@ -101,7 +102,10 @@ function (design_mutator::DesignMutator)(pose::Pose, atoms::Vector{Atom})
 
             # 2) Perform mutation (already requests i2c)
             derivation = [string(nr_name)]
-            Peptides.mutate!(pose, residue, design_mutator.grammar, derivation)
+
+            @info "Mutating $(residue.name)-$(residue.id) to $(string(nr_name))"
+            # println("Mutating $(residue.name)-$(residue.id) to $(string(nr_name))")
+            Peptides.mutate!(pose, residue, design_mutator.grammar, derivation) # requests i2c! inside
         end
     end
 end

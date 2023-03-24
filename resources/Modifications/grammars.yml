@@ -2,6 +2,8 @@ modifications:
   variables:
     MET: Modifications/yml/met.yml
     PO4: Modifications/yml/po4.yml
+    PO4-1: Modifications/yml/po4-1.yml
+    PO4-2: Modifications/yml/po4-2.yml
     INE: Modifications/yml/pyridine.yml
     NYL: Modifications/yml/carbonyl.yml
     ETH: Modifications/yml/ether.yml
@@ -9,5 +11,6 @@ modifications:
     XYL: Modifications/yml/carboxyl.yml
     AMN: Modifications/yml/amino-N.yml
     HYL: Modifications/yml/hydroxyl.yml
+    CHYL: Modifications/yml/c-hydroxyl.yml
     OXN: Modifications/yml/oxidized-N.yml
     HID: Modifications/yml/hydrogen.yml

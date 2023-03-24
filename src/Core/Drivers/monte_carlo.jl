@@ -25,12 +25,13 @@ ProtoSyn.Drivers.MonteCarloState{Float64}(0, false, false, false, 0, 0.0)
 ```
 """
 Base.@kwdef mutable struct MonteCarloState{T <: AbstractFloat} <: DriverState
-    step::Int             = 0
-    converged::Bool       = false
-    completed::Bool       = false
-    stalled::Bool         = false
-    acceptance_count::Int = 0
-    temperature::T        = T(0.0)
+    step::Int                = 0
+    converged::Bool          = false
+    completed::Bool          = false
+    stalled::Bool            = false
+    acceptance_count::Int    = 0
+    temperature::T           = T(0.0)
+    last_step_accepted::Bool = false
 end
 
 
@@ -142,6 +143,8 @@ function (driver::MonteCarlo)(pose::Pose)
 
     previous_energy = driver.eval!(pose)
     previous_state  = copy(pose)
+    previous_state.graph.id = pose.graph.id # Set this to maintain ID
+    previous_state.state.id = pose.state.id # Set this to maintain ID
     driver.callback !== nothing && driver.callback(pose, driver_state)
     
     while driver_state.step < driver.max_steps
@@ -158,9 +161,11 @@ function (driver::MonteCarlo)(pose::Pose)
             previous_energy = energy
             ProtoSyn.recoverfrom!(previous_state, pose) # If copy, the chain is broken
             driver_state.acceptance_count += 1
+            driver_state.last_step_accepted = true
         else
-            # println("Rejected")
+            # println("Rejected: $previous_energy < $energy")
             ProtoSyn.recoverfrom!(pose, previous_state) # If copy, the chain is broken
+            driver_state.last_step_accepted = false
         end
 
         driver_state.step += 1

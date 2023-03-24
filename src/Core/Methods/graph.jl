@@ -231,6 +231,7 @@ julia> ascendents(pose.graph[1][1][4], 4)
 function ascendents(container::AbstractContainer, level::Int)
     # println("$container (Level $level) (Next: $(container.parent))")
     if level > 1
+        @assert container.parent !== nothing "$container has no parent."
         return (container.index, ascendents(container.parent, level - 1)...)
     else
         (container.index,)
@@ -597,7 +598,7 @@ Segment{/2a3d:8625/A:1}
 """
 function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Bool = false, start::Opt{Atom} = nothing, linear_aromatics::Bool = true)
 
-    w = Dict{String, Int}("H" => 1, "N" => 5, "C" => 15, "O" => 10, "S" => 20)
+    w = Dict{String, Int}("H" => 1, "N" => 5,  "O" => 10, "C" => 15, "S" => 20, "FE" => 25)
 
     @assert typeof(container) > Atom "Can't infer parenthood of a single Atom!"
 
@@ -641,6 +642,7 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
         end
 
         if length(atom_i_bonds) === 0
+            @info " $atom_i has no non-visited bonds."
             continue
         end
 
@@ -670,33 +672,46 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                 eq_weight_atoms = atom_i_bonds[eq_weight]
 
                 # Solve equalization with size of downstream bond graph
-                lengths = Vector{Int}()
-                for eq_weight_atom in eq_weight_atoms
-                    contacts_visited = false
-                    for range in 1:3
+                equal_downstream = true
+                range            = 1
+                N                = length(eq_weight_atoms)
+                lengths          = Vector{Int}()
+                max_range        = 5
+                while equal_downstream
+                    lengths = Vector{Int}() 
+                    for eq_weight_atom in eq_weight_atoms
                         atoms_in_range = ProtoSyn.travel_bonds(eq_weight_atom, range, atom_i)
-                        @info "For range $range, atoms in range of $eq_weight_atom : $atoms_in_range"
-                        for atom_in_range in atoms_in_range[2:end]
-                            atom_in_range_index = findfirst((a)->a === atom_in_range, atoms)
-                            if atom_in_range_index === nothing
-                                continue
-                            elseif visited[atom_in_range_index]
-                                push!(lengths, range)
-                                contacts_visited = true
+                        @info "For range $range, atoms in range of $eq_weight_atom : ($(length(atoms_in_range))) $atoms_in_range"
+                        push!(lengths, length(atoms_in_range))
+                    end
+                    
+                    equal_downstream = false
+                    for i in 1:(N-1)
+                        for j in i+1:N
+                            if lengths[i] === lengths[j]
+                                equal_downstream = true
                                 break
                             end
                         end
-                        contacts_visited && break
                     end
-                    if !contacts_visited
-                        push!(lengths, 4)
-                    end
+
+                    range += 1
+                    range > max_range && break
                 end
 
                 # If first one is, all equal weighted atoms are
                 # Aromatic     : longer first
                 # Non-aromatic : shorter first
-                permvec = sortperm(lengths, rev = !aromatics[eq_weight[1]])
+                id = findfirst((a) -> a.id === eq_weight_atoms[1].id, atoms)
+                @info "          Aromatic: $(aromatics[id]) (ID: $id)"
+                @info "         EQ weight: $eq_weight"
+                @info "     Final lengths: $lengths"
+                if all(y->y==lengths[1], lengths)
+                    permvec = sortperm([x.name for x in atom_i_bonds[eq_weight]], rev = false)
+                    @info "     ... Sorting by name ..."
+                else
+                    permvec = sortperm(lengths, rev = aromatics[id])
+                end
                 @info "       Size weight: $(["$sw ($(x.name))" for (sw, x) in zip(permvec, atom_i_bonds[eq_weight])])"
                 atom_i_weight[eq_weight] .+= permvec
             end
@@ -713,7 +728,24 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
             j !== nothing && @info " Bonded to atom $atom_j - $j (Visited? => $(visited[j]))"
             if j !== nothing && !(visited[j]) && !(changed[j])
 
-                push!(stack, atom_j)
+                atom_j_index = findfirst((a) -> a === atom_j, atoms)
+                if linear_aromatics && aromatics[atom_j_index]
+                    push!(stack, atom_j)
+                    @info "Linear aromatics! Pushing $atom_j to the top of the stack."
+
+                    if overwrite && hasparent(atom_j)
+                        ProtoSyn.popparent!(atom_j)
+                    end
+                    if !hasparent(atom_j)
+                        ProtoSyn.setparent!(atom_j, atom_i)
+                        changed[j] = true
+                    else
+                        @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
+                    end
+
+                    break
+                end
+                insert!(stack, 1, atom_j)
 
                 if overwrite && hasparent(atom_j)
                     ProtoSyn.popparent!(atom_j)
@@ -723,12 +755,6 @@ function infer_parenthood!(container::ProtoSyn.AbstractContainer; overwrite::Boo
                     changed[j] = true
                 else
                     @warn "  Tried to set $atom_i as parent of $atom_j, but $atom_j already had parent"
-                end
-
-                # Deal with aromatics
-                if linear_aromatics && atom_j.symbol !== "H" && aromatics[j]
-                    @info "  ! Parent atom ($atom_i) is AROMATIC. Moving along aromatic ring ..."
-                    break
                 end
             end
         end
@@ -790,7 +816,9 @@ function infer_bonds!(pose::Pose; threshold::T = 0.1) where {T <: AbstractFloat}
 
             d = ProtoSyn.Units.bond_lengths[putative_bond]
             d += d * threshold
-            dm[i, j] < d && ProtoSyn.bond(atom_i, atom_j)
+            if dm[i, j] < d && atom_i.container.container === atom_j.container.container
+                ProtoSyn.bond(atom_i, atom_j)
+            end
         end
     end
 

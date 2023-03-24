@@ -106,8 +106,7 @@ Based on the provided `grammar`, add the residue sequence from `derivation` to
 the given `pose`, inserting it on the position of the given [`Residue`](@ref)
 instance `residue` (the `residue` gets shifted downstream). The first downstream
 [`Residue`](@ref) and the new [`Fragment`](@ref) will be connected using
-operation `op` ("α" by default). If `connect_upstream` is set to true (is, by
-default), also connect to the upstream [`Residue`](@ref) instances using the
+operation `op` ("α" by default). Also connects to the upstream [`Residue`](@ref) instances using the
 same operation `op`. Request internal to cartesian coordinate conversion and
 return the altered [`Pose`](@ref) `pose`.
 
@@ -131,7 +130,7 @@ Pose{Topology}(Topology{/UNK:1}, State{Float64}:
 )
 ```
 """
-function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op::Any = "α", connect_upstream::Bool = true)
+function insert_fragment!(pose::Pose{Topology}, residue::Residue, grammar::LGrammar, derivation; op::Any = "α")
 
     # Build the fragment to insert
     frag = ProtoSyn.fragment(grammar, derivation)

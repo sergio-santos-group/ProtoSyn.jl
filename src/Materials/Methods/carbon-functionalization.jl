@@ -11,7 +11,7 @@ edge_or_center = base & BondCountSelection(4, <)
 center         = base & BondCountSelection(3)
 
 """
-    functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normalize_frequencies::Bool = false) where {T <: AbstractFloat}
+    functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; [normalize_frequencies::Bool = false], [attempt_minimization::Bool = true]) where {T <: AbstractFloat}
 
 Add N functional groups to the given [`Pose`](@ref) `pose`. The number of added
 functional groups is given by the `functional groups` dictionary, mapping
@@ -22,7 +22,9 @@ If the `normalize_frequencies` flag is set to `true` (`false`, by default),
 ProtoSyn normalizes the input `functional_groups` dictionary so that all
 possible non-charged carbon [`Atom`](@ref) instances are functionalized (in
 proportional percentages to the input dictionary). Note that this method expects
-correctly ordered [`Segment`](@ref) instances (1 is bottom, :end is top).
+correctly ordered [`Segment`](@ref) instances (1 is bottom, :end is top). If
+`attempt_minimization` is set to `true` (is, by default), a quick Monte Carlo
+simulation attempts to minimize the prevalence of inter-atomic clashes.
 
 !!! ukw "Note:"
     The reason only non-charged carbon [`Atom`](@ref) instances are considered for functionalization is because ProtoSyn automatically assigns a charge when adding a functional group. Therefore, only non-charged [`Atom`](@ref) instances are left "open" for functionalization.
@@ -31,11 +33,13 @@ correctly ordered [`Segment`](@ref) instances (1 is bottom, :end is top).
 ---
 
 
-    functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
+    functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int}; [attempt_minimization::Bool = true])
 
 In an alternative syntax, the `functional_groups` fictionary directly maps
 [`Fragment`](@ref) instances to the actual number of desired functional groups
-to add.
+to add. If `attempt_minimization` is set to `true` (is, by default), a quick
+Monte Carlo simulation attempts to minimize the prevalence of inter-atomic
+clashes.
 
 # See also
 [`add_functionalization!`](@ref)
@@ -52,7 +56,7 @@ Pose{Topology}(Topology{/CRV:42474}, State{Float64}:
 )
 ```
 """
-function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normalize_frequencies::Bool = false) where {T <: AbstractFloat}
+function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normalize_frequencies::Bool = false, attempt_minimization::Bool = true) where {T <: AbstractFloat}
 
     # Initial verifications
     for (frag, perc) in functional_groups
@@ -74,12 +78,19 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, T}; normal
         functional_groups_n[frag] = floor(Int, perc * init_N_carbons)
     end
 
-    return functionalize!(pose, functional_groups_n)
+    return functionalize!(pose, functional_groups_n,
+        attempt_minimization = attempt_minimization)
 end
 
-function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
+function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int}; attempt_minimization::Bool = true)
 
     L_layer = SerialSelection{Segment}(ProtoSyn.count_segments(pose.graph), :id)
+
+    # Start fcns added dict
+    fcns_added = Dict{String, Int}()
+    for key in keys(functional_groups)
+        fcns_added[key.graph.name] = 0
+    end
 
     known_functional_groups = Dict{String, AbstractSelection}(
         "ine" => edge,                                             # Pyridine
@@ -129,8 +140,26 @@ function functionalize!(pose::Pose, functional_groups::Dict{Fragment, Int})
             random_atom = StatsBase.sample(ProtoSyn.gather(mask, pose.graph))
             
             @info "Adding $(fcn.graph.name) to $random_atom"
-            add_functionalization!(pose, fcn, random_atom)
+            fcn_added = add_functionalization!(pose, fcn, random_atom,
+                attempt_minimization = attempt_minimization)
+
+            if fcn_added !== nothing
+                fcns_added[fcn.graph.name] += 1
+            end
         end
+    end
+
+    # Adjust residual partial charge (should be close to 0.0)
+    spread_charges!(pose)
+
+    return pose, fcns_added
+end
+
+function spread_charges!(pose::Pose)
+    c = sum([a.δ for a in pose.state.items[4:end]])
+    Δc = c / ProtoSyn.count_atoms(pose.graph)
+    for atom in pose.state.items[4:end]
+        atom.δ -= Δc
     end
 end
 
@@ -251,6 +280,7 @@ function add_functionalization!(pose::Pose, fcn::Fragment, atom::Atom; attempt_m
                 define_functionalization_up_down(false)
             else
                 @info "No suitable placement for functional group was found."
+                return nothing
             end
         else
             @info " Edge position"
@@ -348,6 +378,8 @@ function add_hydrogens!(pose::Pose, res_lib::LGrammar, selection::Opt{AbstractSe
         add_functionalization!(pose, hydro, atom; attempt_minimization = false)
         sync!(pose)
     end
+
+    spread_charges!(pose)
 
     return pose
 end
